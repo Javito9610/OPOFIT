@@ -7,12 +7,13 @@ class Oposicion{
 }
 
 class PruebaOficial{
-    constructor(id_pruebas_oficiales, nombre_prueba, descripcion, trucos, oposiciones_id_oposicion){
+    constructor(id_pruebas_oficiales, nombre_prueba, descripcion, trucos, oposiciones_id_oposicion, mejor_si_es_menor){
         this.id_pruebas_oficiales=id_pruebas_oficiales;
         this.nombre_prueba=nombre_prueba;
         this.descripcion=descripcion;
         this.trucos=trucos;
         this.oposiciones_id_oposicion=oposiciones_id_oposicion;
+        this.mejor_si_es_menor = mejor_si_es_menor;
     }
 }
 
@@ -36,9 +37,20 @@ class Noticia{
     }
 }
 
+class BaremoPuntuacion {
+    constructor(id_baremo, pruebas_id, genero, marca_valor, nota) {
+        this.id_baremo = id_baremo;
+        this.pruebas_id = pruebas_id;
+        this.genero = genero;
+        this.marca_valor = marca_valor;
+        this.nota = nota;
+    }
+}
+
 module.exports={
     Oposicion,
     PruebaOficial,
     RequisitoNivel,
-    Noticia
+    Noticia,
+    BaremoPuntuacion
 }

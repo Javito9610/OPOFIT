@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`pruebas_oficiales` (
   `descripcion` TEXT NOT NULL,
   `trucos` TEXT NULL,
   `oposiciones_id_oposicion` INT NOT NULL,
+  `mejor_si_es_menor` TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id_pruebas_oficiales`),
   INDEX `fk_pruebas_oficiales_oposiciones1_idx` (`oposiciones_id_oposicion` ASC) VISIBLE,
   CONSTRAINT `fk_pruebas_oficiales_oposiciones1`
@@ -194,6 +195,24 @@ CREATE TABLE IF NOT EXISTS `mydb`.`requisitos_nivel` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `mydb`.`baremos_puntuacion`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`baremos_puntuacion` (
+  `id_baremo` INT NOT NULL AUTO_INCREMENT,
+  `pruebas_oficiales_id_pruebas_oficiales` INT NOT NULL,
+  `genero` ENUM('H', 'M') NOT NULL,
+  `marca_valor` DECIMAL(10,2) NOT NULL,
+  `nota` INT NOT NULL,
+  PRIMARY KEY (`id_baremo`),
+  CONSTRAINT `fk_baremo_prueba`
+    FOREIGN KEY (`pruebas_oficiales_id_pruebas_oficiales`)
+    REFERENCES `mydb`.`pruebas_oficiales` (`id_pruebas_oficiales`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
 
 
 -- -----------------------------------------------------

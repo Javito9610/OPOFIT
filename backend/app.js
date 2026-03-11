@@ -31,12 +31,13 @@ Nota: usaremos los prefijos '/api/...' para diferenciar la api del contenido est
 */
 
 /*Los entrutadores no se creanuno por cada tabla, sino uno por cada funcionalidad. porque si tuvieramos infinitud de tablas, tendriamos que hacer muchisimos enrutadores*/
-app.use('/api/auth', require('./src/routes/auth.routes')); //Abarca las tablas user y oposicion. Para el registro.
-app.use('/api/user', require('./src/routes/user.routes')); //Abarca las tablas usuarios, settings y marcas_perfil. donde se cambian las marcas del atleta y las unidades de medida
-app.use('/api/oposiciones', require('./src/routes/oposiciones.routes')); //Abarca las tablas oposiciones, marcas_oficiales y noticias
-app.use('/api/rutinas', require('./src/routes/rutinas.routes')); //Abarca las tablas rutinas_opo, detalle_rutina_opo, ejercicios y requisitos_nivel.m Cruza requisutos_nivel y rutina_opo, para en funcion de los requisitos y las marcas del perfil pueda ofrecer una rutina especifica. Ejercicios están contenidos en rutinas
-app.use('/api/rutinas_pers', require('./src/routes/rutinas_pers.routes'));//Abarca las tablas rutinas_pers,detalle_rutina_pers y ejercicios. Para gestionar la funcionalidad de entrenamiento libre.
-app.use('/api/historial', require('./src/routes/historial.routes')); //Abarca las tablas historial_sesiones y registro_resultados. Para que cada vez que el usuario termine el entreno, registre la fecha y las marcas conseguidas y pueda consultarlas
+app.use('/api/auth', require('./src/routes/AuthRoute')); //Abarca las tablas user y oposicion. Para el registro.
+app.use('/api/user', require('./src/routes/UsuarioRoute')); //Abarca las tablas usuarios, settings y marcas_perfil. donde se cambian las marcas del atleta y las unidades de medida
+app.use('/api/oposiciones', require('./src/routes/OposicionRoute')); //Abarca las tablas oposiciones, marcas_oficiales y noticias
+app.use('/api/rutinas', require('./src/routes/RutinaRoute')); //Abarca las tablas rutinas_opo, detalle_rutina_opo, ejercicios y requisitos_nivel.m Cruza requisutos_nivel y rutina_opo, para en funcion de los requisitos y las marcas del perfil pueda ofrecer una rutina especifica. Ejercicios están contenidos en rutinas
+app.use('/api/rutinas-pers', require('./src/routes/RutinaPersRoute'));//Abarca las tablas rutinas_pers,detalle_rutina_pers y ejercicios. Para gestionar la funcionalidad de entrenamiento libre.
+app.use('/api/historial', require('./src/routes/ProgresoRoute')); //Abarca las tablas historial_sesiones y registro_resultados. Para que cada vez que el usuario termine el entreno, registre la fecha y las marcas conseguidas y pueda consultarlas
+app.use('/api/info', require('./src/routes/InfoPruebasRoute'));
 
 /*Para levantar el servidor y aceptar conexiones en el puerto indicado*/
 app.listen(port,()=>{
