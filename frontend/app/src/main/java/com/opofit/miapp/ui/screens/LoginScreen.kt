@@ -1,0 +1,318 @@
+package com.opofit.miapp.ui.screens
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.opofit.miapp.ui.viewmodels.AuthViewModel
+
+/**
+ * ============ PANTALLA DE LOGIN ============
+ *
+ * Pantalla profesional con:
+ * - Campos de email y contraseña
+ * - Validación en tiempo real
+ * - Spinner de carga
+ * - Manejo de errores
+ * - Login con Google
+ * - Link a registro
+ */
+@Composable
+fun LoginScreen(
+    onLoginSuccess: () -> Unit,
+    onNavigateToRegister: () -> Unit,
+    viewModel: AuthViewModel = viewModel()
+) {
+
+    // ============ ESTADO LOCAL ============
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    // Observamos el estado del ViewModel
+    val uiState by viewModel.uiState.collectAsState()
+
+    // ============ EFECTO: Navegar cuando login es exitoso ============
+    LaunchedEffect(uiState.success) {
+        if (uiState.success) {
+            onLoginSuccess()
+            viewModel.resetState()
+        }
+    }
+
+    // ============ CONTENEDOR PRINCIPAL ============
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        contentAlignment = Alignment.Center
+    ) {
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(0.85f)  // 85% del ancho
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+
+            // ============ LOGO / ICONO ============
+            Card(
+                modifier = Modifier
+                    .size(80.dp)
+                    .padding(bottom = 32.dp),
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "🏋️",
+                        style = MaterialTheme.typography.headlineLarge
+                    )
+                }
+            }
+
+            // ============ TÍTULO PRINCIPAL ============
+            Text(
+                text = "Bienvenido a OpoFit",
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            // ============ SUBTÍTULO ============
+            Text(
+                text = "Inicia sesión para continuar",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 32.dp)
+            )
+
+            // ============ CAMPO EMAIL ============
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Email") },
+                placeholder = { Text("tu@email.com") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                singleLine = true,
+                enabled = !uiState.isLoading,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    disabledBorderColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                shape = MaterialTheme.shapes.medium
+            )
+
+            // ============ CAMPO CONTRASEÑA ============
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Contraseña") },
+                placeholder = { Text("Mínimo 6 caracteres") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                singleLine = true,
+                enabled = !uiState.isLoading,
+                visualTransformation = if (passwordVisible)
+                    VisualTransformation.None
+                else
+                    PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(
+                        onClick = { passwordVisible = !passwordVisible },
+                        enabled = !uiState.isLoading
+                    ) {
+                        Icon(
+                            imageVector = if (passwordVisible)
+                                Icons.Filled.Visibility
+                            else
+                                Icons.Filled.VisibilityOff,
+                            contentDescription = "Toggle password visibility",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    disabledBorderColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                shape = MaterialTheme.shapes.medium
+            )
+
+            // ============ LINK OLVIDÉ CONTRASEÑA ============
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(
+                    onClick = { /* TODO: Recuperar contraseña */ },
+                    enabled = !uiState.isLoading
+                ) {
+                    Text(
+                        "¿Olvidaste tu contraseña?",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            // ============ MENSAJE DE ERROR ============
+            if (uiState.error.isNotEmpty()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    ),
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        text = uiState.error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+            }
+
+            // ============ BOTÓN LOGIN PRINCIPAL ============
+            Button(
+                onClick = {
+                    viewModel.login(email, password)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+                    .padding(bottom = 16.dp),
+                enabled = !uiState.isLoading,
+                shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        "Iniciar Sesión",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
+
+            // ============ DIVISOR ============
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Divider(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(1.dp),
+                    color = MaterialTheme.colorScheme.outline
+                )
+                Text(
+                    text = "O continúa con",
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Divider(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(1.dp),
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+
+            // ============ BOTÓN GOOGLE ============
+            OutlinedButton(
+                onClick = {
+                    // TODO: Implementar Google Sign-In con Firebase
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+                    .padding(bottom = 24.dp),
+                enabled = !uiState.isLoading,
+                shape = MaterialTheme.shapes.medium,
+                border = ButtonDefaults.outlinedButtonBorder.copy(
+                    width = 1.5.dp
+                ),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onBackground
+                )
+            ) {
+                Text(
+                    "🔐 Iniciar con Google",
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+
+            // ============ SEPARADOR VISUAL ============
+            Divider(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                color = MaterialTheme.colorScheme.outline
+            )
+
+            // ============ LINK A REGISTRO ============
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "¿No tienes cuenta? ",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                TextButton(
+                    onClick = onNavigateToRegister,
+                    enabled = !uiState.isLoading
+                ) {
+                    Text(
+                        "Regístrate aquí",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+    }
+}

@@ -1,4 +1,4 @@
-package com.opofit.miapp
+package com.opofit.miapp.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
