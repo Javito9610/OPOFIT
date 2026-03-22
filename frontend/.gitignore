@@ -1,27 +1,15 @@
-# Node modules
-node_modules/
-
-# Build outputs
-dist/
-build/
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-
-# Dependency directories
-jspm_packages/
-
-# VS Code settings
-.vscode/
-
-# IntelliJ IDEA project files
-.idea/
-
-# Google services
-google-services.json
-
-# Sensitive files
-.env
-config/secrets.json
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties

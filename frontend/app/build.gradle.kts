@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("kotlin-kapt")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -57,4 +59,33 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // ============ KAPT (necesario para Hilt) ============
+    kapt("com.google.dagger:hilt-compiler:2.48")
+
+    // ============ FIREBASE ============
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+
+    // ============ HILT (Inyección de dependencias) ============
+    implementation("com.google.dagger:hilt-android:2.48")
+    kapt("com.google.dagger:hilt-compiler:2.48")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+
+    // ============ COROUTINES (Para operaciones async) ============
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+    // ============ COIL (Para cargar imágenes) ============
+    implementation("io.coil-kt.coil3:coil-compose:3.0.0-alpha06")
+
+    // ============ NAVIGATION (Para navegar entre pantallas) ============
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+
+    // ============ DATASTORE (Para guardar preferencias) ============
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    // ============ RETROFIT (Para APIs HTTP - si lo necesitas) ============
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 }
