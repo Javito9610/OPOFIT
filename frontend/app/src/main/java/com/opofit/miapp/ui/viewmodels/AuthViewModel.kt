@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.opofit.miapp.data.BackendAuthService
-import com.opofit.miapp.data.MarcaInicial
+import com.opofit.miapp.data.models.MarcaInicial
 import com.opofit.miapp.domain.ValidationUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,17 +15,19 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 
-data class AuthUiState(
-    val isLoading: Boolean = false,           // ¿Está cargando? (mostramos spinner)
-    val error: String = "",                   // Mensaje de error (vacío = sin error)
-    val success: Boolean = false,             // ¿Login exitoso?
-    val userId: Int? = null,                  // ID del usuario autenticado
-    val userEmail: String? = null,            // Email del usuario
-    val userName: String? = null              // Nombre del usuario
-)
 
 
 class AuthViewModel : ViewModel() {
+
+    data class AuthUiState(
+        val isLoading: Boolean = false,           // ¿Está cargando? (mostramos spinner)
+        val error: String = "",                   // Mensaje de error (vacío = sin error)
+        val success: Boolean = false,             // ¿Login exitoso?
+        val userId: Int? = null,                  // ID del usuario autenticado
+        val userEmail: String? = null,            // Email del usuario
+        val userName: String? = null              // Nombre del usuario
+    )
+
 
     private val backendService = BackendAuthService()
     private val firebaseAuth = FirebaseAuth.getInstance()
