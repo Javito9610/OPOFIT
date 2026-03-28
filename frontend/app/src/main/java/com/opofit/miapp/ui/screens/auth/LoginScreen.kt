@@ -1,4 +1,4 @@
-package com.opofit.miapp.ui.screens
+package com.opofit.miapp.ui.screens.auth
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,17 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 
-/**
- * ============ PANTALLA DE LOGIN ============
- *
- * Pantalla profesional con:
- * - Campos de email y contraseña
- * - Validación en tiempo real
- * - Spinner de carga
- * - Manejo de errores
- * - Login con Google
- * - Link a registro
- */
+
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
