@@ -7,12 +7,28 @@ require('dotenv').config();
 const express = require('express');
 //Importamos cors para permitir peticiones desde otro origen. Ejemplo: El fronted servido en el mismo servidor o distinto
 const cors = require('cors');
+//Importamos rate limiter para proteger contra ataques de fuerza bruta
+const rateLimit = require('express-rate-limit');
 
 //creamos la aplicación express (Objeto central)(EL SERVIDOR)
 const app = express();
 
 //Puerto donde se escuchará al servidor. Primero intentara con la variable de entorno y sino con con el puerto 3000
 const port = process.env.PORT || 3000;
+
+// Rate limiter global: máximo 100 peticiones por IP cada 15 minutos
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: { ok: false, msg: 'Demasiadas peticiones. Inténtalo de nuevo más tarde.' }
+});
+
+// Rate limiter estricto para autenticación: máximo 10 intentos cada 15 minutos
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { ok: false, msg: 'Demasiados intentos de autenticación. Espera unos minutos.' }
+});
 
 /*
 Midlewares globales:
@@ -23,6 +39,7 @@ Midlewares globales:
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+app.use(globalLimiter);
 
 /* 
 Rutas:
@@ -31,7 +48,7 @@ Nota: usaremos los prefijos '/api/...' para diferenciar la api del contenido est
 */
 
 /*Los entrutadores no se creanuno por cada tabla, sino uno por cada funcionalidad. porque si tuvieramos infinitud de tablas, tendriamos que hacer muchisimos enrutadores*/
-app.use('/api/auth', require('./src/routes/AuthRoute')); //Abarca las tablas user y oposicion. Para el registro.
+app.use('/api/auth', authLimiter, require('./src/routes/AuthRoute')); //Abarca las tablas user y oposicion. Para el registro. Tiene rate limiter estricto.
 app.use('/api/user', require('./src/routes/UsuarioRoute')); //Abarca las tablas usuarios, settings y marcas_perfil. donde se cambian las marcas del atleta y las unidades de medida
 app.use('/api/oposiciones', require('./src/routes/OposicionRoute')); //Abarca las tablas oposiciones, marcas_oficiales y noticias
 app.use('/api/rutinas', require('./src/routes/RutinaRoute')); //Abarca las tablas rutinas_opo, detalle_rutina_opo, ejercicios y requisitos_nivel.m Cruza requisutos_nivel y rutina_opo, para en funcion de los requisitos y las marcas del perfil pueda ofrecer una rutina especifica. Ejercicios están contenidos en rutinas

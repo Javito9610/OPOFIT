@@ -61,7 +61,7 @@ class RutinasLibresViewModel(application: Application) : AndroidViewModel(applic
                     _uiState.update { it.copy(isLoading = false, guardadoExitoso = true) }
                     cargarRutinas(userId)
                 } else {
-                    _uiState.update { it.copy(isLoading = false, error = response.message ?: "Error al crear rutina") }
+                    _uiState.update { it.copy(isLoading = false, error = response.msg ?: response.message ?: "Error al crear rutina") }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = e.message ?: "Error de conexión") }
@@ -71,5 +71,22 @@ class RutinasLibresViewModel(application: Application) : AndroidViewModel(applic
 
     fun resetGuardado() {
         _uiState.update { it.copy(guardadoExitoso = false, error = "") }
+    }
+
+    fun eliminarRutina(userId: Int, idRutina: Int) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = "") }
+            try {
+                val token = tokenManager.getToken().first() ?: ""
+                val response = RetrofitClient.rutinasLibresApi.eliminarRutina("Bearer $token", userId, idRutina)
+                if (response.ok) {
+                    cargarRutinas(userId)
+                } else {
+                    _uiState.update { it.copy(isLoading = false, error = response.message ?: "Error al eliminar rutina") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Error de conexión") }
+            }
+        }
     }
 }

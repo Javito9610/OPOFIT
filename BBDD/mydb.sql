@@ -202,7 +202,7 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `mydb`.`baremos_puntuacion` (
   `id_baremo` INT NOT NULL AUTO_INCREMENT,
   `pruebas_oficiales_id_pruebas_oficiales` INT NOT NULL,
-  `genero` ENUM('H', 'M') NOT NULL,
+  `genero` ENUM('HOMBRE', 'MUJER') NOT NULL,
   `marca_valor` DECIMAL(10,2) NOT NULL,
   `nota` INT NOT NULL,
   PRIMARY KEY (`id_baremo`),
@@ -286,6 +286,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`detalle_rutina_pers` (
   `ejercicios_id_ejercicio` INT NOT NULL,
   `series` INT NOT NULL,
   `repeticiones` INT NOT NULL,
+  `descanso` INT NOT NULL DEFAULT 60,
   `id_detalle_rutina_pers` INT NOT NULL AUTO_INCREMENT,
   INDEX `fk_rutinas_pers_has_ejercicios_ejercicios1_idx` (`ejercicios_id_ejercicio` ASC) VISIBLE,
   INDEX `fk_rutinas_pers_has_ejercicios_rutinas_pers1_idx` (`rutinas_pers_id_rutina_pers` ASC) VISIBLE,

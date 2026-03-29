@@ -14,7 +14,8 @@ data class CrearRutinaLibreRequest(
 
 data class CrearRutinaLibreResponse(
     val ok: Boolean,
-    val message: String?
+    val msg: String? = null,
+    val message: String? = null
 )
 
 data class RutinaLibre(

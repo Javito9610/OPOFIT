@@ -14,6 +14,11 @@ const getMiEntrenamiento = async(req, res)=>{
             });
         }
 
+        // Validar que el usuario autenticado accede a sus propios datos
+        if (parseInt(userId) !== req.usuario.id) {
+            return res.status(403).json({ ok: false, msg: "No tienes permiso para acceder a estos datos" });
+        }
+
         const resultadoCalculo = await RutinaService.calcularNotaYNivel(userId, idOposicion);
 
 

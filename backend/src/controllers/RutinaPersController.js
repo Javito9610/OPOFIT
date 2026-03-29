@@ -12,6 +12,11 @@ const nuevaRutinaPersonalizada=async (req, res)=>{
             });
         }
 
+        // Validar que el usuario autenticado accede a sus propios datos
+        if (parseInt(userId) !== req.usuario.id) {
+            return res.status(403).json({ ok: false, msg: "No tienes permiso para crear rutinas para otro usuario" });
+        }
+
         const id = await rutinaPersService.crearRutinaPropia(userId, nombre, ejercicios);
 
 
@@ -37,6 +42,11 @@ const misRutinas= async (req, res)=>{
             return res.status(400).json({ ok: false, msg: "ID de usuario necesario" });
         }
 
+        // Validar que el usuario autenticado accede a sus propios datos
+        if (parseInt(userId) !== req.usuario.id) {
+            return res.status(403).json({ ok: false, msg: "No tienes permiso para ver rutinas de otro usuario" });
+        }
+
         const lista = await rutinaPersService.listarMisRutinas(userId);
 
         if (!lista || lista.length === 0) {
@@ -60,5 +70,34 @@ const misRutinas= async (req, res)=>{
     }
 };
 
-module.exports= {nuevaRutinaPersonalizada, misRutinas};
+const eliminarRutina = async (req, res) => {
+    try {
+        const { userId, idRutina } = req.params;
+
+        if (!userId || !idRutina) {
+            return res.status(400).json({ ok: false, msg: "Faltan datos para eliminar la rutina" });
+        }
+
+        // Validar que el usuario autenticado accede a sus propios datos
+        if (parseInt(userId) !== req.usuario.id) {
+            return res.status(403).json({ ok: false, msg: "No tienes permiso para eliminar rutinas de otro usuario" });
+        }
+
+        await rutinaPersService.eliminarRutina(userId, idRutina);
+
+        res.status(200).json({
+            ok: true,
+            msg: "Rutina eliminada correctamente"
+        });
+    } catch (error) {
+        console.error("Error en eliminarRutina:", error.message);
+        res.status(500).json({
+            ok: false,
+            msg: "No se pudo eliminar la rutina",
+            error: error.message
+        });
+    }
+};
+
+module.exports= {nuevaRutinaPersonalizada, misRutinas, eliminarRutina};
 

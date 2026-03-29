@@ -12,6 +12,11 @@ const actualizarPerfil = async (req, res) => {
             });
         }
 
+        // Validar que el usuario autenticado accede a sus propios datos
+        if (parseInt(userId) !== req.usuario.id) {
+            return res.status(403).json({ ok: false, msg: "No tienes permiso para modificar el perfil de otro usuario" });
+        }
+
         // 1. Actualizamos datos físicos (Peso, Altura e IMC)
         const imc = (peso / ((altura / 100) ** 2)).toFixed(2);
         await db.query(
@@ -56,6 +61,11 @@ const actualizarSettings = async (req, res) => {
 
         if (!userId || !unidadPeso || !unidadDistancia) {
             return res.status(400).json({ ok: false, msg: "Faltan preferencias de unidades" });
+        }
+
+        // Validar que el usuario autenticado accede a sus propios datos
+        if (parseInt(userId) !== req.usuario.id) {
+            return res.status(403).json({ ok: false, msg: "No tienes permiso para modificar ajustes de otro usuario" });
         }
 
         await db.query(

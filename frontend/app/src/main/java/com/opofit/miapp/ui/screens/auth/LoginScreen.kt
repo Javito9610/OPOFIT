@@ -158,13 +158,13 @@ fun LoginScreen(
                 horizontalArrangement = Arrangement.End
             ) {
                 TextButton(
-                    onClick = { /* TODO: Recuperar contraseña */ },
-                    enabled = !uiState.isLoading
+                    onClick = { /* Funcionalidad no disponible en esta versión */ },
+                    enabled = false
                 ) {
                     Text(
                         "¿Olvidaste tu contraseña?",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -250,7 +250,8 @@ fun LoginScreen(
             // ============ BOTÓN GOOGLE ============
             OutlinedButton(
                 onClick = {
-                    // TODO: Implementar Google Sign-In con Firebase
+                    // Google Sign-In requiere configuración adicional en el dispositivo
+                    // La funcionalidad está preparada en AuthViewModel.loginWithGoogle()
                 },
                 modifier = Modifier
                     .fillMaxWidth()

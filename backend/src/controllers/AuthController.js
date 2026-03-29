@@ -16,7 +16,7 @@ const registrar= async(req, res)=>{
         if (!userData.email || !userData.password) {
             return res.status(400).json({
                 ok: false,
-                message: 'Faltan campos obligatorios (email o contraseña)'
+                msg: 'Faltan campos obligatorios (email o contraseña)'
             });
         }
 
@@ -28,7 +28,7 @@ const registrar= async(req, res)=>{
         //Mandamos un JSON al movil confirmando que todo fué bien
         res.status(201).json({
             ok: true,
-            message: '¡Usuario registrado, configurado y con marcas guardadas!',
+            msg: '¡Usuario registrado, configurado y con marcas guardadas!',
             userId: resultado.userId
         });
     }catch(error){
@@ -41,7 +41,7 @@ const registrar= async(req, res)=>{
         if (error.message.includes("Duplicate entry") || error.message.includes("ya existe")) {
             return res.status(409).json({
                 ok: false,
-                message: 'Este correo electrónico ya está registrado'
+                msg: 'Este correo electrónico ya está registrado'
             });
         }
 
@@ -50,7 +50,7 @@ const registrar= async(req, res)=>{
 
         res.status(500).json({
             ok: false,
-            message: 'Error en el proceso de registro',
+            msg: 'Error en el proceso de registro',
             error: error.message
         });
     }
@@ -65,15 +65,18 @@ const login =async(req,res)=>{
 
         //VALIDACIÓN DE CAMPOS VACÍOS
         if (!email || !password) {
-            return res.status(400).json({ ok: false, message: "Email y contraseña requeridos" });
+            return res.status(400).json({ ok: false, msg: "Email y contraseña requeridos" });
         }
 
         const usuario= await AuthService.login(email,password);// Se lo enviamos al service para que lo envie a la base de datos y lo compruebe. Nos devolvera todos los datos de ese usuario para esas credenciales
         
         //Generamos el Token de seguridad: código cifrado que dura 24 horas:
+        if (!process.env.JWT_SECRET) {
+            return res.status(500).json({ ok: false, msg: 'Error de configuración del servidor: JWT_SECRET no definido.' });
+        }
         const token= jwt.sign(
             {id: usuario.id_usuario, email:usuario.email},
-            process.env.JWT_SECRET || 'TU_CLAVE_SECRETA_DEL_TFG', 
+            process.env.JWT_SECRET, 
             { expiresIn: '24h' }
 
         )
@@ -89,11 +92,46 @@ const login =async(req,res)=>{
         // respondemos con un 401 (No autorizado)
         res.status(401).json({
             ok: false,
-            message: "Credenciales incorrectas"
+            msg: "Credenciales incorrectas"
+        });
+    }
+};
+
+const loginConGoogle = async(req, res) => {
+    try {
+        const { googleToken, email, nombre } = req.body;
+
+        if (!googleToken || !email) {
+            return res.status(400).json({ ok: false, msg: "Token de Google y email son requeridos" });
+        }
+
+        const usuario = await AuthService.loginConGoogle(googleToken, email, nombre || 'Usuario Google');
+
+        // Generamos el token JWT
+        if (!process.env.JWT_SECRET) {
+            return res.status(500).json({ ok: false, msg: 'Error de configuración del servidor: JWT_SECRET no definido.' });
+        }
+        const token = jwt.sign(
+            { id: usuario.id_usuario, email: usuario.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        res.status(200).json({
+            ok: true,
+            user: usuario,
+            token: token
+        });
+    } catch (error) {
+        console.error("Error en loginConGoogle:", error.message);
+        res.status(500).json({
+            ok: false,
+            msg: "Error al autenticar con Google",
+            error: error.message
         });
     }
 };
 
 //Exportamos las funciones para que su correspondiente archivo de routes pueda utilizarlas:
-module.exports= {registrar,login};
+module.exports= {registrar,login,loginConGoogle};
 

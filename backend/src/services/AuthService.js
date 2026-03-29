@@ -74,8 +74,56 @@ class AuthService{
         if (rows.length===0) throw new Error('Usuario no encontrado');
         const usuario = rows[0];
         const esValida= await bcrypt.compare(password, usuario.password);
+        if (!esValida) throw new Error('Contraseña incorrecta');
         delete usuario.password //por seguridad no devolvemos la contraseña al movil
         return usuario; // Devolvemos el usuario completo
+    }
+
+    //LOGIN CON GOOGLE: Busca o crea un usuario autenticado con Google
+    static async loginConGoogle(googleToken, email, nombre){
+        // Buscamos si el usuario ya existe por email
+        const [rows] = await db.query('SELECT * FROM usuarios WHERE email = ?', [email]);
+        
+        if (rows.length > 0) {
+            // El usuario ya existe, lo devolvemos
+            const usuario = rows[0];
+            delete usuario.password;
+            return usuario;
+        }
+        
+        // Si no existe, creamos uno nuevo con datos mínimos
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+            
+            // Generamos una contraseña aleatoria segura (el usuario usa Google, no la necesita)
+            const crypto = require('crypto');
+            const randomPassword = crypto.randomBytes(32).toString('hex');
+            const hashedPassword = await bcrypt.hash(randomPassword, 10);
+            
+            // Nota: El género se establece por defecto como 'HOMBRE'. El usuario debe actualizarlo en su perfil.
+            // El campo genero es NOT NULL en la BBDD, por lo que se requiere un valor inicial.
+            const sqlUsuario = `INSERT INTO usuarios (nombre, email, password, genero, peso, altura, imc, fecha_registro) VALUES (?, ?, ?, 'HOMBRE', 0, 0, 0, NOW())`;
+            const [userResult] = await connection.query(sqlUsuario, [nombre, email, hashedPassword]);
+            const userId = userResult.insertId;
+            
+            // Creamos settings por defecto
+            await connection.query(
+                'INSERT INTO settings(unidad_peso, unidad_distancia, usuarios_id_usuario) VALUES(?, ?, ?)', ['kg', 'km', userId]
+            );
+            
+            await connection.commit();
+            
+            // Devolvemos el usuario recién creado
+            const [nuevoUsuario] = await db.query('SELECT * FROM usuarios WHERE id_usuario = ?', [userId]);
+            delete nuevoUsuario[0].password;
+            return nuevoUsuario[0];
+        } catch(error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 }
 module.exports= AuthService;
