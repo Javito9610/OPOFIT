@@ -7,5 +7,6 @@ data class UsuarioData(
     val genero: String,
     val peso: Double,
     val altura: Double,
-    val imc: Double
+    val imc: Double,
+    val oposiciones_id_oposicion: Int? = null
 )
