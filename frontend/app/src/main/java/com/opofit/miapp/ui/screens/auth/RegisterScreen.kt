@@ -1,5 +1,8 @@
 package com.opofit.miapp.ui.screens.auth
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -10,10 +13,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.opofit.miapp.R
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 
 
@@ -42,6 +50,22 @@ fun RegisterScreen(
 
     // Observamos el estado del ViewModel
     val uiState by viewModel.uiState.collectAsState()
+
+    // ============ GOOGLE SIGN-IN ============
+    val context = LocalContext.current
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            try {
+                val account = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+                    .getResult(ApiException::class.java)
+                account.idToken?.let { token ->
+                    viewModel.loginWithGoogle(token)
+                }
+            } catch (_: ApiException) { }
+        }
+    }
 
     // ============ EFECTO: Registrar cuando success es true ============
     LaunchedEffect(uiState.success) {
@@ -438,7 +462,12 @@ fun RegisterScreen(
             // ============ BOTÓN GOOGLE ============
             OutlinedButton(
                 onClick = {
-                    // TODO: Implementar Google Sign-In
+                    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestIdToken(context.getString(R.string.default_web_client_id))
+                        .requestEmail()
+                        .build()
+                    val googleSignInClient = GoogleSignIn.getClient(context, gso)
+                    googleSignInLauncher.launch(googleSignInClient.signInIntent)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
