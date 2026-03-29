@@ -50,9 +50,10 @@ const getInfoOposiciones= async(req,res)=>{
 
     } catch (error) {
         //ERROR EN EL SERVIDOR, PORQUE NO ESTA DEVOLVIENDO LOS DATOS REQUERIDOS
+        console.error("Error en getInfoOposiciones:", error.message);
         res.status(500).json({
             ok:false,
-            error:error.message
+            msg: "Error al obtener el detalle de la oposición"
         });
     }
 };
@@ -78,9 +79,10 @@ const getRequisitos=async(req,res)=>{
         });
     } catch (error) {
         //ERROR EN EL SERVIDOR, PORQUE NO ESTA DEVOLVIENDO LOS DATOS REQUERIDOS
+        console.error("Error en getRequisitos:", error.message);
         res.status(500).json({
             ok: false,
-            error:error.message
+            msg: "Error al obtener los requisitos de la prueba"
         });
     }
 };

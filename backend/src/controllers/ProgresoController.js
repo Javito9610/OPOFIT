@@ -25,8 +25,7 @@ const guardarEntrenamiento= async (req, res)=>{
         console.error("Error en guardarEntrenamiento:", error.message);
         res.status(500).json({
             ok:false,
-            msg: "Error al registrar",
-            error: error.message
+            msg: "Error al registrar el entrenamiento"
         })
     }
 };
@@ -59,10 +58,10 @@ const verEvolucion=async(req, res)=>{
 
         res.status(200).json({ ok: true, data: datos });
     }catch(error){
+        console.error("Error en verEvolucion:", error.message);
         res.status(500).json({ 
             ok: false, 
-            msg: "Error al obtener progreso", 
-            error: error.message
+            msg: "Error al obtener progreso"
         });
     }
 };

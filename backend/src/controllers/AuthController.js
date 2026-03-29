@@ -50,8 +50,7 @@ const registrar= async(req, res)=>{
 
         res.status(500).json({
             ok: false,
-            msg: 'Error en el proceso de registro',
-            error: error.message
+            msg: 'Error en el proceso de registro'
         });
     }
     
@@ -126,8 +125,7 @@ const loginConGoogle = async(req, res) => {
         console.error("Error en loginConGoogle:", error.message);
         res.status(500).json({
             ok: false,
-            msg: "Error al autenticar con Google",
-            error: error.message
+            msg: "Error al autenticar con Google"
         });
     }
 };

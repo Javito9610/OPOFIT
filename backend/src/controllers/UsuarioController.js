@@ -51,7 +51,8 @@ const actualizarPerfil = async (req, res) => {
             nuevaNota: resultadoNivel.notaMedia
         });
     } catch (error) {
-        res.status(500).json({ ok: false, error: error.message });
+        console.error("Error en actualizarPerfil:", error.message);
+        res.status(500).json({ ok: false, msg: "Error al actualizar el perfil" });
     }
 };
 
@@ -74,7 +75,8 @@ const actualizarSettings = async (req, res) => {
         );
         res.status(200).json({ ok: true, msg: "Ajustes guardados" });
     } catch (error) {
-        res.status(500).json({ ok: false, error: error.message });
+        console.error("Error en actualizarSettings:", error.message);
+        res.status(500).json({ ok: false, msg: "Error al guardar los ajustes" });
     }
 };
 

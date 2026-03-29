@@ -29,8 +29,8 @@ const nuevaRutinaPersonalizada=async (req, res)=>{
         console.error("Error en nuevaRutinaPersonalizada:", error.message);
         res.status(500).json({ 
             ok: false,
-            msg: "No se pudo guardar la rutina personalizada",
-            error: error.message });
+            msg: "No se pudo guardar la rutina personalizada"
+        });
     }
 };
 
@@ -62,10 +62,10 @@ const misRutinas= async (req, res)=>{
             data:lista
         })
     }catch(error){
+        console.error("Error en misRutinas:", error.message);
         res.status(500).json({ 
             ok: false,
-            msg: "Error al listar rutinas",
-            error: error.message
+            msg: "Error al listar rutinas"
         });
     }
 };
@@ -93,8 +93,7 @@ const eliminarRutina = async (req, res) => {
         console.error("Error en eliminarRutina:", error.message);
         res.status(500).json({
             ok: false,
-            msg: "No se pudo eliminar la rutina",
-            error: error.message
+            msg: "No se pudo eliminar la rutina"
         });
     }
 };
