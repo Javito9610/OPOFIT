@@ -58,8 +58,7 @@ const getMiEntrenamiento = async(req, res)=>{
         console.error("Error en RutinaController:", error);
         res.status(500).json({
             ok: false,
-            msg: "Hubo un problema al generar tu entrenamiento personalizado",
-            error: error.message
+            msg: "Hubo un problema al generar tu entrenamiento personalizado"
         });
     }
 }

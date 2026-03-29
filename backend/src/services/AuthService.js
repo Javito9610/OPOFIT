@@ -1,6 +1,7 @@
 // Vamos a importar db y bcrypt para hashear la password y generar la conexion con la base de datos
 const db = require('../config/db');
 const bcrypt = require('bcryptjs');
+const { OAuth2Client } = require('google-auth-library');
 
 // Comenzamos con la lógica de negocio.
 
@@ -81,6 +82,24 @@ class AuthService{
 
     //LOGIN CON GOOGLE: Busca o crea un usuario autenticado con Google
     static async loginConGoogle(googleToken, email, nombre){
+        // Verificamos el token de Google con la librería oficial
+        const clientId = process.env.GOOGLE_CLIENT_ID;
+        if (!clientId) {
+            throw new Error('GOOGLE_CLIENT_ID no está configurado en las variables de entorno');
+        }
+
+        const client = new OAuth2Client(clientId);
+        const ticket = await client.verifyIdToken({
+            idToken: googleToken,
+            audience: clientId
+        });
+        const payload = ticket.getPayload();
+
+        // Validamos que el email del token coincida con el email enviado
+        if (payload.email !== email) {
+            throw new Error('El email del token no coincide con el email proporcionado');
+        }
+
         // Buscamos si el usuario ya existe por email
         const [rows] = await db.query('SELECT * FROM usuarios WHERE email = ?', [email]);
         

@@ -26,10 +26,10 @@ const getInfoPruebas= async (req,res)=>{
             data: listaInfoOpo
         });
     }catch(error){
+        console.error("Error en getInfoPruebas:", error.message);
         res.status(500).json({
             ok: false,
-            msg: "Error al obtener la información de la oposición",
-            error: error.message
+            msg: "Error al obtener la información de la oposición"
         })
     }
     
