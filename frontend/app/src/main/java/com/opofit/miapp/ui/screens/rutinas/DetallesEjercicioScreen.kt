@@ -1,5 +1,7 @@
 package com.opofit.miapp.ui.screens.rutinas
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +24,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -35,6 +38,7 @@ fun DetallesEjercicioScreen(
     videoUrl: String? = null,
     onNavigateBack: () -> Unit
 ) {
+    val context = LocalContext.current
     Scaffold(
         topBar = {
             TopAppBar(
@@ -112,7 +116,10 @@ fun DetallesEjercicioScreen(
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        TextButton(onClick = { }) {
+                        TextButton(onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl))
+                            context.startActivity(intent)
+                        }) {
                             Text(
                                 text = videoUrl,
                                 style = MaterialTheme.typography.bodySmall,

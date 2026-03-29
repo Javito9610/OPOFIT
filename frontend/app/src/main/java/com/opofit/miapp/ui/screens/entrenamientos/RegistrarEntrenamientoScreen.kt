@@ -63,6 +63,7 @@ fun RegistrarEntrenamientoScreen(
     }
 
     var duracion by remember { mutableStateOf("") }
+    var rutinaId by remember { mutableStateOf("") }
 
     data class EjercicioRow(val idEjercicio: String = "", val valor: String = "")
     val ejercicios = remember { mutableStateListOf(EjercicioRow()) }
@@ -111,6 +112,18 @@ fun RegistrarEntrenamientoScreen(
                     value = duracion,
                     onValueChange = { duracion = it },
                     label = { Text("Duración (minutos)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
+                )
+            }
+
+            item {
+                OutlinedTextField(
+                    value = rutinaId,
+                    onValueChange = { rutinaId = it },
+                    label = { Text("ID de la Rutina (libre)") },
+                    placeholder = { Text("Ej: 1") },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true
@@ -187,7 +200,7 @@ fun RegistrarEntrenamientoScreen(
                             historialViewModel.registrarEntrenamiento(
                                 userId = userId,
                                 tipoRutina = "PERS",
-                                idRutina = 1,
+                                idRutina = rutinaId.toIntOrNull() ?: 1,
                                 duracion = mins,
                                 ejercicios = realizados
                             )

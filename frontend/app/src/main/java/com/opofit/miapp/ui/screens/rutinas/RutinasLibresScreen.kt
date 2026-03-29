@@ -146,7 +146,7 @@ fun RutinasLibresScreen(
                                         )
                                         if (rutina.ejercicios_id_ejercicio != null) {
                                             Text(
-                                                text = "Ejercicio ID: ${rutina.ejercicios_id_ejercicio}",
+                                                text = "Ejercicio #${rutina.ejercicios_id_ejercicio} • ${rutina.series ?: "-"} series × ${rutina.repeticiones ?: "-"} reps",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )

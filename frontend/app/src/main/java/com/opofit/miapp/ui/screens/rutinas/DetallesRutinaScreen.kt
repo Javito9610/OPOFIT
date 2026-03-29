@@ -130,8 +130,9 @@ fun DetallesRutinaScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Text(
-                                            text = "ID Ejercicio: ${rutina.ejercicios_id_ejercicio ?: "-"}",
-                                            style = MaterialTheme.typography.bodyLarge
+                                            text = "Ejercicio #${rutina.ejercicios_id_ejercicio ?: "-"}",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.SemiBold
                                         )
                                     }
                                     if (rutina.series != null && rutina.repeticiones != null) {

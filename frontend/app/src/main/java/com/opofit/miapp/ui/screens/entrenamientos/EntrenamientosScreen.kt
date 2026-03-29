@@ -82,7 +82,7 @@ fun EntrenamientosScreen(
                     ejerciciosEstado.add(
                         EjercicioEstado(
                             nombre = ejercicio.nombre,
-                            idEjercicio = (bloqueIdx * 100) + ejercicioIdx + 1
+                            idEjercicio = ejercicio.id_ejercicio ?: (bloqueIdx * 100 + ejercicioIdx + 1)
                         )
                     )
                 }
@@ -234,10 +234,11 @@ fun EntrenamientosScreen(
                             val realizados = ejerciciosEstado
                                 .filter { it.completado }
                                 .map { EjercicioRealizado(it.idEjercicio, it.valorConseguido.toDoubleOrNull() ?: 0.0) }
+                            val rutinaOpoId = rutinasState.rutinaCompleta.firstOrNull()?.id_rutina_opo ?: 1
                             historialViewModel.registrarEntrenamiento(
                                 userId = userId,
                                 tipoRutina = "OPO",
-                                idRutina = 1,
+                                idRutina = rutinaOpoId,
                                 duracion = segundos / 60,
                                 ejercicios = realizados
                             )

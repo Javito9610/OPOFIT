@@ -1,6 +1,7 @@
 package com.opofit.miapp.data.responsemodels
 
 data class EjercicioRutina(
+    val id_ejercicio: Int? = null,
     val nombre: String,
     val video_url: String?,
     val series: Int,
@@ -9,6 +10,7 @@ data class EjercicioRutina(
 )
 
 data class BloqueRutina(
+    val id_rutina_opo: Int? = null,
     val bloque: String,
     val ejercicios: List<EjercicioRutina>
 )
