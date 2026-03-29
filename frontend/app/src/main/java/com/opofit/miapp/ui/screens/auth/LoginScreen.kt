@@ -42,6 +42,13 @@ fun LoginScreen(
 
     // ============ GOOGLE SIGN-IN ============
     val context = LocalContext.current
+    val googleSignInClient = remember {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+        GoogleSignIn.getClient(context, gso)
+    }
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -52,7 +59,9 @@ fun LoginScreen(
                 account.idToken?.let { token ->
                     viewModel.loginWithGoogle(token)
                 }
-            } catch (_: ApiException) { }
+            } catch (e: ApiException) {
+                android.util.Log.e("LoginScreen", "Google Sign-In falló: ${e.statusCode}")
+            }
         }
     }
 
@@ -274,11 +283,6 @@ fun LoginScreen(
             // ============ BOTÓN GOOGLE ============
             OutlinedButton(
                 onClick = {
-                    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                        .requestIdToken(context.getString(R.string.default_web_client_id))
-                        .requestEmail()
-                        .build()
-                    val googleSignInClient = GoogleSignIn.getClient(context, gso)
                     googleSignInLauncher.launch(googleSignInClient.signInIntent)
                 },
                 modifier = Modifier
