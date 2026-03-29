@@ -33,7 +33,7 @@ class Noticia{
         this.titulo=titulo;
         this.contenido=contenido;
         this.fecha_publicacion=fecha_publicacion;
-        this.oposiciones_id_oposicion;
+        this.oposiciones_id_oposicion = oposiciones_id_oposicion;
     }
 }
 

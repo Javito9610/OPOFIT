@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("kotlin-kapt")
     id("com.google.gms.google-services")
 }
 
@@ -20,6 +19,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // URL del backend (usar 10.0.2.2 para emulador Android, cambiar para producción)
+        buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:3000/\"")
     }
 
     buildTypes {
@@ -40,6 +42,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -60,18 +63,13 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    // ============ KAPT (necesario para Hilt) ============
-    kapt("com.google.dagger:hilt-compiler:2.48")
-
     // ============ FIREBASE ============
     implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
 
-    // ============ HILT (Inyección de dependencias) ============
-    implementation("com.google.dagger:hilt-android:2.48")
-    kapt("com.google.dagger:hilt-compiler:2.48")
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    // ============ GOOGLE SIGN-IN ============
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
 
     // ============ COROUTINES (Para operaciones async) ============
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
