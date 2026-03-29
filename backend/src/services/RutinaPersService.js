@@ -29,12 +29,47 @@ class RutinaPersService{
     }
     static async listarMisRutinas(userId){
         const connection= await db.getConnection();
-        const sqlListar=`SELECT r.id_rutina_pers, r.nombre_personalizado, d.ejercicios_id_ejercicio, d.series, d.repeticiones
-                            FROM rutinas_pers r
-                            LEFT JOIN detalle_rutina_pers d ON r.id_rutina_pers = d.rutinas_pers_id_rutina_pers
-                             WHERE r.usuarios_id_usuario = ?`
-        const [rows]=await connection.query(sqlListar, userId);
-        return rows;
+        try{
+            const sqlListar=`SELECT r.id_rutina_pers, r.nombre_personalizado, d.ejercicios_id_ejercicio, d.series, d.repeticiones
+                                FROM rutinas_pers r
+                                LEFT JOIN detalle_rutina_pers d ON r.id_rutina_pers = d.rutinas_pers_id_rutina_pers
+                                 WHERE r.usuarios_id_usuario = ?`
+            const [rows]=await connection.query(sqlListar, [userId]);
+            return rows;
+        }finally{
+            connection.release();
+        }
+    }
+    static async eliminarRutina(userId, idRutina){
+        const connection= await db.getConnection();
+        try{
+            // Verificar que la rutina pertenece al usuario
+            const [rutina] = await connection.query(
+                'SELECT id_rutina_pers FROM rutinas_pers WHERE id_rutina_pers = ? AND usuarios_id_usuario = ?',
+                [idRutina, userId]
+            );
+            if (rutina.length === 0) {
+                throw new Error("No se encontró la rutina o no tienes permiso para eliminarla");
+            }
+            await connection.beginTransaction();
+            // Primero eliminamos los detalles (ejercicios de la rutina)
+            await connection.query(
+                'DELETE FROM detalle_rutina_pers WHERE rutinas_pers_id_rutina_pers = ?',
+                [idRutina]
+            );
+            // Luego eliminamos la rutina
+            await connection.query(
+                'DELETE FROM rutinas_pers WHERE id_rutina_pers = ? AND usuarios_id_usuario = ?',
+                [idRutina, userId]
+            );
+            await connection.commit();
+            return { success: true };
+        }catch(error){
+            await connection.rollback();
+            throw error;
+        }finally{
+            connection.release();
+        }
     }
 }
 module.exports= RutinaPersService;

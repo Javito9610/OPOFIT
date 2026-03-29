@@ -21,4 +21,11 @@ interface RutinasLibresApi {
         @Header("Authorization") token: String,
         @Path("userId") userId: Int
     ): RutinasLibresListResponse
+
+    @retrofit2.http.DELETE("/api/rutinas-pers/eliminar/{userId}/{idRutina}")
+    suspend fun eliminarRutina(
+        @Header("Authorization") token: String,
+        @Path("userId") userId: Int,
+        @Path("idRutina") idRutina: Int
+    ): CrearRutinaLibreResponse
 }

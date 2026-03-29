@@ -15,7 +15,7 @@ class RutinaService {
         const [user] = await db.query('SELECT genero FROM usuarios WHERE id_usuario = ?', [userId]);
         if (!user || user.length === 0) throw new Error("Usuario no encontrado");
         const generoOriginal = user[0].genero;
-        const generoDB = generoOriginal === 'HOMBRE' ? 'H' : 'M';
+        const generoDB = generoOriginal;
 
         // 2. OBTENCIÓN DE MARCAS DEL USUARIO
         // Traemos sus récords personales y los cruzamos con 'pruebas_oficiales' para saber 
@@ -72,12 +72,12 @@ class RutinaService {
 
         // 5. ASIGNACIÓN LÓGICA DEL NIVEL DE ENTRENAMIENTO
         // Aquí aplicamos tu filosofía: ¿A qué nivel de entrenamiento le mandamos?
-        let nivelSugerido = 1; // Por defecto: Nivel 1 (Iniciación/Suspenso)
+        let nivelSugerido = 'BASICO'; // Por defecto: Nivel Básico (Iniciación/Suspenso)
 
         if (notaMedia >= 5 && notaMedia < 8) {
-            nivelSugerido = 2; // Nivel 2: Para los que ya aprueban pero quieren mejorar (Notable)
+            nivelSugerido = 'INTERMEDIO'; // Para los que ya aprueban pero quieren mejorar (Notable)
         } else if (notaMedia >= 8) {
-            nivelSugerido = 3; // Nivel 3: Para los que buscan la excelencia (Sobresaliente)
+            nivelSugerido = 'AVANZADO'; // Para los que buscan la excelencia (Sobresaliente)
         }
 
         // Devolvemos ambos datos para que el Controller decida qué mostrar

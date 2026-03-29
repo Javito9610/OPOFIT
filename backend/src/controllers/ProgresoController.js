@@ -10,6 +10,11 @@ const guardarEntrenamiento= async (req, res)=>{
             });
         }
 
+        // Validar que el usuario autenticado accede a sus propios datos
+        if (parseInt(req.body.userId) !== req.usuario.id) {
+            return res.status(403).json({ ok: false, msg: "No tienes permiso para registrar entrenamientos para otro usuario" });
+        }
+
         const resultado= await progresoService.registrarEntreno(req.body); //req.body contiene todo el JSON que le envía el movil del entrenamiento.
         res.status(200).json({
             ok: true,
@@ -35,6 +40,11 @@ const verEvolucion=async(req, res)=>{
                 ok: false,
                 msg: "Faltan identificadores (Usuario o Ejercicio)"
             });
+        }
+
+        // Validar que el usuario autenticado accede a sus propios datos
+        if (parseInt(userId) !== req.usuario.id) {
+            return res.status(403).json({ ok: false, msg: "No tienes permiso para ver el progreso de otro usuario" });
         }
 
         const datos = await progresoService.obtenerEvolucionEntreno(userId, idEjercicio);

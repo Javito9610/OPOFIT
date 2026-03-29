@@ -18,6 +18,9 @@ const authController= require("../controllers/AuthController"); //Importamos el 
 
  router.post('/login', authController.login);
 
+ // RUTA DE LOGIN CON GOOGLE: http://localhost:3000/api/auth/google
+ router.post('/google', authController.loginConGoogle);
+
  // EXPORTACIÓN:
 
  module.exports=router;

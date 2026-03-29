@@ -24,7 +24,7 @@ class BackendAuthService {
             if (response.ok) {
                 Result.success(response)
             } else {
-                Result.failure(Exception(response.message ?: "Error en login"))
+                Result.failure(Exception(response.msg ?: response.message ?: "Error en login"))
             }
         } catch (e: Exception) {
             Result.failure(Exception("Error de conexión: ${e.message}"))
@@ -60,7 +60,7 @@ class BackendAuthService {
             if (response.ok) {
                 Result.success(response)
             } else {
-                Result.failure(Exception(response.message ?: "Error en registro"))
+                Result.failure(Exception(response.msg ?: response.message ?: "Error en registro"))
             }
         } catch (e: Exception) {
             Result.failure(Exception("Error de conexión: ${e.message}"))
@@ -82,7 +82,7 @@ class BackendAuthService {
             if (response.ok) {
                 Result.success(response)
             } else {
-                Result.failure(Exception(response.message ?: "Error en login con Google"))
+                Result.failure(Exception(response.msg ?: response.message ?: "Error en login con Google"))
             }
         } catch (e: Exception) {
             Result.failure(Exception("Error de conexión: ${e.message}"))

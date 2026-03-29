@@ -16,7 +16,10 @@ const validarToken = (req, res, next) => {
 
     try {
         // 2. Verificamos el token con la misma clave secreta que usas en el Login
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'TU_CLAVE_SECRETA_DEL_TFG');
+        if (!process.env.JWT_SECRET) {
+            return res.status(500).json({ ok: false, msg: 'Error de configuración del servidor: JWT_SECRET no definido.' });
+        }
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
         // 3. Metemos los datos del usuario en la petición para que el controlador los use
         req.usuario = decoded;
