@@ -37,7 +37,7 @@ class SessionManager(private val tokenManager: TokenManager) {
         userName: String
     ) {
         tokenManager.apply {
-            saveToken(token)
+            saveToken(token ?: "")
             saveUserEmail(email)
             saveUserId(userId)
             saveUserName(userName)

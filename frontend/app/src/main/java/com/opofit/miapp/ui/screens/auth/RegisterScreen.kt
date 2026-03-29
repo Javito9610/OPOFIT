@@ -34,6 +34,8 @@ fun RegisterScreen(
     var peso by remember { mutableStateOf("") }
     var altura by remember { mutableStateOf("") }
     var imc by remember { mutableStateOf("0.0") }
+    var oposicionId by remember { mutableStateOf("") }
+    var localError by remember { mutableStateOf("") }
 
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
@@ -50,12 +52,14 @@ fun RegisterScreen(
     }
 
     // ============ FUNCIÓN: Calcular IMC ============
+    // El backend espera la altura en centímetros (ej. 175), igual que la UI
     fun calcularIMC() {
         val pesoFloat = peso.toFloatOrNull() ?: 0f
         val alturaFloat = altura.toFloatOrNull() ?: 0f
 
         if (pesoFloat > 0 && alturaFloat > 0) {
-            val imcCalculado = pesoFloat / (alturaFloat * alturaFloat)
+            val alturaMetros = alturaFloat / 100f
+            val imcCalculado = pesoFloat / (alturaMetros * alturaMetros)
             imc = String.format("%.2f", imcCalculado)
         }
     }
@@ -132,7 +136,7 @@ fun RegisterScreen(
 
             // ============ CAMPO GÉNERO (DROPDOWN) ============
             var expandedGenero by remember { mutableStateOf(false) }
-            val generosDisponibles = listOf("Masculino", "Femenino", "Otro")
+            val generosDisponibles = listOf("HOMBRE", "MUJER")
 
             ExposedDropdownMenuBox(
                 expanded = expandedGenero,
@@ -202,8 +206,8 @@ fun RegisterScreen(
                     altura = it
                     calcularIMC()
                 },
-                label = { Text("Altura (m)") },
-                placeholder = { Text("1.75") },
+                label = { Text("Altura (cm)") },
+                placeholder = { Text("175") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp),
@@ -234,6 +238,26 @@ fun RegisterScreen(
                     modifier = Modifier.padding(12.dp)
                 )
             }
+
+            // ============ CAMPO OPOSICIÓN ID ============
+            // Temporal: en la versión final usar un dropdown que cargue /api/oposiciones/
+            OutlinedTextField(
+                value = oposicionId,
+                onValueChange = { oposicionId = it.filter { c -> c.isDigit() } },
+                label = { Text("ID de Oposición") },
+                placeholder = { Text("Ej: 1") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                singleLine = true,
+                enabled = !uiState.isLoading,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    disabledBorderColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                shape = MaterialTheme.shapes.medium
+            )
 
             // ============ CAMPO CONTRASEÑA ============
             OutlinedTextField(
@@ -312,7 +336,8 @@ fun RegisterScreen(
             )
 
             // ============ MENSAJE DE ERROR ============
-            if (uiState.error.isNotEmpty()) {
+            val errorMessage = localError.ifEmpty { uiState.error }
+            if (errorMessage.isNotEmpty()) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -323,7 +348,7 @@ fun RegisterScreen(
                     shape = MaterialTheme.shapes.small
                 ) {
                     Text(
-                        text = uiState.error,
+                        text = errorMessage,
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(12.dp)
@@ -334,9 +359,28 @@ fun RegisterScreen(
             // ============ BOTÓN REGISTRARSE ============
             Button(
                 onClick = {
-                    // TODO: Validar que las contraseñas coincidan
-                    // TODO: Validar formato de datos
-                    // viewModel.register(email, password, nombre, genero, peso.toFloat(), altura.toFloat())
+                    localError = when {
+                        nombre.isBlank() -> "El nombre es obligatorio"
+                        email.isBlank() -> "El email es obligatorio"
+                        genero.isBlank() -> "Debes seleccionar un género"
+                        peso.isBlank() || peso.toDoubleOrNull() == null -> "Introduce un peso válido (kg)"
+                        altura.isBlank() || altura.toDoubleOrNull() == null -> "Introduce una altura válida (cm)"
+                        oposicionId.isBlank() || oposicionId.toIntOrNull() == null -> "Introduce el ID de la oposición"
+                        password.length < 6 -> "La contraseña debe tener al menos 6 caracteres"
+                        password != confirmPassword -> "Las contraseñas no coinciden"
+                        else -> ""
+                    }
+                    if (localError.isEmpty()) {
+                        viewModel.register(
+                            nombre = nombre,
+                            email = email,
+                            password = password,
+                            genero = genero,
+                            peso = peso.toDouble(),
+                            altura = altura.toDouble(),
+                            oposiciones_id = oposicionId.toInt()
+                        )
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
