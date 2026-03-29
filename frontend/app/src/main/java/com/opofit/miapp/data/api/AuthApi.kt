@@ -1,4 +1,4 @@
-package com.opofit.miapp.data.network
+package com.opofit.miapp.data.api
 
 import com.opofit.miapp.data.models.LoginRequest
 import com.opofit.miapp.data.models.RegisterRequest

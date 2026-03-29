@@ -5,7 +5,7 @@ import com.opofit.miapp.data.models.LoginRequest
 import com.opofit.miapp.data.models.RegisterRequest
 import com.opofit.miapp.data.models.GoogleLoginRequest
 import com.opofit.miapp.data.models.MarcaInicial
-import com.opofit.miapp.data.network.AuthApi
+import com.opofit.miapp.data.api.AuthApi
 import com.opofit.miapp.data.responsemodels.AuthResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

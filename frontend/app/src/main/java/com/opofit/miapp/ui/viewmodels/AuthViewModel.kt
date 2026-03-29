@@ -77,7 +77,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         sessionManager.saveSession(
                             token = response.token,
                             email = email,
-                            userId = response.user?.id_usuario.toString() ?: "",
+                            userId = response.user?.id_usuario?.toString() ?: "",
                             userName = response.user?.nombre ?: ""
                         )
 
@@ -141,7 +141,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         sessionManager.saveSession(
                             token = response.token,
                             email = email,
-                            userId = response.userId.toString() ?: "",
+                            userId = response.userId?.toString() ?: "",
                             userName = nombre
                         )
 
@@ -203,7 +203,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             sessionManager.saveSession(
                                 token = response.token,
                                 email = email,
-                                userId = response.userId.toString() ?: "",
+                                userId = response.userId?.toString() ?: "",
                                 userName = name
                             )
 
