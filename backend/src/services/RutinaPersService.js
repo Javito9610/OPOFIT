@@ -43,6 +43,7 @@ class RutinaPersService{
     static async eliminarRutina(userId, idRutina){
         const connection= await db.getConnection();
         try{
+            await connection.beginTransaction();
             // Verificar que la rutina pertenece al usuario
             const [rutina] = await connection.query(
                 'SELECT id_rutina_pers FROM rutinas_pers WHERE id_rutina_pers = ? AND usuarios_id_usuario = ?',
@@ -51,7 +52,6 @@ class RutinaPersService{
             if (rutina.length === 0) {
                 throw new Error("No se encontró la rutina o no tienes permiso para eliminarla");
             }
-            await connection.beginTransaction();
             // Primero eliminamos los detalles (ejercicios de la rutina)
             await connection.query(
                 'DELETE FROM detalle_rutina_pers WHERE rutinas_pers_id_rutina_pers = ?',

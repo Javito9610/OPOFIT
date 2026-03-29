@@ -96,9 +96,13 @@ class AuthService{
         try {
             await connection.beginTransaction();
             
-            // Generamos una contraseña aleatoria hasheada (el usuario usa Google, no la necesita)
-            const hashedPassword = await bcrypt.hash(googleToken + Date.now(), 10);
+            // Generamos una contraseña aleatoria segura (el usuario usa Google, no la necesita)
+            const crypto = require('crypto');
+            const randomPassword = crypto.randomBytes(32).toString('hex');
+            const hashedPassword = await bcrypt.hash(randomPassword, 10);
             
+            // Nota: El género se establece por defecto como 'HOMBRE'. El usuario debe actualizarlo en su perfil.
+            // El campo genero es NOT NULL en la BBDD, por lo que se requiere un valor inicial.
             const sqlUsuario = `INSERT INTO usuarios (nombre, email, password, genero, peso, altura, imc, fecha_registro) VALUES (?, ?, ?, 'HOMBRE', 0, 0, 0, NOW())`;
             const [userResult] = await connection.query(sqlUsuario, [nombre, email, hashedPassword]);
             const userId = userResult.insertId;
