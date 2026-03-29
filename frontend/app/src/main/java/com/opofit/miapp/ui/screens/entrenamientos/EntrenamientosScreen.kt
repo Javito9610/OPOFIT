@@ -77,12 +77,12 @@ fun EntrenamientosScreen(
 
     LaunchedEffect(rutinasState.rutinaCompleta) {
         if (ejerciciosEstado.isEmpty()) {
-            rutinasState.rutinaCompleta.forEach { bloque ->
-                bloque.ejercicios.forEachIndexed { index, ejercicio ->
+            rutinasState.rutinaCompleta.forEachIndexed { bloqueIdx, bloque ->
+                bloque.ejercicios.forEachIndexed { ejercicioIdx, ejercicio ->
                     ejerciciosEstado.add(
                         EjercicioEstado(
                             nombre = ejercicio.nombre,
-                            idEjercicio = index + 1
+                            idEjercicio = (bloqueIdx * 100) + ejercicioIdx + 1
                         )
                     )
                 }

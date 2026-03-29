@@ -52,7 +52,7 @@ fun RutinasScreen(
     val uiState by rutinasViewModel.uiState.collectAsState()
 
     val userId = authState.userId ?: 0
-    val oposicionId = 1
+    val oposicionId = authState.oposicionId ?: 1
 
     LaunchedEffect(userId) {
         if (userId > 0) {

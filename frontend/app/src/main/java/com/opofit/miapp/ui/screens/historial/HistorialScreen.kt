@@ -48,10 +48,12 @@ fun HistorialScreen(
     val uiState by historialViewModel.uiState.collectAsState()
 
     val userId = authState.userId ?: 0
+    val oposicionId = authState.oposicionId ?: 1
 
     LaunchedEffect(userId) {
         if (userId > 0) {
-            historialViewModel.cargarEvolucion(userId, 1)
+            // Load evolution for the first exercise of the user's oposicion (ID = oposicionId as proxy)
+            historialViewModel.cargarEvolucion(userId, oposicionId)
         }
     }
 

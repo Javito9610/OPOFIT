@@ -57,6 +57,7 @@ fun EditarPerfilScreen(
     val perfilState by perfilViewModel.uiState.collectAsState()
 
     val userId = authState.userId ?: 0
+    val oposicionId = authState.oposicionId ?: 1
 
     var peso by remember { mutableStateOf("") }
     var altura by remember { mutableStateOf("") }
@@ -234,7 +235,7 @@ fun EditarPerfilScreen(
                                 val v = row.valor.toDoubleOrNull() ?: return@mapNotNull null
                                 MarcaActualizar(id, v)
                             }
-                            perfilViewModel.actualizarPerfil(userId, p, a, 1, nuevasMarcas)
+                            perfilViewModel.actualizarPerfil(userId, p, a, oposicionId, nuevasMarcas)
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {

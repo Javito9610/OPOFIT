@@ -53,8 +53,8 @@ fun PerfilScreen(
     val rutinasState by rutinasViewModel.uiState.collectAsState()
 
     val userId = authState.userId ?: 0
-    val oposicionId = 1
-    val genero = "HOMBRE"
+    val oposicionId = authState.oposicionId ?: 1
+    val genero = authState.genero ?: "HOMBRE"
 
     LaunchedEffect(userId) {
         if (userId > 0) {
