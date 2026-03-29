@@ -1,25 +1,38 @@
 package com.opofit.miapp.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
+import com.opofit.miapp.ui.screens.ajustes.AjustesScreen
 import com.opofit.miapp.ui.screens.auth.LoginScreen
 import com.opofit.miapp.ui.screens.auth.RegisterScreen
+import com.opofit.miapp.ui.screens.entrenamientos.EntrenamientosScreen
+import com.opofit.miapp.ui.screens.entrenamientos.RegistrarEntrenamientoScreen
+import com.opofit.miapp.ui.screens.historial.HistorialScreen
 import com.opofit.miapp.ui.screens.home.HomeScreen
+import com.opofit.miapp.ui.screens.perfil.EditarPerfilScreen
+import com.opofit.miapp.ui.screens.perfil.PerfilScreen
+import com.opofit.miapp.ui.screens.rutinas.CrearRutinaScreen
+import com.opofit.miapp.ui.screens.rutinas.DetallesEjercicioScreen
+import com.opofit.miapp.ui.screens.rutinas.DetallesRutinaScreen
+import com.opofit.miapp.ui.screens.rutinas.RutinasLibresScreen
+import com.opofit.miapp.ui.screens.rutinas.RutinasScreen
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 
 
 /**
  * ============ NAVEGACIÓN PRINCIPAL ============
  * Gestiona todas las rutas y transiciones de la app
- * 13 pantallas en total
  */
 @Composable
 fun AppNavigation(
     navController: NavHostController,
     authViewModel: AuthViewModel,
-    isLoggedIn: Boolean=false
+    isLoggedIn: Boolean = false
 ) {
     NavHost(
         navController = navController,
@@ -56,8 +69,9 @@ fun AppNavigation(
             )
         }
 
-        // ============ 3. HOGAR (PANTALLA PRINCIPAL) ============
+        // ============ 3. HOME ============
         composable(NavDestinations.HOME) {
+            val authState = authViewModel.uiState.collectAsState()
             HomeScreen(
                 onNavigateToRutinas = {
                     navController.navigate(NavDestinations.RUTINAS)
@@ -76,75 +90,148 @@ fun AppNavigation(
                 },
                 onLogout = {
                     authViewModel.logout()
-                    
                     navController.navigate(NavDestinations.LOGIN) {
                         popUpTo(0) { inclusive = true }
                     }
-                }
+                },
+                userName = authState.value.userName
             )
         }
 
         // ============ 4. RUTINAS ============
         composable(NavDestinations.RUTINAS) {
-            // TODO: RutinasScreen
+            RutinasScreen(
+                authViewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToEntrenamientos = { navController.navigate(NavDestinations.ENTRENAMIENTOS) },
+                onNavigateToRutinasLibres = { navController.navigate(NavDestinations.RUTINAS_LIBRES) }
+            )
         }
 
         // ============ 4.1 RUTINAS POR NIVEL ============
         composable(NavDestinations.RUTINAS_POR_NIVEL) { backStackEntry ->
             val nivel = backStackEntry.arguments?.getString("nivel") ?: "1"
-            // TODO: RutinasPorNivelScreen(nivel)
+            RutinasScreen(
+                authViewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToEntrenamientos = { navController.navigate(NavDestinations.ENTRENAMIENTOS) },
+                onNavigateToRutinasLibres = { navController.navigate(NavDestinations.RUTINAS_LIBRES) }
+            )
         }
 
-        // ============ 5. CREAR/EDITAR RUTINA ============
+        // ============ 5. CREAR RUTINA ============
+        composable(NavDestinations.CREAR_RUTINA) {
+            CrearRutinaScreen(
+                authViewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
         composable(NavDestinations.CREAR_EDITAR_RUTINA) {
-            // TODO: CrearEditarRutinaScreen
+            CrearRutinaScreen(
+                authViewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
-        // ============ 12. DETALLES RUTINA ============
-        composable(NavDestinations.DETALLES_RUTINA) { backStackEntry ->
-            val rutinaId = backStackEntry.arguments?.getString("rutina_id") ?: ""
-            // TODO: DetallesRutinaScreen(rutinaId)
+        // ============ 6. DETALLES RUTINA ============
+        composable(
+            route = NavDestinations.DETALLES_RUTINA,
+            arguments = listOf(navArgument("rutina_id") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val rutinaIdStr = backStackEntry.arguments?.getString("rutina_id") ?: "0"
+            val rutinaId = rutinaIdStr.toIntOrNull() ?: 0
+            DetallesRutinaScreen(
+                rutinaId = rutinaId,
+                authViewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onIniciarEntrenamiento = { navController.navigate(NavDestinations.ENTRENAMIENTOS) }
+            )
         }
 
-        // ============ 13. RUTINAS LIBRES ============
+        // ============ 7. RUTINAS LIBRES ============
         composable(NavDestinations.RUTINAS_LIBRES) {
-            // TODO: RutinasLibresScreen
+            RutinasLibresScreen(
+                authViewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToCrearRutina = { navController.navigate(NavDestinations.CREAR_RUTINA) },
+                onNavigateToDetallesRutina = { id ->
+                    navController.navigate("detalles_rutina/$id")
+                }
+            )
         }
 
-        // ============ 6. ENTRENAMIENTOS ============
+        // ============ 8. ENTRENAMIENTOS ============
         composable(NavDestinations.ENTRENAMIENTOS) {
-            // TODO: EntrenamientosScreen
+            EntrenamientosScreen(
+                authViewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onEntrenamientoFinalizado = {
+                    navController.navigate(NavDestinations.HISTORIAL) {
+                        popUpTo(NavDestinations.ENTRENAMIENTOS) { inclusive = true }
+                    }
+                }
+            )
         }
 
-        // ============ 7. REGISTRAR ENTRENAMIENTO ============
+        // ============ 9. REGISTRAR ENTRENAMIENTO ============
         composable(NavDestinations.REGISTRAR_ENTRENAMIENTO) {
-            // TODO: RegistrarEntrenamientoScreen
+            RegistrarEntrenamientoScreen(
+                authViewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onRegistrado = { navController.popBackStack() }
+            )
         }
 
-        // ============ 12. DETALLES EJERCICIO ============
-        composable(NavDestinations.DETALLES_EJERCICIO) { backStackEntry ->
+        // ============ 10. DETALLES EJERCICIO ============
+        composable(
+            route = NavDestinations.DETALLES_EJERCICIO,
+            arguments = listOf(navArgument("ejercicio_id") { type = NavType.StringType })
+        ) { backStackEntry ->
             val ejercicioId = backStackEntry.arguments?.getString("ejercicio_id") ?: ""
-            // TODO: DetallesEjercicioScreen(ejercicioId)
+            DetallesEjercicioScreen(
+                ejercicioNombre = ejercicioId,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
-        // ============ 8. PERFIL ============
+        // ============ 11. PERFIL ============
         composable(NavDestinations.PERFIL) {
-            // TODO: PerfilScreen
+            PerfilScreen(
+                authViewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToEditarPerfil = { navController.navigate(NavDestinations.EDITAR_PERFIL) }
+            )
         }
 
-        // ============ 9. EDITAR PERFIL ============
+        // ============ 12. EDITAR PERFIL ============
         composable(NavDestinations.EDITAR_PERFIL) {
-            // TODO: EditarPerfilScreen
+            EditarPerfilScreen(
+                authViewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
-        // ============ 11. HISTORIAL ============
+        // ============ 13. HISTORIAL ============
         composable(NavDestinations.HISTORIAL) {
-            // TODO: HistorialScreen
+            HistorialScreen(
+                authViewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
-        // ============ 10. AJUSTES ============
+        // ============ 14. AJUSTES ============
         composable(NavDestinations.AJUSTES) {
-            // TODO: AjustesScreen
+            AjustesScreen(
+                authViewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onLogout = {
+                    authViewModel.logout()
+                    navController.navigate(NavDestinations.LOGIN) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }

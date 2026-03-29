@@ -104,13 +104,14 @@ class RutinaService {
         
         for(let r of rutinas){
             const [ejercicios] = await db.query(`
-                SELECT e.nombre, e.video_url, d.series, d.repeticiones, d.descanso
+                SELECT e.id_ejercicio, e.nombre, e.video_url, d.series, d.repeticiones, d.descanso
                 FROM detalle_rutina_opo d
                 JOIN ejercicios e ON d.ejercicios_id_ejercicio = e.id_ejercicio
                 WHERE d.rutinas_opo_id_rutina_opo = ?
             `, [r.id_rutina_opo]);
 
                 planCompleto.push({
+                    id_rutina_opo: r.id_rutina_opo,
                     bloque: r.enfoque_tipo,
                     ejercicios: ejercicios
                 });

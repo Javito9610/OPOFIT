@@ -1,0 +1,224 @@
+package com.opofit.miapp.ui.screens.ajustes
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.opofit.miapp.ui.viewmodels.AjustesViewModel
+import com.opofit.miapp.ui.viewmodels.AuthViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AjustesScreen(
+    authViewModel: AuthViewModel,
+    onNavigateBack: () -> Unit,
+    onLogout: () -> Unit,
+    ajustesViewModel: AjustesViewModel = viewModel()
+) {
+    val authState by authViewModel.uiState.collectAsState()
+    val uiState by ajustesViewModel.uiState.collectAsState()
+
+    val userId = authState.userId ?: 0
+
+    var unidadPeso by remember { mutableStateOf("kg") }
+    var unidadDistancia by remember { mutableStateOf("km") }
+    var expandedPeso by remember { mutableStateOf(false) }
+    var expandedDistancia by remember { mutableStateOf(false) }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.guardadoExitoso) {
+        if (uiState.guardadoExitoso) {
+            snackbarHostState.showSnackbar("Ajustes guardados correctamente")
+            ajustesViewModel.resetGuardado()
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Ajustes") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Unidades de medida",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            ExposedDropdownMenuBox(
+                expanded = expandedPeso,
+                onExpandedChange = { expandedPeso = it }
+            ) {
+                OutlinedTextField(
+                    value = unidadPeso,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Unidad de Peso") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedPeso) },
+                    modifier = Modifier.fillMaxWidth().menuAnchor()
+                )
+                ExposedDropdownMenu(
+                    expanded = expandedPeso,
+                    onDismissRequest = { expandedPeso = false }
+                ) {
+                    listOf("kg", "lb").forEach { opcion ->
+                        DropdownMenuItem(
+                            text = { Text(opcion) },
+                            onClick = {
+                                unidadPeso = opcion
+                                expandedPeso = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            ExposedDropdownMenuBox(
+                expanded = expandedDistancia,
+                onExpandedChange = { expandedDistancia = it }
+            ) {
+                OutlinedTextField(
+                    value = unidadDistancia,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Unidad de Distancia") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedDistancia) },
+                    modifier = Modifier.fillMaxWidth().menuAnchor()
+                )
+                ExposedDropdownMenu(
+                    expanded = expandedDistancia,
+                    onDismissRequest = { expandedDistancia = false }
+                ) {
+                    listOf("km", "mi").forEach { opcion ->
+                        DropdownMenuItem(
+                            text = { Text(opcion) },
+                            onClick = {
+                                unidadDistancia = opcion
+                                expandedDistancia = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            if (uiState.error.isNotEmpty()) {
+                Text(
+                    text = uiState.error,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            if (uiState.isLoading) {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                Button(
+                    onClick = { ajustesViewModel.guardarAjustes(userId, unidadPeso, unidadDistancia) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Guardar Ajustes")
+                }
+            }
+
+            Divider()
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "Información de la App",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "OpoFit v1.0.0",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "App de fitness para opositores",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            OutlinedButton(
+                onClick = onLogout,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Text("Cerrar Sesión")
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}

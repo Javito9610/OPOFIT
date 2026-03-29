@@ -13,8 +13,14 @@ object RetrofitClient {
             .build()
     }
 
-    // Función genérica para crear cualquier API
     fun <T> createService(serviceClass: Class<T>): T {
         return retrofit.create(serviceClass)
     }
+
+    val rutinasApi: RutinasApi by lazy { retrofit.create(RutinasApi::class.java) }
+    val oposicionesApi: OposicionesApi by lazy { retrofit.create(OposicionesApi::class.java) }
+    val rutinasLibresApi: RutinasLibresApi by lazy { retrofit.create(RutinasLibresApi::class.java) }
+    val progresoApi: ProgresoApi by lazy { retrofit.create(ProgresoApi::class.java) }
+    val usuarioApi: UsuarioApi by lazy { retrofit.create(UsuarioApi::class.java) }
+    val infoPruebasApi: InfoPruebasApi by lazy { retrofit.create(InfoPruebasApi::class.java) }
 }

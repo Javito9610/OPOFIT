@@ -25,7 +25,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         val isLoggedIn: Boolean = false,
         val userId: Int? = null,
         val userEmail: String? = null,
-        val userName: String? = null
+        val userName: String? = null,
+        val genero: String? = null,
+        val oposicionId: Int? = null
     )
 
     private val backendService = BackendAuthService()
@@ -87,7 +89,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             isLoggedIn = true,
                             userId = response.user?.id_usuario,
                             userEmail = response.user?.email,
-                            userName = response.user?.nombre
+                            userName = response.user?.nombre,
+                            genero = response.user?.genero,
+                            oposicionId = response.user?.oposiciones_id_oposicion
                         )}
                     } catch (e: Exception) {
                         _uiState.update { it.copy(
