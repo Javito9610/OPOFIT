@@ -21,7 +21,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Crear ViewModel con contexto
         authViewModel = ViewModelProvider(this).get(AuthViewModel::class.java)
 
         enableEdgeToEdge()
@@ -32,10 +31,8 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val navController = rememberNavController()
 
-                    // Observar si hay sesión activa
                     val uiState = authViewModel.uiState.collectAsState()
 
-                    // Si está loggeado ir a HOME, si no a LOGIN
                     AppNavigation(
                         navController = navController,
                         isLoggedIn = uiState.value.isLoggedIn,

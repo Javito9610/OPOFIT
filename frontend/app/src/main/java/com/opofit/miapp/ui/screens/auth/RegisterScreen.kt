@@ -24,7 +24,6 @@ import com.google.android.gms.common.api.ApiException
 import com.opofit.miapp.R
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
@@ -33,7 +32,6 @@ fun RegisterScreen(
     viewModel: AuthViewModel = viewModel()
 ) {
 
-    // ============ ESTADO LOCAL ============
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -48,10 +46,8 @@ fun RegisterScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
-    // Observamos el estado del ViewModel
     val uiState by viewModel.uiState.collectAsState()
 
-    // ============ GOOGLE SIGN-IN ============
     val context = LocalContext.current
     val googleSignInClient = remember {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -76,7 +72,6 @@ fun RegisterScreen(
         }
     }
 
-    // ============ EFECTO: Registrar cuando success es true ============
     LaunchedEffect(uiState.success) {
         if (uiState.success) {
             onRegisterSuccess()
@@ -84,8 +79,6 @@ fun RegisterScreen(
         }
     }
 
-    // ============ FUNCIÓN: Calcular IMC ============
-    // El backend espera la altura en centímetros (ej. 175), igual que la UI
     fun calcularIMC() {
         val pesoFloat = peso.toFloatOrNull() ?: 0f
         val alturaFloat = altura.toFloatOrNull() ?: 0f
@@ -97,7 +90,6 @@ fun RegisterScreen(
         }
     }
 
-    // ============ CONTENEDOR PRINCIPAL ============
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -113,7 +105,6 @@ fun RegisterScreen(
             verticalArrangement = Arrangement.Center
         ) {
 
-            // ============ TÍTULO ============
             Text(
                 text = "Crear Cuenta",
                 style = MaterialTheme.typography.headlineLarge,
@@ -121,7 +112,6 @@ fun RegisterScreen(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            // ============ SUBTÍTULO ============
             Text(
                 text = "Completa tus datos para registrarte",
                 style = MaterialTheme.typography.bodyLarge,
@@ -129,7 +119,6 @@ fun RegisterScreen(
                 modifier = Modifier.padding(bottom = 32.dp)
             )
 
-            // ============ CAMPO EMAIL ============
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -148,7 +137,6 @@ fun RegisterScreen(
                 shape = MaterialTheme.shapes.medium
             )
 
-            // ============ CAMPO NOMBRE ============
             OutlinedTextField(
                 value = nombre,
                 onValueChange = { nombre = it },
@@ -167,7 +155,6 @@ fun RegisterScreen(
                 shape = MaterialTheme.shapes.medium
             )
 
-            // ============ CAMPO GÉNERO (DROPDOWN) ============
             var expandedGenero by remember { mutableStateOf(false) }
             val generosDisponibles = listOf("HOMBRE", "MUJER")
 
@@ -210,7 +197,6 @@ fun RegisterScreen(
                 }
             }
 
-            // ============ CAMPO PESO ============
             OutlinedTextField(
                 value = peso,
                 onValueChange = {
@@ -232,7 +218,6 @@ fun RegisterScreen(
                 shape = MaterialTheme.shapes.medium
             )
 
-            // ============ CAMPO ALTURA ============
             OutlinedTextField(
                 value = altura,
                 onValueChange = {
@@ -254,7 +239,6 @@ fun RegisterScreen(
                 shape = MaterialTheme.shapes.medium
             )
 
-            // ============ MOSTRAR IMC CALCULADO ============
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -272,8 +256,6 @@ fun RegisterScreen(
                 )
             }
 
-            // ============ CAMPO OPOSICIÓN ID ============
-            // Temporal: en la versión final usar un dropdown que cargue /api/oposiciones/
             OutlinedTextField(
                 value = oposicionId,
                 onValueChange = { oposicionId = it.filter { c -> c.isDigit() } },
@@ -292,7 +274,6 @@ fun RegisterScreen(
                 shape = MaterialTheme.shapes.medium
             )
 
-            // ============ CAMPO CONTRASEÑA ============
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -330,7 +311,6 @@ fun RegisterScreen(
                 shape = MaterialTheme.shapes.medium
             )
 
-            // ============ CAMPO CONFIRMAR CONTRASEÑA ============
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
@@ -368,7 +348,6 @@ fun RegisterScreen(
                 shape = MaterialTheme.shapes.medium
             )
 
-            // ============ MENSAJE DE ERROR ============
             val errorMessage = localError.ifEmpty { uiState.error }
             if (errorMessage.isNotEmpty()) {
                 Card(
@@ -389,7 +368,6 @@ fun RegisterScreen(
                 }
             }
 
-            // ============ BOTÓN REGISTRARSE ============
             Button(
                 onClick = {
                     localError = when {
@@ -440,7 +418,6 @@ fun RegisterScreen(
                 }
             }
 
-            // ============ DIVISOR ============
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -468,7 +445,6 @@ fun RegisterScreen(
                 )
             }
 
-            // ============ BOTÓN GOOGLE ============
             OutlinedButton(
                 onClick = {
                     googleSignInLauncher.launch(googleSignInClient.signInIntent)
@@ -492,7 +468,6 @@ fun RegisterScreen(
                 )
             }
 
-            // ============ LINK A LOGIN ============
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,

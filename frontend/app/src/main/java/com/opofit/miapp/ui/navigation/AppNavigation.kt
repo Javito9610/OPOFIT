@@ -23,11 +23,6 @@ import com.opofit.miapp.ui.screens.rutinas.RutinasLibresScreen
 import com.opofit.miapp.ui.screens.rutinas.RutinasScreen
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 
-
-/**
- * ============ NAVEGACIÓN PRINCIPAL ============
- * Gestiona todas las rutas y transiciones de la app
- */
 @Composable
 fun AppNavigation(
     navController: NavHostController,
@@ -39,7 +34,6 @@ fun AppNavigation(
         startDestination = if (isLoggedIn) NavDestinations.HOME else NavDestinations.LOGIN
     ) {
 
-        // ============ 1. LOGIN ============
         composable(NavDestinations.LOGIN) {
             LoginScreen(
                 onLoginSuccess = {
@@ -54,7 +48,6 @@ fun AppNavigation(
             )
         }
 
-        // ============ 2. REGISTRO ============
         composable(NavDestinations.REGISTRO) {
             RegisterScreen(
                 onRegisterSuccess = {
@@ -69,7 +62,6 @@ fun AppNavigation(
             )
         }
 
-        // ============ 3. HOME ============
         composable(NavDestinations.HOME) {
             val authState = authViewModel.uiState.collectAsState()
             HomeScreen(
@@ -98,7 +90,6 @@ fun AppNavigation(
             )
         }
 
-        // ============ 4. RUTINAS ============
         composable(NavDestinations.RUTINAS) {
             RutinasScreen(
                 authViewModel = authViewModel,
@@ -108,7 +99,6 @@ fun AppNavigation(
             )
         }
 
-        // ============ 4.1 RUTINAS POR NIVEL ============
         composable(NavDestinations.RUTINAS_POR_NIVEL) { backStackEntry ->
             val nivel = backStackEntry.arguments?.getString("nivel") ?: "1"
             RutinasScreen(
@@ -119,7 +109,6 @@ fun AppNavigation(
             )
         }
 
-        // ============ 5. CREAR RUTINA ============
         composable(NavDestinations.CREAR_RUTINA) {
             CrearRutinaScreen(
                 authViewModel = authViewModel,
@@ -134,7 +123,6 @@ fun AppNavigation(
             )
         }
 
-        // ============ 6. DETALLES RUTINA ============
         composable(
             route = NavDestinations.DETALLES_RUTINA,
             arguments = listOf(navArgument("rutina_id") { type = NavType.StringType })
@@ -149,7 +137,6 @@ fun AppNavigation(
             )
         }
 
-        // ============ 7. RUTINAS LIBRES ============
         composable(NavDestinations.RUTINAS_LIBRES) {
             RutinasLibresScreen(
                 authViewModel = authViewModel,
@@ -161,7 +148,6 @@ fun AppNavigation(
             )
         }
 
-        // ============ 8. ENTRENAMIENTOS ============
         composable(NavDestinations.ENTRENAMIENTOS) {
             EntrenamientosScreen(
                 authViewModel = authViewModel,
@@ -174,7 +160,6 @@ fun AppNavigation(
             )
         }
 
-        // ============ 9. REGISTRAR ENTRENAMIENTO ============
         composable(NavDestinations.REGISTRAR_ENTRENAMIENTO) {
             RegistrarEntrenamientoScreen(
                 authViewModel = authViewModel,
@@ -183,7 +168,6 @@ fun AppNavigation(
             )
         }
 
-        // ============ 10. DETALLES EJERCICIO ============
         composable(
             route = NavDestinations.DETALLES_EJERCICIO,
             arguments = listOf(navArgument("ejercicio_id") { type = NavType.StringType })
@@ -195,7 +179,6 @@ fun AppNavigation(
             )
         }
 
-        // ============ 11. PERFIL ============
         composable(NavDestinations.PERFIL) {
             PerfilScreen(
                 authViewModel = authViewModel,
@@ -204,7 +187,6 @@ fun AppNavigation(
             )
         }
 
-        // ============ 12. EDITAR PERFIL ============
         composable(NavDestinations.EDITAR_PERFIL) {
             EditarPerfilScreen(
                 authViewModel = authViewModel,
@@ -212,7 +194,6 @@ fun AppNavigation(
             )
         }
 
-        // ============ 13. HISTORIAL ============
         composable(NavDestinations.HISTORIAL) {
             HistorialScreen(
                 authViewModel = authViewModel,
@@ -220,7 +201,6 @@ fun AppNavigation(
             )
         }
 
-        // ============ 14. AJUSTES ============
         composable(NavDestinations.AJUSTES) {
             AjustesScreen(
                 authViewModel = authViewModel,

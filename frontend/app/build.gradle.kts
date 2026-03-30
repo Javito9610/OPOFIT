@@ -20,7 +20,6 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // URL del backend (usar 10.0.2.2 para emulador Android, cambiar para producción)
         buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:3000/\"")
     }
 
@@ -64,27 +63,20 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    // ============ FIREBASE ============
     implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
 
-    // ============ GOOGLE SIGN-IN ============
     implementation("com.google.android.gms:play-services-auth:21.2.0")
 
-    // ============ COROUTINES (Para operaciones async) ============
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
-    // ============ COIL (Para cargar imágenes) ============
     implementation("io.coil-kt.coil3:coil-compose:3.0.0-alpha06")
 
-    // ============ NAVIGATION (Para navegar entre pantallas) ============
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
-    // ============ DATASTORE (Para guardar preferencias) ============
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
-    // ============ RETROFIT (Para APIs HTTP - si lo necesitas) ============
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 

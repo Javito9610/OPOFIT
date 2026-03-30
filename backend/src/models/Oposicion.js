@@ -1,4 +1,3 @@
-//Este archivo lógico contendrá las tablas:Oposiciones, pruebas_oficiales, requisitos_nivel, noticias ENFOCADO EN LA OPOSICIÓN
 class Oposicion{
     constructor(id_oposicion, nombre){
         this.id_oposicion=id_oposicion;

@@ -1,4 +1,3 @@
-// En este archivo lógico encotraremos los modelos: Ususario, settings y marcas_perfil. ENFOCADO EN EL USER
 class Usuario{
     constructor(id_usuario, nombre, email, password, genero, peso, altura, imc, fecha_registro, oposiciones_id_oposicion){
         this.id_usuario=id_usuario;

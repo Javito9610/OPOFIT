@@ -1,5 +1,3 @@
-// Este archivo lógico contiene las tablas: rutina_pers y detalle_rutina_pers. PARA GESTIONAR LAS RUTINAS PERSONALES. NO HE METIDO EJERCICIOS POR EL PRINCIPIO DRY
-
 class RutinaPers{
     constructor(id_rutina_pers, nombre_personalizado, usuarios_id_usuario){
         this.id_rutina_pers=id_rutina_pers;

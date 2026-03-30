@@ -13,7 +13,6 @@ data class UserSession(
 
 class SessionManager(private val tokenManager: TokenManager) {
 
-    // ============ OBTENER SESIÓN ACTUAL ============
     fun getCurrentSession(): Flow<UserSession> = combine(
         tokenManager.getToken(),
         tokenManager.getUserEmail(),
@@ -29,7 +28,6 @@ class SessionManager(private val tokenManager: TokenManager) {
         )
     }
 
-    // ============ GUARDAR SESIÓN COMPLETA ============
     suspend fun saveSession(
         token: String?,
         email: String,
@@ -44,7 +42,6 @@ class SessionManager(private val tokenManager: TokenManager) {
         }
     }
 
-    // ============ CERRAR SESIÓN ============
     suspend fun logout() {
         tokenManager.clearAll()
     }

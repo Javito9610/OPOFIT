@@ -7,7 +7,6 @@ class RutinaPersService{
         const [existente] = await connection.query(sqlCheck, [userId, nombre]);
 
         if (existente.length > 0) {
-            // Si el nombre ya está pillado, lanzamos error
             throw new Error("Ya tienes una rutina con este nombre. ¡Prueba uno diferente!");
         }
             await connection.beginTransaction();
@@ -44,7 +43,6 @@ class RutinaPersService{
         const connection= await db.getConnection();
         try{
             await connection.beginTransaction();
-            // Verificar que la rutina pertenece al usuario
             const [rutina] = await connection.query(
                 'SELECT id_rutina_pers FROM rutinas_pers WHERE id_rutina_pers = ? AND usuarios_id_usuario = ?',
                 [idRutina, userId]
@@ -52,12 +50,10 @@ class RutinaPersService{
             if (rutina.length === 0) {
                 throw new Error("No se encontró la rutina o no tienes permiso para eliminarla");
             }
-            // Primero eliminamos los detalles (ejercicios de la rutina)
             await connection.query(
                 'DELETE FROM detalle_rutina_pers WHERE rutinas_pers_id_rutina_pers = ?',
                 [idRutina]
             );
-            // Luego eliminamos la rutina
             await connection.query(
                 'DELETE FROM rutinas_pers WHERE id_rutina_pers = ? AND usuarios_id_usuario = ?',
                 [idRutina, userId]

@@ -2,7 +2,7 @@ const db = require("../config/db");
 class ProgresoService{
     static async registrarEntreno(datos){
         const {userId, tipoRutina, idRutina, duracion, ejercicios}= datos;
-        const connection = await db.getConnection(); // Pedimos una conexion especifica al pool
+        const connection = await db.getConnection();
         try{
 
             const sqlCheck = `
@@ -15,11 +15,10 @@ class ProgresoService{
             const [existente] = await connection.query(sqlCheck, [userId, idRutina]);
 
             if (existente.length > 0) {
-                // Si encontramos algo, lanzamos error y NO seguimos
                 throw new Error("Ya has registrado este entrenamiento hoy. ¡Mañana más!");
             }
 
-            await connection.beginTransaction(); // Si algo va mal enla petición cancela esa peticioón y la vuelve a realizar desde cero
+            await connection.beginTransaction();
             const sqlHistorial= `INSERT INTO historial_sesiones 
                 (fecha_entreno, tipo_rutina, duracion_oficial, usuarios_id_usuario, ${tipoRutina === 'OPO' ? 'rutinas_opo_id_rutina_opo' : 'rutinas_pers_id_rutina_pers'})
                 VALUES (NOW(), ?, ?, ?, ?)`;

@@ -8,11 +8,10 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-// ============ ESQUEMA DE COLORES - MODO CLARO ============
 private val LightColorScheme = lightColorScheme(
     primary = PrimaryLight,
     onPrimary = OnPrimaryLight,
-    primaryContainer = Color(0xFFE3F2FD),  // Azul muy claro
+    primaryContainer = Color(0xFFE3F2FD),
     onPrimaryContainer = PrimaryLight,
 
     secondary = SecondaryLight,
@@ -40,7 +39,6 @@ private val LightColorScheme = lightColorScheme(
     outlineVariant = Color(0xFFC7C7C7)
 )
 
-// ============ ESQUEMA DE COLORES - MODO OSCURO ============
 private val DarkColorScheme = darkColorScheme(
     primary = PrimaryDark,
     onPrimary = OnPrimaryDark,
@@ -72,10 +70,9 @@ private val DarkColorScheme = darkColorScheme(
     outlineVariant = Color(0xFF565656)
 )
 
-// ============ TEMA GLOBAL ============
 @Composable
 fun MiAppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),  // Automático según dispositivo
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
