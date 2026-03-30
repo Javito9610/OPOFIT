@@ -63,12 +63,19 @@ fun RegisterScreen(
             try {
                 val account = GoogleSignIn.getSignedInAccountFromIntent(result.data)
                     .getResult(ApiException::class.java)
-                account.idToken?.let { token ->
+                val token = account.idToken
+                if (token != null) {
                     viewModel.loginWithGoogle(token)
+                } else {
+                    viewModel.setError("No se pudo obtener el token de Google")
                 }
             } catch (e: ApiException) {
                 android.util.Log.e("RegisterScreen", "Google Sign-In falló: ${e.statusCode}")
+                viewModel.setError(GoogleSignInHelper.getErrorMessage(e))
             }
+        } else {
+            android.util.Log.e("RegisterScreen", "Google Sign-In resultado no OK: ${result.resultCode}")
+            viewModel.setError("Inicio de sesión con Google cancelado")
         }
     }
 
@@ -447,7 +454,9 @@ fun RegisterScreen(
 
             OutlinedButton(
                 onClick = {
-                    googleSignInLauncher.launch(googleSignInClient.signInIntent)
+                    googleSignInClient.signOut().addOnCompleteListener {
+                        googleSignInLauncher.launch(googleSignInClient.signInIntent)
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
