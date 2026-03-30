@@ -1,6 +1,7 @@
 package com.opofit.miapp.data.responsemodels
 
 data class InfoPrueba(
+    val id_pruebas_oficiales: Int,
     val nombre_prueba: String,
     val descripcion: String?,
     val trucos: String?,

@@ -18,7 +18,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -58,12 +61,19 @@ fun EditarPerfilScreen(
 
     val userId = authState.userId ?: 0
     val oposicionId = authState.oposicionId ?: 1
+    val genero = authState.genero ?: "HOMBRE"
 
     var peso by remember { mutableStateOf("") }
     var altura by remember { mutableStateOf("") }
 
-    data class MarcaRow(val idPrueba: String = "", val valor: String = "")
+    data class MarcaRow(val idPrueba: Int? = null, val nombrePrueba: String = "", val valor: String = "")
     val marcas = remember { mutableStateListOf(MarcaRow()) }
+
+    val pruebasDisponibles = remember(perfilState.infoPruebas) {
+        perfilState.infoPruebas
+            .distinctBy { it.id_pruebas_oficiales }
+            .map { it.id_pruebas_oficiales to it.nombre_prueba }
+    }
 
     val imc = remember(peso, altura) {
         val p = peso.toDoubleOrNull()
@@ -72,6 +82,10 @@ fun EditarPerfilScreen(
             val alturaM = a / 100.0
             "%.2f".format(p / alturaM.pow(2))
         } else "-"
+    }
+
+    LaunchedEffect(oposicionId, genero) {
+        perfilViewModel.cargarInfoPruebas(oposicionId, genero)
     }
 
     LaunchedEffect(perfilState.guardadoExitoso) {
@@ -161,24 +175,49 @@ fun EditarPerfilScreen(
             }
 
             itemsIndexed(marcas) { index, row ->
-                Row(
+                var expanded by remember { mutableStateOf(false) }
+
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedTextField(
-                        value = row.idPrueba,
-                        onValueChange = { marcas[index] = row.copy(idPrueba = it) },
-                        label = { Text("ID Prueba") },
-                        modifier = Modifier.weight(1f),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true
-                    )
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = it }
+                    ) {
+                        OutlinedTextField(
+                            value = row.nombrePrueba,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Prueba") },
+                            placeholder = { Text("Selecciona una prueba") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(),
+                            singleLine = true
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            pruebasDisponibles.forEach { (id, nombre) ->
+                                DropdownMenuItem(
+                                    text = { Text(nombre) },
+                                    onClick = {
+                                        marcas[index] = row.copy(idPrueba = id, nombrePrueba = nombre)
+                                        expanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
                     OutlinedTextField(
                         value = row.valor,
                         onValueChange = { marcas[index] = row.copy(valor = it) },
                         label = { Text("Valor") },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true
                     )
@@ -231,7 +270,7 @@ fun EditarPerfilScreen(
                             val p = peso.toDoubleOrNull() ?: 0.0
                             val a = altura.toDoubleOrNull() ?: 0.0
                             val nuevasMarcas = marcas.mapNotNull { row ->
-                                val id = row.idPrueba.toIntOrNull() ?: return@mapNotNull null
+                                val id = row.idPrueba ?: return@mapNotNull null
                                 val v = row.valor.toDoubleOrNull() ?: return@mapNotNull null
                                 MarcaActualizar(id, v)
                             }
