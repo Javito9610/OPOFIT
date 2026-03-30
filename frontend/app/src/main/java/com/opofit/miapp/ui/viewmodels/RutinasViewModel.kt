@@ -66,10 +66,10 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
                 if (response.ok && response.data != null) {
                     _uiState.update { it.copy(oposicionesLoading = false, oposiciones = response.data) }
                 } else {
-                    _uiState.update { it.copy(oposicionesLoading = false) }
+                    _uiState.update { it.copy(oposicionesLoading = false, error = "No se pudieron cargar las oposiciones") }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(oposicionesLoading = false) }
+                _uiState.update { it.copy(oposicionesLoading = false, error = e.message ?: "Error al cargar oposiciones") }
             }
         }
     }
