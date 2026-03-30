@@ -1,6 +1,7 @@
 package com.opofit.miapp.data.api
 
 import com.opofit.miapp.data.responsemodels.InfoPruebasResponse
+import com.opofit.miapp.data.responsemodels.MarcasUsuarioResponse
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Path
@@ -12,4 +13,11 @@ interface InfoPruebasApi {
         @Path("idOposicion") idOposicion: Int,
         @Path("genero") genero: String
     ): InfoPruebasResponse
+
+    @GET("/api/info/marcas/{userId}/{idOposicion}")
+    suspend fun getMarcasUsuario(
+        @Header("Authorization") token: String,
+        @Path("userId") userId: Int,
+        @Path("idOposicion") idOposicion: Int
+    ): MarcasUsuarioResponse
 }

@@ -34,4 +34,36 @@ const getInfoPruebas= async (req,res)=>{
     }
     
 }
-module.exports = { getInfoPruebas };
+
+const getMarcasUsuario = async (req, res) => {
+    try {
+        const { userId, idOposicion } = req.params;
+
+        if (!userId || !idOposicion) {
+            return res.status(400).json({
+                ok: false,
+                msg: "Faltan datos obligatorios (userId o idOposicion)"
+            });
+        }
+
+        const parsedUserId = parseInt(userId, 10);
+        if (isNaN(parsedUserId) || parsedUserId !== req.usuario.id) {
+            return res.status(403).json({ ok: false, msg: "No tienes permiso para ver marcas de otro usuario" });
+        }
+
+        const marcas = await infoPruebasService.getMarcasUsuario(userId, idOposicion);
+
+        res.status(200).json({
+            ok: true,
+            data: marcas || []
+        });
+    } catch (error) {
+        console.error("Error en getMarcasUsuario:", error.message);
+        res.status(500).json({
+            ok: false,
+            msg: "Error al obtener las marcas del usuario"
+        });
+    }
+};
+
+module.exports = { getInfoPruebas, getMarcasUsuario };

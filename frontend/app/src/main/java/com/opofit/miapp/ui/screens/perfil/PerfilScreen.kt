@@ -58,7 +58,7 @@ fun PerfilScreen(
 
     LaunchedEffect(userId) {
         if (userId > 0) {
-            perfilViewModel.cargarInfoPruebas(oposicionId, genero)
+            perfilViewModel.cargarMarcasUsuario(userId, oposicionId)
             rutinasViewModel.cargarRutina(userId, oposicionId)
         }
     }
@@ -135,7 +135,7 @@ fun PerfilScreen(
                     }
                 }
 
-                if (perfilState.infoPruebas.isNotEmpty()) {
+                if (perfilState.marcasUsuario.isNotEmpty()) {
                     item {
                         Text(
                             text = "Mis Marcas",
@@ -143,22 +143,22 @@ fun PerfilScreen(
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    items(perfilState.infoPruebas) { prueba ->
+                    items(perfilState.marcasUsuario) { marca ->
                         Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(1.dp)) {
                             Column(modifier = Modifier.padding(12.dp)) {
                                 Text(
-                                    text = prueba.nombre_prueba,
+                                    text = marca.nombre_prueba,
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Divider(modifier = Modifier.padding(vertical = 4.dp))
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text(
-                                        text = "Marca: ${prueba.marca_valor ?: "-"}",
+                                        text = "Marca: ${marca.valord_record ?: "-"}",
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                     Text(
-                                        text = "Nota: ${prueba.nota ?: "-"}",
+                                        text = "Fecha: ${marca.fecha_logro?.take(10) ?: "-"}",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.secondary
                                     )

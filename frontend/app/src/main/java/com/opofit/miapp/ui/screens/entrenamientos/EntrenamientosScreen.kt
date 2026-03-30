@@ -71,7 +71,7 @@ fun EntrenamientosScreen(
     val userId = authState.userId ?: 0
 
     var segundos by remember { mutableStateOf(0) }
-    var cronometroActivo by remember { mutableStateOf(true) }
+    var cronometroActivo by remember { mutableStateOf(false) }
 
     val ejerciciosEstado = remember { mutableStateListOf<EjercicioEstado>() }
 
@@ -86,6 +86,9 @@ fun EntrenamientosScreen(
                         )
                     )
                 }
+            }
+            if (ejerciciosEstado.isNotEmpty()) {
+                cronometroActivo = true
             }
         }
     }
@@ -228,6 +231,15 @@ fun EntrenamientosScreen(
                         CircularProgressIndicator()
                     }
                 } else {
+                    val hayEjerciciosCompletados = ejerciciosEstado.any { it.completado }
+                    if (ejerciciosEstado.isNotEmpty() && !hayEjerciciosCompletados) {
+                        Text(
+                            text = "Marca al menos un ejercicio como completado para finalizar.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                    }
                     Button(
                         onClick = {
                             cronometroActivo = false
@@ -243,7 +255,8 @@ fun EntrenamientosScreen(
                                 ejercicios = realizados
                             )
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = hayEjerciciosCompletados
                     ) {
                         Text("🏁 Finalizar Entrenamiento")
                     }

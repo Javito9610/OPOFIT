@@ -8,6 +8,7 @@ import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.ActualizarPerfilRequest
 import com.opofit.miapp.data.responsemodels.InfoPrueba
 import com.opofit.miapp.data.responsemodels.MarcaActualizar
+import com.opofit.miapp.data.responsemodels.MarcaUsuario
 import com.opofit.miapp.data.responsemodels.RequisitoOposicion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,10 +25,11 @@ class PerfilViewModel(application: Application) : AndroidViewModel(application) 
         val isLoading: Boolean = false,
         val error: String = "",
         val guardadoExitoso: Boolean = false,
-        val nuevoNivel: Int? = null,
+        val nuevoNivel: String? = null,
         val nuevaNota: String? = null,
         val requisitos: List<RequisitoOposicion> = emptyList(),
-        val infoPruebas: List<InfoPrueba> = emptyList()
+        val infoPruebas: List<InfoPrueba> = emptyList(),
+        val marcasUsuario: List<MarcaUsuario> = emptyList()
     )
 
     private val _uiState = MutableStateFlow(PerfilUiState())
@@ -67,6 +69,25 @@ class PerfilViewModel(application: Application) : AndroidViewModel(application) 
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = e.message ?: "Error de conexión") }
+            }
+        }
+    }
+
+    fun cargarMarcasUsuario(userId: Int, oposicionId: Int) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = "") }
+            try {
+                val token = tokenManager.getToken().first() ?: ""
+                val response = RetrofitClient.infoPruebasApi.getMarcasUsuario(
+                    "Bearer $token", userId, oposicionId
+                )
+                if (response.ok) {
+                    _uiState.update { it.copy(isLoading = false, marcasUsuario = response.data ?: emptyList()) }
+                } else {
+                    _uiState.update { it.copy(isLoading = false, marcasUsuario = emptyList()) }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, marcasUsuario = emptyList()) }
             }
         }
     }
