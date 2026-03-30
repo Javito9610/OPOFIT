@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes
 import com.google.android.gms.common.api.ApiException
 import com.opofit.miapp.R
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
@@ -61,21 +60,11 @@ fun LoginScreen(
                 }
             } catch (e: ApiException) {
                 android.util.Log.e("LoginScreen", "Google Sign-In falló: ${e.statusCode}")
-                val errorMsg = when (e.statusCode) {
-                    GoogleSignInStatusCodes.SIGN_IN_CANCELLED -> "Inicio de sesión con Google cancelado"
-                    GoogleSignInStatusCodes.NETWORK_ERROR -> "Error de red. Comprueba tu conexión"
-                    GoogleSignInStatusCodes.SIGN_IN_CURRENTLY_IN_PROGRESS -> "Ya hay un inicio de sesión en curso"
-                    GoogleSignInStatusCodes.INVALID_ACCOUNT -> "Cuenta de Google no válida"
-                    12500 -> "Error de configuración de Google Sign-In. Verifica la configuración de la app"
-                    else -> "Error en Google Sign-In (código: ${e.statusCode})"
-                }
-                viewModel.setError(errorMsg)
+                viewModel.setError(GoogleSignInHelper.getErrorMessage(e))
             }
         } else {
             android.util.Log.e("LoginScreen", "Google Sign-In resultado no OK: ${result.resultCode}")
-            if (result.resultCode == Activity.RESULT_CANCELED) {
-                viewModel.setError("Inicio de sesión con Google cancelado")
-            }
+            viewModel.setError("Inicio de sesión con Google cancelado")
         }
     }
 
