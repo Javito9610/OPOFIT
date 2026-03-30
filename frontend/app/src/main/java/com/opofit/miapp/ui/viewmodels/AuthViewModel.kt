@@ -1,6 +1,7 @@
 package com.opofit.miapp.ui.viewmodels
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
@@ -9,9 +10,11 @@ import com.opofit.miapp.data.api.BackendAuthService
 import com.opofit.miapp.data.local.SessionManager
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.domain.ValidationUtils
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -31,7 +34,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     )
 
     private val backendService = BackendAuthService()
-    private val firebaseAuth = FirebaseAuth.getInstance()
+    private val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
     private val tokenManager = TokenManager(application)
     private val sessionManager = SessionManager(tokenManager)
 
@@ -43,8 +46,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun checkExistingSession() {
-        viewModelScope.launch {
-            sessionManager.getCurrentSession().collect { session ->
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val session = sessionManager.getCurrentSession().first()
                 _uiState.update { state ->
                     state.copy(
                         isLoggedIn = session.isLoggedIn,
@@ -55,6 +59,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         oposicionId = session.oposicionId.toIntOrNull()
                     )
                 }
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "Error restoring session", e)
             }
         }
     }
