@@ -36,6 +36,7 @@ fun HomeScreen(
     onNavigateToPerfil: () -> Unit,
     onNavigateToHistorial: () -> Unit,
     onNavigateToAjustes: () -> Unit,
+    onNavigateToInfoOposicion: () -> Unit,
     onLogout: () -> Unit,
     userName: String? = null
 ) {
@@ -141,6 +142,14 @@ fun HomeScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Text("📊 Historial", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(8.dp))
+                }
+
+                Button(
+                    onClick = onNavigateToInfoOposicion,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                ) {
+                    Text("ℹ️ Info Oposición", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(8.dp))
                 }
             }
         }

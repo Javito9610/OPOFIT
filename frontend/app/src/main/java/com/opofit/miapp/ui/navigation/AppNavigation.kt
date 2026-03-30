@@ -21,6 +21,7 @@ import com.opofit.miapp.ui.screens.rutinas.DetallesEjercicioScreen
 import com.opofit.miapp.ui.screens.rutinas.DetallesRutinaScreen
 import com.opofit.miapp.ui.screens.rutinas.RutinasLibresScreen
 import com.opofit.miapp.ui.screens.rutinas.RutinasScreen
+import com.opofit.miapp.ui.screens.oposicion.OposicionInfoScreen
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 
 @Composable
@@ -79,6 +80,9 @@ fun AppNavigation(
                 },
                 onNavigateToAjustes = {
                     navController.navigate(NavDestinations.AJUSTES)
+                },
+                onNavigateToInfoOposicion = {
+                    navController.navigate(NavDestinations.INFO_OPOSICION)
                 },
                 onLogout = {
                     authViewModel.logout()
@@ -211,6 +215,13 @@ fun AppNavigation(
                         popUpTo(0) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        composable(NavDestinations.INFO_OPOSICION) {
+            OposicionInfoScreen(
+                authViewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
