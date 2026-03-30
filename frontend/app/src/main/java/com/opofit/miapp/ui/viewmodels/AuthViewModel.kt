@@ -71,11 +71,11 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(isLoading = true, error = "")}
 
         viewModelScope.launch {
-            val result = backendService.login(email, password)
+            try {
+                val result = backendService.login(email, password)
 
-            result.onSuccess { response ->
-                viewModelScope.launch {
-                    try {
+                result.fold(
+                    onSuccess = { response ->
                         sessionManager.saveSession(
                             token = response.token,
                             email = email,
@@ -93,20 +93,19 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             genero = response.user?.genero,
                             oposicionId = response.user?.oposiciones_id_oposicion
                         )}
-                    } catch (e: Exception) {
+                    },
+                    onFailure = { error ->
                         _uiState.update { it.copy(
                             isLoading = false,
-                            error = "Error al guardar sesión: ${e.message}",
+                            error = error.message ?: "Error desconocido",
                             success = false
                         )}
                     }
-                }
-            }
-
-            result.onFailure { error ->
+                )
+            } catch (e: Exception) {
                 _uiState.update { it.copy(
                     isLoading = false,
-                    error = error.message ?: "Error desconocido",
+                    error = "Error al guardar sesión: ${e.message}",
                     success = false
                 )}
             }
@@ -135,13 +134,13 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(isLoading = true, error = "") }
 
         viewModelScope.launch {
-            val result = backendService.register(
-                nombre, email, password, genero, peso, altura, oposiciones_id
-            )
+            try {
+                val result = backendService.register(
+                    nombre, email, password, genero, peso, altura, oposiciones_id
+                )
 
-            result.onSuccess { response ->
-                viewModelScope.launch {
-                    try {
+                result.fold(
+                    onSuccess = { response ->
                         sessionManager.saveSession(
                             token = response.token,
                             email = email,
@@ -157,20 +156,19 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             userEmail = response.user?.email,
                             userName = response.user?.nombre
                         )}
-                    } catch (e: Exception) {
+                    },
+                    onFailure = { error ->
                         _uiState.update { it.copy(
                             isLoading = false,
-                            error = "Error al guardar sesión: ${e.message}",
+                            error = error.message ?: "Error desconocido",
                             success = false
                         )}
                     }
-                }
-            }
-
-            result.onFailure { error ->
+                )
+            } catch (e: Exception) {
                 _uiState.update { it.copy(
                     isLoading = false,
-                    error = error.message ?: "Error desconocido",
+                    error = "Error al guardar sesión: ${e.message}",
                     success = false
                 )}
             }
@@ -178,7 +176,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun loginWithGoogle(idToken: String) {
-        _uiState.update { _uiState.value.copy(isLoading = true, error = "") }
+        _uiState.update { it.copy(isLoading = true, error = "") }
 
         viewModelScope.launch {
             try {
@@ -200,42 +198,32 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
                 val result = backendService.loginWithGoogle(idToken, email, name)
 
-                result.onSuccess { response ->
-                    viewModelScope.launch {
-                        try {
-                            sessionManager.saveSession(
-                                token = response.token,
-                                email = email,
-                                userId = response.userId?.toString() ?: "",
-                                userName = name
-                            )
+                result.fold(
+                    onSuccess = { response ->
+                        sessionManager.saveSession(
+                            token = response.token,
+                            email = email,
+                            userId = response.userId?.toString() ?: "",
+                            userName = name
+                        )
 
-                            _uiState.update { it.copy(
-                                isLoading = false,
-                                success = true,
-                                isLoggedIn = true,
-                                userId = response.userId,
-                                userEmail = response.user?.email,
-                                userName = response.user?.nombre
-                            )}
-                        } catch (e: Exception) {
-                            _uiState.update { it.copy(
-                                isLoading = false,
-                                error = "Error al guardar sesión: ${e.message}",
-                                success = false
-                            )}
-                        }
+                        _uiState.update { it.copy(
+                            isLoading = false,
+                            success = true,
+                            isLoggedIn = true,
+                            userId = response.userId,
+                            userEmail = response.user?.email,
+                            userName = response.user?.nombre
+                        )}
+                    },
+                    onFailure = { error ->
+                        _uiState.update { it.copy(
+                            isLoading = false,
+                            error = error.message ?: "Error al sincronizar con backend",
+                            success = false
+                        )}
                     }
-                }
-
-                result.onFailure { error ->
-                    _uiState.update { it.copy(
-                        isLoading = false,
-                        error = error.message ?: "Error al sincronizar con backend",
-                        success = false
-                    )}
-                }
-
+                )
             } catch (e: Exception) {
                 _uiState.update { it.copy(
                     isLoading = false,
