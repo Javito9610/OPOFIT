@@ -26,6 +26,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         val error: String = "",
         val success: Boolean = false,
         val isLoggedIn: Boolean = false,
+        val isSessionChecked: Boolean = false,
         val userId: Int? = null,
         val userEmail: String? = null,
         val userName: String? = null,
@@ -52,6 +53,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 _uiState.update { state ->
                     state.copy(
                         isLoggedIn = session.isLoggedIn,
+                        isSessionChecked = true,
                         userId = session.userId.toIntOrNull(),
                         userEmail = session.email,
                         userName = session.userName,
@@ -61,6 +63,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } catch (e: Exception) {
                 Log.e("AuthViewModel", "Error restoring session", e)
+                _uiState.update { it.copy(isSessionChecked = true) }
             }
         }
     }
