@@ -11,5 +11,16 @@ class InfoPruebasService{
             ORDER BY p.nombre_prueba ASC, b.nota ASC`, [genero,idOposicion]);
             return getInfoPruebas;
     }
+
+    static async getMarcasUsuario(userId, idOposicion){
+        const [marcas] = await db.query(`
+            SELECT m.id_marcas_perfil, m.valord_record, m.fecha_logro,
+                   p.id_pruebas_oficiales, p.nombre_prueba
+            FROM marcas_perfil m
+            JOIN pruebas_oficiales p ON m.pruebas_oficiales_id_pruebas_oficiales = p.id_pruebas_oficiales
+            WHERE m.usuarios_id_usuario = ? AND p.oposiciones_id_oposicion = ?
+            ORDER BY p.nombre_prueba ASC`, [userId, idOposicion]);
+        return marcas;
+    }
 }
 module.exports=InfoPruebasService;

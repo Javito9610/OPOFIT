@@ -14,3 +14,16 @@ data class InfoPruebasResponse(
     val ok: Boolean,
     val data: List<InfoPrueba>?
 )
+
+data class MarcaUsuario(
+    val id_marcas_perfil: Int,
+    val valord_record: Double?,
+    val fecha_logro: String?,
+    val id_pruebas_oficiales: Int,
+    val nombre_prueba: String
+)
+
+data class MarcasUsuarioResponse(
+    val ok: Boolean,
+    val data: List<MarcaUsuario>?
+)

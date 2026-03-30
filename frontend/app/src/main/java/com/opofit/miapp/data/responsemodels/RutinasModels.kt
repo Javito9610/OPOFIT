@@ -17,7 +17,7 @@ data class BloqueRutina(
 
 data class RutinasData(
     val notaActual: String,
-    val nivelAsignado: Int,
+    val nivelAsignado: String,
     val rutinaCompleta: List<BloqueRutina>
 )
 

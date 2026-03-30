@@ -15,7 +15,7 @@ data class ActualizarPerfilRequest(
 
 data class ActualizarPerfilResponse(
     val ok: Boolean,
-    val nuevoNivel: Int?,
+    val nuevoNivel: String?,
     val nuevaNota: String?,
     val message: String?
 )

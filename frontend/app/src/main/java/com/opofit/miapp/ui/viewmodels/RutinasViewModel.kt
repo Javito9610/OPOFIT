@@ -22,7 +22,7 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
         val isLoading: Boolean = false,
         val error: String = "",
         val notaActual: String = "",
-        val nivelAsignado: Int = 0,
+        val nivelAsignado: String = "",
         val rutinaCompleta: List<BloqueRutina> = emptyList(),
         val oposiciones: List<Oposicion> = emptyList(),
         val oposicionesLoading: Boolean = false
