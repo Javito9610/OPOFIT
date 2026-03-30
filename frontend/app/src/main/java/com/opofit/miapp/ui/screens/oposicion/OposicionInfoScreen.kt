@@ -1,5 +1,8 @@
 package com.opofit.miapp.ui.screens.oposicion
 
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,11 +14,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.InfoPrueba
 import com.opofit.miapp.data.responsemodels.NoticiaOposicion
+import com.opofit.miapp.data.responsemodels.NoticiaRss
+import com.opofit.miapp.data.responsemodels.Oposicion
 import com.opofit.miapp.data.responsemodels.PruebaOposicion
 import kotlinx.coroutines.flow.first
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
@@ -35,9 +41,14 @@ fun OposicionInfoScreen(
 
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf("") }
+    var oposicion by remember { mutableStateOf<Oposicion?>(null) }
     var pruebas by remember { mutableStateOf<List<PruebaOposicion>>(emptyList()) }
     var noticias by remember { mutableStateOf<List<NoticiaOposicion>>(emptyList()) }
+    var noticiasRss by remember { mutableStateOf<List<NoticiaRss>>(emptyList()) }
     var infoPruebas by remember { mutableStateOf<List<InfoPrueba>>(emptyList()) }
+    var selectedTab by remember { mutableIntStateOf(0) }
+
+    val tabs = listOf("📋 Info", "💡 Trucos", "📰 Noticias", "📊 Baremos")
 
     LaunchedEffect(oposicionId) {
         isLoading = true
@@ -50,6 +61,7 @@ fun OposicionInfoScreen(
             try {
                 val detalleResponse = RetrofitClient.oposicionesApi.getInfoOposicion(bearerToken, oposicionId)
                 if (detalleResponse.ok) {
+                    oposicion = detalleResponse.oposicion
                     pruebas = detalleResponse.pruebas ?: emptyList()
                     noticias = detalleResponse.noticias ?: emptyList()
                 }
@@ -69,6 +81,16 @@ fun OposicionInfoScreen(
                 }
             }
 
+            // Load RSS news
+            try {
+                val rssResponse = RetrofitClient.oposicionesApi.getNoticiasRss(bearerToken, oposicionId)
+                if (rssResponse.ok) {
+                    noticiasRss = rssResponse.data ?: emptyList()
+                }
+            } catch (_: Exception) {
+                // RSS is optional, don't set error
+            }
+
             isLoading = false
         } catch (e: Exception) {
             error = e.message ?: "Error al cargar información"
@@ -76,10 +98,12 @@ fun OposicionInfoScreen(
         }
     }
 
+    val nombreOposicion = oposicion?.nombre ?: if (oposicionId == 1) "Policía Nacional" else "Guardia Civil"
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Info Oposición") },
+                title = { Text(nombreOposicion, maxLines = 1) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
@@ -93,209 +117,503 @@ fun OposicionInfoScreen(
             )
         }
     ) { innerPadding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
             when {
                 isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
                 }
                 error.isNotEmpty() -> {
-                    Text(
-                        text = error,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center).padding(16.dp)
-                    )
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = error,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
                 }
                 else -> {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    // Tabs
+                    ScrollableTabRow(
+                        selectedTabIndex = selectedTab,
+                        edgePadding = 8.dp
                     ) {
-                        // Pruebas Oficiales Section
-                        if (pruebas.isNotEmpty()) {
-                            item {
-                                Text(
-                                    text = "📋 Pruebas Oficiales",
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                            items(pruebas) { prueba ->
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                                ) {
-                                    Column(modifier = Modifier.padding(16.dp)) {
-                                        Text(
-                                            text = prueba.nombre,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        if (!prueba.descripcion.isNullOrBlank()) {
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            Text(
-                                                text = prueba.descripcion,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                        tabs.forEachIndexed { index, title ->
+                            Tab(
+                                selected = selectedTab == index,
+                                onClick = { selectedTab = index },
+                                text = { Text(title) }
+                            )
                         }
+                    }
 
-                        // Baremos Section
-                        if (infoPruebas.isNotEmpty()) {
-                            item {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "📊 Baremos de Puntuación",
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Text(
-                                    text = "Género: $genero",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                    when (selectedTab) {
+                        0 -> InfoTab(nombreOposicion, oposicionId, pruebas)
+                        1 -> TrucosTab(pruebas, infoPruebas)
+                        2 -> NoticiasTab(noticias, noticiasRss, context)
+                        3 -> BaremosTab(infoPruebas, genero)
+                    }
+                }
+            }
+        }
+    }
+}
 
-                            // Group by prueba name
-                            val grouped = infoPruebas.groupBy { it.nombre_prueba }
-                            grouped.forEach { (nombrePrueba, baremos) ->
-                                item {
-                                    Card(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                                    ) {
-                                        Column(modifier = Modifier.padding(16.dp)) {
-                                            Text(
-                                                text = nombrePrueba,
-                                                style = MaterialTheme.typography.titleMedium,
-                                                fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.secondary
-                                            )
+@Composable
+private fun InfoTab(
+    nombreOposicion: String,
+    oposicionId: Int,
+    pruebas: List<PruebaOposicion>
+) {
+    val descripcion = if (oposicionId == 1) {
+        "La oposición a la Escala Básica de la Policía Nacional es una de las más demandadas en España. " +
+                "Los aspirantes deben superar pruebas físicas, teóricas y psicotécnicas. " +
+                "Las pruebas físicas incluyen circuito de agilidad, dominadas (hombres) o suspensión en barra (mujeres) " +
+                "y carrera de 1.000 metros. Es necesario obtener una calificación mínima en cada prueba para no ser eliminado."
+    } else {
+        "La oposición de acceso libre a la Guardia Civil ofrece plazas para incorporarse al cuerpo como Guardia Civil. " +
+                "Las pruebas físicas son exigentes e incluyen carrera de 2.000 metros, circuito de agilidad, " +
+                "flexiones de brazos y natación de 50 metros. Todas las pruebas son eliminatorias: " +
+                "no alcanzar la marca mínima supone la exclusión del proceso selectivo."
+    }
 
-                                            // Tips/tricks
-                                            val trucos = baremos.firstOrNull()?.trucos
-                                            if (!trucos.isNullOrBlank()) {
-                                                Spacer(modifier = Modifier.height(4.dp))
-                                                Text(
-                                                    text = "💡 $trucos",
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.tertiary
-                                                )
-                                            }
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Description card
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "🏛️ Sobre la oposición",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = descripcion,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+        }
 
-                                            Spacer(modifier = Modifier.height(8.dp))
-                                            HorizontalDivider()
-                                            Spacer(modifier = Modifier.height(8.dp))
-
-                                            // Baremo table header
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                Text(
-                                                    text = "Marca",
-                                                    style = MaterialTheme.typography.labelMedium,
-                                                    fontWeight = FontWeight.Bold,
-                                                    modifier = Modifier.weight(1f)
-                                                )
-                                                Text(
-                                                    text = "Nota",
-                                                    style = MaterialTheme.typography.labelMedium,
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                            }
-
-                                            baremos.forEach { baremo ->
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-                                                    horizontalArrangement = Arrangement.SpaceBetween
-                                                ) {
-                                                    Text(
-                                                        text = "${baremo.marca_valor ?: "-"}",
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        modifier = Modifier.weight(1f)
-                                                    )
-                                                    Text(
-                                                        text = baremo.nota?.let { String.format("%.1f", it) } ?: "-",
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        fontWeight = FontWeight.SemiBold,
-                                                        color = MaterialTheme.colorScheme.primary
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+        // Pruebas Oficiales Section
+        if (pruebas.isNotEmpty()) {
+            item {
+                Text(
+                    text = "📋 Pruebas Físicas Oficiales",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            items(pruebas) { prueba ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = prueba.nombre_prueba,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        if (!prueba.descripcion.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = prueba.descripcion,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
+                    }
+                }
+            }
+        }
 
-                        // Noticias Section
-                        if (noticias.isNotEmpty()) {
-                            item {
-                                Spacer(modifier = Modifier.height(8.dp))
+        // Empty state
+        if (pruebas.isEmpty()) {
+            item {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("ℹ️", style = MaterialTheme.typography.displayMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "No hay información disponible para tu oposición.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TrucosTab(
+    pruebas: List<PruebaOposicion>,
+    infoPruebas: List<InfoPrueba>
+) {
+    // Collect unique trucos from pruebas_oficiales
+    val trucosFromPruebas = pruebas
+        .filter { !it.trucos.isNullOrBlank() }
+        .map { it.nombre_prueba to it.trucos!! }
+
+    // Collect unique trucos from infoPruebas (baremos)
+    val trucosFromInfo = infoPruebas
+        .filter { !it.trucos.isNullOrBlank() }
+        .distinctBy { it.nombre_prueba }
+        .map { it.nombre_prueba to it.trucos!! }
+
+    // Merge, preferring pruebas trucos (more detailed)
+    val allTrucos = mutableMapOf<String, String>()
+    trucosFromInfo.forEach { (nombre, truco) -> allTrucos[nombre] = truco }
+    trucosFromPruebas.forEach { (nombre, truco) -> allTrucos[nombre] = truco }
+
+    // General tips for physical tests
+    val consejosGenerales = listOf(
+        "🏃 Calentamiento" to "Dedica al menos 10-15 minutos a calentar antes de cada entrenamiento y especialmente el día de la prueba. Incluye carrera suave, movilidad articular y estiramientos dinámicos.",
+        "🍎 Nutrición" to "Mantén una dieta equilibrada rica en proteínas, carbohidratos complejos y grasas saludables. Hidrátate correctamente: al menos 2 litros de agua al día.",
+        "😴 Descanso" to "Duerme entre 7-9 horas diarias. El descanso es fundamental para la recuperación muscular y el rendimiento. Evita entrenar los mismos grupos musculares en días consecutivos.",
+        "📅 Planificación" to "Organiza tus entrenamientos alternando entre fuerza, resistencia y velocidad. Incluye al menos un día de descanso activo a la semana.",
+        "🧠 Mentalidad" to "Visualiza las pruebas antes del día del examen. Practica con las condiciones reales (pista, circuito, piscina). La confianza se construye con la preparación."
+    )
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Specific tips per test
+        if (allTrucos.isNotEmpty()) {
+            item {
+                Text(
+                    text = "💡 Trucos por Prueba",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            items(allTrucos.toList()) { (nombrePrueba, truco) ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "🎯 $nombrePrueba",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = truco,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    }
+                }
+            }
+        }
+
+        // General tips
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "🏋️ Consejos Generales para las Físicas",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+        items(consejosGenerales) { (titulo, consejo) ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = titulo,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = consejo,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NoticiasTab(
+    noticias: List<NoticiaOposicion>,
+    noticiasRss: List<NoticiaRss>,
+    context: android.content.Context
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // RSS News Section
+        if (noticiasRss.isNotEmpty()) {
+            item {
+                Text(
+                    text = "📡 Noticias RSS",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "Fuentes oficiales actualizadas automáticamente",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            items(noticiasRss) { noticia ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(
+                            if (noticia.enlace.isNotBlank()) {
+                                Modifier.clickable {
+                                    try {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(noticia.enlace))
+                                        context.startActivity(intent)
+                                    } catch (_: Exception) { }
+                                }
+                            } else Modifier
+                        ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = noticia.titulo,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        if (noticia.fuente.isNotBlank()) {
+                            Text(
+                                text = "📌 ${noticia.fuente}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                        if (noticia.descripcion.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = noticia.descripcion,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                maxLines = 3
+                            )
+                        }
+                        if (noticia.enlace.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "🔗 Ver noticia completa",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                textDecoration = TextDecoration.Underline
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Database News Section
+        if (noticias.isNotEmpty()) {
+            item {
+                if (noticiasRss.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                Text(
+                    text = "📰 Noticias de la Oposición",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            items(noticias) { noticia ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = noticia.titulo,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (!noticia.contenido.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = noticia.contenido,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Empty state
+        if (noticias.isEmpty() && noticiasRss.isEmpty()) {
+            item {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("📰", style = MaterialTheme.typography.displayMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "No hay noticias disponibles en este momento.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BaremosTab(
+    infoPruebas: List<InfoPrueba>,
+    genero: String
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        if (infoPruebas.isNotEmpty()) {
+            item {
+                Text(
+                    text = "📊 Baremos de Puntuación",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "Género: $genero",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Group by prueba name
+            val grouped = infoPruebas.groupBy { it.nombre_prueba }
+            grouped.forEach { (nombrePrueba, baremos) ->
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = nombrePrueba,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+                            HorizontalDivider()
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Baremo table header
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
                                 Text(
-                                    text = "📰 Noticias",
-                                    style = MaterialTheme.typography.headlineSmall,
+                                    text = "Marca",
+                                    style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = "Nota",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
-                            items(noticias) { noticia ->
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                                    )
-                                ) {
-                                    Column(modifier = Modifier.padding(16.dp)) {
-                                        Text(
-                                            text = noticia.titulo,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                                        )
-                                        if (!noticia.contenido.isNullOrBlank()) {
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            Text(
-                                                text = noticia.contenido,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
 
-                        // Empty state
-                        if (pruebas.isEmpty() && noticias.isEmpty() && infoPruebas.isEmpty()) {
-                            item {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth().padding(32.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                            baremos.forEach { baremo ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("ℹ️", style = MaterialTheme.typography.displayMedium)
-                                    Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = "No hay información disponible para tu oposición.",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        text = "${baremo.marca_valor ?: "-"}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Text(
+                                        text = baremo.nota?.let { String.format("%.1f", it) } ?: "-",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.primary
                                     )
                                 }
                             }
                         }
                     }
+                }
+            }
+        } else {
+            item {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("📊", style = MaterialTheme.typography.displayMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "No hay baremos disponibles.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }

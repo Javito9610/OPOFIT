@@ -50,7 +50,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         isLoggedIn = session.isLoggedIn,
                         userId = session.userId.toIntOrNull(),
                         userEmail = session.email,
-                        userName = session.userName
+                        userName = session.userName,
+                        genero = session.genero.ifEmpty { null },
+                        oposicionId = session.oposicionId.toIntOrNull()
                     )
                 }
             }
@@ -80,7 +82,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             token = response.token,
                             email = email,
                             userId = response.user?.id_usuario?.toString() ?: "",
-                            userName = response.user?.nombre ?: ""
+                            userName = response.user?.nombre ?: "",
+                            genero = response.user?.genero ?: "",
+                            oposicionId = response.user?.oposiciones_id_oposicion?.toString() ?: ""
                         )
 
                         _uiState.update { it.copy(

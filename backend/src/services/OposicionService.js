@@ -10,13 +10,17 @@ class OposicionService{
 
     static async obtenerDetalleCompleto(idOposicion){
 
+        const sqlOposicion="SELECT * FROM oposiciones WHERE id_oposicion = ?";
+        const [opoRows]=await db.query(sqlOposicion, [idOposicion]);
+        const oposicion = opoRows && opoRows.length > 0 ? opoRows[0] : null;
+
         const sqlPruebasOficiales="SELECT * FROM pruebas_oficiales WHERE oposiciones_id_oposicion = ?";
         const [pruebas]=await db.query(sqlPruebasOficiales, [idOposicion]);
 
         const sqlNoticiasRecientes="SELECT * FROM noticias WHERE oposiciones_id_oposicion = ? ORDER BY fecha_publicacion DESC";
         const [noticias]=await db.query(sqlNoticiasRecientes, [idOposicion]);
 
-        return {pruebas, noticias};
+        return {oposicion, pruebas, noticias};
 
     }
 

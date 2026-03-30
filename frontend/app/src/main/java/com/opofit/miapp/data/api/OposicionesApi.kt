@@ -1,5 +1,6 @@
 package com.opofit.miapp.data.api
 
+import com.opofit.miapp.data.responsemodels.NoticiasRssResponse
 import com.opofit.miapp.data.responsemodels.OposicionDetalleResponse
 import com.opofit.miapp.data.responsemodels.OposicionesListResponse
 import com.opofit.miapp.data.responsemodels.RequisitosResponse
@@ -25,4 +26,10 @@ interface OposicionesApi {
         @Path("id") id: Int,
         @Path("genero") genero: String
     ): RequisitosResponse
+
+    @GET("/api/oposiciones/rss/{id}")
+    suspend fun getNoticiasRss(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): NoticiasRssResponse
 }

@@ -18,6 +18,8 @@ class TokenManager(private val context: Context) {
         private val USER_EMAIL_KEY = stringPreferencesKey("user_email")
         private val USER_ID_KEY = stringPreferencesKey("user_id")
         private val USER_NAME_KEY = stringPreferencesKey("user_name")
+        private val USER_GENERO_KEY = stringPreferencesKey("user_genero")
+        private val USER_OPOSICION_ID_KEY = stringPreferencesKey("user_oposicion_id")
     }
 
     suspend fun saveToken(token: String) {
@@ -58,6 +60,26 @@ class TokenManager(private val context: Context) {
 
     fun getUserName(): Flow<String?> = context.dataStore.data.map { preferences ->
         preferences[USER_NAME_KEY]
+    }
+
+    suspend fun saveGenero(genero: String) {
+        context.dataStore.edit { preferences ->
+            preferences[USER_GENERO_KEY] = genero
+        }
+    }
+
+    fun getGenero(): Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[USER_GENERO_KEY]
+    }
+
+    suspend fun saveOposicionId(oposicionId: String) {
+        context.dataStore.edit { preferences ->
+            preferences[USER_OPOSICION_ID_KEY] = oposicionId
+        }
+    }
+
+    fun getOposicionId(): Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[USER_OPOSICION_ID_KEY]
     }
 
     suspend fun clearAll() {
