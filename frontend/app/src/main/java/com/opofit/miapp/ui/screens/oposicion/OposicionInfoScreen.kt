@@ -98,7 +98,7 @@ fun OposicionInfoScreen(
         }
     }
 
-    val nombreOposicion = oposicion?.nombre ?: if (oposicionId == 1) "Policía Nacional" else "Guardia Civil"
+    val nombreOposicion = oposicion?.nombre ?: "Info Oposición"
 
     Scaffold(
         topBar = {

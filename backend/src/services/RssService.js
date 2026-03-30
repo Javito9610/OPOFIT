@@ -8,6 +8,10 @@ const parser = new Parser({
     }
 });
 
+const ITEMS_PER_FEED = 5;
+const MAX_TOTAL_NEWS = 10;
+const MAX_DESCRIPTION_LENGTH = 300;
+
 const RSS_FEEDS = {
     1: [
         {
@@ -40,13 +44,13 @@ class RssService {
         for (const feedConfig of feeds) {
             try {
                 const feed = await parser.parseURL(feedConfig.url);
-                const items = (feed.items || []).slice(0, 5).map(item => ({
+                const items = (feed.items || []).slice(0, ITEMS_PER_FEED).map(item => ({
                     titulo: item.title || 'Sin título',
                     enlace: item.link || '',
                     fecha: item.pubDate || item.isoDate || '',
                     fuente: feedConfig.nombre,
                     descripcion: (item.contentSnippet || item.content || '')
-                        .substring(0, 300)
+                        .substring(0, MAX_DESCRIPTION_LENGTH)
                         .replace(/<[^>]*>/g, '')
                 }));
                 todasNoticias.push(...items);
@@ -61,7 +65,7 @@ class RssService {
             return dateB - dateA;
         });
 
-        return todasNoticias.slice(0, 10);
+        return todasNoticias.slice(0, MAX_TOTAL_NEWS);
     }
 }
 
