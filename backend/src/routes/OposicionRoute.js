@@ -5,8 +5,10 @@ const { validarToken } = require('../middleware/authMiddleware');
 
  router.get("/", validarToken, oposicionesController.getOposiciones);
 
- router.get("/:id", validarToken, oposicionesController.getInfoOposiciones);
+ router.get("/rss/:id", validarToken, oposicionesController.getNoticiasRss);
 
  router.get("/requisitos/:id/:genero", validarToken, oposicionesController.getRequisitos);
+
+ router.get("/:id", validarToken, oposicionesController.getInfoOposiciones);
 
  module.exports= router;

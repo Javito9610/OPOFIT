@@ -8,6 +8,8 @@ data class UserSession(
     val email: String = "",
     val userId: String = "",
     val userName: String = "",
+    val genero: String = "",
+    val oposicionId: String = "",
     val isLoggedIn: Boolean = false
 )
 
@@ -17,28 +19,36 @@ class SessionManager(private val tokenManager: TokenManager) {
         tokenManager.getToken(),
         tokenManager.getUserEmail(),
         tokenManager.getUserId(),
-        tokenManager.getUserName()
-    ) { token, email, userId, name ->
+        tokenManager.getUserName(),
+        tokenManager.getGenero()
+    ) { token, email, userId, name, genero ->
         UserSession(
             token = token ?: "",
             email = email ?: "",
             userId = userId ?: "",
             userName = name ?: "",
+            genero = genero ?: "",
             isLoggedIn = !token.isNullOrEmpty()
         )
+    }.combine(tokenManager.getOposicionId()) { session, oposicionId ->
+        session.copy(oposicionId = oposicionId ?: "")
     }
 
     suspend fun saveSession(
         token: String?,
         email: String,
         userId: String,
-        userName: String
+        userName: String,
+        genero: String = "",
+        oposicionId: String = ""
     ) {
         tokenManager.apply {
             saveToken(token ?: "")
             saveUserEmail(email)
             saveUserId(userId)
             saveUserName(userName)
+            if (genero.isNotEmpty()) saveGenero(genero)
+            if (oposicionId.isNotEmpty()) saveOposicionId(oposicionId)
         }
     }
 
