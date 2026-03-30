@@ -69,6 +69,8 @@ fun EditarPerfilScreen(
     data class MarcaRow(val idPrueba: Int? = null, val nombrePrueba: String = "", val valor: String = "")
     val marcas = remember { mutableStateListOf(MarcaRow()) }
 
+    var expandedDropdownIndex by remember { mutableStateOf(-1) }
+
     val pruebasDisponibles = remember(perfilState.infoPruebas) {
         perfilState.infoPruebas
             .distinctBy { it.id_pruebas_oficiales }
@@ -175,7 +177,7 @@ fun EditarPerfilScreen(
             }
 
             itemsIndexed(marcas) { index, row ->
-                var expanded by remember { mutableStateOf(false) }
+                val expanded = expandedDropdownIndex == index
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -183,7 +185,7 @@ fun EditarPerfilScreen(
                 ) {
                     ExposedDropdownMenuBox(
                         expanded = expanded,
-                        onExpandedChange = { expanded = it }
+                        onExpandedChange = { expandedDropdownIndex = if (it) index else -1 }
                     ) {
                         OutlinedTextField(
                             value = row.nombrePrueba,
@@ -199,14 +201,14 @@ fun EditarPerfilScreen(
                         )
                         ExposedDropdownMenu(
                             expanded = expanded,
-                            onDismissRequest = { expanded = false }
+                            onDismissRequest = { expandedDropdownIndex = -1 }
                         ) {
                             pruebasDisponibles.forEach { (id, nombre) ->
                                 DropdownMenuItem(
                                     text = { Text(nombre) },
                                     onClick = {
                                         marcas[index] = row.copy(idPrueba = id, nombrePrueba = nombre)
-                                        expanded = false
+                                        expandedDropdownIndex = -1
                                     }
                                 )
                             }
