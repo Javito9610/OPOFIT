@@ -221,7 +221,7 @@ fun OposicionInfoScreen(
                                                         modifier = Modifier.weight(1f)
                                                     )
                                                     Text(
-                                                        text = "${baremo.nota?.toInt() ?: "-"}",
+                                                        text = baremo.nota?.let { String.format("%.1f", it) } ?: "-",
                                                         style = MaterialTheme.typography.bodyMedium,
                                                         fontWeight = FontWeight.SemiBold,
                                                         color = MaterialTheme.colorScheme.primary
