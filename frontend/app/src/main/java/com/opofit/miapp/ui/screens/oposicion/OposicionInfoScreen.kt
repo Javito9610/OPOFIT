@@ -53,7 +53,9 @@ fun OposicionInfoScreen(
                     pruebas = detalleResponse.pruebas ?: emptyList()
                     noticias = detalleResponse.noticias ?: emptyList()
                 }
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                error = "Error al cargar pruebas: ${e.message ?: "Error de conexión"}"
+            }
 
             // Load pruebas info with baremos
             try {
@@ -61,7 +63,11 @@ fun OposicionInfoScreen(
                 if (infoResponse.ok) {
                     infoPruebas = infoResponse.data ?: emptyList()
                 }
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                if (error.isEmpty()) {
+                    error = "Error al cargar baremos: ${e.message ?: "Error de conexión"}"
+                }
+            }
 
             isLoading = false
         } catch (e: Exception) {

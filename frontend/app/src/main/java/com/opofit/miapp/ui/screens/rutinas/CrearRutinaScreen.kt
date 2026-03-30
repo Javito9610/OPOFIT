@@ -77,6 +77,7 @@ fun CrearRutinaScreen(
     val ejercicios = remember { mutableStateListOf(EjercicioFormRow()) }
 
     var ejerciciosDisponibles by remember { mutableStateOf<List<Ejercicio>>(emptyList()) }
+    var errorCargaEjercicios by remember { mutableStateOf("") }
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
 
@@ -86,8 +87,12 @@ fun CrearRutinaScreen(
             val response = RetrofitClient.ejerciciosApi.listarEjercicios("Bearer $token")
             if (response.ok && response.data != null) {
                 ejerciciosDisponibles = response.data
+            } else {
+                errorCargaEjercicios = "No se pudieron cargar los ejercicios"
             }
-        } catch (_: Exception) { }
+        } catch (e: Exception) {
+            errorCargaEjercicios = "Error al cargar ejercicios: ${e.message ?: "Error de conexión"}"
+        }
     }
 
     LaunchedEffect(uiState.guardadoExitoso) {
@@ -137,6 +142,13 @@ fun CrearRutinaScreen(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground
                 )
+                if (errorCargaEjercicios.isNotEmpty()) {
+                    Text(
+                        text = errorCargaEjercicios,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
 
             itemsIndexed(ejercicios) { index, row ->

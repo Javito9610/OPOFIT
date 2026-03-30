@@ -30,11 +30,11 @@ class RutinaPersService{
         const connection= await db.getConnection();
         try{
             const sqlListar=`SELECT r.id_rutina_pers, r.nombre_personalizado, d.ejercicios_id_ejercicio, e.nombre AS nombre_ejercicio, d.series, d.repeticiones, d.descanso
-                                FROM rutinas_pers r
-                                LEFT JOIN detalle_rutina_pers d ON r.id_rutina_pers = d.rutinas_pers_id_rutina_pers
-                                LEFT JOIN ejercicios e ON d.ejercicios_id_ejercicio = e.id_ejercicio
-                                 WHERE r.usuarios_id_usuario = ?
-                                 ORDER BY r.id_rutina_pers ASC`
+                FROM rutinas_pers r
+                LEFT JOIN detalle_rutina_pers d ON r.id_rutina_pers = d.rutinas_pers_id_rutina_pers
+                LEFT JOIN ejercicios e ON d.ejercicios_id_ejercicio = e.id_ejercicio
+                WHERE r.usuarios_id_usuario = ?
+                ORDER BY r.id_rutina_pers ASC`
             const [rows]=await connection.query(sqlListar, [userId]);
             return rows;
         }finally{
