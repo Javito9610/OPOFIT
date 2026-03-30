@@ -42,6 +42,3 @@
 
 # ============ FIREBASE ============
 -dontwarn com.google.firebase.**
-
-# ============ COIL ============
--dontwarn coil3.**
