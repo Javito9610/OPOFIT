@@ -7,9 +7,7 @@ plugins {
 
 android {
     namespace = "com.opofit.miapp"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.opofit.miapp"
