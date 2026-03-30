@@ -37,6 +37,16 @@ const RSS_FEEDS = {
 
 class RssService {
 
+    static stripHtmlTags(text) {
+        let result = text;
+        let previous;
+        do {
+            previous = result;
+            result = result.replace(/<[^>]*>/g, '');
+        } while (result !== previous);
+        return result;
+    }
+
     static async obtenerNoticiasRss(idOposicion) {
         const feeds = RSS_FEEDS[idOposicion] || RSS_FEEDS[1];
         const todasNoticias = [];
@@ -49,9 +59,10 @@ class RssService {
                     enlace: item.link || '',
                     fecha: item.pubDate || item.isoDate || '',
                     fuente: feedConfig.nombre,
-                    descripcion: (item.contentSnippet || item.content || '')
-                        .substring(0, MAX_DESCRIPTION_LENGTH)
-                        .replace(/<[^>]*>/g, '')
+                    descripcion: RssService.stripHtmlTags(
+                        (item.contentSnippet || item.content || '')
+                            .substring(0, MAX_DESCRIPTION_LENGTH)
+                    )
                 }));
                 todasNoticias.push(...items);
             } catch (error) {
