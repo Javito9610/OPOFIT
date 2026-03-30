@@ -134,6 +134,7 @@ fun HomeScreen(
                         title = "Mis Rutinas",
                         subtitle = "Plan personalizado",
                         containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
                         onClick = onNavigateToRutinas
                     )
                     NavCard(
@@ -142,6 +143,7 @@ fun HomeScreen(
                         title = "Entrenamientos",
                         subtitle = "Empieza a entrenar",
                         containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary,
                         onClick = onNavigateToEntrenamientos
                     )
                 }
@@ -159,6 +161,7 @@ fun HomeScreen(
                         title = "Mi Perfil",
                         subtitle = "Marcas y nivel",
                         containerColor = MaterialTheme.colorScheme.tertiary,
+                        contentColor = MaterialTheme.colorScheme.onTertiary,
                         onClick = onNavigateToPerfil
                     )
                     NavCard(
@@ -167,6 +170,7 @@ fun HomeScreen(
                         title = "Historial",
                         subtitle = "Tu progreso",
                         containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
                         onClick = onNavigateToHistorial
                     )
                 }
@@ -184,6 +188,7 @@ fun HomeScreen(
                         title = "Info Oposición",
                         subtitle = "Baremos y noticias",
                         containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary,
                         onClick = onNavigateToInfoOposicion
                     )
                     NavCard(
@@ -192,6 +197,7 @@ fun HomeScreen(
                         title = "Rutinas Libres",
                         subtitle = "Crea tu rutina",
                         containerColor = MaterialTheme.colorScheme.tertiary,
+                        contentColor = MaterialTheme.colorScheme.onTertiary,
                         onClick = onNavigateToRutinasLibres
                     )
                 }
@@ -209,6 +215,7 @@ private fun NavCard(
     title: String,
     subtitle: String,
     containerColor: Color,
+    contentColor: Color,
     onClick: () -> Unit
 ) {
     Card(
@@ -216,7 +223,10 @@ private fun NavCard(
         onClick = onClick,
         shape = MaterialTheme.shapes.large,
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor)
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        )
     ) {
         Column(
             modifier = Modifier
@@ -227,19 +237,19 @@ private fun NavCard(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
+                tint = contentColor,
                 modifier = Modifier.size(32.dp)
             )
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimary
+                color = contentColor
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+                color = contentColor.copy(alpha = 0.85f)
             )
         }
     }
