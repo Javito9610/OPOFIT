@@ -144,9 +144,9 @@ fun RutinasLibresScreen(
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.SemiBold
                                         )
-                                        if (rutina.ejercicios_id_ejercicio != null) {
+                                        if (rutina.nombre_ejercicio != null) {
                                             Text(
-                                                text = "Ejercicio #${rutina.ejercicios_id_ejercicio} • ${rutina.series ?: "-"} series × ${rutina.repeticiones ?: "-"} reps",
+                                                text = "${rutina.nombre_ejercicio} • ${rutina.series ?: "-"} series × ${rutina.repeticiones ?: "-"} reps",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
