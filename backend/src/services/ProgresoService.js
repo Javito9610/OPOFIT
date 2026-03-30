@@ -42,13 +42,25 @@ class ProgresoService{
     }
 
     static async obtenerEvolucionEntreno(userId, idEjercicio){
-       const sql= `SELECT h.fecha_entreno, r.valor_conseguido 
+       const sql= `SELECT h.fecha_entreno, r.valor_conseguido, e.nombre AS nombre_ejercicio
             FROM registro_resultados r
             JOIN historial_sesiones h ON r.historial_sesiones_id_historial_sesiones = h.id_historial_sesion
+            JOIN ejercicios e ON r.ejercicios_id_ejercicio = e.id_ejercicio
             WHERE h.usuarios_id_usuario = ? AND r.ejercicios_id_ejercicio = ?
             ORDER BY h.fecha_entreno ASC`; 
         const [rows]= await db.query(sql,[userId, idEjercicio])
         return rows
+    }
+
+    static async obtenerHistorialSesiones(userId) {
+        const sql = `
+            SELECT h.id_historial_sesion, h.fecha_entreno, h.tipo_rutina, h.duracion_oficial,
+                   h.rutinas_opo_id_rutina_opo, h.rutinas_pers_id_rutina_pers
+            FROM historial_sesiones h
+            WHERE h.usuarios_id_usuario = ?
+            ORDER BY h.fecha_entreno DESC`;
+        const [rows] = await db.query(sql, [userId]);
+        return rows;
     }
 
 }

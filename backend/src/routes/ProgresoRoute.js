@@ -5,5 +5,6 @@ const { validarToken } = require('../middleware/authMiddleware');
 
 router.post('/registrar', validarToken, progresoController.guardarEntrenamiento);
 router.get('/evolucion/:userId/:idEjercicio', validarToken, progresoController.verEvolucion);
+router.get('/sesiones/:userId', validarToken, progresoController.verHistorialSesiones);
 
 module.exports = router;

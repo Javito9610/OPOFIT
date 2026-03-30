@@ -23,4 +23,6 @@ object NavDestinations {
     const val HISTORIAL = "historial"
 
     const val AJUSTES = "ajustes"
+
+    const val INFO_OPOSICION = "info_oposicion"
 }

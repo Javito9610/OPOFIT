@@ -20,6 +20,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,15 +42,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.first
 import com.opofit.miapp.data.responsemodels.EjercicioLibreItem
+import com.opofit.miapp.data.api.RetrofitClient
+import com.opofit.miapp.data.local.TokenManager
+import com.opofit.miapp.data.responsemodels.Ejercicio
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasLibresViewModel
 
 private data class EjercicioFormRow(
-    val idEjercicio: String = "",
+    val idEjercicio: Int? = null,
+    val nombreEjercicio: String = "",
     val series: String = "",
     val repeticiones: String = ""
 )
@@ -66,6 +75,25 @@ fun CrearRutinaScreen(
 
     var nombreRutina by remember { mutableStateOf("") }
     val ejercicios = remember { mutableStateListOf(EjercicioFormRow()) }
+
+    var ejerciciosDisponibles by remember { mutableStateOf<List<Ejercicio>>(emptyList()) }
+    var errorCargaEjercicios by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    val tokenManager = remember { TokenManager(context) }
+
+    LaunchedEffect(Unit) {
+        try {
+            val token = tokenManager.getToken().first() ?: ""
+            val response = RetrofitClient.ejerciciosApi.listarEjercicios("Bearer $token")
+            if (response.ok && response.data != null) {
+                ejerciciosDisponibles = response.data
+            } else {
+                errorCargaEjercicios = "No se pudieron cargar los ejercicios"
+            }
+        } catch (e: Exception) {
+            errorCargaEjercicios = "Error al cargar ejercicios: ${e.message ?: "Error de conexión"}"
+        }
+    }
 
     LaunchedEffect(uiState.guardadoExitoso) {
         if (uiState.guardadoExitoso) {
@@ -114,6 +142,13 @@ fun CrearRutinaScreen(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground
                 )
+                if (errorCargaEjercicios.isNotEmpty()) {
+                    Text(
+                        text = errorCargaEjercicios,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
 
             itemsIndexed(ejercicios) { index, row ->
@@ -142,14 +177,34 @@ fun CrearRutinaScreen(
                                 }
                             }
                         }
-                        OutlinedTextField(
-                            value = row.idEjercicio,
-                            onValueChange = { ejercicios[index] = row.copy(idEjercicio = it) },
-                            label = { Text("ID Ejercicio") },
-                            modifier = Modifier.fillMaxWidth(),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            singleLine = true
-                        )
+                        var expanded by remember { mutableStateOf(false) }
+                        ExposedDropdownMenuBox(
+                            expanded = expanded,
+                            onExpandedChange = { expanded = !expanded }
+                        ) {
+                            OutlinedTextField(
+                                value = row.nombreEjercicio,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Ejercicio") },
+                                modifier = Modifier.fillMaxWidth().menuAnchor(),
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                ejerciciosDisponibles.forEach { ej ->
+                                    DropdownMenuItem(
+                                        text = { Text(ej.nombre) },
+                                        onClick = {
+                                            ejercicios[index] = row.copy(idEjercicio = ej.id_ejercicio, nombreEjercicio = ej.nombre)
+                                            expanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedTextField(
                                 value = row.series,
@@ -201,7 +256,7 @@ fun CrearRutinaScreen(
                     Button(
                         onClick = {
                             val items = ejercicios.mapNotNull { row ->
-                                val id = row.idEjercicio.toIntOrNull() ?: return@mapNotNull null
+                                val id = row.idEjercicio ?: return@mapNotNull null
                                 val s = row.series.toIntOrNull() ?: 1
                                 val r = row.repeticiones.toIntOrNull() ?: 1
                                 EjercicioLibreItem(id, s, r)

@@ -293,18 +293,46 @@ INSERT INTO `ejercicios` (`id_ejercicio`, `nombre`, `video_url`, `instrucciones_
 (20, 'Fondos en paralelas',       NULL, 'Apoyado en barras paralelas, flexionar brazos hasta que el codo forme 90° y empujar hasta extensión completa. Trabaja pectoral, tríceps y deltoides anterior.');
 
 INSERT INTO `rutinas_opo` (`id_rutina_opo`, `nivel`, `genero`, `enfoque_tipo`, `oposiciones_id_oposicion`) VALUES
+-- Oposición 1 – Policía Nacional: HOMBRE
 (1,  'BASICO',      'HOMBRE', 'RESISTENCIA', 1),
+(13, 'BASICO',      'HOMBRE', 'FUERZA',      1),
+(14, 'BASICO',      'HOMBRE', 'VELOCIDAD',   1),
 (2,  'INTERMEDIO',  'HOMBRE', 'FUERZA',      1),
+(15, 'INTERMEDIO',  'HOMBRE', 'RESISTENCIA', 1),
+(16, 'INTERMEDIO',  'HOMBRE', 'VELOCIDAD',   1),
 (3,  'AVANZADO',    'HOMBRE', 'VELOCIDAD',   1),
+(17, 'AVANZADO',    'HOMBRE', 'FUERZA',      1),
+(18, 'AVANZADO',    'HOMBRE', 'RESISTENCIA', 1),
+-- Oposición 1 – Policía Nacional: MUJER
 (4,  'BASICO',      'MUJER',  'RESISTENCIA', 1),
+(19, 'BASICO',      'MUJER',  'FUERZA',      1),
+(20, 'BASICO',      'MUJER',  'VELOCIDAD',   1),
 (5,  'INTERMEDIO',  'MUJER',  'FUERZA',      1),
+(21, 'INTERMEDIO',  'MUJER',  'RESISTENCIA', 1),
+(22, 'INTERMEDIO',  'MUJER',  'VELOCIDAD',   1),
 (6,  'AVANZADO',    'MUJER',  'VELOCIDAD',   1),
+(23, 'AVANZADO',    'MUJER',  'FUERZA',      1),
+(24, 'AVANZADO',    'MUJER',  'RESISTENCIA', 1),
+-- Oposición 2 – Guardia Civil: HOMBRE
 (7,  'BASICO',      'HOMBRE', 'RESISTENCIA', 2),
+(25, 'BASICO',      'HOMBRE', 'FUERZA',      2),
+(26, 'BASICO',      'HOMBRE', 'VELOCIDAD',   2),
 (8,  'INTERMEDIO',  'HOMBRE', 'FUERZA',      2),
+(27, 'INTERMEDIO',  'HOMBRE', 'RESISTENCIA', 2),
+(28, 'INTERMEDIO',  'HOMBRE', 'VELOCIDAD',   2),
 (9,  'AVANZADO',    'HOMBRE', 'VELOCIDAD',   2),
+(29, 'AVANZADO',    'HOMBRE', 'FUERZA',      2),
+(30, 'AVANZADO',    'HOMBRE', 'RESISTENCIA', 2),
+-- Oposición 2 – Guardia Civil: MUJER
 (10, 'BASICO',      'MUJER',  'RESISTENCIA', 2),
+(31, 'BASICO',      'MUJER',  'FUERZA',      2),
+(32, 'BASICO',      'MUJER',  'VELOCIDAD',   2),
 (11, 'INTERMEDIO',  'MUJER',  'FUERZA',      2),
-(12, 'AVANZADO',    'MUJER',  'VELOCIDAD',   2);
+(33, 'INTERMEDIO',  'MUJER',  'RESISTENCIA', 2),
+(34, 'INTERMEDIO',  'MUJER',  'VELOCIDAD',   2),
+(12, 'AVANZADO',    'MUJER',  'VELOCIDAD',   2),
+(35, 'AVANZADO',    'MUJER',  'FUERZA',      2),
+(36, 'AVANZADO',    'MUJER',  'RESISTENCIA', 2);
 
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
 (2,  1, 8,  3, 90),   -- Dominadas asistidas
@@ -389,6 +417,202 @@ INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rut
 (17, 12, 1,  6, 30),  -- Escalera agilidad
 (9,  12, 1,  10, 30), -- Series natación 25m
 (13, 12, 10, 4, 45);  -- Burpees
+
+-- =====================================================
+-- NUEVAS rutinas (IDs 13-36): detalle_rutina_opo
+-- =====================================================
+
+-- ID 13: BASICO, HOMBRE, FUERZA – Opo 1
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(2,  13, 6,  2, 90),   -- Dominadas asistidas
+(6,  13, 12, 3, 60),   -- Flexiones
+(12, 13, 10, 3, 60),   -- Sentadillas
+(19, 13, 8,  2, 90),   -- Press banca
+(11, 13, 20, 2, 45);   -- Plancha abdominal (20 seg)
+
+-- ID 14: BASICO, HOMBRE, VELOCIDAD – Opo 1
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(4,  14, 1,  4, 120),  -- Series 400m
+(5,  14, 1,  4, 90),   -- Series 200m
+(7,  14, 4,  2, 60),   -- Circuito de conos
+(17, 14, 1,  3, 45),   -- Escalera de agilidad
+(13, 14, 6,  2, 60);   -- Burpees
+
+-- ID 15: INTERMEDIO, HOMBRE, RESISTENCIA – Opo 1
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(3,  15, 1,  1, 0),    -- Carrera continua 30 min
+(8,  15, 1,  6, 60),   -- Natación crol 50m
+(6,  15, 20, 4, 45),   -- Flexiones
+(14, 15, 12, 3, 60),   -- Zancadas
+(11, 15, 40, 3, 45);   -- Plancha abdominal (40 seg)
+
+-- ID 16: INTERMEDIO, HOMBRE, VELOCIDAD – Opo 1
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(4,  16, 1,  6, 120),  -- Series 400m
+(5,  16, 1,  6, 90),   -- Series 200m
+(7,  16, 6,  3, 45),   -- Circuito de conos
+(17, 16, 1,  4, 30),   -- Escalera de agilidad
+(15, 16, 1,  1, 0);    -- Fartlek 20 min
+
+-- ID 17: AVANZADO, HOMBRE, FUERZA – Opo 1
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(1,  17, 12, 5, 90),   -- Dominadas estrictas
+(19, 17, 12, 4, 90),   -- Press banca
+(12, 17, 20, 5, 60),   -- Sentadillas
+(20, 17, 15, 4, 60),   -- Fondos en paralelas
+(16, 17, 15, 4, 60);   -- Remo invertido
+
+-- ID 18: AVANZADO, HOMBRE, RESISTENCIA – Opo 1
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(18, 18, 1,  1, 0),    -- Carrera continua 45 min
+(8,  18, 1,  8, 45),   -- Natación crol 50m
+(6,  18, 30, 5, 45),   -- Flexiones
+(14, 18, 20, 4, 45),   -- Zancadas
+(11, 18, 60, 4, 30);   -- Plancha abdominal (60 seg)
+
+-- ID 19: BASICO, MUJER, FUERZA – Opo 1
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(2,  19, 4,  2, 90),   -- Dominadas asistidas
+(6,  19, 8,  2, 60),   -- Flexiones
+(12, 19, 10, 3, 60),   -- Sentadillas
+(14, 19, 8,  2, 60),   -- Zancadas
+(11, 19, 20, 2, 45);   -- Plancha abdominal (20 seg)
+
+-- ID 20: BASICO, MUJER, VELOCIDAD – Opo 1
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(4,  20, 1,  3, 120),  -- Series 400m
+(5,  20, 1,  4, 90),   -- Series 200m
+(7,  20, 4,  2, 60),   -- Circuito de conos
+(17, 20, 1,  3, 45),   -- Escalera de agilidad
+(13, 20, 5,  2, 60);   -- Burpees
+
+-- ID 21: INTERMEDIO, MUJER, RESISTENCIA – Opo 1
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(3,  21, 1,  1, 0),    -- Carrera continua 30 min
+(8,  21, 1,  5, 60),   -- Natación crol 50m
+(6,  21, 15, 3, 60),   -- Flexiones
+(14, 21, 12, 3, 60),   -- Zancadas
+(11, 21, 35, 3, 45);   -- Plancha abdominal (35 seg)
+
+-- ID 22: INTERMEDIO, MUJER, VELOCIDAD – Opo 1
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(4,  22, 1,  5, 120),  -- Series 400m
+(5,  22, 1,  6, 90),   -- Series 200m
+(7,  22, 6,  3, 45),   -- Circuito de conos
+(17, 22, 1,  4, 30),   -- Escalera de agilidad
+(15, 22, 1,  1, 0);    -- Fartlek 20 min
+
+-- ID 23: AVANZADO, MUJER, FUERZA – Opo 1
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(1,  23, 8,  4, 90),   -- Dominadas estrictas
+(19, 23, 10, 4, 90),   -- Press banca
+(12, 23, 18, 5, 60),   -- Sentadillas
+(20, 23, 12, 4, 60),   -- Fondos en paralelas
+(16, 23, 12, 4, 60);   -- Remo invertido
+
+-- ID 24: AVANZADO, MUJER, RESISTENCIA – Opo 1
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(18, 24, 1,  1, 0),    -- Carrera continua 45 min
+(8,  24, 1,  8, 45),   -- Natación crol 50m
+(6,  24, 25, 5, 45),   -- Flexiones
+(14, 24, 16, 4, 45),   -- Zancadas
+(11, 24, 50, 4, 30);   -- Plancha abdominal (50 seg)
+
+-- ID 25: BASICO, HOMBRE, FUERZA – Opo 2
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(2,  25, 6,  3, 90),   -- Dominadas asistidas
+(6,  25, 12, 3, 60),   -- Flexiones
+(12, 25, 12, 3, 60),   -- Sentadillas
+(19, 25, 8,  2, 90),   -- Press banca
+(20, 25, 6,  2, 90);   -- Fondos en paralelas
+
+-- ID 26: BASICO, HOMBRE, VELOCIDAD – Opo 2
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(4,  26, 1,  4, 120),  -- Series 400m
+(5,  26, 1,  4, 90),   -- Series 200m
+(7,  26, 4,  3, 60),   -- Circuito de conos
+(17, 26, 1,  3, 45),   -- Escalera de agilidad
+(3,  26, 1,  1, 0);    -- Carrera continua 30 min
+
+-- ID 27: INTERMEDIO, HOMBRE, RESISTENCIA – Opo 2
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(18, 27, 1,  1, 0),    -- Carrera continua 45 min
+(8,  27, 1,  6, 60),   -- Natación crol 50m
+(9,  27, 1,  8, 45),   -- Series natación 25m
+(6,  27, 20, 4, 45),   -- Flexiones
+(11, 27, 40, 3, 45);   -- Plancha abdominal (40 seg)
+
+-- ID 28: INTERMEDIO, HOMBRE, VELOCIDAD – Opo 2
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(4,  28, 1,  6, 120),  -- Series 400m
+(5,  28, 1,  6, 90),   -- Series 200m
+(7,  28, 6,  4, 45),   -- Circuito de conos
+(17, 28, 1,  4, 30),   -- Escalera de agilidad
+(13, 28, 8,  3, 60);   -- Burpees
+
+-- ID 29: AVANZADO, HOMBRE, FUERZA – Opo 2
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(1,  29, 12, 5, 90),   -- Dominadas estrictas
+(19, 29, 12, 5, 90),   -- Press banca
+(12, 29, 20, 5, 60),   -- Sentadillas
+(20, 29, 15, 5, 60),   -- Fondos en paralelas
+(16, 29, 15, 4, 60);   -- Remo invertido
+
+-- ID 30: AVANZADO, HOMBRE, RESISTENCIA – Opo 2
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(18, 30, 1,  1, 0),    -- Carrera continua 45 min
+(8,  30, 1, 10, 45),   -- Natación crol 50m
+(9,  30, 1, 12, 30),   -- Series natación 25m
+(6,  30, 30, 5, 45),   -- Flexiones
+(11, 30, 60, 5, 30);   -- Plancha abdominal (60 seg)
+
+-- ID 31: BASICO, MUJER, FUERZA – Opo 2
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(2,  31, 4,  2, 90),   -- Dominadas asistidas
+(6,  31, 8,  3, 60),   -- Flexiones
+(12, 31, 10, 3, 60),   -- Sentadillas
+(14, 31, 8,  2, 60),   -- Zancadas
+(10, 31, 15, 2, 90);   -- Suspensión en barra (15 seg)
+
+-- ID 32: BASICO, MUJER, VELOCIDAD – Opo 2
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(4,  32, 1,  3, 120),  -- Series 400m
+(5,  32, 1,  4, 90),   -- Series 200m
+(7,  32, 4,  2, 60),   -- Circuito de conos
+(17, 32, 1,  3, 45),   -- Escalera de agilidad
+(3,  32, 1,  1, 0);    -- Carrera continua 30 min
+
+-- ID 33: INTERMEDIO, MUJER, RESISTENCIA – Opo 2
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(15, 33, 1,  1, 0),    -- Fartlek 20 min
+(8,  33, 1,  5, 60),   -- Natación crol 50m
+(9,  33, 1,  6, 45),   -- Series natación 25m
+(6,  33, 15, 4, 60),   -- Flexiones
+(11, 33, 35, 3, 45);   -- Plancha abdominal (35 seg)
+
+-- ID 34: INTERMEDIO, MUJER, VELOCIDAD – Opo 2
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(4,  34, 1,  5, 120),  -- Series 400m
+(5,  34, 1,  6, 90),   -- Series 200m
+(7,  34, 6,  3, 45),   -- Circuito de conos
+(17, 34, 1,  4, 30),   -- Escalera de agilidad
+(13, 34, 6,  3, 60);   -- Burpees
+
+-- ID 35: AVANZADO, MUJER, FUERZA – Opo 2
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(1,  35, 8,  4, 90),   -- Dominadas estrictas
+(19, 35, 10, 4, 90),   -- Press banca
+(12, 35, 18, 5, 60),   -- Sentadillas
+(20, 35, 12, 4, 60),   -- Fondos en paralelas
+(16, 35, 12, 5, 60);   -- Remo invertido
+
+-- ID 36: AVANZADO, MUJER, RESISTENCIA – Opo 2
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(18, 36, 1,  1, 0),    -- Carrera continua 45 min
+(8,  36, 1,  8, 45),   -- Natación crol 50m
+(9,  36, 1, 10, 30),   -- Series natación 25m
+(6,  36, 25, 5, 45),   -- Flexiones
+(11, 36, 50, 4, 30);   -- Plancha abdominal (50 seg)
 
 INSERT INTO `noticias` (`titulo`, `contenido`, `fecha_publicacion`, `oposiciones_id_oposicion`) VALUES
 ('Convocatoria Policía Nacional 2026 publicada en BOE',

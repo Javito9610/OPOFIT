@@ -130,7 +130,7 @@ fun DetallesRutinaScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Text(
-                                            text = "Ejercicio #${rutina.ejercicios_id_ejercicio ?: "-"}",
+                                            text = rutina.nombre_ejercicio ?: "Ejercicio",
                                             style = MaterialTheme.typography.bodyLarge,
                                             fontWeight = FontWeight.SemiBold
                                         )

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -23,7 +22,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -38,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
@@ -60,7 +57,7 @@ fun HistorialScreen(
     val userId = authState.userId ?: 0
     val oposicionId = authState.oposicionId ?: 1
 
-    var ejercicioIdInput by remember { mutableStateOf("") }
+    var ejercicioSeleccionado by remember { mutableStateOf("") }
 
     val ejerciciosDeRutina = remember(rutinasState.rutinaCompleta) {
         rutinasState.rutinaCompleta.flatMap { bloque ->
@@ -127,13 +124,13 @@ fun HistorialScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "$nombre (ID: $id)",
+                                        text = nombre,
                                         style = MaterialTheme.typography.bodyMedium,
                                         modifier = Modifier.weight(1f)
                                     )
                                     Button(
                                         onClick = {
-                                            ejercicioIdInput = id.toString()
+                                            ejercicioSeleccionado = nombre
                                             historialViewModel.cargarEvolucion(userId, id)
                                         }
                                     ) {
@@ -142,30 +139,6 @@ fun HistorialScreen(
                                 }
                             }
                             Spacer(modifier = Modifier.height(8.dp))
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            OutlinedTextField(
-                                value = ejercicioIdInput,
-                                onValueChange = { ejercicioIdInput = it },
-                                label = { Text("ID Ejercicio") },
-                                modifier = Modifier.weight(1f),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                singleLine = true
-                            )
-                            Button(
-                                onClick = {
-                                    val id = ejercicioIdInput.toIntOrNull()
-                                    if (id != null && userId > 0) {
-                                        historialViewModel.cargarEvolucion(userId, id)
-                                    }
-                                }
-                            ) {
-                                Text("Buscar")
-                            }
                         }
                     }
                 }
@@ -189,7 +162,7 @@ fun HistorialScreen(
                 }
             }
 
-            if (!uiState.isLoading && uiState.error.isEmpty() && uiState.evolucion.isEmpty() && ejercicioIdInput.isEmpty()) {
+            if (!uiState.isLoading && uiState.error.isEmpty() && uiState.evolucion.isEmpty() && ejercicioSeleccionado.isEmpty()) {
                 item {
                     Column(
                         modifier = Modifier

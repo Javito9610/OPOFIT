@@ -63,4 +63,21 @@ const verEvolucion=async(req, res)=>{
         });
     }
 };
-module.exports = { guardarEntrenamiento, verEvolucion };
+const verHistorialSesiones = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        if (!userId) {
+            return res.status(400).json({ ok: false, msg: "Falta el identificador del usuario" });
+        }
+        if (parseInt(userId) !== req.usuario.id) {
+            return res.status(403).json({ ok: false, msg: "No tienes permiso para ver el historial de otro usuario" });
+        }
+        const datos = await progresoService.obtenerHistorialSesiones(userId);
+        res.status(200).json({ ok: true, data: datos });
+    } catch (error) {
+        console.error("Error en verHistorialSesiones:", error.message);
+        res.status(500).json({ ok: false, msg: "Error al obtener el historial" });
+    }
+};
+
+module.exports = { guardarEntrenamiento, verEvolucion, verHistorialSesiones };

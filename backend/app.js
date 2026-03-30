@@ -32,6 +32,7 @@ app.use('/api/rutinas', require('./src/routes/RutinaRoute'));
 app.use('/api/rutinas-pers', require('./src/routes/RutinaPersRoute'));
 app.use('/api/historial', require('./src/routes/ProgresoRoute'));
 app.use('/api/info', require('./src/routes/InfoPruebasRoute'));
+app.use('/api/ejercicios', require('./src/routes/EjerciciosRoute'));
 
 app.listen(port,()=>{
     console.log(`Servidor ejecutandose en http://localhost:${port}`);

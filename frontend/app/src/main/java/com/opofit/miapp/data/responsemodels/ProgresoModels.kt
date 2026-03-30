@@ -20,7 +20,8 @@ data class RegistrarHistorialResponse(
 
 data class PuntoEvolucion(
     val fecha_entreno: String,
-    val valor_conseguido: Double
+    val valor_conseguido: Double,
+    val nombre_ejercicio: String? = null
 )
 
 data class EvolucionResponse(

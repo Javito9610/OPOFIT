@@ -69,14 +69,21 @@ fun EntrenamientosScreen(
     val historialState by historialViewModel.uiState.collectAsState()
 
     val userId = authState.userId ?: 0
+    val oposicionId = authState.oposicionId ?: 1
 
     var segundos by remember { mutableStateOf(0) }
     var cronometroActivo by remember { mutableStateOf(false) }
 
     val ejerciciosEstado = remember { mutableStateListOf<EjercicioEstado>() }
 
+    LaunchedEffect(userId, oposicionId) {
+        if (userId > 0 && rutinasState.rutinaCompleta.isEmpty()) {
+            rutinasViewModel.cargarRutina(userId, oposicionId)
+        }
+    }
+
     LaunchedEffect(rutinasState.rutinaCompleta) {
-        if (ejerciciosEstado.isEmpty()) {
+        if (ejerciciosEstado.isEmpty() && rutinasState.rutinaCompleta.isNotEmpty()) {
             rutinasState.rutinaCompleta.forEachIndexed { bloqueIdx, bloque ->
                 bloque.ejercicios.forEachIndexed { ejercicioIdx, ejercicio ->
                     ejerciciosEstado.add(
@@ -164,10 +171,24 @@ fun EntrenamientosScreen(
                 }
             }
 
-            if (ejerciciosEstado.isEmpty()) {
+            if (ejerciciosEstado.isEmpty() && rutinasState.isLoading) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Cargando rutina...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            } else if (ejerciciosEstado.isEmpty()) {
                 item {
                     Text(
-                        text = "No hay ejercicios en la rutina actual.",
+                        text = "No hay ejercicios en la rutina actual. Ve a 'Mis Rutinas' para ver tu rutina.",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 16.dp)
