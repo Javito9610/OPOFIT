@@ -171,6 +171,7 @@ describe('AuthController', () => {
             expect(res.json).toHaveBeenCalledWith({
                 ok: true,
                 user: usuario,
+                userId: 1,
                 token: 'jwt-token'
             });
         });

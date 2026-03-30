@@ -195,11 +195,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     return@launch
                 }
 
-                val googleToken = firebaseUser.uid
                 val email = firebaseUser.email ?: ""
                 val name = firebaseUser.displayName ?: "Usuario Google"
 
-                val result = backendService.loginWithGoogle(googleToken, email, name)
+                val result = backendService.loginWithGoogle(idToken, email, name)
 
                 result.onSuccess { response ->
                     viewModelScope.launch {

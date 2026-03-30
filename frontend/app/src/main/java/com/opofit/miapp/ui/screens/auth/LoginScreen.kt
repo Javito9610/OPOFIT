@@ -271,8 +271,8 @@ fun LoginScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
-                    .padding(bottom = 24.dp),
+                    .padding(bottom = 16.dp)
+                    .height(50.dp),
                 enabled = !uiState.isLoading,
                 shape = MaterialTheme.shapes.medium,
                 border = ButtonDefaults.outlinedButtonBorder.copy(
