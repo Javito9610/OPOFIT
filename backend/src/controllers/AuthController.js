@@ -92,6 +92,7 @@ const loginConGoogle = async(req, res) => {
         res.status(200).json({
             ok: true,
             user: usuario,
+            userId: usuario.id_usuario,
             token: token
         });
     } catch (error) {
