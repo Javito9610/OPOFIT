@@ -46,7 +46,8 @@ const getMarcasUsuario = async (req, res) => {
             });
         }
 
-        if (parseInt(userId) !== req.usuario.id) {
+        const parsedUserId = parseInt(userId, 10);
+        if (isNaN(parsedUserId) || parsedUserId !== req.usuario.id) {
             return res.status(403).json({ ok: false, msg: "No tienes permiso para ver marcas de otro usuario" });
         }
 
