@@ -255,6 +255,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun setError(message: String) {
+        _uiState.update { it.copy(error = message, isLoading = false) }
+    }
+
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = "")
     }
