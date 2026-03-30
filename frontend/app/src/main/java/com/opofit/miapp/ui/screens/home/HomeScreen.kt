@@ -1,28 +1,23 @@
 package com.opofit.miapp.ui.screens.home
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -37,6 +32,7 @@ fun HomeScreen(
     onNavigateToHistorial: () -> Unit,
     onNavigateToAjustes: () -> Unit,
     onNavigateToInfoOposicion: () -> Unit,
+    onNavigateToRutinasLibres: () -> Unit,
     onLogout: () -> Unit,
     userName: String? = null
 ) {
@@ -47,6 +43,7 @@ fun HomeScreen(
                     Text(
                         "OpoFit",
                         style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 },
@@ -73,85 +70,177 @@ fun HomeScreen(
             )
         }
     ) { innerPadding ->
-        Box(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.background),
-            contentAlignment = Alignment.Center
+                .padding(innerPadding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth(0.85f)
-                    .padding(16.dp)
-            ) {
-                if (!userName.isNullOrBlank()) {
-                    Text(
-                        text = "¡Hola, $userName!",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        textAlign = TextAlign.Center
-                    )
-                }
-
-                Text(
-                    text = "Bienvenido a OpoFit",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    textAlign = TextAlign.Center
-                )
-
-                Text(
-                    text = "Elige una opción para continuar",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                Button(
-                    onClick = onNavigateToRutinas,
+            // Welcome banner
+            item {
+                Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    shape = MaterialTheme.shapes.large,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
-                    Text("📋 Mis Rutinas", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(8.dp))
-                }
-
-                Button(
-                    onClick = onNavigateToEntrenamientos,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                ) {
-                    Text("💪 Entrenamientos", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(8.dp))
-                }
-
-                Button(
-                    onClick = onNavigateToPerfil,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
-                ) {
-                    Text("👤 Mi Perfil", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(8.dp))
-                }
-
-                Button(
-                    onClick = onNavigateToHistorial,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Text("📊 Historial", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(8.dp))
-                }
-
-                Button(
-                    onClick = onNavigateToInfoOposicion,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                ) {
-                    Text("ℹ️ Info Oposición", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(8.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (!userName.isNullOrBlank()) "¡Hola, $userName! 👋" else "¡Bienvenido a OpoFit! 👋",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Preparado para tu entrenamiento",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            )
+                        }
+                        Text("🏋️", style = MaterialTheme.typography.displaySmall)
+                    }
                 }
             }
+
+            item {
+                Text(
+                    text = "¿Qué quieres hacer hoy?",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+
+            // Navigation grid - row 1
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    NavCard(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Filled.FitnessCenter,
+                        title = "Mis Rutinas",
+                        subtitle = "Plan personalizado",
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        onClick = onNavigateToRutinas
+                    )
+                    NavCard(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Filled.PlayArrow,
+                        title = "Entrenamientos",
+                        subtitle = "Empieza a entrenar",
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        onClick = onNavigateToEntrenamientos
+                    )
+                }
+            }
+
+            // Navigation grid - row 2
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    NavCard(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Filled.Person,
+                        title = "Mi Perfil",
+                        subtitle = "Marcas y nivel",
+                        containerColor = MaterialTheme.colorScheme.tertiary,
+                        onClick = onNavigateToPerfil
+                    )
+                    NavCard(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Filled.BarChart,
+                        title = "Historial",
+                        subtitle = "Tu progreso",
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        onClick = onNavigateToHistorial
+                    )
+                }
+            }
+
+            // Navigation grid - row 3
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    NavCard(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Filled.Info,
+                        title = "Info Oposición",
+                        subtitle = "Baremos y noticias",
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        onClick = onNavigateToInfoOposicion
+                    )
+                    NavCard(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Filled.Star,
+                        title = "Rutinas Libres",
+                        subtitle = "Crea tu rutina",
+                        containerColor = MaterialTheme.colorScheme.tertiary,
+                        onClick = onNavigateToRutinasLibres
+                    )
+                }
+            }
+
+            item { Spacer(modifier = Modifier.height(8.dp)) }
+        }
+    }
+}
+
+@Composable
+private fun NavCard(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    containerColor: Color,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier,
+        onClick = onClick,
+        shape = MaterialTheme.shapes.large,
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(32.dp)
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+            )
         }
     }
 }

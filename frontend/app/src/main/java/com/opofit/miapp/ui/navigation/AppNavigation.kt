@@ -1,7 +1,6 @@
 package com.opofit.miapp.ui.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -12,16 +11,13 @@ import com.opofit.miapp.ui.screens.auth.LoginScreen
 import com.opofit.miapp.ui.screens.auth.RegisterScreen
 import com.opofit.miapp.ui.screens.entrenamientos.EntrenamientosScreen
 import com.opofit.miapp.ui.screens.entrenamientos.RegistrarEntrenamientoScreen
-import com.opofit.miapp.ui.screens.historial.HistorialScreen
-import com.opofit.miapp.ui.screens.home.HomeScreen
+import com.opofit.miapp.ui.screens.main.MainScreen
+import com.opofit.miapp.ui.screens.oposicion.OposicionInfoScreen
 import com.opofit.miapp.ui.screens.perfil.EditarPerfilScreen
-import com.opofit.miapp.ui.screens.perfil.PerfilScreen
 import com.opofit.miapp.ui.screens.rutinas.CrearRutinaScreen
 import com.opofit.miapp.ui.screens.rutinas.DetallesEjercicioScreen
 import com.opofit.miapp.ui.screens.rutinas.DetallesRutinaScreen
 import com.opofit.miapp.ui.screens.rutinas.RutinasLibresScreen
-import com.opofit.miapp.ui.screens.rutinas.RutinasScreen
-import com.opofit.miapp.ui.screens.oposicion.OposicionInfoScreen
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 
 @Composable
@@ -32,13 +28,13 @@ fun AppNavigation(
 ) {
     NavHost(
         navController = navController,
-        startDestination = if (isLoggedIn) NavDestinations.HOME else NavDestinations.LOGIN
+        startDestination = if (isLoggedIn) NavDestinations.MAIN else NavDestinations.LOGIN
     ) {
 
         composable(NavDestinations.LOGIN) {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate(NavDestinations.HOME) {
+                    navController.navigate(NavDestinations.MAIN) {
                         popUpTo(NavDestinations.LOGIN) { inclusive = true }
                     }
                 },
@@ -52,7 +48,7 @@ fun AppNavigation(
         composable(NavDestinations.REGISTRO) {
             RegisterScreen(
                 onRegisterSuccess = {
-                    navController.navigate(NavDestinations.HOME) {
+                    navController.navigate(NavDestinations.MAIN) {
                         popUpTo(NavDestinations.LOGIN) { inclusive = true }
                     }
                 },
@@ -63,20 +59,12 @@ fun AppNavigation(
             )
         }
 
-        composable(NavDestinations.HOME) {
-            val authState = authViewModel.uiState.collectAsState()
-            HomeScreen(
-                onNavigateToRutinas = {
-                    navController.navigate(NavDestinations.RUTINAS)
-                },
+        // Main app screen with BottomNavigation (Home, Rutinas, Perfil, Historial)
+        composable(NavDestinations.MAIN) {
+            MainScreen(
+                authViewModel = authViewModel,
                 onNavigateToEntrenamientos = {
                     navController.navigate(NavDestinations.ENTRENAMIENTOS)
-                },
-                onNavigateToPerfil = {
-                    navController.navigate(NavDestinations.PERFIL)
-                },
-                onNavigateToHistorial = {
-                    navController.navigate(NavDestinations.HISTORIAL)
                 },
                 onNavigateToAjustes = {
                     navController.navigate(NavDestinations.AJUSTES)
@@ -84,32 +72,24 @@ fun AppNavigation(
                 onNavigateToInfoOposicion = {
                     navController.navigate(NavDestinations.INFO_OPOSICION)
                 },
+                onNavigateToRutinasLibres = {
+                    navController.navigate(NavDestinations.RUTINAS_LIBRES)
+                },
+                onNavigateToCrearRutina = {
+                    navController.navigate(NavDestinations.CREAR_RUTINA)
+                },
+                onNavigateToDetallesRutina = { id ->
+                    navController.navigate("detalles_rutina/$id")
+                },
+                onNavigateToEditarPerfil = {
+                    navController.navigate(NavDestinations.EDITAR_PERFIL)
+                },
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate(NavDestinations.LOGIN) {
                         popUpTo(0) { inclusive = true }
                     }
-                },
-                userName = authState.value.userName
-            )
-        }
-
-        composable(NavDestinations.RUTINAS) {
-            RutinasScreen(
-                authViewModel = authViewModel,
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToEntrenamientos = { navController.navigate(NavDestinations.ENTRENAMIENTOS) },
-                onNavigateToRutinasLibres = { navController.navigate(NavDestinations.RUTINAS_LIBRES) }
-            )
-        }
-
-        composable(NavDestinations.RUTINAS_POR_NIVEL) { backStackEntry ->
-            val nivel = backStackEntry.arguments?.getString("nivel") ?: "1"
-            RutinasScreen(
-                authViewModel = authViewModel,
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToEntrenamientos = { navController.navigate(NavDestinations.ENTRENAMIENTOS) },
-                onNavigateToRutinasLibres = { navController.navigate(NavDestinations.RUTINAS_LIBRES) }
+                }
             )
         }
 
@@ -157,9 +137,7 @@ fun AppNavigation(
                 authViewModel = authViewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onEntrenamientoFinalizado = {
-                    navController.navigate(NavDestinations.HISTORIAL) {
-                        popUpTo(NavDestinations.ENTRENAMIENTOS) { inclusive = true }
-                    }
+                    navController.popBackStack()
                 }
             )
         }
@@ -183,23 +161,8 @@ fun AppNavigation(
             )
         }
 
-        composable(NavDestinations.PERFIL) {
-            PerfilScreen(
-                authViewModel = authViewModel,
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToEditarPerfil = { navController.navigate(NavDestinations.EDITAR_PERFIL) }
-            )
-        }
-
         composable(NavDestinations.EDITAR_PERFIL) {
             EditarPerfilScreen(
-                authViewModel = authViewModel,
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(NavDestinations.HISTORIAL) {
-            HistorialScreen(
                 authViewModel = authViewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
