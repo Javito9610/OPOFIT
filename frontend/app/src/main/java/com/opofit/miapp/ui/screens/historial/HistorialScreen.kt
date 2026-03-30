@@ -60,10 +60,8 @@ fun HistorialScreen(
     val userId = authState.userId ?: 0
     val oposicionId = authState.oposicionId ?: 1
 
-    // Exercise selector state
     var ejercicioIdInput by remember { mutableStateOf("") }
 
-    // Try to pre-fill exercise IDs from current routine
     val ejerciciosDeRutina = remember(rutinasState.rutinaCompleta) {
         rutinasState.rutinaCompleta.flatMap { bloque ->
             bloque.ejercicios.mapNotNull { ej ->
@@ -102,7 +100,6 @@ fun HistorialScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Exercise selector section
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -174,7 +171,6 @@ fun HistorialScreen(
                 }
             }
 
-            // Loading indicator
             if (uiState.isLoading) {
                 item {
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -183,7 +179,6 @@ fun HistorialScreen(
                 }
             }
 
-            // Error message
             if (uiState.error.isNotEmpty()) {
                 item {
                     Text(
@@ -194,7 +189,6 @@ fun HistorialScreen(
                 }
             }
 
-            // Empty state
             if (!uiState.isLoading && uiState.error.isEmpty() && uiState.evolucion.isEmpty() && ejercicioIdInput.isEmpty()) {
                 item {
                     Column(
@@ -214,7 +208,6 @@ fun HistorialScreen(
                 }
             }
 
-            // History data grouped by date
             if (uiState.evolucion.isNotEmpty()) {
                 val agrupado = uiState.evolucion.groupBy { punto ->
                     punto.fecha_entreno.take(10)

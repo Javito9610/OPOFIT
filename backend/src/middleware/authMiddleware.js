@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
 
 const validarToken = (req, res, next) => {
-    // 1. Buscamos el token en la cabecera 'Authorization'
     const authHeader = req.header('Authorization');
 
     if (!authHeader) {
@@ -11,20 +10,16 @@ const validarToken = (req, res, next) => {
         });
     }
 
-    // El formato suele ser "Bearer TOKEN", así que quitamos la palabra Bearer
     const token = authHeader.split(' ')[1];
 
     try {
-        // 2. Verificamos el token con la misma clave secreta que usas en el Login
         if (!process.env.JWT_SECRET) {
             return res.status(500).json({ ok: false, msg: 'Error de configuración del servidor: JWT_SECRET no definido.' });
         }
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
-        // 3. Metemos los datos del usuario en la petición para que el controlador los use
         req.usuario = decoded;
         
-        // 4. ¡Todo ok! Pasamos al siguiente paso (el controlador)
         next();
     } catch (error) {
         return res.status(401).json({

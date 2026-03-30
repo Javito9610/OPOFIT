@@ -1,4 +1,3 @@
-
 const rutinaPersService= require("../services/RutinaPersService");
 
 const nuevaRutinaPersonalizada=async (req, res)=>{
@@ -12,13 +11,11 @@ const nuevaRutinaPersonalizada=async (req, res)=>{
             });
         }
 
-        // Validar que el usuario autenticado accede a sus propios datos
         if (parseInt(userId) !== req.usuario.id) {
             return res.status(403).json({ ok: false, msg: "No tienes permiso para crear rutinas para otro usuario" });
         }
 
         const id = await rutinaPersService.crearRutinaPropia(userId, nombre, ejercicios);
-
 
         res.status(201).json({
             ok:true,
@@ -42,7 +39,6 @@ const misRutinas= async (req, res)=>{
             return res.status(400).json({ ok: false, msg: "ID de usuario necesario" });
         }
 
-        // Validar que el usuario autenticado accede a sus propios datos
         if (parseInt(userId) !== req.usuario.id) {
             return res.status(403).json({ ok: false, msg: "No tienes permiso para ver rutinas de otro usuario" });
         }
@@ -78,7 +74,6 @@ const eliminarRutina = async (req, res) => {
             return res.status(400).json({ ok: false, msg: "Faltan datos para eliminar la rutina" });
         }
 
-        // Validar que el usuario autenticado accede a sus propios datos
         if (parseInt(userId) !== req.usuario.id) {
             return res.status(403).json({ ok: false, msg: "No tienes permiso para eliminar rutinas de otro usuario" });
         }
@@ -99,4 +94,3 @@ const eliminarRutina = async (req, res) => {
 };
 
 module.exports= {nuevaRutinaPersonalizada, misRutinas, eliminarRutina};
-

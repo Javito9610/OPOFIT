@@ -12,19 +12,16 @@ const actualizarPerfil = async (req, res) => {
             });
         }
 
-        // Validar que el usuario autenticado accede a sus propios datos
         if (parseInt(userId) !== req.usuario.id) {
             return res.status(403).json({ ok: false, msg: "No tienes permiso para modificar el perfil de otro usuario" });
         }
 
-        // 1. Actualizamos datos físicos (Peso, Altura e IMC)
         const imc = (peso / ((altura / 100) ** 2)).toFixed(2);
         await db.query(
             'UPDATE usuarios SET peso = ?, altura = ?, imc = ? WHERE id_usuario = ?',
             [peso, altura, imc, userId]
         );
 
-        // 2. Actualizamos las marcas en la tabla marcas_perfil
         for (const marca of nuevasMarcas) {
             await db.query(
                 `INSERT INTO marcas_perfil (usuarios_id_usuario, pruebas_oficiales_id_pruebas_oficiales, valord_record, fecha_logro)
@@ -34,7 +31,6 @@ const actualizarPerfil = async (req, res) => {
             );
         }
 
-        // 3. RE-CALCULAMOS EL NIVEL AUTOMÁTICAMENTE (Aquí está la inteligencia)
         const resultadoNivel = await RutinaService.calcularNotaYNivel(userId, oposicionId);
 
         if (!resultadoNivel) {
@@ -64,7 +60,6 @@ const actualizarSettings = async (req, res) => {
             return res.status(400).json({ ok: false, msg: "Faltan preferencias de unidades" });
         }
 
-        // Validar que el usuario autenticado accede a sus propios datos
         if (parseInt(userId) !== req.usuario.id) {
             return res.status(403).json({ ok: false, msg: "No tienes permiso para modificar ajustes de otro usuario" });
         }

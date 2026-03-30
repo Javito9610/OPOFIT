@@ -24,7 +24,6 @@ import com.google.android.gms.common.api.ApiException
 import com.opofit.miapp.R
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 
-
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
@@ -32,15 +31,12 @@ fun LoginScreen(
     viewModel: AuthViewModel = viewModel()
 ) {
 
-    // ============ ESTADO LOCAL ============
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // Observamos el estado del ViewModel
     val uiState by viewModel.uiState.collectAsState()
 
-    // ============ GOOGLE SIGN-IN ============
     val context = LocalContext.current
     val googleSignInClient = remember {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -65,7 +61,6 @@ fun LoginScreen(
         }
     }
 
-    // ============ EFECTO: Navegar cuando login es exitoso ============
     LaunchedEffect(uiState.success) {
         if (uiState.success) {
             onLoginSuccess()
@@ -73,7 +68,6 @@ fun LoginScreen(
         }
     }
 
-    // ============ CONTENEDOR PRINCIPAL ============
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -83,13 +77,12 @@ fun LoginScreen(
 
         Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)  // 85% del ancho
+                .fillMaxWidth(0.85f)
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
 
-            // ============ LOGO / ICONO ============
             Card(
                 modifier = Modifier
                     .size(80.dp)
@@ -110,7 +103,6 @@ fun LoginScreen(
                 }
             }
 
-            // ============ TÍTULO PRINCIPAL ============
             Text(
                 text = "Bienvenido a OpoFit",
                 style = MaterialTheme.typography.headlineLarge,
@@ -118,7 +110,6 @@ fun LoginScreen(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            // ============ SUBTÍTULO ============
             Text(
                 text = "Inicia sesión para continuar",
                 style = MaterialTheme.typography.bodyLarge,
@@ -126,7 +117,6 @@ fun LoginScreen(
                 modifier = Modifier.padding(bottom = 32.dp)
             )
 
-            // ============ CAMPO EMAIL ============
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -145,7 +135,6 @@ fun LoginScreen(
                 shape = MaterialTheme.shapes.medium
             )
 
-            // ============ CAMPO CONTRASEÑA ============
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -183,7 +172,6 @@ fun LoginScreen(
                 shape = MaterialTheme.shapes.medium
             )
 
-            // ============ LINK OLVIDÉ CONTRASEÑA ============
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -191,7 +179,7 @@ fun LoginScreen(
                 horizontalArrangement = Arrangement.End
             ) {
                 TextButton(
-                    onClick = { /* Funcionalidad no disponible en esta versión */ },
+                    onClick = {  },
                     enabled = false
                 ) {
                     Text(
@@ -202,7 +190,6 @@ fun LoginScreen(
                 }
             }
 
-            // ============ MENSAJE DE ERROR ============
             if (uiState.error.isNotEmpty()) {
                 Card(
                     modifier = Modifier
@@ -222,7 +209,6 @@ fun LoginScreen(
                 }
             }
 
-            // ============ BOTÓN LOGIN PRINCIPAL ============
             Button(
                 onClick = {
                     viewModel.login(email, password)
@@ -252,7 +238,6 @@ fun LoginScreen(
                 }
             }
 
-            // ============ DIVISOR ============
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -280,7 +265,6 @@ fun LoginScreen(
                 )
             }
 
-            // ============ BOTÓN GOOGLE ============
             OutlinedButton(
                 onClick = {
                     googleSignInLauncher.launch(googleSignInClient.signInIntent)
@@ -304,7 +288,6 @@ fun LoginScreen(
                 )
             }
 
-            // ============ SEPARADOR VISUAL ============
             Divider(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -312,7 +295,6 @@ fun LoginScreen(
                 color = MaterialTheme.colorScheme.outline
             )
 
-            // ============ LINK A REGISTRO ============
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

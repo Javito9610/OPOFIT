@@ -1,7 +1,5 @@
 const db=require('../config/db');
 
-//Le pedimos a la base de datos los datos de cualquier oposicion para reflejarlos en una vista de información.
-
 class InfoPruebasService{
 
     static async getInfoPruebas(idOposicion, genero){

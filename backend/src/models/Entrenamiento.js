@@ -1,5 +1,3 @@
-// Este archivo lógico contiene las tablas: rutinas_opo, detalles_rutina_opo, ejercicios. ENFOCADO EN LAS RUTINAS DE ENTRENAMIENTO DE LA OPOSICIÓN
-
 class RutinaOpo{
     constructor(id_rutina_opo, nivel, genero, enfoque_tipo, oposiciones_id_oposicion){
         this.id_rutina_opo=id_rutina_opo;

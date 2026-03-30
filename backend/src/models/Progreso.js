@@ -1,5 +1,3 @@
-//Este archivo lógico contendrá las tablas: historial_sesiones, registro_resultados. SE ENFOCA EN EL PROGRESO DE AMBOS ENTRENAMIENTOS (PERS/OPO).
-
 class HistorialSesion{
     constructor(id_historial_sesion, fecha_entreno, tipo_rutina, duracion_oficial, rutinas_pers_id_rutina_pers, rutinas_opo_id_rutina_opo, usuarios_id_usuario){
         this.id_historial_sesion=id_historial_sesion;

@@ -2,7 +2,7 @@ const infoPruebasService=require('../services/InfoPruebasService');
 
 const getInfoPruebas= async (req,res)=>{
     try{
-        const{idOposicion,genero}=req.params; //Los datos suelen venir por params en una consulta GET
+        const{idOposicion,genero}=req.params;
         
         if(!idOposicion||!genero){
             return res.status(400).json(
@@ -12,7 +12,7 @@ const getInfoPruebas= async (req,res)=>{
                 }
             )
         }
-        const listaInfoOpo= await infoPruebasService.getInfoPruebas(idOposicion, genero); //Adquisición de la lista mediante su service
+        const listaInfoOpo= await infoPruebasService.getInfoPruebas(idOposicion, genero);
 
         if (!listaInfoOpo || listaInfoOpo.length === 0) {
             return res.status(404).json({
