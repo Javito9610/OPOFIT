@@ -3,8 +3,10 @@ package com.opofit.miapp.ui.screens.auth
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -13,10 +15,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -30,7 +36,6 @@ fun LoginScreen(
     onNavigateToRegister: () -> Unit,
     viewModel: AuthViewModel = viewModel()
 ) {
-
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -59,12 +64,10 @@ fun LoginScreen(
                     viewModel.setError("No se pudo obtener el token de Google")
                 }
             } catch (e: ApiException) {
-                android.util.Log.e("LoginScreen", "Google Sign-In falló: ${e.statusCode}")
                 viewModel.setError(GoogleSignInHelper.getErrorMessage(e))
             }
-        } else {
-            android.util.Log.e("LoginScreen", "Google Sign-In resultado no OK: ${result.resultCode}")
-            viewModel.setError("Inicio de sesión con Google cancelado")
+        } else if (result.resultCode != Activity.RESULT_CANCELED) {
+            viewModel.setError("Error al iniciar sesión con Google")
         }
     }
 
@@ -78,236 +81,170 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-        contentAlignment = Alignment.Center
+            .background(MaterialTheme.colorScheme.background)
     ) {
-
         Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .padding(24.dp),
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            Spacer(modifier = Modifier.height(48.dp))
 
-            Card(
+            // Logo
+            Box(
                 modifier = Modifier
-                    .size(80.dp)
-                    .padding(bottom = 32.dp),
-                shape = MaterialTheme.shapes.large,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                    .size(88.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        "🏋️",
-                        style = MaterialTheme.typography.headlineLarge
-                    )
-                }
+                Text("🏋️", fontSize = 44.sp)
             }
 
+            Spacer(modifier = Modifier.height(20.dp))
+
             Text(
-                text = "Bienvenido a OpoFit",
+                text = "OpoFit",
                 style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(bottom = 8.dp)
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.primary
             )
-
             Text(
-                text = "Inicia sesión para continuar",
-                style = MaterialTheme.typography.bodyLarge,
+                text = "Tu entrenador para oposiciones",
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 32.dp)
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 4.dp, bottom = 36.dp)
             )
 
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                placeholder = { Text("tu@email.com") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                singleLine = true,
-                enabled = !uiState.isLoading,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                    disabledBorderColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
-                shape = MaterialTheme.shapes.medium
-            )
+            // Form card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Iniciar sesión",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
 
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Contraseña") },
-                placeholder = { Text("Mínimo 6 caracteres") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                singleLine = true,
-                enabled = !uiState.isLoading,
-                visualTransformation = if (passwordVisible)
-                    VisualTransformation.None
-                else
-                    PasswordVisualTransformation(),
-                trailingIcon = {
-                    IconButton(
-                        onClick = { passwordVisible = !passwordVisible },
-                        enabled = !uiState.isLoading
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email") },
+                        placeholder = { Text("tu@email.com") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        enabled = !uiState.isLoading,
+                        shape = MaterialTheme.shapes.medium
+                    )
+
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Contraseña") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        enabled = !uiState.isLoading,
+                        visualTransformation = if (passwordVisible)
+                            VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(
+                                onClick = { passwordVisible = !passwordVisible },
+                                enabled = !uiState.isLoading
+                            ) {
+                                Icon(
+                                    imageVector = if (passwordVisible)
+                                        Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                    contentDescription = "Mostrar/ocultar contraseña",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        },
+                        shape = MaterialTheme.shapes.medium
+                    )
+
+                    if (uiState.error.isNotEmpty()) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer
+                            ),
+                            shape = MaterialTheme.shapes.small
+                        ) {
+                            Text(
+                                text = uiState.error,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(12.dp)
+                            )
+                        }
+                    }
+
+                    Button(
+                        onClick = { viewModel.login(email, password) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        enabled = !uiState.isLoading,
+                        shape = MaterialTheme.shapes.medium
                     ) {
-                        Icon(
-                            imageVector = if (passwordVisible)
-                                Icons.Filled.Visibility
-                            else
-                                Icons.Filled.VisibilityOff,
-                            contentDescription = "Toggle password visibility",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        if (uiState.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(22.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("Iniciar Sesión", style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
+
+                    // Divider
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Divider(modifier = Modifier.weight(1f))
+                        Text(
+                            text = "  o continúa con  ",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        Divider(modifier = Modifier.weight(1f))
                     }
-                },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                    disabledBorderColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
-                shape = MaterialTheme.shapes.medium
-            )
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-                TextButton(
-                    onClick = {  },
-                    enabled = false
-                ) {
-                    Text(
-                        "¿Olvidaste tu contraseña?",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            if (uiState.error.isNotEmpty()) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    ),
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text(
-                        text = uiState.error,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(12.dp)
-                    )
-                }
-            }
-
-            Button(
-                onClick = {
-                    viewModel.login(email, password)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-                    .padding(bottom = 16.dp),
-                enabled = !uiState.isLoading,
-                shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text(
-                        "Iniciar Sesión",
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                }
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Divider(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(1.dp),
-                    color = MaterialTheme.colorScheme.outline
-                )
-                Text(
-                    text = "O continúa con",
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Divider(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(1.dp),
-                    color = MaterialTheme.colorScheme.outline
-                )
-            }
-
-            OutlinedButton(
-                onClick = {
-                    googleSignInClient.signOut().addOnCompleteListener {
-                        googleSignInLauncher.launch(googleSignInClient.signInIntent)
+                    OutlinedButton(
+                        onClick = {
+                            googleSignInClient.signOut().addOnCompleteListener {
+                                googleSignInLauncher.launch(googleSignInClient.signInIntent)
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        enabled = !uiState.isLoading,
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Text("🔐  Iniciar con Google", style = MaterialTheme.typography.labelLarge)
                     }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp)
-                    .height(50.dp),
-                enabled = !uiState.isLoading,
-                shape = MaterialTheme.shapes.medium,
-                border = ButtonDefaults.outlinedButtonBorder.copy(
-                    width = 1.5.dp
-                ),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onBackground
-                )
-            ) {
-                Text(
-                    "🔐 Iniciar con Google",
-                    style = MaterialTheme.typography.labelLarge
-                )
+                }
             }
 
-            Divider(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                color = MaterialTheme.colorScheme.outline
-            )
+            Spacer(modifier = Modifier.height(24.dp))
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -323,10 +260,13 @@ fun LoginScreen(
                     Text(
                         "Regístrate aquí",
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

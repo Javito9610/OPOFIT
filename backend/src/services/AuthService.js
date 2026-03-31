@@ -33,7 +33,12 @@ class AuthService{
             }
 
             await connection.commit();
-            return{success: true, userId};
+
+            const [userRows] = await db.query('SELECT * FROM usuarios WHERE id_usuario = ?', [userId]);
+            const user = userRows[0];
+            delete user.password;
+
+            return { success: true, userId, user };
             
         }catch(error){
             await connection.rollback();

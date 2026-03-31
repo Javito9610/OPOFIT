@@ -14,10 +14,21 @@ const registrar= async(req, res)=>{
 
         const resultado= await AuthService.registrar(userData);
 
+        if (!process.env.JWT_SECRET) {
+            return res.status(500).json({ ok: false, msg: 'Error de configuración del servidor' });
+        }
+        const token = jwt.sign(
+            { id: resultado.userId, email: userData.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
         res.status(201).json({
             ok: true,
-            msg: '¡Usuario registrado, configurado y con marcas guardadas!',
-            userId: resultado.userId
+            msg: '¡Registro completado con éxito!',
+            userId: resultado.userId,
+            token: token,
+            user: resultado.user
         });
     }catch(error){
         console.error("Error en el registro:", error.message)

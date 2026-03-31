@@ -4,6 +4,7 @@ object NavDestinations {
     const val LOGIN = "login"
     const val REGISTRO = "registro"
 
+    const val MAIN = "main"
     const val HOME = "home"
 
     const val RUTINAS = "rutinas"

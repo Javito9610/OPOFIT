@@ -156,18 +156,22 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     onSuccess = { response ->
                         sessionManager.saveSession(
                             token = response.token,
-                            email = email,
-                            userId = response.userId?.toString() ?: "",
-                            userName = nombre
+                            email = response.user?.email ?: email,
+                            userId = response.userId?.toString() ?: response.user?.id_usuario?.toString() ?: "",
+                            userName = response.user?.nombre ?: nombre,
+                            genero = response.user?.genero ?: genero,
+                            oposicionId = response.user?.oposiciones_id_oposicion?.toString() ?: oposiciones_id.toString()
                         )
 
                         _uiState.update { it.copy(
                             isLoading = false,
                             success = true,
                             isLoggedIn = true,
-                            userId = response.userId,
-                            userEmail = response.user?.email,
-                            userName = response.user?.nombre
+                            userId = response.userId ?: response.user?.id_usuario,
+                            userEmail = response.user?.email ?: email,
+                            userName = response.user?.nombre ?: nombre,
+                            genero = response.user?.genero ?: genero,
+                            oposicionId = response.user?.oposiciones_id_oposicion ?: oposiciones_id
                         )}
                     },
                     onFailure = { error ->
