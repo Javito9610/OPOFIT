@@ -57,49 +57,68 @@ class AuthService{
         return usuario;
     }
 
-    static async loginConGoogle(googleToken, email, nombre){
+    static async _verificarTokenGoogle(googleToken, email) {
         const clientId = process.env.GOOGLE_CLIENT_ID;
         if (!clientId) {
             throw new Error('GOOGLE_CLIENT_ID no está configurado en las variables de entorno');
         }
-
         const client = new OAuth2Client(clientId);
         const ticket = await client.verifyIdToken({
             idToken: googleToken,
             audience: clientId
         });
         const payload = ticket.getPayload();
-
         if (payload.email !== email) {
             throw new Error('El email del token no coincide con el email proporcionado');
         }
+        return payload;
+    }
+
+    static async loginConGoogle(googleToken, email, nombre){
+        await AuthService._verificarTokenGoogle(googleToken, email);
 
         const [rows] = await db.query('SELECT * FROM usuarios WHERE email = ?', [email]);
-        
+
+        if (rows.length === 0) {
+            const err = new Error('No tienes una cuenta registrada con Google. Por favor, regístrate primero desde la pantalla de registro.');
+            err.code = 'USUARIO_NO_REGISTRADO';
+            throw err;
+        }
+
+        const usuario = rows[0];
+        delete usuario.password;
+        return usuario;
+    }
+
+    static async registrarConGoogle(googleToken, email, nombre){
+        await AuthService._verificarTokenGoogle(googleToken, email);
+
+        const [rows] = await db.query('SELECT * FROM usuarios WHERE email = ?', [email]);
+
         if (rows.length > 0) {
             const usuario = rows[0];
             delete usuario.password;
             return usuario;
         }
-        
+
         const connection = await db.getConnection();
         try {
             await connection.beginTransaction();
-            
+
             const crypto = require('crypto');
             const randomPassword = crypto.randomBytes(32).toString('hex');
             const hashedPassword = await bcrypt.hash(randomPassword, 10);
-            
+
             const sqlUsuario = `INSERT INTO usuarios (nombre, email, password, genero, peso, altura, imc, fecha_registro) VALUES (?, ?, ?, 'HOMBRE', 0, 0, 0, NOW())`;
             const [userResult] = await connection.query(sqlUsuario, [nombre, email, hashedPassword]);
             const userId = userResult.insertId;
-            
+
             await connection.query(
                 'INSERT INTO settings(unidad_peso, unidad_distancia, usuarios_id_usuario) VALUES(?, ?, ?)', ['kg', 'km', userId]
             );
-            
+
             await connection.commit();
-            
+
             const [nuevoUsuario] = await db.query('SELECT * FROM usuarios WHERE id_usuario = ?', [userId]);
             delete nuevoUsuario[0].password;
             return nuevoUsuario[0];

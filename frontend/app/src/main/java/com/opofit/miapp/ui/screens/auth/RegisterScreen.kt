@@ -69,7 +69,7 @@ fun RegisterScreen(
                     .getResult(ApiException::class.java)
                 val token = account.idToken
                 if (token != null) {
-                    viewModel.loginWithGoogle(token)
+                    viewModel.registerWithGoogle(token)
                 } else {
                     viewModel.setError("No se pudo obtener el token de Google")
                 }
@@ -82,7 +82,7 @@ fun RegisterScreen(
     LaunchedEffect(uiState.success) {
         if (uiState.success) {
             onRegisterSuccess()
-            viewModel.resetState()
+            viewModel.clearSuccessFlag()
         }
     }
 

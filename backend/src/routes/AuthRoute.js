@@ -8,4 +8,6 @@ const authController= require("../controllers/AuthController");
 
  router.post('/google', authController.loginConGoogle);
 
+ router.post('/google/registrar', authController.registrarConGoogle);
+
  module.exports=router;

@@ -108,6 +108,12 @@ const loginConGoogle = async(req, res) => {
         });
     } catch (error) {
         console.error("Error en loginConGoogle:", error.message);
+        if (error.code === 'USUARIO_NO_REGISTRADO') {
+            return res.status(404).json({
+                ok: false,
+                msg: error.message
+            });
+        }
         res.status(500).json({
             ok: false,
             msg: "Error al autenticar con Google"
@@ -115,4 +121,38 @@ const loginConGoogle = async(req, res) => {
     }
 };
 
-module.exports= {registrar,login,loginConGoogle};
+const registrarConGoogle = async(req, res) => {
+    try {
+        const { googleToken, email, nombre } = req.body;
+
+        if (!googleToken || !email) {
+            return res.status(400).json({ ok: false, msg: "Token de Google y email son requeridos" });
+        }
+
+        const usuario = await AuthService.registrarConGoogle(googleToken, email, nombre || 'Usuario Google');
+
+        if (!process.env.JWT_SECRET) {
+            return res.status(500).json({ ok: false, msg: 'Error de configuración del servidor: JWT_SECRET no definido.' });
+        }
+        const token = jwt.sign(
+            { id: usuario.id_usuario, email: usuario.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        res.status(200).json({
+            ok: true,
+            user: usuario,
+            userId: usuario.id_usuario,
+            token: token
+        });
+    } catch (error) {
+        console.error("Error en registrarConGoogle:", error.message);
+        res.status(500).json({
+            ok: false,
+            msg: "Error al registrar con Google"
+        });
+    }
+};
+
+module.exports= {registrar,login,loginConGoogle,registrarConGoogle};
