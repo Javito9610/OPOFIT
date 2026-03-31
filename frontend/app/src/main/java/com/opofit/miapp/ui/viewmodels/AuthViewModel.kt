@@ -250,7 +250,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             sessionManager.logout()
-            _uiState.value = AuthUiState()
+            _uiState.value = AuthUiState(isSessionChecked = true)
         }
     }
 
