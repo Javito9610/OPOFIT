@@ -4,7 +4,6 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
 import com.opofit.miapp.data.api.BackendAuthService
 import com.opofit.miapp.data.local.SessionManager
 import com.opofit.miapp.data.local.TokenManager
@@ -34,7 +33,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     )
 
     private val backendService = BackendAuthService()
-    private val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
     private val tokenManager = TokenManager(application)
     private val sessionManager = SessionManager(tokenManager)
 
@@ -246,8 +244,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun logout() {
-        firebaseAuth.signOut()
-
         viewModelScope.launch {
             sessionManager.logout()
             _uiState.value = AuthUiState(isSessionChecked = true)
