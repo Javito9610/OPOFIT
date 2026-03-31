@@ -108,12 +108,6 @@ const loginConGoogle = async(req, res) => {
         });
     } catch (error) {
         console.error("Error en loginConGoogle:", error.message);
-        if (error.code === 'USUARIO_NO_REGISTRADO') {
-            return res.status(404).json({
-                ok: false,
-                msg: error.message
-            });
-        }
         res.status(500).json({
             ok: false,
             msg: "Error al autenticar con Google"

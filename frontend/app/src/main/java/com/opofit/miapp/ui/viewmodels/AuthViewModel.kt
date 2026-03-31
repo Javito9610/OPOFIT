@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
 import com.opofit.miapp.data.api.BackendAuthService
 import com.opofit.miapp.data.local.SessionManager
 import com.opofit.miapp.data.local.TokenManager
@@ -18,7 +17,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -193,79 +191,57 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private suspend fun authenticateWithFirebaseAndCallBackend(
-        idToken: String,
-        backendCall: suspend (email: String, name: String) -> Result<AuthResponse>,
+    private suspend fun handleGoogleBackendResult(
+        email: String,
+        name: String,
+        result: Result<AuthResponse>,
         defaultError: String
     ) {
-        try {
-            val credential = GoogleAuthProvider.getCredential(idToken, null)
-            val authResult = firebaseAuth.signInWithCredential(credential).await()
-            val firebaseUser = authResult.user
-
-            if (firebaseUser == null) {
-                _uiState.update { it.copy(isLoading = false, error = "Error al autenticar con Google", success = false) }
-                return
+        result.fold(
+            onSuccess = { response ->
+                val resolvedName = response.user?.nombre ?: name
+                sessionManager.saveSession(
+                    token = response.token,
+                    email = email,
+                    userId = response.userId?.toString() ?: "",
+                    userName = resolvedName,
+                    genero = response.user?.genero ?: "",
+                    oposicionId = response.user?.oposiciones_id_oposicion?.toString() ?: ""
+                )
+                _uiState.update { it.copy(
+                    isLoading = false,
+                    success = true,
+                    isLoggedIn = true,
+                    userId = response.userId,
+                    userEmail = response.user?.email,
+                    userName = resolvedName,
+                    genero = response.user?.genero,
+                    oposicionId = response.user?.oposiciones_id_oposicion
+                )}
+            },
+            onFailure = { error ->
+                _uiState.update { it.copy(
+                    isLoading = false,
+                    error = error.message ?: defaultError,
+                    success = false
+                )}
             }
+        )
+    }
 
-            val email = firebaseUser.email ?: ""
-            val name = firebaseUser.displayName ?: "Usuario Google"
-
-            val result = backendCall(email, name)
-
-            result.fold(
-                onSuccess = { response ->
-                    sessionManager.saveSession(
-                        token = response.token,
-                        email = email,
-                        userId = response.userId?.toString() ?: "",
-                        userName = name,
-                        genero = response.user?.genero ?: "",
-                        oposicionId = response.user?.oposiciones_id_oposicion?.toString() ?: ""
-                    )
-                    _uiState.update { it.copy(
-                        isLoading = false,
-                        success = true,
-                        isLoggedIn = true,
-                        userId = response.userId,
-                        userEmail = response.user?.email,
-                        userName = response.user?.nombre,
-                        genero = response.user?.genero,
-                        oposicionId = response.user?.oposiciones_id_oposicion
-                    )}
-                },
-                onFailure = { error ->
-                    _uiState.update { it.copy(
-                        isLoading = false,
-                        error = error.message ?: defaultError,
-                        success = false
-                    )}
-                }
-            )
-        } catch (e: Exception) {
-            _uiState.update { it.copy(isLoading = false, error = "Error: ${e.message}", success = false) }
+    fun loginWithGoogle(idToken: String, email: String, name: String) {
+        _uiState.update { it.copy(isLoading = true, error = "") }
+        viewModelScope.launch {
+            val result = backendService.loginWithGoogle(idToken, email, name)
+            handleGoogleBackendResult(email, name, result, "Error al sincronizar con backend")
         }
     }
 
-    fun loginWithGoogle(idToken: String) {
+    fun registerWithGoogle(idToken: String, email: String, name: String) {
         _uiState.update { it.copy(isLoading = true, error = "") }
         viewModelScope.launch {
-            authenticateWithFirebaseAndCallBackend(
-                idToken = idToken,
-                backendCall = { email, name -> backendService.loginWithGoogle(idToken, email, name) },
-                defaultError = "Error al sincronizar con backend"
-            )
-        }
-    }
-
-    fun registerWithGoogle(idToken: String) {
-        _uiState.update { it.copy(isLoading = true, error = "") }
-        viewModelScope.launch {
-            authenticateWithFirebaseAndCallBackend(
-                idToken = idToken,
-                backendCall = { email, name -> backendService.registerWithGoogle(idToken, email, name) },
-                defaultError = "Error al registrar con Google"
-            )
+            val result = backendService.registerWithGoogle(idToken, email, name)
+            handleGoogleBackendResult(email, name, result, "Error al registrar con Google")
         }
     }
 

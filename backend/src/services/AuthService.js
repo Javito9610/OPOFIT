@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const { OAuth2Client } = require('google-auth-library');
 
 class AuthService{
@@ -79,15 +80,38 @@ class AuthService{
 
         const [rows] = await db.query('SELECT * FROM usuarios WHERE email = ?', [email]);
 
-        if (rows.length === 0) {
-            const err = new Error('No tienes una cuenta registrada con Google. Por favor, regístrate primero desde la pantalla de registro.');
-            err.code = 'USUARIO_NO_REGISTRADO';
-            throw err;
+        if (rows.length > 0) {
+            const usuario = rows[0];
+            delete usuario.password;
+            return usuario;
         }
 
-        const usuario = rows[0];
-        delete usuario.password;
-        return usuario;
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            const randomPassword = crypto.randomBytes(32).toString('hex');
+            const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+            const sqlUsuario = `INSERT INTO usuarios (nombre, email, password, genero, peso, altura, imc, fecha_registro) VALUES (?, ?, ?, 'HOMBRE', 0, 0, 0, NOW())`;
+            const [userResult] = await connection.query(sqlUsuario, [nombre, email, hashedPassword]);
+            const userId = userResult.insertId;
+
+            await connection.query(
+                'INSERT INTO settings(unidad_peso, unidad_distancia, usuarios_id_usuario) VALUES(?, ?, ?)', ['kg', 'km', userId]
+            );
+
+            await connection.commit();
+
+            const [nuevoUsuario] = await db.query('SELECT * FROM usuarios WHERE id_usuario = ?', [userId]);
+            delete nuevoUsuario[0].password;
+            return nuevoUsuario[0];
+        } catch(error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 
     static async registrarConGoogle(googleToken, email, nombre){
@@ -105,7 +129,6 @@ class AuthService{
         try {
             await connection.beginTransaction();
 
-            const crypto = require('crypto');
             const randomPassword = crypto.randomBytes(32).toString('hex');
             const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
