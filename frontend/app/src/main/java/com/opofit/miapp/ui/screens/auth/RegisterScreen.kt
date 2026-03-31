@@ -69,7 +69,11 @@ fun RegisterScreen(
                     .getResult(ApiException::class.java)
                 val token = account.idToken
                 if (token != null) {
-                    viewModel.registerWithGoogle(token)
+                    viewModel.registerWithGoogle(
+                        token,
+                        account.email ?: "",
+                        account.displayName ?: "Usuario Google"
+                    )
                 } else {
                     viewModel.setError("No se pudo obtener el token de Google")
                 }

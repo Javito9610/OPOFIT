@@ -59,7 +59,11 @@ fun LoginScreen(
                     .getResult(ApiException::class.java)
                 val token = account.idToken
                 if (token != null) {
-                    viewModel.loginWithGoogle(token)
+                    viewModel.loginWithGoogle(
+                        token,
+                        account.email ?: "",
+                        account.displayName ?: "Usuario Google"
+                    )
                 } else {
                     viewModel.setError("No se pudo obtener el token de Google")
                 }
