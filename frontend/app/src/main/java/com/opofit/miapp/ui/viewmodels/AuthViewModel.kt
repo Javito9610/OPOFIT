@@ -9,6 +9,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.opofit.miapp.data.api.BackendAuthService
 import com.opofit.miapp.data.local.SessionManager
 import com.opofit.miapp.data.local.TokenManager
+import com.opofit.miapp.data.responsemodels.AuthResponse
 import com.opofit.miapp.domain.ValidationUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -192,62 +193,79 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private suspend fun authenticateWithFirebaseAndCallBackend(
+        idToken: String,
+        backendCall: suspend (email: String, name: String) -> Result<AuthResponse>,
+        defaultError: String
+    ) {
+        try {
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+            val authResult = firebaseAuth.signInWithCredential(credential).await()
+            val firebaseUser = authResult.user
+
+            if (firebaseUser == null) {
+                _uiState.update { it.copy(isLoading = false, error = "Error al autenticar con Google", success = false) }
+                return
+            }
+
+            val email = firebaseUser.email ?: ""
+            val name = firebaseUser.displayName ?: "Usuario Google"
+
+            val result = backendCall(email, name)
+
+            result.fold(
+                onSuccess = { response ->
+                    sessionManager.saveSession(
+                        token = response.token,
+                        email = email,
+                        userId = response.userId?.toString() ?: "",
+                        userName = name,
+                        genero = response.user?.genero ?: "",
+                        oposicionId = response.user?.oposiciones_id_oposicion?.toString() ?: ""
+                    )
+                    _uiState.update { it.copy(
+                        isLoading = false,
+                        success = true,
+                        isLoggedIn = true,
+                        userId = response.userId,
+                        userEmail = response.user?.email,
+                        userName = response.user?.nombre,
+                        genero = response.user?.genero,
+                        oposicionId = response.user?.oposiciones_id_oposicion
+                    )}
+                },
+                onFailure = { error ->
+                    _uiState.update { it.copy(
+                        isLoading = false,
+                        error = error.message ?: defaultError,
+                        success = false
+                    )}
+                }
+            )
+        } catch (e: Exception) {
+            _uiState.update { it.copy(isLoading = false, error = "Error: ${e.message}", success = false) }
+        }
+    }
+
     fun loginWithGoogle(idToken: String) {
         _uiState.update { it.copy(isLoading = true, error = "") }
-
         viewModelScope.launch {
-            try {
-                val credential = GoogleAuthProvider.getCredential(idToken, null)
-                val authResult = firebaseAuth.signInWithCredential(credential).await()
-                val firebaseUser = authResult.user
+            authenticateWithFirebaseAndCallBackend(
+                idToken = idToken,
+                backendCall = { email, name -> backendService.loginWithGoogle(idToken, email, name) },
+                defaultError = "Error al sincronizar con backend"
+            )
+        }
+    }
 
-                if (firebaseUser == null) {
-                    _uiState.value = AuthUiState(
-                        isLoading = false,
-                        error = "Error al autenticar con Google",
-                        success = false
-                    )
-                    return@launch
-                }
-
-                val email = firebaseUser.email ?: ""
-                val name = firebaseUser.displayName ?: "Usuario Google"
-
-                val result = backendService.loginWithGoogle(idToken, email, name)
-
-                result.fold(
-                    onSuccess = { response ->
-                        sessionManager.saveSession(
-                            token = response.token,
-                            email = email,
-                            userId = response.userId?.toString() ?: "",
-                            userName = name
-                        )
-
-                        _uiState.update { it.copy(
-                            isLoading = false,
-                            success = true,
-                            isLoggedIn = true,
-                            userId = response.userId,
-                            userEmail = response.user?.email,
-                            userName = response.user?.nombre
-                        )}
-                    },
-                    onFailure = { error ->
-                        _uiState.update { it.copy(
-                            isLoading = false,
-                            error = error.message ?: "Error al sincronizar con backend",
-                            success = false
-                        )}
-                    }
-                )
-            } catch (e: Exception) {
-                _uiState.update { it.copy(
-                    isLoading = false,
-                    error = "Error: ${e.message}",
-                    success = false
-                )}
-            }
+    fun registerWithGoogle(idToken: String) {
+        _uiState.update { it.copy(isLoading = true, error = "") }
+        viewModelScope.launch {
+            authenticateWithFirebaseAndCallBackend(
+                idToken = idToken,
+                backendCall = { email, name -> backendService.registerWithGoogle(idToken, email, name) },
+                defaultError = "Error al registrar con Google"
+            )
         }
     }
 
@@ -266,6 +284,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = "")
+    }
+
+    fun clearSuccessFlag() {
+        _uiState.update { it.copy(success = false, error = "") }
     }
 
     fun resetState() {

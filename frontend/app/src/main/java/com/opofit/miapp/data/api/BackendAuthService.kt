@@ -97,6 +97,30 @@ class BackendAuthService {
         }
     }
 
+    suspend fun registerWithGoogle(
+        googleToken: String,
+        email: String,
+        nombre: String
+    ): Result<AuthResponse> {
+        return try {
+            val response = withContext(Dispatchers.IO) {
+                authApi.registerWithGoogle(
+                    GoogleLoginRequest(googleToken, email, nombre)
+                )
+            }
+            if (response.ok) Result.success(response)
+            else Result.failure(Exception(response.msg ?: response.message ?: "Error al registrar con Google"))
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpError(e)))
+        } catch (e: ConnectException) {
+            Result.failure(Exception("No se puede conectar al servidor. Verifica que el servidor esté activo."))
+        } catch (e: SocketTimeoutException) {
+            Result.failure(Exception("La conexión tardó demasiado. Inténtalo de nuevo."))
+        } catch (e: Exception) {
+            Result.failure(Exception("Error de conexión: ${e.message ?: "Error desconocido"}"))
+        }
+    }
+
     private fun parseHttpError(e: HttpException): String {
         val serverMsg = try {
             val rawBody = e.response()?.errorBody()?.string()
