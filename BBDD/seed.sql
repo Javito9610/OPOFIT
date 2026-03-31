@@ -1,6 +1,7 @@
 USE `mydb`;
 
 SET FOREIGN_KEY_CHECKS=0;
+SET SQL_SAFE_UPDATES=0;
 
 DELETE FROM `registro_resultados`;
 DELETE FROM `detalle_rutina_opo`;
@@ -19,6 +20,7 @@ DELETE FROM `ejercicios`;
 DELETE FROM `oposiciones`;
 
 SET FOREIGN_KEY_CHECKS=1;
+SET SQL_SAFE_UPDATES=1;
 
 INSERT INTO `oposiciones` (`id_oposicion`, `nombre`) VALUES
 (1, 'Policía Nacional - Escala Básica'),
