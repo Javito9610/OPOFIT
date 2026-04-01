@@ -4,10 +4,22 @@ const oposicionesController = require("../controllers/OposicionController");
 const {
   validarToken
 } = require('../middleware/authMiddleware');
-// Raíz con y sin barra final: si no coincide, Express puede caer en /:id y pedir token.
+// Express 5 / path-to-regexp ya no admite /:id(\d+) en la ruta; validamos el id aquí.
+function soloIdNumerico(req, res, next) {
+  const {
+    id
+  } = req.params;
+  if (!id || !/^\d+$/.test(String(id))) {
+    return res.status(404).json({
+      ok: false,
+      msg: 'Recurso no encontrado'
+    });
+  }
+  next();
+}
+// Raíz con y sin barra final.
 router.get(["/", ""], oposicionesController.getOposiciones);
 router.get("/rss/:id", validarToken, oposicionesController.getNoticiasRss);
 router.get("/requisitos/:id/:genero", validarToken, oposicionesController.getRequisitos);
-// Solo IDs numéricos; así no intercepta la lista ni rutas raras.
-router.get("/:id(\\d+)", validarToken, oposicionesController.getInfoOposiciones);
+router.get("/:id", soloIdNumerico, validarToken, oposicionesController.getInfoOposiciones);
 module.exports = router;
