@@ -5,10 +5,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -37,10 +39,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasLibresViewModel
+import com.opofit.miapp.utils.Units
+import kotlinx.coroutines.flow.collectLatest
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
@@ -56,6 +62,15 @@ fun RutinasLibresScreen(
     val authState by authViewModel.uiState.collectAsState()
     val uiState by rutinasLibresViewModel.uiState.collectAsState()
 
+    val context = LocalContext.current
+    val tokenManager = remember { TokenManager(context) }
+    var unitDist by remember { mutableStateOf("km") }
+    LaunchedEffect(Unit) {
+        tokenManager.getUnitDistancia().collectLatest { u ->
+            if (!u.isNullOrBlank()) unitDist = u
+        }
+    }
+
     val userId = authState.userId ?: 0
     var rutinaAEliminar by remember { mutableStateOf<Pair<Int, String>?>(null) }
 
@@ -66,6 +81,7 @@ fun RutinasLibresScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
         topBar = {
             TopAppBar(
                 title = { Text("Rutinas Personalizadas") },
@@ -145,10 +161,15 @@ fun RutinasLibresScreen(
                     }
                 }
                 else -> {
-                    LazyColumn(
+                    Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp),
+                            .padding(16.dp)
+                    ) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(uiState.rutinas) { rutina ->
@@ -173,7 +194,7 @@ fun RutinasLibresScreen(
                                         )
                                         if (firstEj?.nombre_ejercicio != null) {
                                             Text(
-                                                text = "${firstEj.nombre_ejercicio} • ${rutina.ejercicios.size} ejercicios",
+                                                text = "${Units.nombreConEquivalenciaDistancia(firstEj.nombre_ejercicio, unitDist)} • ${rutina.ejercicios.size} ejercicios",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -204,6 +225,7 @@ fun RutinasLibresScreen(
                                 }
                             }
                         }
+                    }
                     }
                 }
             }

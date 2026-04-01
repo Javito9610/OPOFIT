@@ -7,11 +7,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -40,6 +42,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -49,9 +52,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasViewModel
+import com.opofit.miapp.utils.Units
 import com.opofit.miapp.utils.UrlOpener
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,6 +72,13 @@ fun RutinasScreen(
     val authState by authViewModel.uiState.collectAsState()
     val uiState by rutinasViewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val tokenManager = remember { TokenManager(context) }
+    var unitDist by remember { mutableStateOf("km") }
+    LaunchedEffect(Unit) {
+        tokenManager.getUnitDistancia().collectLatest { u ->
+            if (!u.isNullOrBlank()) unitDist = u
+        }
+    }
 
     val userId = authState.userId ?: 0
     val oposicionId = authState.oposicionId ?: 1
@@ -85,6 +98,7 @@ fun RutinasScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
         topBar = {
             TopAppBar(
                 title = { Text("Mi Entrenamiento") },
@@ -282,113 +296,120 @@ fun RutinasScreen(
                                 }
                             }
                         } else if (uiState.rutinaCompleta.isNotEmpty()) {
-                            
-                            ScrollableTabRow(
-                                selectedTabIndex = selectedTab,
-                                edgePadding = 8.dp
-                            ) {
-                                enfoqueTabs.forEachIndexed { index, (label, _) ->
-                                    Tab(
-                                        selected = selectedTab == index,
-                                        onClick = { selectedTab = index },
-                                        text = { Text(label) }
-                                    )
-                                }
-                            }
-
-                            
                             val selectedEnfoque = enfoqueTabs[selectedTab].second
                             val filteredBlocks = uiState.rutinaCompleta.filter {
                                 it.bloque.equals(selectedEnfoque, ignoreCase = true)
                             }
-
-                            LazyColumn(
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f)
-                                    .padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                if (filteredBlocks.isEmpty()) {
-                                    item {
-                                        Card(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            colors = CardDefaults.cardColors(
-                                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                                            )
-                                        ) {
-                                            Box(
-                                                modifier = Modifier.fillMaxWidth().padding(32.dp),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Text(
-                                                    text = "No hay ejercicios de ${selectedEnfoque.lowercase()} disponibles para tu nivel.",
-                                                    style = MaterialTheme.typography.bodyLarge,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
-                                        }
+                                ScrollableTabRow(
+                                    selectedTabIndex = selectedTab,
+                                    edgePadding = 8.dp
+                                ) {
+                                    enfoqueTabs.forEachIndexed { index, (label, _) ->
+                                        Tab(
+                                            selected = selectedTab == index,
+                                            onClick = { selectedTab = index },
+                                            text = { Text(label) }
+                                        )
                                     }
                                 }
-
-                                items(filteredBlocks) { bloque ->
-                                    Card(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                                    ) {
-                                        Column(modifier = Modifier.padding(16.dp)) {
-                                            Text(
-                                                text = bloque.bloque,
-                                                style = MaterialTheme.typography.titleMedium,
-                                                fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
-                                            Spacer(modifier = Modifier.height(8.dp))
-                                            bloque.ejercicios.forEachIndexed { index, ejercicio ->
-                                                if (index > 0) Divider(modifier = Modifier.padding(vertical = 4.dp))
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                LazyColumn(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f)
+                                        .padding(horizontal = 16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    if (filteredBlocks.isEmpty()) {
+                                        item {
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = CardDefaults.cardColors(
+                                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                                )
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier.fillMaxWidth().padding(32.dp),
+                                                    contentAlignment = Alignment.Center
                                                 ) {
                                                     Text(
-                                                        text = ejercicio.nombre,
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        modifier = Modifier.weight(1f)
-                                                    )
-                                                    Text(
-                                                        text = "${ejercicio.series}x${ejercicio.repeticiones}",
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        color = MaterialTheme.colorScheme.secondary
+                                                        text = "No hay ejercicios de ${selectedEnfoque.lowercase()} disponibles para tu nivel.",
+                                                        style = MaterialTheme.typography.bodyLarge,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                                     )
                                                 }
-                                                if (!ejercicio.video_url.isNullOrBlank()) {
-                                                    TextButton(
-                                                        onClick = {
-                                                            UrlOpener.open(context, ejercicio.video_url)
-                                                        }
-                                                    ) {
-                                                        Text("Ver vídeo")
-                                                    }
-                                                }
+                                            }
+                                        }
+                                    }
+                                    items(filteredBlocks) { bloque ->
+                                        Card(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                        ) {
+                                            Column(modifier = Modifier.padding(16.dp)) {
                                                 Text(
-                                                    text = "Descanso: ${ejercicio.descanso}s",
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    text = bloque.bloque,
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.primary
                                                 )
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                bloque.ejercicios.forEachIndexed { index, ejercicio ->
+                                                    if (index > 0) Divider(modifier = Modifier.padding(vertical = 4.dp))
+                                                    val nombreEj = Units.nombreConEquivalenciaDistancia(
+                                                        ejercicio.nombre,
+                                                        unitDist
+                                                    )
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.SpaceBetween
+                                                    ) {
+                                                        Text(
+                                                            text = nombreEj,
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            modifier = Modifier.weight(1f)
+                                                        )
+                                                        Text(
+                                                            text = "${ejercicio.series}x${ejercicio.repeticiones}",
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            color = MaterialTheme.colorScheme.secondary
+                                                        )
+                                                    }
+                                                    if (!ejercicio.video_url.isNullOrBlank()) {
+                                                        TextButton(
+                                                            onClick = {
+                                                                UrlOpener.open(context, ejercicio.video_url)
+                                                            }
+                                                        ) {
+                                                            Text("Ver vídeo")
+                                                        }
+                                                    }
+                                                    Text(
+                                                        text = "Descanso: ${ejercicio.descanso}s",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
                                             }
                                         }
                                     }
                                 }
-
-                                item {
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
                                     Button(
                                         onClick = { onNavigateToEntrenamientos(selectedEnfoque) },
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Text("💪 Comenzar Entrenamiento")
                                     }
-                                    Spacer(modifier = Modifier.height(8.dp))
                                     OutlinedButton(
                                         onClick = onNavigateToRutinasLibres,
                                         modifier = Modifier.fillMaxWidth()

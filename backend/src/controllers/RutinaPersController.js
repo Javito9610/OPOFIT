@@ -26,6 +26,13 @@ const nuevaRutinaPersonalizada = async (req, res) => {
     });
   } catch (error) {
     console.error("Error en nuevaRutinaPersonalizada:", error.message);
+    const msg = error.message || '';
+    if (msg.includes('Ya tienes una rutina con este nombre')) {
+      return res.status(409).json({
+        ok: false,
+        msg: msg
+      });
+    }
     res.status(500).json({
       ok: false,
       msg: "No se pudo guardar la rutina personalizada"

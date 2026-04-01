@@ -5,10 +5,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -87,6 +89,7 @@ fun PerfilScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
         topBar = {
             TopAppBar(
                 title = { Text("Mi Perfil") },
@@ -108,11 +111,17 @@ fun PerfilScreen(
                 CircularProgressIndicator()
             }
         } else {
-            LazyColumn(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .padding(16.dp),
+            ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(top = 16.dp, bottom = 8.dp)
+                    .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
@@ -161,7 +170,11 @@ fun PerfilScreen(
                                     }
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text("Altura", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
-                                        Text(altura?.let { String.format("%.0f cm", it) } ?: "-", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                        Text(
+                                            altura?.let { Units.formatAltura(it, unitDist) } ?: "-",
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
                                     }
                                     Column(horizontalAlignment = Alignment.End) {
                                         Text("IMC", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
@@ -212,7 +225,7 @@ fun PerfilScreen(
                                 Divider(modifier = Modifier.padding(vertical = 4.dp))
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text(
-                                        text = "Marca: ${marca.valord_record ?: "-"}${if (!marca.unidad.isNullOrBlank()) " ${marca.unidad}" else ""}",
+                                        text = "Marca: ${Units.formatMarcaDisplay(marca.valord_record, marca.unidad, unitDist)}",
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                     Text(
@@ -236,15 +249,15 @@ fun PerfilScreen(
                     }
                 }
 
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = onNavigateToEditarPerfil,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("✏️ Editar Perfil")
-                    }
-                }
+            }
+            Button(
+                onClick = onNavigateToEditarPerfil,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text("✏️ Editar Perfil")
+            }
             }
         }
     }

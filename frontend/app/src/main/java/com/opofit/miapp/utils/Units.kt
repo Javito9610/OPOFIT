@@ -47,5 +47,32 @@ object Units {
         }
         return "$nombre ($extra)"
     }
+
+    /** Muestra marca según ajuste de distancia (km/m → mi/yd). Segundos y reps no se convierten. */
+    fun formatMarcaDisplay(valor: Double?, unidadRaw: String?, unitDist: String): String {
+        if (valor == null) return "-"
+        val u = unidadRaw?.lowercase()?.trim().orEmpty()
+        return when {
+            u == "s" || u == "seg" || u == "segundos" -> String.format("%.1f s", valor)
+            u == "reps" || u.contains("rep") -> String.format("%.1f reps", valor)
+            u == "m" || u == "metros" || u == "metro" -> if (unitDist == "mi") {
+                if (valor >= 1000) "%.2f mi".format(mToMi(valor)) else "%.0f yd".format(mToYd(valor))
+            } else String.format("%.1f m", valor)
+            u == "km" -> if (unitDist == "mi") "%.2f mi".format(kmToMi(valor)) else String.format("%.2f km", valor)
+            else -> String.format("%.1f %s", valor, unidadRaw ?: "")
+        }
+    }
+
+    /** Altura: cm o pies/pulgadas si el usuario usa millas. */
+    fun formatAltura(cm: Double, unitDist: String): String {
+        return if (unitDist == "mi") {
+            val totalIn = cm / 2.54
+            val ft = (totalIn / 12).toInt().coerceAtLeast(0)
+            val inch = (totalIn - ft * 12).roundToInt().coerceIn(0, 11)
+            "$ft' $inch\""
+        } else {
+            "%.0f cm".format(cm)
+        }
+    }
 }
 

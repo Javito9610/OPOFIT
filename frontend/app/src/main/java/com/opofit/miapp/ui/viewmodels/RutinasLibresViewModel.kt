@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.json.JSONObject
+import retrofit2.HttpException
 
 class RutinasLibresViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -62,6 +64,19 @@ class RutinasLibresViewModel(application: Application) : AndroidViewModel(applic
                     cargarRutinas(userId)
                 } else {
                     _uiState.update { it.copy(isLoading = false, error = response.msg ?: response.message ?: "Error al crear rutina") }
+                }
+            } catch (e: HttpException) {
+                val serverMsg = try {
+                    val raw = e.response()?.errorBody()?.string().orEmpty()
+                    if (raw.isNotEmpty()) JSONObject(raw).optString("msg", "") else ""
+                } catch (_: Exception) {
+                    ""
+                }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = serverMsg.ifEmpty { e.message ?: "Error al crear rutina" }
+                    )
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = e.message ?: "Error de conexión") }
