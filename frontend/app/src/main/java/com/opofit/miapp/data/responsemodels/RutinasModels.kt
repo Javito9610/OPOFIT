@@ -4,6 +4,7 @@ data class EjercicioRutina(
     val id_ejercicio: Int? = null,
     val nombre: String,
     val video_url: String?,
+    val unidad: String? = null,
     val series: Int,
     val repeticiones: Int,
     val descanso: Int
@@ -18,10 +19,14 @@ data class BloqueRutina(
 data class RutinasData(
     val notaActual: String,
     val nivelAsignado: String,
-    val rutinaCompleta: List<BloqueRutina>
+    val rutinaCompleta: List<BloqueRutina>,
+    val totalPruebas: Int? = null,
+    val pruebasCompletadas: Int? = null,
+    val pruebasFaltantes: Int? = null
 )
 
 data class RutinasResponse(
     val ok: Boolean,
+    val msg: String? = null,
     val data: RutinasData?
 )

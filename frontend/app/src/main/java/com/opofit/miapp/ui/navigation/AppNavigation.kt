@@ -10,6 +10,7 @@ import com.opofit.miapp.ui.screens.ajustes.AjustesScreen
 import com.opofit.miapp.ui.screens.auth.LoginScreen
 import com.opofit.miapp.ui.screens.auth.RegisterScreen
 import com.opofit.miapp.ui.screens.entrenamientos.EntrenamientosScreen
+import com.opofit.miapp.ui.screens.entrenamientos.EntrenamientoPersonalizadoScreen
 import com.opofit.miapp.ui.screens.entrenamientos.RegistrarEntrenamientoScreen
 import com.opofit.miapp.ui.screens.main.MainScreen
 import com.opofit.miapp.ui.screens.oposicion.OposicionInfoScreen
@@ -59,12 +60,13 @@ fun AppNavigation(
             )
         }
 
-        // Main app screen with BottomNavigation (Home, Rutinas, Perfil, Historial)
+        
         composable(NavDestinations.MAIN) {
             MainScreen(
                 authViewModel = authViewModel,
-                onNavigateToEntrenamientos = {
-                    navController.navigate(NavDestinations.ENTRENAMIENTOS)
+                onNavigateToEntrenamientos = { enfoque ->
+                    val e = enfoque?.takeIf { it.isNotBlank() } ?: ""
+                    navController.navigate("entrenamientos?enfoque=$e")
                 },
                 onNavigateToAjustes = {
                     navController.navigate(NavDestinations.AJUSTES)
@@ -117,7 +119,7 @@ fun AppNavigation(
                 rutinaId = rutinaId,
                 authViewModel = authViewModel,
                 onNavigateBack = { navController.popBackStack() },
-                onIniciarEntrenamiento = { navController.navigate(NavDestinations.ENTRENAMIENTOS) }
+                onIniciarEntrenamiento = { navController.navigate("entrenamiento_pers/$rutinaId") }
             )
         }
 
@@ -132,13 +134,32 @@ fun AppNavigation(
             )
         }
 
-        composable(NavDestinations.ENTRENAMIENTOS) {
+        composable(
+            route = NavDestinations.ENTRENAMIENTO_PERS,
+            arguments = listOf(navArgument("rutina_id") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val rutinaIdStr = backStackEntry.arguments?.getString("rutina_id") ?: "0"
+            val rutinaId = rutinaIdStr.toIntOrNull() ?: 0
+            EntrenamientoPersonalizadoScreen(
+                rutinaId = rutinaId,
+                authViewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onEntrenamientoFinalizado = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = NavDestinations.ENTRENAMIENTOS,
+            arguments = listOf(navArgument("enfoque") { type = NavType.StringType; defaultValue = "" })
+        ) { backStackEntry ->
+            val enfoque = backStackEntry.arguments?.getString("enfoque").orEmpty()
             EntrenamientosScreen(
                 authViewModel = authViewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onEntrenamientoFinalizado = {
                     navController.popBackStack()
-                }
+                },
+                initialEnfoque = enfoque
             )
         }
 

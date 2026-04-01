@@ -115,7 +115,12 @@ class PerfilViewModel(application: Application) : AndroidViewModel(application) 
                         )
                     }
                 } else {
-                    _uiState.update { it.copy(isLoading = false, error = response.message ?: "Error al actualizar perfil") }
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            error = response.msg ?: response.message ?: "Error al actualizar perfil"
+                        )
+                    }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = e.message ?: "Error de conexión") }

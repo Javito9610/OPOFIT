@@ -18,14 +18,18 @@ data class CrearRutinaLibreResponse(
     val message: String? = null
 )
 
-data class RutinaLibre(
-    val id_rutina_pers: Int,
-    val nombre_personalizado: String,
-    val ejercicios_id_ejercicio: Int?,
+data class RutinaLibreEjercicio(
+    val id_ejercicio: Int,
     val nombre_ejercicio: String? = null,
     val series: Int?,
     val repeticiones: Int?,
     val descanso: Int? = null
+)
+
+data class RutinaLibre(
+    val id_rutina_pers: Int,
+    val nombre_personalizado: String,
+    val ejercicios: List<RutinaLibreEjercicio> = emptyList()
 )
 
 data class RutinasLibresListResponse(

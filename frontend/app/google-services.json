@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "997698298685-oi2qumoa8j3obm2spouqtot74rou5dnf.apps.googleusercontent.com",
+          "client_id": "997698298685-98pl5gptlsmds2pkigdpifhto0urpvqk.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.opofit.miapp",
-            "certificate_hash": "c9d208ca2df42bd772e40bacec252398bbeef8ec"
+            "certificate_hash": "a11083cd7fa53feb1c3ac95d569349bc589109b6"
           }
         },
         {

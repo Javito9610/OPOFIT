@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.json.JSONObject
+import java.util.Base64
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -29,7 +31,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         val userEmail: String? = null,
         val userName: String? = null,
         val genero: String? = null,
-        val oposicionId: Int? = null
+        val oposicionId: Int? = null,
+        val peso: Double? = null,
+        val altura: Double? = null,
+        val imc: Double? = null
     )
 
     private val backendService = BackendAuthService()
@@ -47,21 +52,97 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val session = sessionManager.getCurrentSession().first()
+                val inferredUserId = session.userId.toIntOrNull()
+                    ?: decodeJwtUserId(session.token)
+
+                
+                if (session.token.isNotBlank()) {
+                    val meResult = backendService.me(session.token)
+                    meResult.fold(
+                        onSuccess = { me ->
+                            val user = me.user
+                            if (user != null) {
+                                sessionManager.saveSession(
+                                    token = session.token,
+                                    email = user.email,
+                                    userId = user.id_usuario.toString(),
+                                    userName = user.nombre,
+                                    genero = user.genero,
+                                    oposicionId = user.oposiciones_id_oposicion?.toString() ?: "",
+                                    peso = user.peso.toString(),
+                                    altura = user.altura.toString(),
+                                    imc = user.imc.toString()
+                                )
+                                _uiState.update { state ->
+                                    state.copy(
+                                        isLoggedIn = true,
+                                        isSessionChecked = true,
+                                        userId = user.id_usuario,
+                                        userEmail = user.email,
+                                        userName = user.nombre,
+                                        genero = user.genero,
+                                        oposicionId = user.oposiciones_id_oposicion,
+                                        peso = user.peso,
+                                        altura = user.altura,
+                                        imc = user.imc
+                                    )
+                                }
+                                return@launch
+                            }
+                        },
+                        onFailure = {
+                            
+                            sessionManager.logout()
+                            _uiState.update {
+                                it.copy(
+                                    isLoggedIn = false,
+                                    isSessionChecked = true,
+                                    error = "Tu sesión ha caducado o ya no es válida. Inicia sesión de nuevo."
+                                )
+                            }
+                            return@launch
+                        }
+                    )
+                }
                 _uiState.update { state ->
                     state.copy(
                         isLoggedIn = session.isLoggedIn,
                         isSessionChecked = true,
-                        userId = session.userId.toIntOrNull(),
+                        userId = inferredUserId,
                         userEmail = session.email,
                         userName = session.userName,
                         genero = session.genero.ifEmpty { null },
-                        oposicionId = session.oposicionId.toIntOrNull()
+                        oposicionId = session.oposicionId.toIntOrNull(),
+                        peso = session.peso.toDoubleOrNull(),
+                        altura = session.altura.toDoubleOrNull(),
+                        imc = session.imc.toDoubleOrNull()
                     )
                 }
             } catch (e: Exception) {
                 Log.e("AuthViewModel", "Error restoring session", e)
                 _uiState.update { it.copy(isSessionChecked = true) }
             }
+        }
+    }
+
+    private fun decodeJwtUserId(token: String): Int? {
+        return try {
+            if (token.isBlank()) return null
+            val parts = token.split(".")
+            if (parts.size < 2) return null
+            val payload = parts[1]
+                .replace('-', '+')
+                .replace('_', '/')
+                .let { p ->
+                    
+                    val pad = (4 - (p.length % 4)) % 4
+                    p + "=".repeat(pad)
+                }
+            val json = String(Base64.getDecoder().decode(payload))
+            val obj = JSONObject(json)
+            obj.optInt("id").takeIf { it > 0 }
+        } catch (_: Exception) {
+            null
         }
     }
 
@@ -90,7 +171,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             userId = response.user?.id_usuario?.toString() ?: "",
                             userName = response.user?.nombre ?: "",
                             genero = response.user?.genero ?: "",
-                            oposicionId = response.user?.oposiciones_id_oposicion?.toString() ?: ""
+                            oposicionId = response.user?.oposiciones_id_oposicion?.toString() ?: "",
+                            peso = response.user?.peso?.toString() ?: "",
+                            altura = response.user?.altura?.toString() ?: "",
+                            imc = response.user?.imc?.toString() ?: ""
                         )
 
                         _uiState.update { it.copy(
@@ -101,7 +185,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             userEmail = response.user?.email,
                             userName = response.user?.nombre,
                             genero = response.user?.genero,
-                            oposicionId = response.user?.oposiciones_id_oposicion
+                            oposicionId = response.user?.oposiciones_id_oposicion,
+                            peso = response.user?.peso,
+                            altura = response.user?.altura,
+                            imc = response.user?.imc
                         )}
                     },
                     onFailure = { error ->
@@ -157,7 +244,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             userId = response.userId?.toString() ?: response.user?.id_usuario?.toString() ?: "",
                             userName = response.user?.nombre ?: nombre,
                             genero = response.user?.genero ?: genero,
-                            oposicionId = response.user?.oposiciones_id_oposicion?.toString() ?: oposiciones_id.toString()
+                            oposicionId = response.user?.oposiciones_id_oposicion?.toString() ?: oposiciones_id.toString(),
+                            peso = response.user?.peso?.toString() ?: peso.toString(),
+                            altura = response.user?.altura?.toString() ?: altura.toString(),
+                            imc = response.user?.imc?.toString() ?: ""
                         )
 
                         _uiState.update { it.copy(
@@ -168,7 +258,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             userEmail = response.user?.email ?: email,
                             userName = response.user?.nombre ?: nombre,
                             genero = response.user?.genero ?: genero,
-                            oposicionId = response.user?.oposiciones_id_oposicion ?: oposiciones_id
+                            oposicionId = response.user?.oposiciones_id_oposicion ?: oposiciones_id,
+                            peso = response.user?.peso ?: peso,
+                            altura = response.user?.altura ?: altura,
+                            imc = response.user?.imc
                         )}
                     },
                     onFailure = { error ->
@@ -198,23 +291,31 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         result.fold(
             onSuccess = { response ->
                 val resolvedName = response.user?.nombre ?: name
+                val resolvedEmail = response.user?.email ?: email
+                val resolvedUserId = response.userId ?: response.user?.id_usuario
                 sessionManager.saveSession(
                     token = response.token,
-                    email = email,
-                    userId = response.userId?.toString() ?: "",
+                    email = resolvedEmail,
+                    userId = resolvedUserId?.toString() ?: decodeJwtUserId(response.token ?: "")?.toString() ?: "",
                     userName = resolvedName,
                     genero = response.user?.genero ?: "",
-                    oposicionId = response.user?.oposiciones_id_oposicion?.toString() ?: ""
+                    oposicionId = response.user?.oposiciones_id_oposicion?.toString() ?: "",
+                    peso = response.user?.peso?.toString() ?: "",
+                    altura = response.user?.altura?.toString() ?: "",
+                    imc = response.user?.imc?.toString() ?: ""
                 )
                 _uiState.update { it.copy(
                     isLoading = false,
                     success = true,
                     isLoggedIn = true,
-                    userId = response.userId,
-                    userEmail = response.user?.email,
+                    userId = resolvedUserId,
+                    userEmail = resolvedEmail,
                     userName = resolvedName,
                     genero = response.user?.genero,
-                    oposicionId = response.user?.oposiciones_id_oposicion
+                    oposicionId = response.user?.oposiciones_id_oposicion,
+                    peso = response.user?.peso,
+                    altura = response.user?.altura,
+                    imc = response.user?.imc
                 )}
             },
             onFailure = { error ->
@@ -243,10 +344,85 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun loginWithFirebase(idToken: String) {
+        _uiState.update { it.copy(isLoading = true, error = "") }
+        viewModelScope.launch {
+            val result = backendService.loginWithFirebase(idToken)
+            handleGoogleBackendResult(
+                email = "",
+                name = "Usuario",
+                result = result,
+                defaultError = "Error al iniciar sesión con Firebase"
+            )
+        }
+    }
+
+    fun registerWithFirebase(
+        idToken: String,
+        nombre: String,
+        genero: String,
+        peso: Double,
+        altura: Double,
+        oposicionesId: Int
+    ) {
+        _uiState.update { it.copy(isLoading = true, error = "") }
+        viewModelScope.launch {
+            val result = backendService.registerWithFirebase(
+                idToken, nombre, genero, peso, altura, oposicionesId
+            )
+            handleGoogleBackendResult(
+                email = "",
+                name = nombre,
+                result = result,
+                defaultError = "Error al completar el registro con Google"
+            )
+        }
+    }
+
     fun logout() {
         viewModelScope.launch {
             sessionManager.logout()
             _uiState.value = AuthUiState(isSessionChecked = true)
+        }
+    }
+
+    fun refreshSessionFromBackend() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val token = tokenManager.getToken().first().orEmpty()
+                if (token.isBlank()) return@launch
+
+                val meResult = backendService.me(token)
+                meResult.fold(
+                    onSuccess = { me ->
+                        val user = me.user ?: return@fold
+                        sessionManager.saveSession(
+                            token = token,
+                            email = user.email,
+                            userId = user.id_usuario.toString(),
+                            userName = user.nombre,
+                            genero = user.genero,
+                            oposicionId = user.oposiciones_id_oposicion?.toString() ?: "",
+                            peso = user.peso.toString(),
+                            altura = user.altura.toString(),
+                            imc = user.imc.toString()
+                        )
+                        _uiState.update { state ->
+                            state.copy(
+                                userId = user.id_usuario,
+                                userEmail = user.email,
+                                userName = user.nombre,
+                                genero = user.genero,
+                                oposicionId = user.oposiciones_id_oposicion,
+                                peso = user.peso,
+                                altura = user.altura,
+                                imc = user.imc
+                            )
+                        }
+                    },
+                    onFailure = {  }
+                )
+            } catch (_: Exception) { }
         }
     }
 

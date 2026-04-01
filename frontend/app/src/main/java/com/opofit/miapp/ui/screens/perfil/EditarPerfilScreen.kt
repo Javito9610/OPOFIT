@@ -40,13 +40,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.MarcaActualizar
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.PerfilViewModel
+import com.opofit.miapp.utils.Units
+import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.pow
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,23 +70,39 @@ fun EditarPerfilScreen(
     var peso by remember { mutableStateOf("") }
     var altura by remember { mutableStateOf("") }
 
+    val context = LocalContext.current
+    val tokenManager = remember { TokenManager(context) }
+    var unitPeso by remember { mutableStateOf("kg") }
+    var unitDist by remember { mutableStateOf("km") }
+    LaunchedEffect(Unit) {
+        tokenManager.getUnitPeso().collectLatest { u ->
+            if (!u.isNullOrBlank()) unitPeso = u
+        }
+    }
+    LaunchedEffect(Unit) {
+        tokenManager.getUnitDistancia().collectLatest { u ->
+            if (!u.isNullOrBlank()) unitDist = u
+        }
+    }
+
     data class MarcaRow(val idPrueba: Int? = null, val nombrePrueba: String = "", val valor: String = "")
     val marcas = remember { mutableStateListOf(MarcaRow()) }
 
     var expandedDropdownIndex by remember { mutableStateOf(-1) }
 
-    val pruebasDisponibles = remember(perfilState.infoPruebas) {
+    val pruebasDisponibles = remember(perfilState.infoPruebas, unitDist) {
         perfilState.infoPruebas
             .distinctBy { it.id_pruebas_oficiales }
-            .map { it.id_pruebas_oficiales to it.nombre_prueba }
+            .map { Triple(it.id_pruebas_oficiales, Units.nombreConEquivalenciaDistancia(it.nombre_prueba, unitDist), it.mejor_si_es_menor ?: 0) }
     }
 
-    val imc = remember(peso, altura) {
-        val p = peso.toDoubleOrNull()
+    val imc = remember(peso, altura, unitPeso) {
+        val pRaw = peso.toDoubleOrNull()
         val a = altura.toDoubleOrNull()
-        if (p != null && a != null && a > 0) {
+        val pKg = pRaw?.let { if (unitPeso == "lb") Units.lbToKg(it) else it }
+        if (pKg != null && a != null && a > 0) {
             val alturaM = a / 100.0
-            "%.2f".format(p / alturaM.pow(2))
+            "%.2f".format(pKg / alturaM.pow(2))
         } else "-"
     }
 
@@ -90,8 +110,22 @@ fun EditarPerfilScreen(
         perfilViewModel.cargarInfoPruebas(oposicionId, genero)
     }
 
+    LaunchedEffect(authState.peso, unitPeso) {
+        if (peso.isBlank() && authState.peso != null) {
+            val shown = if (unitPeso == "lb") Units.kgToLb(authState.peso!!) else authState.peso!!
+            peso = String.format("%.1f", shown)
+        }
+    }
+
+    LaunchedEffect(authState.altura) {
+        if (altura.isBlank() && authState.altura != null) {
+            altura = String.format("%.0f", authState.altura!!)
+        }
+    }
+
     LaunchedEffect(perfilState.guardadoExitoso) {
         if (perfilState.guardadoExitoso) {
+            authViewModel.refreshSessionFromBackend()
             perfilViewModel.resetGuardado()
             onNavigateBack()
         }
@@ -133,7 +167,7 @@ fun EditarPerfilScreen(
                 OutlinedTextField(
                     value = peso,
                     onValueChange = { peso = it },
-                    label = { Text("Peso (kg)") },
+                    label = { Text("Peso ($unitPeso)") },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true
@@ -178,6 +212,11 @@ fun EditarPerfilScreen(
 
             itemsIndexed(marcas) { index, row ->
                 val expanded = expandedDropdownIndex == index
+                val selectedPruebaMeta = pruebasDisponibles.firstOrNull { it.first == row.idPrueba }
+                val esTiempo = (selectedPruebaMeta?.third ?: 0) == 1
+                val unidadLabel = if (row.idPrueba != null) {
+                    if (esTiempo) "Tiempo (segundos)" else "Repeticiones (nº)"
+                } else null
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -203,7 +242,7 @@ fun EditarPerfilScreen(
                             expanded = expanded,
                             onDismissRequest = { expandedDropdownIndex = -1 }
                         ) {
-                            pruebasDisponibles.forEach { (id, nombre) ->
+                            pruebasDisponibles.forEach { (id, nombre, _) ->
                                 DropdownMenuItem(
                                     text = { Text(nombre) },
                                     onClick = {
@@ -218,10 +257,15 @@ fun EditarPerfilScreen(
                     OutlinedTextField(
                         value = row.valor,
                         onValueChange = { marcas[index] = row.copy(valor = it) },
-                        label = { Text("Valor") },
+                        label = { Text(unidadLabel ?: "Valor") },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true
+                        singleLine = true,
+                        supportingText = {
+                            if (unidadLabel != null) {
+                                Text(if (esTiempo) "Introduce tu marca en segundos" else "Introduce tu marca en repeticiones")
+                            }
+                        }
                     )
                 }
             }
@@ -269,7 +313,8 @@ fun EditarPerfilScreen(
                 } else {
                     Button(
                         onClick = {
-                            val p = peso.toDoubleOrNull() ?: 0.0
+                            val pRaw = peso.toDoubleOrNull() ?: 0.0
+                            val p = if (unitPeso == "lb") Units.lbToKg(pRaw) else pRaw
                             val a = altura.toDoubleOrNull() ?: 0.0
                             val nuevasMarcas = marcas.mapNotNull { row ->
                                 val id = row.idPrueba ?: return@mapNotNull null

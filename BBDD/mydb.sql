@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`marcas_perfil` (
   `pruebas_oficiales_id_pruebas_oficiales` INT NOT NULL,
   `usuarios_id_usuario` INT NOT NULL,
   PRIMARY KEY (`id_marcas_perfil`),
+  UNIQUE INDEX `uniq_usuario_prueba` (`usuarios_id_usuario` ASC, `pruebas_oficiales_id_pruebas_oficiales` ASC) VISIBLE,
   INDEX `fk_marcas_perfil_pruebas_oficiales1_idx` (`pruebas_oficiales_id_pruebas_oficiales` ASC) VISIBLE,
   INDEX `fk_marcas_perfil_usuarios1_idx` (`usuarios_id_usuario` ASC) VISIBLE,
   CONSTRAINT `fk_marcas_perfil_pruebas_oficiales1`

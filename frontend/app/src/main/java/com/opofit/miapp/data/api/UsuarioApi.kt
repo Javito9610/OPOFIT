@@ -5,6 +5,7 @@ import com.opofit.miapp.data.responsemodels.ActualizarAjustesResponse
 import com.opofit.miapp.data.responsemodels.ActualizarPerfilRequest
 import com.opofit.miapp.data.responsemodels.ActualizarPerfilResponse
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.Header
 import retrofit2.http.PUT
 
@@ -19,5 +20,10 @@ interface UsuarioApi {
     suspend fun actualizarAjustes(
         @Header("Authorization") token: String,
         @Body body: ActualizarAjustesRequest
+    ): ActualizarAjustesResponse
+
+    @DELETE("/api/user/cuenta")
+    suspend fun eliminarCuenta(
+        @Header("Authorization") token: String
     ): ActualizarAjustesResponse
 }

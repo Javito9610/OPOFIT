@@ -13,6 +13,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
+import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.ui.navigation.AppNavigation
 import com.opofit.miapp.ui.theme.MiAppTheme
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
@@ -26,7 +27,8 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            MiAppTheme {
+            val darkMode = TokenManager(this).getDarkMode().collectAsState(initial = false).value
+            MiAppTheme(darkTheme = darkMode) {
                 Surface(
                     modifier = Modifier.fillMaxSize()
                 ) {

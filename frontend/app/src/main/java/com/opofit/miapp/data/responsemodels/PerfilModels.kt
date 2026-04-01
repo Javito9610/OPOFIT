@@ -17,7 +17,8 @@ data class ActualizarPerfilResponse(
     val ok: Boolean,
     val nuevoNivel: String?,
     val nuevaNota: String?,
-    val message: String?
+    val msg: String? = null,
+    val message: String? = null
 )
 
 data class ActualizarAjustesRequest(
@@ -28,5 +29,6 @@ data class ActualizarAjustesRequest(
 
 data class ActualizarAjustesResponse(
     val ok: Boolean,
-    val message: String?
+    val msg: String? = null,
+    val message: String? = null
 )

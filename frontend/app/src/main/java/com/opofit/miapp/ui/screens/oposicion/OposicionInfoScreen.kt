@@ -1,7 +1,5 @@
 package com.opofit.miapp.ui.screens.oposicion
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,6 +23,9 @@ import com.opofit.miapp.data.responsemodels.Oposicion
 import com.opofit.miapp.data.responsemodels.PruebaOposicion
 import kotlinx.coroutines.flow.first
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
+import com.opofit.miapp.utils.UrlOpener
+import com.opofit.miapp.utils.Units
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,7 +58,7 @@ fun OposicionInfoScreen(
             val token = tokenManager.getToken().first() ?: ""
             val bearerToken = "Bearer $token"
 
-            // Load oposicion details (pruebas + noticias)
+            
             try {
                 val detalleResponse = RetrofitClient.oposicionesApi.getInfoOposicion(bearerToken, oposicionId)
                 if (detalleResponse.ok) {
@@ -69,7 +70,7 @@ fun OposicionInfoScreen(
                 error = "Error al cargar pruebas: ${e.message ?: "Error de conexión"}"
             }
 
-            // Load pruebas info with baremos
+            
             try {
                 val infoResponse = RetrofitClient.infoPruebasApi.getInfoPruebas(bearerToken, oposicionId, genero)
                 if (infoResponse.ok) {
@@ -81,14 +82,14 @@ fun OposicionInfoScreen(
                 }
             }
 
-            // Load RSS news
+            
             try {
                 val rssResponse = RetrofitClient.oposicionesApi.getNoticiasRss(bearerToken, oposicionId)
                 if (rssResponse.ok) {
                     noticiasRss = rssResponse.data ?: emptyList()
                 }
             } catch (_: Exception) {
-                // RSS is optional, don't set error
+                
             }
 
             isLoading = false
@@ -138,7 +139,7 @@ fun OposicionInfoScreen(
                     }
                 }
                 else -> {
-                    // Tabs
+                    
                     ScrollableTabRow(
                         selectedTabIndex = selectedTab,
                         edgePadding = 8.dp
@@ -188,7 +189,7 @@ private fun InfoTab(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Description card
+        
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -213,7 +214,7 @@ private fun InfoTab(
             }
         }
 
-        // Pruebas Oficiales Section
+        
         if (pruebas.isNotEmpty()) {
             item {
                 Text(
@@ -247,7 +248,7 @@ private fun InfoTab(
             }
         }
 
-        // Empty state
+        
         if (pruebas.isEmpty()) {
             item {
                 Column(
@@ -272,23 +273,23 @@ private fun TrucosTab(
     pruebas: List<PruebaOposicion>,
     infoPruebas: List<InfoPrueba>
 ) {
-    // Collect unique trucos from pruebas_oficiales
+    
     val trucosFromPruebas = pruebas
         .filter { !it.trucos.isNullOrBlank() }
         .map { it.nombre_prueba to it.trucos!! }
 
-    // Collect unique trucos from infoPruebas (baremos)
+    
     val trucosFromInfo = infoPruebas
         .filter { !it.trucos.isNullOrBlank() }
         .distinctBy { it.nombre_prueba }
         .map { it.nombre_prueba to it.trucos!! }
 
-    // Merge, preferring pruebas trucos (more detailed)
+    
     val allTrucos = mutableMapOf<String, String>()
     trucosFromInfo.forEach { (nombre, truco) -> allTrucos[nombre] = truco }
     trucosFromPruebas.forEach { (nombre, truco) -> allTrucos[nombre] = truco }
 
-    // General tips for physical tests
+    
     val consejosGenerales = listOf(
         "🏃 Calentamiento" to "Dedica al menos 10-15 minutos a calentar antes de cada entrenamiento y especialmente el día de la prueba. Incluye carrera suave, movilidad articular y estiramientos dinámicos.",
         "🍎 Nutrición" to "Mantén una dieta equilibrada rica en proteínas, carbohidratos complejos y grasas saludables. Hidrátate correctamente: al menos 2 litros de agua al día.",
@@ -303,7 +304,7 @@ private fun TrucosTab(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Specific tips per test
+        
         if (allTrucos.isNotEmpty()) {
             item {
                 Text(
@@ -339,7 +340,7 @@ private fun TrucosTab(
             }
         }
 
-        // General tips
+        
         item {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -378,58 +379,112 @@ private fun NoticiasTab(
     noticiasRss: List<NoticiaRss>,
     context: android.content.Context
 ) {
+    fun esRelevanteParaOposicion(item: NoticiaRss): Boolean {
+        val text = ("${item.titulo} ${item.descripcion}").lowercase()
+        
+        
+        return text.contains("guardia civil") ||
+            text.contains("dirección general de la guardia civil") ||
+            text.contains("policía") ||
+            text.contains("policia") ||
+            text.contains("dirección general de la policía") ||
+            text.contains("cuerpo nacional de policía") ||
+            text.contains("ministerio del interior")
+    }
+
+    val rssOrdenadas = remember(noticiasRss) {
+        noticiasRss.sortedWith(
+            compareByDescending<NoticiaRss> { esRelevanteParaOposicion(it) }
+                .thenByDescending { it.fecha }
+        )
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // RSS News Section
-        if (noticiasRss.isNotEmpty()) {
+        
+        item {
+            Text(
+                text = "📡 Noticias RSS",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = "Fuentes oficiales actualizadas automáticamente",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        if (noticiasRss.isEmpty()) {
             item {
-                Text(
-                    text = "📡 Noticias RSS",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = "Fuentes oficiales actualizadas automáticamente",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "No se pudieron cargar noticias RSS ahora mismo.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        TextButton(onClick = {
+                            UrlOpener.open(context, "https://www.boe.es/rss/")
+                        }) {
+                            Text("Abrir fuentes oficiales")
+                        }
+                    }
+                }
             }
-            items(noticiasRss) { noticia ->
+        } else {
+            items(rssOrdenadas) { noticia ->
+                val relevante = esRelevanteParaOposicion(noticia)
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .then(
                             if (noticia.enlace.isNotBlank()) {
-                                Modifier.clickable {
-                                    try {
-                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(noticia.enlace))
-                                        context.startActivity(intent)
-                                    } catch (_: Exception) { }
-                                }
+                                Modifier.clickable { UrlOpener.open(context, noticia.enlace) }
                             } else Modifier
                         ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        containerColor = if (relevante) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
                     )
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
+                        if (relevante) {
+                            Text(
+                                text = "⭐ Relevante para tu oposición",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                        }
                         Text(
                             text = noticia.titulo,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                            color = if (relevante) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
                         )
+                        if (noticia.fecha.isNotBlank()) {
+                            Text(
+                                text = "🗓 ${noticia.fecha.take(10)}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (relevante) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
                         if (noticia.fuente.isNotBlank()) {
                             Text(
                                 text = "📌 ${noticia.fuente}",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                                color = if (relevante) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
                             )
                         }
                         if (noticia.descripcion.isNotBlank()) {
@@ -437,66 +492,29 @@ private fun NoticiasTab(
                             Text(
                                 text = noticia.descripcion,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                color = if (relevante) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
                                 maxLines = 3
                             )
                         }
                         if (noticia.enlace.isNotBlank()) {
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "🔗 Ver noticia completa",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                textDecoration = TextDecoration.Underline
-                            )
+                            TextButton(onClick = {
+                                UrlOpener.open(context, noticia.enlace)
+                            }) {
+                                Text(
+                                    text = "Abrir",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
                     }
                 }
             }
         }
 
-        // Database News Section
-        if (noticias.isNotEmpty()) {
-            item {
-                if (noticiasRss.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-                Text(
-                    text = "📰 Noticias de la Oposición",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-            items(noticias) { noticia ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = noticia.titulo,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        if (!noticia.contenido.isNullOrBlank()) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = noticia.contenido,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        // Empty state
-        if (noticias.isEmpty() && noticiasRss.isEmpty()) {
+        
+        if (noticiasRss.isEmpty()) {
             item {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(32.dp),
@@ -520,6 +538,24 @@ private fun BaremosTab(
     infoPruebas: List<InfoPrueba>,
     genero: String
 ) {
+    val context = LocalContext.current
+    val tokenManager = remember { TokenManager(context) }
+    var unitDist by remember { mutableStateOf("km") }
+    LaunchedEffect(Unit) {
+        tokenManager.getUnitDistancia().collectLatest { u ->
+            if (!u.isNullOrBlank()) unitDist = u
+        }
+    }
+
+    fun unidadParaPrueba(baremos: List<InfoPrueba>): String {
+        
+        val mejorSiEsMenor = baremos.firstOrNull()?.mejor_si_es_menor
+        return if (mejorSiEsMenor == 1) "s" else "reps"
+    }
+
+    fun nombrePruebaConConversion(nombre: String): String =
+        Units.nombreConEquivalenciaDistancia(nombre, unitDist)
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -541,17 +577,18 @@ private fun BaremosTab(
                 )
             }
 
-            // Group by prueba name
+            
             val grouped = infoPruebas.groupBy { it.nombre_prueba }
             grouped.forEach { (nombrePrueba, baremos) ->
                 item {
+                    val unidad = unidadParaPrueba(baremos)
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = nombrePrueba,
+                                text = nombrePruebaConConversion(nombrePrueba),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.secondary
@@ -561,13 +598,13 @@ private fun BaremosTab(
                             HorizontalDivider()
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            // Baremo table header
+                            
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "Marca",
+                                    text = if (unidad == "s") "Marca (segundos)" else "Marca (repeticiones)",
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.weight(1f)
@@ -585,7 +622,13 @@ private fun BaremosTab(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        text = "${baremo.marca_valor ?: "-"}",
+                                        text = if (unidad == "s") {
+                                            
+                                            "${baremo.marca_valor ?: "-"}"
+                                        } else {
+                                            
+                                            baremo.marca_valor?.toInt()?.toString() ?: "-"
+                                        },
                                         style = MaterialTheme.typography.bodyMedium,
                                         modifier = Modifier.weight(1f)
                                     )

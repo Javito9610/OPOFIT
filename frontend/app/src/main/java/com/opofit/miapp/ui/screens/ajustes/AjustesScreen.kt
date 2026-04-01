@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -29,7 +31,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -66,12 +70,84 @@ fun AjustesScreen(
     var expandedDistancia by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    var mostrarDialogoEliminar by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.unidadPeso, uiState.unidadDistancia) {
+        unidadPeso = uiState.unidadPeso
+        unidadDistancia = uiState.unidadDistancia
+    }
 
     LaunchedEffect(uiState.guardadoExitoso) {
         if (uiState.guardadoExitoso) {
             snackbarHostState.showSnackbar("Ajustes guardados correctamente")
             ajustesViewModel.resetGuardado()
         }
+    }
+
+    LaunchedEffect(uiState.cuentaEliminada) {
+        if (uiState.cuentaEliminada) {
+            onLogout()
+            ajustesViewModel.clearCuentaEliminadaFlag()
+        }
+    }
+
+    if (mostrarDialogoEliminar) {
+        AlertDialog(
+            onDismissRequest = {
+                if (!uiState.eliminandoCuenta) mostrarDialogoEliminar = false
+            },
+            title = {
+                Text(
+                    "¿Eliminar cuenta?",
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Se eliminarán de forma permanente tu perfil, marcas, historial de entrenos y rutinas personales. No podrás recuperarlos.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    if (uiState.error.isNotEmpty()) {
+                        Text(
+                            text = uiState.error,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { ajustesViewModel.eliminarCuenta() },
+                    enabled = !uiState.eliminandoCuenta
+                ) {
+                    if (uiState.eliminandoCuenta) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            "Eliminar definitivamente",
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        mostrarDialogoEliminar = false
+                        ajustesViewModel.clearMensajeError()
+                    },
+                    enabled = !uiState.eliminandoCuenta
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -104,6 +180,36 @@ fun AjustesScreen(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Modo oscuro",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Cambia el tema de la aplicación",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = uiState.darkMode,
+                        onCheckedChange = { enabled -> ajustesViewModel.setDarkMode(enabled) }
+                    )
+                }
+            }
 
             ExposedDropdownMenuBox(
                 expanded = expandedPeso,
@@ -208,6 +314,42 @@ fun AjustesScreen(
             }
 
             Spacer(modifier = Modifier.weight(1f))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Cuenta",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "Eliminar tu cuenta borra todos los datos asociados en OpoFit.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    OutlinedButton(
+                        onClick = {
+                            ajustesViewModel.clearMensajeError()
+                            mostrarDialogoEliminar = true
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !uiState.isLoading,
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("Eliminar cuenta")
+                    }
+                }
+            }
 
             OutlinedButton(
                 onClick = onLogout,

@@ -5,6 +5,7 @@ data class InfoPrueba(
     val nombre_prueba: String,
     val descripcion: String?,
     val trucos: String?,
+    val mejor_si_es_menor: Int? = null,
     val genero: String?,
     val marca_valor: Double?,
     val nota: Double?
@@ -20,7 +21,8 @@ data class MarcaUsuario(
     val valord_record: Double?,
     val fecha_logro: String?,
     val id_pruebas_oficiales: Int,
-    val nombre_prueba: String
+    val nombre_prueba: String,
+    val unidad: String? = null
 )
 
 data class MarcasUsuarioResponse(

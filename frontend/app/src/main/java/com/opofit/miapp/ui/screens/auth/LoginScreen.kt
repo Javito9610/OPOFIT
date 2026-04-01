@@ -27,8 +27,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.opofit.miapp.R
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 @Composable
 fun LoginScreen(
@@ -43,6 +47,8 @@ fun LoginScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val firebaseAuth = remember { FirebaseAuth.getInstance() }
     val googleSignInClient = remember {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(context.getString(R.string.default_web_client_id))
@@ -59,11 +65,20 @@ fun LoginScreen(
                     .getResult(ApiException::class.java)
                 val token = account.idToken
                 if (token != null) {
-                    viewModel.loginWithGoogle(
-                        token,
-                        account.email ?: "",
-                        account.displayName ?: "Usuario Google"
-                    )
+                    scope.launch {
+                        try {
+                            val credential = GoogleAuthProvider.getCredential(token, null)
+                            firebaseAuth.signInWithCredential(credential).await()
+                            val idToken = firebaseAuth.currentUser?.getIdToken(true)?.await()?.token
+                            if (!idToken.isNullOrBlank()) {
+                                viewModel.loginWithFirebase(idToken)
+                            } else {
+                                viewModel.setError("No se pudo obtener el token de Firebase")
+                            }
+                        } catch (e: Exception) {
+                            viewModel.setError("Error al iniciar sesión con Firebase: ${e.message ?: "desconocido"}")
+                        }
+                    }
                 } else {
                     viewModel.setError("No se pudo obtener el token de Google")
                 }
@@ -82,6 +97,21 @@ fun LoginScreen(
         }
     }
 
+    LaunchedEffect(uiState.error) {
+        val err = uiState.error
+        if (err.isNotEmpty() && (
+                err.contains("Regístrate", ignoreCase = true) ||
+                    err.contains("No hay cuenta", ignoreCase = true) ||
+                    err.contains("USER_NOT_REGISTERED", ignoreCase = true)
+                )
+        ) {
+            runCatching {
+                firebaseAuth.signOut()
+                googleSignInClient.signOut().await()
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -97,7 +127,7 @@ fun LoginScreen(
         ) {
             Spacer(modifier = Modifier.height(48.dp))
 
-            // Logo
+            
             Box(
                 modifier = Modifier
                     .size(88.dp)
@@ -124,7 +154,7 @@ fun LoginScreen(
                 modifier = Modifier.padding(top = 4.dp, bottom = 36.dp)
             )
 
-            // Form card
+            
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large,
@@ -214,7 +244,7 @@ fun LoginScreen(
                         }
                     }
 
-                    // Divider
+                    
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,

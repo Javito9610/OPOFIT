@@ -24,11 +24,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.opofit.miapp.data.api.RetrofitClient
+import com.opofit.miapp.data.local.TokenManager
+import com.opofit.miapp.data.responsemodels.Oposicion
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.opofit.miapp.R
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,14 +53,21 @@ fun RegisterScreen(
     var peso by remember { mutableStateOf("") }
     var altura by remember { mutableStateOf("") }
     var imc by remember { mutableStateOf("0.00") }
-    var oposicionId by remember { mutableStateOf("") }
+    var oposicionId by remember { mutableStateOf<Int?>(null) }
     var localError by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var pendingFirebaseIdToken by remember { mutableStateOf<String?>(null) }
 
     val uiState by viewModel.uiState.collectAsState()
 
     val context = LocalContext.current
+    val tokenManager = remember { TokenManager(context) }
+    val scope = rememberCoroutineScope()
+    val firebaseAuth = remember { FirebaseAuth.getInstance() }
+
+    var oposiciones by remember { mutableStateOf<List<Oposicion>>(emptyList()) }
+    var errorOposiciones by remember { mutableStateOf("") }
     val googleSignInClient = remember {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(context.getString(R.string.default_web_client_id))
@@ -69,11 +84,27 @@ fun RegisterScreen(
                     .getResult(ApiException::class.java)
                 val token = account.idToken
                 if (token != null) {
-                    viewModel.registerWithGoogle(
-                        token,
-                        account.email ?: "",
-                        account.displayName ?: "Usuario Google"
-                    )
+                    scope.launch {
+                        try {
+                            val credential = GoogleAuthProvider.getCredential(token, null)
+                            firebaseAuth.signInWithCredential(credential).await()
+                            val idToken = firebaseAuth.currentUser?.getIdToken(true)?.await()?.token
+                            if (!idToken.isNullOrBlank()) {
+                                viewModel.clearError()
+                                localError = ""
+                                pendingFirebaseIdToken = idToken
+                                account.email?.let { email = it }
+                                val fromGoogle =
+                                    account.givenName?.takeIf { it.isNotBlank() }
+                                        ?: account.displayName?.takeIf { it.isNotBlank() }
+                                if (!fromGoogle.isNullOrBlank()) nombre = fromGoogle
+                            } else {
+                                viewModel.setError("No se pudo obtener el token de Firebase")
+                            }
+                        } catch (e: Exception) {
+                            viewModel.setError("Error al registrar con Firebase: ${e.message ?: "desconocido"}")
+                        }
+                    }
                 } else {
                     viewModel.setError("No se pudo obtener el token de Google")
                 }
@@ -85,8 +116,22 @@ fun RegisterScreen(
 
     LaunchedEffect(uiState.success) {
         if (uiState.success) {
+            pendingFirebaseIdToken = null
             onRegisterSuccess()
             viewModel.clearSuccessFlag()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        try {
+            val resp = RetrofitClient.oposicionesApi.getOposiciones("")
+            if (resp.ok) {
+                oposiciones = resp.data ?: emptyList()
+            } else {
+                errorOposiciones = "No se pudieron cargar las oposiciones"
+            }
+        } catch (_: Exception) {
+            errorOposiciones = "No se pudieron cargar las oposiciones"
         }
     }
 
@@ -113,7 +158,7 @@ fun RegisterScreen(
         ) {
             Spacer(modifier = Modifier.height(40.dp))
 
-            // Logo
+            
             Box(
                 modifier = Modifier
                     .size(72.dp)
@@ -140,7 +185,7 @@ fun RegisterScreen(
                 modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
             )
 
-            // Form card
+            
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large,
@@ -158,6 +203,15 @@ fun RegisterScreen(
                         color = MaterialTheme.colorScheme.primary
                     )
 
+                    if (pendingFirebaseIdToken != null) {
+                        Text(
+                            text = "Registro con Google: completa género, peso, altura y oposición; revisa el nombre si hace falta.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                    }
+
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
@@ -165,7 +219,8 @@ fun RegisterScreen(
                         placeholder = { Text("tu@email.com") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        enabled = !uiState.isLoading,
+                        enabled = pendingFirebaseIdToken == null && !uiState.isLoading,
+                        readOnly = pendingFirebaseIdToken != null,
                         shape = MaterialTheme.shapes.medium
                     )
 
@@ -180,7 +235,7 @@ fun RegisterScreen(
                         shape = MaterialTheme.shapes.medium
                     )
 
-                    // Género dropdown
+                    
                     var expandedGenero by remember { mutableStateOf(false) }
                     val generosDisponibles = listOf("HOMBRE", "MUJER")
 
@@ -211,7 +266,7 @@ fun RegisterScreen(
                         }
                     }
 
-                    // Peso y Altura en fila
+                    
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -238,7 +293,7 @@ fun RegisterScreen(
                         )
                     }
 
-                    // IMC badge
+                    
                     if (imc != "0.00") {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -257,77 +312,110 @@ fun RegisterScreen(
                         }
                     }
 
-                    OutlinedTextField(
-                        value = oposicionId,
-                        onValueChange = { oposicionId = it.filter { c -> c.isDigit() } },
-                        label = { Text("ID de Oposición") },
-                        placeholder = { Text("1 = Policía Nacional, 2 = Guardia Civil") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        enabled = !uiState.isLoading,
-                        shape = MaterialTheme.shapes.medium,
-                        supportingText = { Text("Ej: 1 para Policía Nacional") }
-                    )
-
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-                    Text(
-                        text = "Seguridad",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = { Text("Contraseña") },
-                        placeholder = { Text("Mínimo 6 caracteres") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        enabled = !uiState.isLoading,
-                        visualTransformation = if (passwordVisible)
-                            VisualTransformation.None else PasswordVisualTransformation(),
-                        trailingIcon = {
-                            IconButton(
-                                onClick = { passwordVisible = !passwordVisible },
-                                enabled = !uiState.isLoading
-                            ) {
-                                Icon(
-                                    imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                                    contentDescription = "Mostrar contraseña",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    
+                    var expandedOpo by remember { mutableStateOf(false) }
+                    ExposedDropdownMenuBox(
+                        expanded = expandedOpo,
+                        onExpandedChange = { if (!uiState.isLoading) expandedOpo = it }
+                    ) {
+                        val selectedLabel = oposiciones.firstOrNull { it.id_oposicion == oposicionId }?.nombre ?: ""
+                        OutlinedTextField(
+                            value = selectedLabel,
+                            onValueChange = {},
+                            label = { Text("Oposición") },
+                            placeholder = { Text("Selecciona tu oposición") },
+                            modifier = Modifier.fillMaxWidth().menuAnchor(),
+                            singleLine = true,
+                            enabled = !uiState.isLoading,
+                            readOnly = true,
+                            shape = MaterialTheme.shapes.medium,
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedOpo) },
+                            isError = errorOposiciones.isNotEmpty()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expandedOpo,
+                            onDismissRequest = { expandedOpo = false }
+                        ) {
+                            oposiciones.forEach { opo ->
+                                DropdownMenuItem(
+                                    text = { Text(opo.nombre) },
+                                    onClick = {
+                                        oposicionId = opo.id_oposicion
+                                        expandedOpo = false
+                                    }
                                 )
                             }
-                        },
-                        shape = MaterialTheme.shapes.medium
-                    )
+                        }
+                    }
+                    if (errorOposiciones.isNotEmpty()) {
+                        Text(
+                            text = errorOposiciones,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
 
-                    OutlinedTextField(
-                        value = confirmPassword,
-                        onValueChange = { confirmPassword = it },
-                        label = { Text("Confirmar contraseña") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        enabled = !uiState.isLoading,
-                        visualTransformation = if (confirmPasswordVisible)
-                            VisualTransformation.None else PasswordVisualTransformation(),
-                        trailingIcon = {
-                            IconButton(
-                                onClick = { confirmPasswordVisible = !confirmPasswordVisible },
-                                enabled = !uiState.isLoading
-                            ) {
-                                Icon(
-                                    imageVector = if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                                    contentDescription = "Mostrar contraseña",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        },
-                        shape = MaterialTheme.shapes.medium
-                    )
+                    if (pendingFirebaseIdToken == null) {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
-                    // Error message
+                        Text(
+                            text = "Seguridad",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        OutlinedTextField(
+                            value = password,
+                            onValueChange = { password = it },
+                            label = { Text("Contraseña") },
+                            placeholder = { Text("Mínimo 6 caracteres") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            enabled = !uiState.isLoading,
+                            visualTransformation = if (passwordVisible)
+                                VisualTransformation.None else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                IconButton(
+                                    onClick = { passwordVisible = !passwordVisible },
+                                    enabled = !uiState.isLoading
+                                ) {
+                                    Icon(
+                                        imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                        contentDescription = "Mostrar contraseña",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            },
+                            shape = MaterialTheme.shapes.medium
+                        )
+
+                        OutlinedTextField(
+                            value = confirmPassword,
+                            onValueChange = { confirmPassword = it },
+                            label = { Text("Confirmar contraseña") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            enabled = !uiState.isLoading,
+                            visualTransformation = if (confirmPasswordVisible)
+                                VisualTransformation.None else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                IconButton(
+                                    onClick = { confirmPasswordVisible = !confirmPasswordVisible },
+                                    enabled = !uiState.isLoading
+                                ) {
+                                    Icon(
+                                        imageVector = if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                        contentDescription = "Mostrar contraseña",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            },
+                            shape = MaterialTheme.shapes.medium
+                        )
+                    }
+
+                    
                     val errorMessage = localError.ifEmpty { uiState.error }
                     if (errorMessage.isNotEmpty()) {
                         Card(
@@ -346,30 +434,42 @@ fun RegisterScreen(
                         }
                     }
 
-                    // Register button - fixed height (no conflicting padding inside height)
+                    
                     Button(
                         onClick = {
+                            val token = pendingFirebaseIdToken
                             localError = when {
                                 nombre.isBlank() -> "El nombre es obligatorio"
                                 email.isBlank() -> "El email es obligatorio"
                                 genero.isBlank() -> "Debes seleccionar un género"
                                 peso.isBlank() || peso.toDoubleOrNull() == null -> "Introduce un peso válido (kg)"
                                 altura.isBlank() || altura.toDoubleOrNull() == null -> "Introduce una altura válida (cm)"
-                                oposicionId.isBlank() || oposicionId.toIntOrNull() == null -> "Introduce el ID de la oposición"
-                                password.length < 6 -> "La contraseña debe tener al menos 6 caracteres"
-                                password != confirmPassword -> "Las contraseñas no coinciden"
+                                oposicionId == null -> "Selecciona una oposición"
+                                token == null && password.length < 6 -> "La contraseña debe tener al menos 6 caracteres"
+                                token == null && password != confirmPassword -> "Las contraseñas no coinciden"
                                 else -> ""
                             }
                             if (localError.isEmpty()) {
-                                viewModel.register(
-                                    nombre = nombre,
-                                    email = email,
-                                    password = password,
-                                    genero = genero,
-                                    peso = peso.toDouble(),
-                                    altura = altura.toDouble(),
-                                    oposiciones_id = oposicionId.toInt()
-                                )
+                                if (token != null) {
+                                    viewModel.registerWithFirebase(
+                                        idToken = token,
+                                        nombre = nombre.trim(),
+                                        genero = genero,
+                                        peso = peso.toDouble(),
+                                        altura = altura.toDouble(),
+                                        oposicionesId = oposicionId!!
+                                    )
+                                } else {
+                                    viewModel.register(
+                                        nombre = nombre,
+                                        email = email,
+                                        password = password,
+                                        genero = genero,
+                                        peso = peso.toDouble(),
+                                        altura = altura.toDouble(),
+                                        oposiciones_id = oposicionId!!
+                                    )
+                                }
                             }
                         },
                         modifier = Modifier
@@ -385,18 +485,43 @@ fun RegisterScreen(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text("Crear cuenta", style = MaterialTheme.typography.labelLarge)
+                            Text(
+                                if (pendingFirebaseIdToken != null) "Completar registro con Google"
+                                else "Crear cuenta",
+                                style = MaterialTheme.typography.labelLarge
+                            )
                         }
                     }
 
-                    // Divider
+                    if (pendingFirebaseIdToken != null) {
+                        TextButton(
+                            onClick = {
+                                pendingFirebaseIdToken = null
+                                scope.launch {
+                                    runCatching {
+                                        firebaseAuth.signOut()
+                                        googleSignInClient.signOut().await()
+                                    }
+                                    viewModel.clearError()
+                                    localError = ""
+                                }
+                            },
+                            enabled = !uiState.isLoading,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Cancelar registro con Google y usar email/contraseña")
+                        }
+                    }
+
+                    
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Divider(modifier = Modifier.weight(1f))
                         Text(
-                            text = "  o regístrate con  ",
+                            text = if (pendingFirebaseIdToken != null) "  o cambia la cuenta Google  "
+                            else "  o regístrate con  ",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -415,7 +540,11 @@ fun RegisterScreen(
                         enabled = !uiState.isLoading,
                         shape = MaterialTheme.shapes.medium
                     ) {
-                        Text("🔐  Registrarse con Google", style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            if (pendingFirebaseIdToken != null) "🔐  Elegir otra cuenta de Google"
+                            else "🔐  Registrarse con Google",
+                            style = MaterialTheme.typography.labelLarge
+                        )
                     }
                 }
             }

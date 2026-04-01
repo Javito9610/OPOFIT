@@ -15,11 +15,14 @@ data class RegistrarHistorialRequest(
 
 data class RegistrarHistorialResponse(
     val ok: Boolean,
-    val message: String?
+    val id: Int? = null,
+    val msg: String? = null,
+    val message: String? = null
 )
 
 data class PuntoEvolucion(
     val fecha_entreno: String,
+    val duracion_oficial: Int? = null,
     val valor_conseguido: Double,
     val nombre_ejercicio: String? = null
 )

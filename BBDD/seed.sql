@@ -273,29 +273,69 @@ INSERT INTO `requisitos_nivel` (`genero`, `nivel_exigencia`, `valor_objetivo`, `
 ('MUJER',  1, 81.00, 7), ('MUJER',  2, 75.00, 7), ('MUJER',  3, 47.00, 7);
 
 INSERT INTO `ejercicios` (`id_ejercicio`, `nombre`, `video_url`, `instrucciones_tecnicas`) VALUES
-(1,  'Dominadas estrictas',       NULL, 'Agarre prono, separación de manos a la anchura de hombros. Extensión completa de brazos abajo, barbilla por encima de la barra arriba. Sin balanceo ni kipping.'),
-(2,  'Dominadas asistidas',       NULL, 'Igual que las dominadas estrictas pero con banda elástica en los pies para reducir el peso efectivo. Ideal para progresar hacia dominadas sin asistencia.'),
-(3,  'Carrera continua 30 min',   NULL, 'Correr a ritmo constante durante 30 minutos. Ritmo conversacional, sin llegar a la fatiga. Mejora la base aeróbica para las pruebas de carrera.'),
-(4,  'Series 400m',               NULL, 'Correr 400 metros al ritmo objetivo de la prueba de 1000m. Descanso de 1:30-2:00 entre series. Hacer entre 4 y 8 repeticiones.'),
-(5,  'Series 200m',               NULL, 'Correr 200 metros a ritmo rápido (por debajo del ritmo de competición). Descanso de 1:00-1:30 entre series. Hacer entre 6 y 10 repeticiones.'),
-(6,  'Flexiones de brazos',       NULL, 'Posición de plancha con manos a la anchura de hombros. Bajar el pecho hasta tocar el suelo manteniendo el cuerpo recto. Subir extendiendo los brazos completamente.'),
-(7,  'Circuito de conos',         NULL, 'Colocar 6-8 conos en zigzag separados 2 metros. Recorrer ida y vuelta lo más rápido posible. Trabajar los cambios de dirección y la coordinación.'),
-(8,  'Natación crol 50m',         NULL, 'Nadar 50 metros estilo crol cronometrado. Practicar la salida desde dentro del agua. Respiración bilateral cada 3 brazadas.'),
-(9,  'Series natación 25m',       NULL, 'Nadar 25 metros a máxima velocidad. Descanso de 30-45 segundos entre series. Hacer entre 8 y 12 repeticiones. Mejora la velocidad en el agua.'),
-(10, 'Suspensión en barra',       NULL, 'Colgarse de la barra con agarre prono y brazos flexionados, barbilla por encima de la barra. Mantener la posición el mayor tiempo posible sin balanceo.'),
-(11, 'Plancha abdominal',         NULL, 'Posición de plancha sobre antebrazos. Mantener el cuerpo recto (sin hundir la cadera) durante el tiempo indicado. Fortalece el core y mejora la estabilidad.'),
-(12, 'Sentadillas',               NULL, 'De pie, pies a la anchura de hombros. Bajar flexionando rodillas hasta que los muslos queden paralelos al suelo. Subir empujando con los talones. Espalda recta.'),
-(13, 'Burpees',                   NULL, 'Desde de pie, bajar a posición de flexión, hacer una flexión, recoger pies hacia las manos y saltar con brazos arriba. Ejercicio completo de fuerza y resistencia.'),
-(14, 'Zancadas',                  NULL, 'Dar un paso largo hacia adelante flexionando ambas rodillas a 90°. La rodilla trasera casi toca el suelo. Alternar piernas. Fortalece cuádriceps y glúteos.'),
-(15, 'Fartlek 20 min',            NULL, 'Carrera continua alternando ritmos: 2 minutos a ritmo rápido, 2 minutos a ritmo suave. Mejora la capacidad de cambiar de ritmo y la resistencia anaeróbica.'),
-(16, 'Remo invertido',            NULL, 'Colgarse bajo una barra baja con el cuerpo recto. Tirar del pecho hacia la barra apretando escápulas. Fortalece la espalda, complemento perfecto para dominadas.'),
-(17, 'Escalera de agilidad',      NULL, 'Realizar diferentes patrones de pisada a máxima velocidad por una escalera de agilidad en el suelo. Mejora la coordinación y la velocidad de pies.'),
-(18, 'Carrera continua 45 min',   NULL, 'Rodaje largo a ritmo suave-moderado. Desarrolla la resistencia aeróbica de base, fundamental para las pruebas de 1000m y 2000m.'),
-(19, 'Press banca',               NULL, 'Tumbado en banco plano, bajar la barra al pecho y empujar hasta extensión completa de brazos. Agarre a la anchura de hombros. Fortalece pectoral y tríceps.'),
-(20, 'Fondos en paralelas',       NULL, 'Apoyado en barras paralelas, flexionar brazos hasta que el codo forme 90° y empujar hasta extensión completa. Trabaja pectoral, tríceps y deltoides anterior.');
+(1,  'Dominadas estrictas',       'https://www.youtube.com/watch?v=eGo4IYlbE5g', 'Agarre prono, separación de manos a la anchura de hombros. Extensión completa de brazos abajo, barbilla por encima de la barra arriba. Sin balanceo ni kipping.'),
+(2,  'Dominadas asistidas',       'https://www.youtube.com/watch?v=eGo4IYlbE5g', 'Igual que las dominadas estrictas pero con banda elástica en los pies para reducir el peso efectivo. Ideal para progresar hacia dominadas sin asistencia.'),
+(3,  'Carrera continua 30 min',   'https://www.youtube.com/watch?v=R0dT0L8F8kM', 'Correr a ritmo constante durante 30 minutos. Ritmo conversacional, sin llegar a la fatiga. Mejora la base aeróbica para las pruebas de carrera.'),
+(4,  'Series 400m',               'https://www.youtube.com/watch?v=5UQbZpJb0lM', 'Correr 400 metros al ritmo objetivo de la prueba de 1000m. Descanso de 1:30-2:00 entre series. Hacer entre 4 y 8 repeticiones.'),
+(5,  'Series 200m',               'https://www.youtube.com/watch?v=5UQbZpJb0lM', 'Correr 200 metros a ritmo rápido (por debajo del ritmo de competición). Descanso de 1:00-1:30 entre series. Hacer entre 6 y 10 repeticiones.'),
+(6,  'Flexiones de brazos',       'https://www.youtube.com/watch?v=IODxDxX7oi4', 'Posición de plancha con manos a la anchura de hombros. Bajar el pecho hasta tocar el suelo manteniendo el cuerpo recto. Subir extendiendo los brazos completamente.'),
+(7,  'Circuito de conos',         'https://www.youtube.com/watch?v=H8mF6l8QF5w', 'Colocar 6-8 conos en zigzag separados 2 metros. Recorrer ida y vuelta lo más rápido posible. Trabajar los cambios de dirección y la coordinación.'),
+(8,  'Natación crol 50m',         'https://www.youtube.com/watch?v=5HLW2AI1Ink', 'Nadar 50 metros estilo crol cronometrado. Practicar la salida desde dentro del agua. Respiración bilateral cada 3 brazadas.'),
+(9,  'Series natación 25m',       'https://www.youtube.com/watch?v=5HLW2AI1Ink', 'Nadar 25 metros a máxima velocidad. Descanso de 30-45 segundos entre series. Hacer entre 8 y 12 repeticiones. Mejora la velocidad en el agua.'),
+(10, 'Suspensión en barra',       'https://www.youtube.com/watch?v=eGo4IYlbE5g', 'Colgarse de la barra con agarre prono y brazos flexionados, barbilla por encima de la barra. Mantener la posición el mayor tiempo posible sin balanceo.'),
+(11, 'Plancha abdominal',         'https://www.youtube.com/watch?v=pSHjTRCQxIw', 'Posición de plancha sobre antebrazos. Mantener el cuerpo recto (sin hundir la cadera) durante el tiempo indicado. Fortalece el core y mejora la estabilidad.'),
+(12, 'Sentadillas',               'https://www.youtube.com/watch?v=aclHkVaku9U', 'De pie, pies a la anchura de hombros. Bajar flexionando rodillas hasta que los muslos queden paralelos al suelo. Subir empujando con los talones. Espalda recta.'),
+(13, 'Burpees',                   'https://www.youtube.com/watch?v=TU8QYVW0gDU', 'Desde de pie, bajar a posición de flexión, hacer una flexión, recoger pies hacia las manos y saltar con brazos arriba. Ejercicio completo de fuerza y resistencia.'),
+(14, 'Zancadas',                  'https://www.youtube.com/watch?v=QF0BQS2W80k', 'Dar un paso largo hacia adelante flexionando ambas rodillas a 90°. La rodilla trasera casi toca el suelo. Alternar piernas. Fortalece cuádriceps y glúteos.'),
+(15, 'Fartlek 20 min',            'https://www.youtube.com/watch?v=R0dT0L8F8kM', 'Carrera continua alternando ritmos: 2 minutos a ritmo rápido, 2 minutos a ritmo suave. Mejora la capacidad de cambiar de ritmo y la resistencia anaeróbica.'),
+(16, 'Remo invertido',            'https://www.youtube.com/watch?v=GZbfZ033f74', 'Colgarse bajo una barra baja con el cuerpo recto. Tirar del pecho hacia la barra apretando escápulas. Fortalece la espalda, complemento perfecto para dominadas.'),
+(17, 'Escalera de agilidad',      'https://www.youtube.com/watch?v=I3oQh8fZzJ0', 'Realizar diferentes patrones de pisada a máxima velocidad por una escalera de agilidad en el suelo. Mejora la coordinación y la velocidad de pies.'),
+(18, 'Carrera continua 45 min',   'https://www.youtube.com/watch?v=R0dT0L8F8kM', 'Rodaje largo a ritmo suave-moderado. Desarrolla la resistencia aeróbica de base, fundamental para las pruebas de 1000m y 2000m.'),
+(19, 'Press banca',               'https://www.youtube.com/watch?v=rT7DgCr-3pg', 'Tumbado en banco plano, bajar la barra al pecho y empujar hasta extensión completa de brazos. Agarre a la anchura de hombros. Fortalece pectoral y tríceps.'),
+(20, 'Fondos en paralelas',       'https://www.youtube.com/watch?v=2z8JmcrW-As', 'Apoyado en barras paralelas, flexionar brazos hasta que el codo forme 90° y empujar hasta extensión completa. Trabaja pectoral, tríceps y deltoides anterior.'),
+(21, 'Carrera continua 60 min',   'https://www.youtube.com/watch?v=R0dT0L8F8kM', 'Rodaje largo para base aeróbica. Mantén un ritmo cómodo y constante.'),
+(22, 'Series 1000m',              'https://www.youtube.com/watch?v=5UQbZpJb0lM', 'Repeticiones de 1000m a ritmo objetivo. Descanso completo entre series.'),
+(23, 'Series 800m',               'https://www.youtube.com/watch?v=5UQbZpJb0lM', 'Repeticiones de 800m para tolerancia al lactato.'),
+(24, 'Cuestas 10×100m',           'https://www.youtube.com/watch?v=5UQbZpJb0lM', 'Subidas cortas con recuperación bajando suave.'),
+(25, 'Cambios de ritmo 30 min',   'https://www.youtube.com/watch?v=R0dT0L8F8kM', 'Alterna 2 min rápido / 2 min suave durante 30 min.'),
+(26, 'Natación técnica 30 min',   'https://www.youtube.com/watch?v=5HLW2AI1Ink', 'Trabajo de técnica: recobro, respiración y alineación.'),
+(27, 'Natación series 50m',       'https://www.youtube.com/watch?v=5HLW2AI1Ink', 'Series de 50m con descansos cortos para mejorar ritmo.'),
+(28, 'Sprints 10×60m',            'https://www.youtube.com/watch?v=5UQbZpJb0lM', 'Aceleraciones máximas de 60m con recuperación completa.'),
+(29, 'Abdominales',               'https://www.youtube.com/watch?v=1919eTCoESo', 'Controla la zona lumbar. No tires del cuello.'),
+(30, 'Mountain climbers',         'https://www.youtube.com/watch?v=nmwgirgXLYM', 'Mantén core firme y ritmo constante.'),
+(31, 'Jumping jacks',             'https://www.youtube.com/watch?v=c4DAnQ6DtF8', 'Cardio básico para calentamiento o intervalos.'),
+(32, 'Saltos a comba 10 min',     'https://www.youtube.com/watch?v=1BZM2Vre5oc', 'Salto continuo a ritmo moderado.'),
+(33, 'Farmer walk',               'https://www.youtube.com/watch?v=Fkzk_RqlYig', 'Camina con carga manteniendo postura neutra.'),
+(34, 'Peso muerto rumano',        'https://www.youtube.com/watch?v=2SHsk9AzdjA', 'Bisagra de cadera, espalda neutra, baja controlado.'),
+(35, 'Hip thrust',                'https://www.youtube.com/watch?v=LM8XHLYJoYs', 'Extiende cadera arriba, mentón recogido.'),
+(36, 'Kettlebell swing',          'https://www.youtube.com/watch?v=YSxHifyI6s8', 'Potencia desde cadera, no desde brazos.'),
+(37, 'Flexiones diamante',        'https://www.youtube.com/watch?v=J0DnG1_S92I', 'Manos juntas, codos cerca del cuerpo.'),
+(38, 'Flexiones inclinadas',      'https://www.youtube.com/watch?v=cfns9y8n9f0', 'Apoyo elevado para reducir carga.'),
+(39, 'Dominadas supinas',         'https://www.youtube.com/watch?v=eGo4IYlbE5g', 'Agarre supino para mayor implicación de bíceps.'),
+(40, 'Remo con mancuerna',        'https://www.youtube.com/watch?v=pYcpY20QaE8', 'Tira con codo, controla la escápula.'),
+(41, 'Press militar',             'https://www.youtube.com/watch?v=2yjwXTZQDDI', 'Empuje vertical con core activo.'),
+(42, 'Elevaciones laterales',     'https://www.youtube.com/watch?v=3VcKaXpzqRo', 'Sube hasta línea de hombros sin balanceo.'),
+(43, 'Curl bíceps',               'https://www.youtube.com/watch?v=ykJmrZ5v0Oo', 'Codos fijos, sin impulso.'),
+(44, 'Extensión tríceps',         'https://www.youtube.com/watch?v=-Vyt2QdsR7E', 'Controla bajada, codos estables.'),
+(45, 'Sentadilla goblet',         'https://www.youtube.com/watch?v=MeIiIdhvXT4', 'Carga al pecho, torso erguido.'),
+(46, 'Zancada caminando',         'https://www.youtube.com/watch?v=QF0BQS2W80k', 'Paso largo y controlado.'),
+(47, 'Step ups',                  'https://www.youtube.com/watch?v=dQqApCGd5Ss', 'Sube con control, empuja con pierna de apoyo.'),
+(48, 'Peso muerto',               'https://www.youtube.com/watch?v=op9kVnSso6Q', 'Aprieta dorsal, barra pegada al cuerpo.'),
+(49, 'Remo con barra',            'https://www.youtube.com/watch?v=vT2GjY_Umpw', 'Torso inclinado, tirón hacia el ombligo.'),
+(50, 'Plancha lateral',           'https://www.youtube.com/watch?v=K2VljzCC16g', 'Cadera alta, cuerpo alineado.'),
+(51, 'Hollow hold',               'https://www.youtube.com/watch?v=LlDNef_Ztsc', 'Mantén lumbares pegadas al suelo.'),
+(52, 'Movilidad cadera 10 min',   'https://www.youtube.com/watch?v=3O4wUuVJ0A0', 'Rutina de movilidad para zancada y sentadilla.'),
+(53, 'Estiramientos 15 min',      'https://www.youtube.com/watch?v=2L2lnxIcNmo', 'Vuelta a la calma con estiramientos globales.'),
+(54, 'Trote suave 20 min',        'https://www.youtube.com/watch?v=R0dT0L8F8kM', 'Rodaje regenerativo para recuperar.'),
+(55, 'Natación continua 20 min',  'https://www.youtube.com/watch?v=5HLW2AI1Ink', 'Nado continuo a ritmo cómodo, sin paradas.'),
+(56, 'Circuito HIIT 12 min',      'https://www.youtube.com/watch?v=ml6cT4AZdqI', 'Intervalos cortos, intensidad alta y técnica limpia.'),
+(57, 'Core 10 min',               'https://www.youtube.com/watch?v=1919eTCoESo', 'Trabajo de core: plancha, hollow, lateral.'),
+(58, 'Técnica de carrera 15 min', 'https://www.youtube.com/watch?v=R0dT0L8F8kM', 'Skipping, talones al glúteo, multisaltos suaves.'),
+(59, 'Agilidad escalera avanzada', 'https://www.youtube.com/watch?v=I3oQh8fZzJ0', 'Patrones complejos para coordinación y velocidad de pies.'),
+(60, 'Burpees por tiempo 10 min', 'https://www.youtube.com/watch?v=TU8QYVW0gDU', 'AMRAP: tantas reps como puedas en 10 min.');
 
 INSERT INTO `rutinas_opo` (`id_rutina_opo`, `nivel`, `genero`, `enfoque_tipo`, `oposiciones_id_oposicion`) VALUES
--- Oposición 1 – Policía Nacional: HOMBRE
+
 (1,  'BASICO',      'HOMBRE', 'RESISTENCIA', 1),
 (13, 'BASICO',      'HOMBRE', 'FUERZA',      1),
 (14, 'BASICO',      'HOMBRE', 'VELOCIDAD',   1),
@@ -305,7 +345,7 @@ INSERT INTO `rutinas_opo` (`id_rutina_opo`, `nivel`, `genero`, `enfoque_tipo`, `
 (3,  'AVANZADO',    'HOMBRE', 'VELOCIDAD',   1),
 (17, 'AVANZADO',    'HOMBRE', 'FUERZA',      1),
 (18, 'AVANZADO',    'HOMBRE', 'RESISTENCIA', 1),
--- Oposición 1 – Policía Nacional: MUJER
+
 (4,  'BASICO',      'MUJER',  'RESISTENCIA', 1),
 (19, 'BASICO',      'MUJER',  'FUERZA',      1),
 (20, 'BASICO',      'MUJER',  'VELOCIDAD',   1),
@@ -315,7 +355,7 @@ INSERT INTO `rutinas_opo` (`id_rutina_opo`, `nivel`, `genero`, `enfoque_tipo`, `
 (6,  'AVANZADO',    'MUJER',  'VELOCIDAD',   1),
 (23, 'AVANZADO',    'MUJER',  'FUERZA',      1),
 (24, 'AVANZADO',    'MUJER',  'RESISTENCIA', 1),
--- Oposición 2 – Guardia Civil: HOMBRE
+
 (7,  'BASICO',      'HOMBRE', 'RESISTENCIA', 2),
 (25, 'BASICO',      'HOMBRE', 'FUERZA',      2),
 (26, 'BASICO',      'HOMBRE', 'VELOCIDAD',   2),
@@ -325,7 +365,7 @@ INSERT INTO `rutinas_opo` (`id_rutina_opo`, `nivel`, `genero`, `enfoque_tipo`, `
 (9,  'AVANZADO',    'HOMBRE', 'VELOCIDAD',   2),
 (29, 'AVANZADO',    'HOMBRE', 'FUERZA',      2),
 (30, 'AVANZADO',    'HOMBRE', 'RESISTENCIA', 2),
--- Oposición 2 – Guardia Civil: MUJER
+
 (10, 'BASICO',      'MUJER',  'RESISTENCIA', 2),
 (31, 'BASICO',      'MUJER',  'FUERZA',      2),
 (32, 'BASICO',      'MUJER',  'VELOCIDAD',   2),
@@ -337,284 +377,284 @@ INSERT INTO `rutinas_opo` (`id_rutina_opo`, `nivel`, `genero`, `enfoque_tipo`, `
 (36, 'AVANZADO',    'MUJER',  'RESISTENCIA', 2);
 
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(2,  1, 8,  3, 90),   -- Dominadas asistidas
-(6,  1, 15, 3, 60),   -- Flexiones
-(3,  1, 1,  1, 0),    -- Carrera continua 30 min
-(7,  1, 4,  3, 60),   -- Circuito de conos
-(11, 1, 30, 3, 45);   -- Plancha abdominal (30 seg)
+(2,  1, 8,  3, 90),   
+(6,  1, 15, 3, 60),   
+(3,  1, 1,  1, 0),    
+(7,  1, 4,  3, 60),   
+(11, 1, 30, 3, 45);   
 
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(1,  2, 8,  4, 90),   -- Dominadas estrictas
-(4,  2, 1,  6, 120),  -- Series 400m
-(7,  2, 6,  4, 45),   -- Circuito de conos
-(12, 2, 15, 4, 60),   -- Sentadillas
-(16, 2, 12, 3, 60);   -- Remo invertido
+(1,  2, 8,  4, 90),   
+(4,  2, 1,  6, 120),  
+(7,  2, 6,  4, 45),   
+(12, 2, 15, 4, 60),   
+(16, 2, 12, 3, 60);   
 
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(1,  3, 12, 5, 90),   -- Dominadas estrictas
-(5,  3, 1,  8, 90),   -- Series 200m
-(7,  3, 8,  5, 30),   -- Circuito de conos
-(13, 3, 10, 4, 45),   -- Burpees
-(17, 3, 1,  6, 30);   -- Escalera agilidad
+(1,  3, 12, 5, 90),   
+(5,  3, 1,  8, 90),   
+(7,  3, 8,  5, 30),   
+(13, 3, 10, 4, 45),   
+(17, 3, 1,  6, 30);   
 
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(10, 4, 20, 3, 90),   -- Suspensión en barra (20 seg)
-(6,  4, 10, 3, 60),   -- Flexiones
-(3,  4, 1,  1, 0),    -- Carrera continua 30 min
-(7,  4, 4,  3, 60),   -- Circuito de conos
-(11, 4, 20, 3, 45);   -- Plancha abdominal (20 seg)
+(10, 4, 20, 3, 90),   
+(6,  4, 10, 3, 60),   
+(3,  4, 1,  1, 0),    
+(7,  4, 4,  3, 60),   
+(11, 4, 20, 3, 45);   
 
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(10, 5, 35, 4, 90),   -- Suspensión en barra (35 seg)
-(4,  5, 1,  5, 120),  -- Series 400m
-(7,  5, 6,  4, 45),   -- Circuito de conos
-(14, 5, 12, 4, 60),   -- Zancadas
-(16, 5, 10, 3, 60);   -- Remo invertido
+(10, 5, 35, 4, 90),   
+(4,  5, 1,  5, 120),  
+(7,  5, 6,  4, 45),   
+(14, 5, 12, 4, 60),   
+(16, 5, 10, 3, 60);   
 
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(10, 6, 50, 5, 90),   -- Suspensión en barra (50 seg)
-(5,  6, 1,  8, 90),   -- Series 200m
-(7,  6, 8,  5, 30),   -- Circuito de conos
-(13, 6, 8,  4, 45),   -- Burpees
-(17, 6, 1,  6, 30);   -- Escalera agilidad
+(10, 6, 50, 5, 90),   
+(5,  6, 1,  8, 90),   
+(7,  6, 8,  5, 30),   
+(13, 6, 8,  4, 45),   
+(17, 6, 1,  6, 30);   
 
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(6,  7, 12, 3, 60),   -- Flexiones
-(3,  7, 1,  1, 0),    -- Carrera continua 30 min
-(7,  7, 4,  3, 60),   -- Circuito de conos
-(8,  7, 1,  4, 60),   -- Natación crol 50m
-(11, 7, 30, 3, 45);   -- Plancha abdominal
+(6,  7, 12, 3, 60),   
+(3,  7, 1,  1, 0),    
+(7,  7, 4,  3, 60),   
+(8,  7, 1,  4, 60),   
+(11, 7, 30, 3, 45);   
 
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(6,  8, 20, 4, 60),   -- Flexiones
-(15, 8, 1,  1, 0),    -- Fartlek 20 min
-(7,  8, 6,  4, 45),   -- Circuito de conos
-(9,  8, 1,  10, 45),  -- Series natación 25m
-(19, 8, 10, 4, 90);   -- Press banca
+(6,  8, 20, 4, 60),   
+(15, 8, 1,  1, 0),    
+(7,  8, 6,  4, 45),   
+(9,  8, 1,  10, 45),  
+(19, 8, 10, 4, 90);   
 
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(6,  9, 30, 5, 45),   -- Flexiones
-(4,  9, 1,  8, 90),   -- Series 400m
-(17, 9, 1,  6, 30),   -- Escalera agilidad
-(9,  9, 1,  12, 30),  -- Series natación 25m
-(13, 9, 12, 4, 45);   -- Burpees
+(6,  9, 30, 5, 45),   
+(4,  9, 1,  8, 90),   
+(17, 9, 1,  6, 30),   
+(9,  9, 1,  12, 30),  
+(13, 9, 12, 4, 45);   
 
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(6,  10, 8,  3, 60),  -- Flexiones
-(3,  10, 1,  1, 0),   -- Carrera continua 30 min
-(7,  10, 4,  3, 60),  -- Circuito de conos
-(8,  10, 1,  4, 60),  -- Natación crol 50m
-(11, 10, 20, 3, 45);  -- Plancha abdominal
+(6,  10, 8,  3, 60),  
+(3,  10, 1,  1, 0),   
+(7,  10, 4,  3, 60),  
+(8,  10, 1,  4, 60),  
+(11, 10, 20, 3, 45);  
 
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(6,  11, 15, 4, 60),  -- Flexiones
-(15, 11, 1,  1, 0),   -- Fartlek 20 min
-(7,  11, 6,  4, 45),  -- Circuito de conos
-(9,  11, 1,  8, 45),  -- Series natación 25m
-(14, 11, 12, 4, 60);  -- Zancadas
+(6,  11, 15, 4, 60),  
+(15, 11, 1,  1, 0),   
+(7,  11, 6,  4, 45),  
+(9,  11, 1,  8, 45),  
+(14, 11, 12, 4, 60);  
 
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(6,  12, 25, 5, 45),  -- Flexiones
-(4,  12, 1,  6, 90),  -- Series 400m
-(17, 12, 1,  6, 30),  -- Escalera agilidad
-(9,  12, 1,  10, 30), -- Series natación 25m
-(13, 12, 10, 4, 45);  -- Burpees
+(6,  12, 25, 5, 45),  
+(4,  12, 1,  6, 90),  
+(17, 12, 1,  6, 30),  
+(9,  12, 1,  10, 30), 
+(13, 12, 10, 4, 45);  
 
--- =====================================================
--- NUEVAS rutinas (IDs 13-36): detalle_rutina_opo
--- =====================================================
 
--- ID 13: BASICO, HOMBRE, FUERZA – Opo 1
+
+
+
+
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(2,  13, 6,  2, 90),   -- Dominadas asistidas
-(6,  13, 12, 3, 60),   -- Flexiones
-(12, 13, 10, 3, 60),   -- Sentadillas
-(19, 13, 8,  2, 90),   -- Press banca
-(11, 13, 20, 2, 45);   -- Plancha abdominal (20 seg)
+(2,  13, 6,  2, 90),   
+(6,  13, 12, 3, 60),   
+(12, 13, 10, 3, 60),   
+(19, 13, 8,  2, 90),   
+(11, 13, 20, 2, 45);   
 
--- ID 14: BASICO, HOMBRE, VELOCIDAD – Opo 1
-INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(4,  14, 1,  4, 120),  -- Series 400m
-(5,  14, 1,  4, 90),   -- Series 200m
-(7,  14, 4,  2, 60),   -- Circuito de conos
-(17, 14, 1,  3, 45),   -- Escalera de agilidad
-(13, 14, 6,  2, 60);   -- Burpees
 
--- ID 15: INTERMEDIO, HOMBRE, RESISTENCIA – Opo 1
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(3,  15, 1,  1, 0),    -- Carrera continua 30 min
-(8,  15, 1,  6, 60),   -- Natación crol 50m
-(6,  15, 20, 4, 45),   -- Flexiones
-(14, 15, 12, 3, 60),   -- Zancadas
-(11, 15, 40, 3, 45);   -- Plancha abdominal (40 seg)
+(4,  14, 1,  4, 120),  
+(5,  14, 1,  4, 90),   
+(7,  14, 4,  2, 60),   
+(17, 14, 1,  3, 45),   
+(13, 14, 6,  2, 60);   
 
--- ID 16: INTERMEDIO, HOMBRE, VELOCIDAD – Opo 1
-INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(4,  16, 1,  6, 120),  -- Series 400m
-(5,  16, 1,  6, 90),   -- Series 200m
-(7,  16, 6,  3, 45),   -- Circuito de conos
-(17, 16, 1,  4, 30),   -- Escalera de agilidad
-(15, 16, 1,  1, 0);    -- Fartlek 20 min
 
--- ID 17: AVANZADO, HOMBRE, FUERZA – Opo 1
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(1,  17, 12, 5, 90),   -- Dominadas estrictas
-(19, 17, 12, 4, 90),   -- Press banca
-(12, 17, 20, 5, 60),   -- Sentadillas
-(20, 17, 15, 4, 60),   -- Fondos en paralelas
-(16, 17, 15, 4, 60);   -- Remo invertido
+(3,  15, 1,  1, 0),    
+(8,  15, 1,  6, 60),   
+(6,  15, 20, 4, 45),   
+(14, 15, 12, 3, 60),   
+(11, 15, 40, 3, 45);   
 
--- ID 18: AVANZADO, HOMBRE, RESISTENCIA – Opo 1
-INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(18, 18, 1,  1, 0),    -- Carrera continua 45 min
-(8,  18, 1,  8, 45),   -- Natación crol 50m
-(6,  18, 30, 5, 45),   -- Flexiones
-(14, 18, 20, 4, 45),   -- Zancadas
-(11, 18, 60, 4, 30);   -- Plancha abdominal (60 seg)
 
--- ID 19: BASICO, MUJER, FUERZA – Opo 1
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(2,  19, 4,  2, 90),   -- Dominadas asistidas
-(6,  19, 8,  2, 60),   -- Flexiones
-(12, 19, 10, 3, 60),   -- Sentadillas
-(14, 19, 8,  2, 60),   -- Zancadas
-(11, 19, 20, 2, 45);   -- Plancha abdominal (20 seg)
+(4,  16, 1,  6, 120),  
+(5,  16, 1,  6, 90),   
+(7,  16, 6,  3, 45),   
+(17, 16, 1,  4, 30),   
+(15, 16, 1,  1, 0);    
 
--- ID 20: BASICO, MUJER, VELOCIDAD – Opo 1
-INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(4,  20, 1,  3, 120),  -- Series 400m
-(5,  20, 1,  4, 90),   -- Series 200m
-(7,  20, 4,  2, 60),   -- Circuito de conos
-(17, 20, 1,  3, 45),   -- Escalera de agilidad
-(13, 20, 5,  2, 60);   -- Burpees
 
--- ID 21: INTERMEDIO, MUJER, RESISTENCIA – Opo 1
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(3,  21, 1,  1, 0),    -- Carrera continua 30 min
-(8,  21, 1,  5, 60),   -- Natación crol 50m
-(6,  21, 15, 3, 60),   -- Flexiones
-(14, 21, 12, 3, 60),   -- Zancadas
-(11, 21, 35, 3, 45);   -- Plancha abdominal (35 seg)
+(1,  17, 12, 5, 90),   
+(19, 17, 12, 4, 90),   
+(12, 17, 20, 5, 60),   
+(20, 17, 15, 4, 60),   
+(16, 17, 15, 4, 60);   
 
--- ID 22: INTERMEDIO, MUJER, VELOCIDAD – Opo 1
-INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(4,  22, 1,  5, 120),  -- Series 400m
-(5,  22, 1,  6, 90),   -- Series 200m
-(7,  22, 6,  3, 45),   -- Circuito de conos
-(17, 22, 1,  4, 30),   -- Escalera de agilidad
-(15, 22, 1,  1, 0);    -- Fartlek 20 min
 
--- ID 23: AVANZADO, MUJER, FUERZA – Opo 1
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(1,  23, 8,  4, 90),   -- Dominadas estrictas
-(19, 23, 10, 4, 90),   -- Press banca
-(12, 23, 18, 5, 60),   -- Sentadillas
-(20, 23, 12, 4, 60),   -- Fondos en paralelas
-(16, 23, 12, 4, 60);   -- Remo invertido
+(18, 18, 1,  1, 0),    
+(8,  18, 1,  8, 45),   
+(6,  18, 30, 5, 45),   
+(14, 18, 20, 4, 45),   
+(11, 18, 60, 4, 30);   
 
--- ID 24: AVANZADO, MUJER, RESISTENCIA – Opo 1
-INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(18, 24, 1,  1, 0),    -- Carrera continua 45 min
-(8,  24, 1,  8, 45),   -- Natación crol 50m
-(6,  24, 25, 5, 45),   -- Flexiones
-(14, 24, 16, 4, 45),   -- Zancadas
-(11, 24, 50, 4, 30);   -- Plancha abdominal (50 seg)
 
--- ID 25: BASICO, HOMBRE, FUERZA – Opo 2
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(2,  25, 6,  3, 90),   -- Dominadas asistidas
-(6,  25, 12, 3, 60),   -- Flexiones
-(12, 25, 12, 3, 60),   -- Sentadillas
-(19, 25, 8,  2, 90),   -- Press banca
-(20, 25, 6,  2, 90);   -- Fondos en paralelas
+(2,  19, 4,  2, 90),   
+(6,  19, 8,  2, 60),   
+(12, 19, 10, 3, 60),   
+(14, 19, 8,  2, 60),   
+(11, 19, 20, 2, 45);   
 
--- ID 26: BASICO, HOMBRE, VELOCIDAD – Opo 2
-INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(4,  26, 1,  4, 120),  -- Series 400m
-(5,  26, 1,  4, 90),   -- Series 200m
-(7,  26, 4,  3, 60),   -- Circuito de conos
-(17, 26, 1,  3, 45),   -- Escalera de agilidad
-(3,  26, 1,  1, 0);    -- Carrera continua 30 min
 
--- ID 27: INTERMEDIO, HOMBRE, RESISTENCIA – Opo 2
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(18, 27, 1,  1, 0),    -- Carrera continua 45 min
-(8,  27, 1,  6, 60),   -- Natación crol 50m
-(9,  27, 1,  8, 45),   -- Series natación 25m
-(6,  27, 20, 4, 45),   -- Flexiones
-(11, 27, 40, 3, 45);   -- Plancha abdominal (40 seg)
+(4,  20, 1,  3, 120),  
+(5,  20, 1,  4, 90),   
+(7,  20, 4,  2, 60),   
+(17, 20, 1,  3, 45),   
+(13, 20, 5,  2, 60);   
 
--- ID 28: INTERMEDIO, HOMBRE, VELOCIDAD – Opo 2
-INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(4,  28, 1,  6, 120),  -- Series 400m
-(5,  28, 1,  6, 90),   -- Series 200m
-(7,  28, 6,  4, 45),   -- Circuito de conos
-(17, 28, 1,  4, 30),   -- Escalera de agilidad
-(13, 28, 8,  3, 60);   -- Burpees
 
--- ID 29: AVANZADO, HOMBRE, FUERZA – Opo 2
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(1,  29, 12, 5, 90),   -- Dominadas estrictas
-(19, 29, 12, 5, 90),   -- Press banca
-(12, 29, 20, 5, 60),   -- Sentadillas
-(20, 29, 15, 5, 60),   -- Fondos en paralelas
-(16, 29, 15, 4, 60);   -- Remo invertido
+(3,  21, 1,  1, 0),    
+(8,  21, 1,  5, 60),   
+(6,  21, 15, 3, 60),   
+(14, 21, 12, 3, 60),   
+(11, 21, 35, 3, 45);   
 
--- ID 30: AVANZADO, HOMBRE, RESISTENCIA – Opo 2
-INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(18, 30, 1,  1, 0),    -- Carrera continua 45 min
-(8,  30, 1, 10, 45),   -- Natación crol 50m
-(9,  30, 1, 12, 30),   -- Series natación 25m
-(6,  30, 30, 5, 45),   -- Flexiones
-(11, 30, 60, 5, 30);   -- Plancha abdominal (60 seg)
 
--- ID 31: BASICO, MUJER, FUERZA – Opo 2
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(2,  31, 4,  2, 90),   -- Dominadas asistidas
-(6,  31, 8,  3, 60),   -- Flexiones
-(12, 31, 10, 3, 60),   -- Sentadillas
-(14, 31, 8,  2, 60),   -- Zancadas
-(10, 31, 15, 2, 90);   -- Suspensión en barra (15 seg)
+(4,  22, 1,  5, 120),  
+(5,  22, 1,  6, 90),   
+(7,  22, 6,  3, 45),   
+(17, 22, 1,  4, 30),   
+(15, 22, 1,  1, 0);    
 
--- ID 32: BASICO, MUJER, VELOCIDAD – Opo 2
-INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(4,  32, 1,  3, 120),  -- Series 400m
-(5,  32, 1,  4, 90),   -- Series 200m
-(7,  32, 4,  2, 60),   -- Circuito de conos
-(17, 32, 1,  3, 45),   -- Escalera de agilidad
-(3,  32, 1,  1, 0);    -- Carrera continua 30 min
 
--- ID 33: INTERMEDIO, MUJER, RESISTENCIA – Opo 2
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(15, 33, 1,  1, 0),    -- Fartlek 20 min
-(8,  33, 1,  5, 60),   -- Natación crol 50m
-(9,  33, 1,  6, 45),   -- Series natación 25m
-(6,  33, 15, 4, 60),   -- Flexiones
-(11, 33, 35, 3, 45);   -- Plancha abdominal (35 seg)
+(1,  23, 8,  4, 90),   
+(19, 23, 10, 4, 90),   
+(12, 23, 18, 5, 60),   
+(20, 23, 12, 4, 60),   
+(16, 23, 12, 4, 60);   
 
--- ID 34: INTERMEDIO, MUJER, VELOCIDAD – Opo 2
-INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(4,  34, 1,  5, 120),  -- Series 400m
-(5,  34, 1,  6, 90),   -- Series 200m
-(7,  34, 6,  3, 45),   -- Circuito de conos
-(17, 34, 1,  4, 30),   -- Escalera de agilidad
-(13, 34, 6,  3, 60);   -- Burpees
 
--- ID 35: AVANZADO, MUJER, FUERZA – Opo 2
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(1,  35, 8,  4, 90),   -- Dominadas estrictas
-(19, 35, 10, 4, 90),   -- Press banca
-(12, 35, 18, 5, 60),   -- Sentadillas
-(20, 35, 12, 4, 60),   -- Fondos en paralelas
-(16, 35, 12, 5, 60);   -- Remo invertido
+(18, 24, 1,  1, 0),    
+(8,  24, 1,  8, 45),   
+(6,  24, 25, 5, 45),   
+(14, 24, 16, 4, 45),   
+(11, 24, 50, 4, 30);   
 
--- ID 36: AVANZADO, MUJER, RESISTENCIA – Opo 2
+
 INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
-(18, 36, 1,  1, 0),    -- Carrera continua 45 min
-(8,  36, 1,  8, 45),   -- Natación crol 50m
-(9,  36, 1, 10, 30),   -- Series natación 25m
-(6,  36, 25, 5, 45),   -- Flexiones
-(11, 36, 50, 4, 30);   -- Plancha abdominal (50 seg)
+(2,  25, 6,  3, 90),   
+(6,  25, 12, 3, 60),   
+(12, 25, 12, 3, 60),   
+(19, 25, 8,  2, 90),   
+(20, 25, 6,  2, 90);   
+
+
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(4,  26, 1,  4, 120),  
+(5,  26, 1,  4, 90),   
+(7,  26, 4,  3, 60),   
+(17, 26, 1,  3, 45),   
+(3,  26, 1,  1, 0);    
+
+
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(18, 27, 1,  1, 0),    
+(8,  27, 1,  6, 60),   
+(9,  27, 1,  8, 45),   
+(6,  27, 20, 4, 45),   
+(11, 27, 40, 3, 45);   
+
+
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(4,  28, 1,  6, 120),  
+(5,  28, 1,  6, 90),   
+(7,  28, 6,  4, 45),   
+(17, 28, 1,  4, 30),   
+(13, 28, 8,  3, 60);   
+
+
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(1,  29, 12, 5, 90),   
+(19, 29, 12, 5, 90),   
+(12, 29, 20, 5, 60),   
+(20, 29, 15, 5, 60),   
+(16, 29, 15, 4, 60);   
+
+
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(18, 30, 1,  1, 0),    
+(8,  30, 1, 10, 45),   
+(9,  30, 1, 12, 30),   
+(6,  30, 30, 5, 45),   
+(11, 30, 60, 5, 30);   
+
+
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(2,  31, 4,  2, 90),   
+(6,  31, 8,  3, 60),   
+(12, 31, 10, 3, 60),   
+(14, 31, 8,  2, 60),   
+(10, 31, 15, 2, 90);   
+
+
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(4,  32, 1,  3, 120),  
+(5,  32, 1,  4, 90),   
+(7,  32, 4,  2, 60),   
+(17, 32, 1,  3, 45),   
+(3,  32, 1,  1, 0);    
+
+
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(15, 33, 1,  1, 0),    
+(8,  33, 1,  5, 60),   
+(9,  33, 1,  6, 45),   
+(6,  33, 15, 4, 60),   
+(11, 33, 35, 3, 45);   
+
+
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(4,  34, 1,  5, 120),  
+(5,  34, 1,  6, 90),   
+(7,  34, 6,  3, 45),   
+(17, 34, 1,  4, 30),   
+(13, 34, 6,  3, 60);   
+
+
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(1,  35, 8,  4, 90),   
+(19, 35, 10, 4, 90),   
+(12, 35, 18, 5, 60),   
+(20, 35, 12, 4, 60),   
+(16, 35, 12, 5, 60);   
+
+
+INSERT INTO `detalle_rutina_opo` (`ejercicios_id_ejercicio`, `rutinas_opo_id_rutina_opo`, `repeticiones`, `series`, `descanso`) VALUES
+(18, 36, 1,  1, 0),    
+(8,  36, 1,  8, 45),   
+(9,  36, 1, 10, 30),   
+(6,  36, 25, 5, 45),   
+(11, 36, 50, 4, 30);   
 
 INSERT INTO `noticias` (`titulo`, `contenido`, `fecha_publicacion`, `oposiciones_id_oposicion`) VALUES
 ('Convocatoria Policía Nacional 2026 publicada en BOE',

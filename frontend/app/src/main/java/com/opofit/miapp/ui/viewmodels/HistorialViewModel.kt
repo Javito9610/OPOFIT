@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.json.JSONObject
+import retrofit2.HttpException
 
 class HistorialViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -41,7 +43,11 @@ class HistorialViewModel(application: Application) : AndroidViewModel(applicatio
                     _uiState.update { it.copy(isLoading = false, error = "No se pudo cargar el historial") }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Error de conexión") }
+                val msg = when (e) {
+                    is HttpException -> parseHttpError(e)
+                    else -> e.message
+                } ?: "Error de conexión"
+                _uiState.update { it.copy(isLoading = false, error = msg) }
             }
         }
     }
@@ -62,11 +68,36 @@ class HistorialViewModel(application: Application) : AndroidViewModel(applicatio
                 if (response.ok) {
                     _uiState.update { it.copy(isLoading = false, registradoExitoso = true) }
                 } else {
-                    _uiState.update { it.copy(isLoading = false, error = response.message ?: "Error al registrar") }
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            error = response.msg ?: response.message ?: "Error al registrar"
+                        )
+                    }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Error de conexión") }
+                val msg = when (e) {
+                    is HttpException -> parseHttpError(e)
+                    else -> e.message
+                } ?: "Error de conexión"
+                _uiState.update { it.copy(isLoading = false, error = msg) }
             }
+        }
+    }
+
+    private fun parseHttpError(e: HttpException): String {
+        val serverMsg = try {
+            val rawBody = e.response()?.errorBody()?.string()
+            if (!rawBody.isNullOrEmpty()) JSONObject(rawBody).optString("msg", "") else ""
+        } catch (_: Exception) { "" }
+
+        return when {
+            serverMsg.isNotEmpty() -> serverMsg
+            e.code() == 409 -> "Ya has registrado este entrenamiento hoy. ¡Mañana más!"
+            e.code() == 401 -> "Sesión inválida. Inicia sesión de nuevo."
+            e.code() == 400 -> "Datos inválidos. Revisa los campos."
+            e.code() >= 500 -> "Error del servidor. Inténtalo más tarde."
+            else -> "Error (${e.code()})"
         }
     }
 

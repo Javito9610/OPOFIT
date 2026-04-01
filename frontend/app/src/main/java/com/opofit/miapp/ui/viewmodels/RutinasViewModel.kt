@@ -25,7 +25,10 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
         val nivelAsignado: String = "",
         val rutinaCompleta: List<BloqueRutina> = emptyList(),
         val oposiciones: List<Oposicion> = emptyList(),
-        val oposicionesLoading: Boolean = false
+        val oposicionesLoading: Boolean = false,
+        val pruebasFaltantes: Int? = null,
+        val totalPruebas: Int? = null,
+        val pruebasCompletadas: Int? = null
     )
 
     private val _uiState = MutableStateFlow(RutinasUiState())
@@ -40,16 +43,22 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
                     "Bearer $token", userId, oposicionId
                 )
                 if (response.ok && response.data != null) {
+                    val data = response.data
+                    val bloqueadoPorPruebas = (data.pruebasFaltantes ?: 0) > 0
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            notaActual = response.data.notaActual,
-                            nivelAsignado = response.data.nivelAsignado,
-                            rutinaCompleta = response.data.rutinaCompleta
+                            notaActual = data.notaActual,
+                            nivelAsignado = data.nivelAsignado,
+                            rutinaCompleta = data.rutinaCompleta,
+                            pruebasFaltantes = data.pruebasFaltantes,
+                            totalPruebas = data.totalPruebas,
+                            pruebasCompletadas = data.pruebasCompletadas,
+                            error = if (bloqueadoPorPruebas) "" else (response.msg ?: "")
                         )
                     }
                 } else {
-                    _uiState.update { it.copy(isLoading = false, error = "No se pudo cargar la rutina") }
+                    _uiState.update { it.copy(isLoading = false, error = response.msg ?: "No se pudo cargar la rutina") }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = e.message ?: "Error de conexión") }

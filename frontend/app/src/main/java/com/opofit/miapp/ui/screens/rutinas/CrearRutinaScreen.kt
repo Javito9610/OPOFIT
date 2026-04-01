@@ -61,6 +61,28 @@ private data class EjercicioFormRow(
     val repeticiones: String = ""
 )
 
+private fun esCardioContinuo(nombre: String): Boolean {
+    val n = nombre.lowercase()
+    val esCardio = n.contains("carrera") || n.contains("trote") || n.contains("rodaje") || n.contains("fartlek") ||
+        n.contains("natación") || n.contains("natacion") || n.contains("nadar")
+    if (!esCardio) return false
+    val tieneMin = Regex("(\\d+)\\s*min\\b", RegexOption.IGNORE_CASE).containsMatchIn(nombre)
+    val tieneContinuo = n.contains("continu")
+    val mencionaSeries = n.contains("series") || n.contains("x ")
+    return (tieneMin || tieneContinuo) && !mencionaSeries
+}
+
+private fun tipoEntradaEjercicio(nombre: String): Pair<String, String> {
+    val n = nombre.lowercase()
+    return when {
+        n.contains("carrera") || n.contains("rodaje") || n.contains("fartlek") -> "Duración" to "min"
+        n.contains("series") && (n.contains("m") || n.contains("400") || n.contains("200")) -> "Distancia" to "m"
+        n.contains("natación") || n.contains("natacion") -> "Distancia" to "m"
+        n.contains("plancha") || n.contains("suspensión") || n.contains("suspension") -> "Tiempo" to "s"
+        else -> "Repeticiones" to "reps"
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CrearRutinaScreen(
@@ -205,20 +227,23 @@ fun CrearRutinaScreen(
                                 }
                             }
                         }
+                        val (labelReps, unit) = tipoEntradaEjercicio(row.nombreEjercicio)
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedTextField(
-                                value = row.series,
-                                onValueChange = { ejercicios[index] = row.copy(series = it) },
-                                label = { Text("Series") },
-                                modifier = Modifier.weight(1f),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                singleLine = true
-                            )
+                            if (!esCardioContinuo(row.nombreEjercicio)) {
+                                OutlinedTextField(
+                                    value = row.series,
+                                    onValueChange = { ejercicios[index] = row.copy(series = it) },
+                                    label = { Text("Series") },
+                                    modifier = Modifier.weight(1f),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    singleLine = true
+                                )
+                            }
                             OutlinedTextField(
                                 value = row.repeticiones,
                                 onValueChange = { ejercicios[index] = row.copy(repeticiones = it) },
-                                label = { Text("Repeticiones") },
-                                modifier = Modifier.weight(1f),
+                                label = { Text("$labelReps ($unit)") },
+                                modifier = if (esCardioContinuo(row.nombreEjercicio)) Modifier.fillMaxWidth() else Modifier.weight(1f),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 singleLine = true
                             )

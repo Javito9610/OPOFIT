@@ -30,6 +30,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -38,6 +41,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.PerfilViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasViewModel
+import com.opofit.miapp.data.local.TokenManager
+import androidx.compose.ui.platform.LocalContext
+import com.opofit.miapp.utils.Units
+import kotlinx.coroutines.flow.collectLatest
+import kotlin.math.pow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,6 +59,21 @@ fun PerfilScreen(
     val authState by authViewModel.uiState.collectAsState()
     val perfilState by perfilViewModel.uiState.collectAsState()
     val rutinasState by rutinasViewModel.uiState.collectAsState()
+
+    val context = LocalContext.current
+    val tokenManager = remember { TokenManager(context) }
+    var unitPeso by remember { mutableStateOf("kg") }
+    var unitDist by remember { mutableStateOf("km") }
+    LaunchedEffect(Unit) {
+        tokenManager.getUnitPeso().collectLatest { u ->
+            if (!u.isNullOrBlank()) unitPeso = u
+        }
+    }
+    LaunchedEffect(Unit) {
+        tokenManager.getUnitDistancia().collectLatest { u ->
+            if (!u.isNullOrBlank()) unitDist = u
+        }
+    }
 
     val userId = authState.userId ?: 0
     val oposicionId = authState.oposicionId ?: 1
@@ -111,6 +134,41 @@ fun PerfilScreen(
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
+
+                            val peso = authState.peso
+                            val altura = authState.altura
+                            val imc = authState.imc ?: run {
+                                val p = peso
+                                val a = altura
+                                if (p != null && a != null && a > 0) {
+                                    val alturaM = a / 100.0
+                                    p / alturaM.pow(2)
+                                } else null
+                            }
+
+                            if (peso != null || altura != null || imc != null) {
+                                val pesoShown = if (peso != null && unitPeso == "lb") Units.kgToLb(peso) else peso
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Divider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f))
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column {
+                                        Text("Peso", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
+                                        Text(pesoShown?.let { String.format("%.1f %s", it, unitPeso) } ?: "-", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                    }
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text("Altura", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
+                                        Text(altura?.let { String.format("%.0f cm", it) } ?: "-", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                    }
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text("IMC", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
+                                        Text(imc?.let { String.format("%.2f", it) } ?: "-", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -147,14 +205,14 @@ fun PerfilScreen(
                         Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(1.dp)) {
                             Column(modifier = Modifier.padding(12.dp)) {
                                 Text(
-                                    text = marca.nombre_prueba,
+                                    text = Units.nombreConEquivalenciaDistancia(marca.nombre_prueba, unitDist),
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Divider(modifier = Modifier.padding(vertical = 4.dp))
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text(
-                                        text = "Marca: ${marca.valord_record ?: "-"}",
+                                        text = "Marca: ${marca.valord_record ?: "-"}${if (!marca.unidad.isNullOrBlank()) " ${marca.unidad}" else ""}",
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                     Text(

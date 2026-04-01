@@ -77,7 +77,7 @@ fun HomeScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Welcome banner
+            
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -122,7 +122,7 @@ fun HomeScreen(
                 )
             }
 
-            // Navigation grid - row 1
+            
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -149,7 +149,7 @@ fun HomeScreen(
                 }
             }
 
-            // Navigation grid - row 2
+            
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -176,7 +176,7 @@ fun HomeScreen(
                 }
             }
 
-            // Navigation grid - row 3
+            
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),

@@ -36,7 +36,7 @@ private sealed class BottomTab(
 @Composable
 fun MainScreen(
     authViewModel: AuthViewModel,
-    onNavigateToEntrenamientos: () -> Unit,
+    onNavigateToEntrenamientos: (String?) -> Unit,
     onNavigateToAjustes: () -> Unit,
     onNavigateToInfoOposicion: () -> Unit,
     onNavigateToRutinasLibres: () -> Unit,
@@ -95,7 +95,7 @@ fun MainScreen(
                             launchSingleTop = true; restoreState = true
                         }
                     },
-                    onNavigateToEntrenamientos = onNavigateToEntrenamientos,
+                    onNavigateToEntrenamientos = { onNavigateToEntrenamientos(null) },
                     onNavigateToPerfil = {
                         innerNavController.navigate(BottomTab.Perfil.route) {
                             popUpTo(innerNavController.graph.findStartDestination().id) { saveState = true }
@@ -126,7 +126,8 @@ fun MainScreen(
                         }
                     },
                     onNavigateToEntrenamientos = onNavigateToEntrenamientos,
-                    onNavigateToRutinasLibres = onNavigateToRutinasLibres
+                    onNavigateToRutinasLibres = onNavigateToRutinasLibres,
+                    onNavigateToEditarPerfil = onNavigateToEditarPerfil
                 )
             }
 

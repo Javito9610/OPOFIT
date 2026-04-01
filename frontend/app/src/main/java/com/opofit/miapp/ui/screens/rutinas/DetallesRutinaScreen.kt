@@ -60,6 +60,29 @@ fun DetallesRutinaScreen(
 
     val rutina = uiState.rutinas.find { it.id_rutina_pers == rutinaId }
 
+    fun esCardioContinuo(nombre: String): Boolean {
+        val n = nombre.lowercase()
+        val esCardio = n.contains("carrera") || n.contains("trote") || n.contains("rodaje") || n.contains("fartlek") ||
+            n.contains("natación") || n.contains("natacion") || n.contains("nadar")
+        if (!esCardio) return false
+        
+        val tieneMin = Regex("(\\d+)\\s*min\\b", RegexOption.IGNORE_CASE).containsMatchIn(nombre)
+        val tieneContinuo = n.contains("continu")
+        val mencionaSeries = n.contains("series") || n.contains("x ")
+        return (tieneMin || tieneContinuo) && !mencionaSeries
+    }
+
+    fun textoDetalleEjercicio(nombre: String, series: Int?, reps: Int?): String {
+        if (esCardioContinuo(nombre)) {
+            val m = Regex("(\\d+)\\s*min\\b", RegexOption.IGNORE_CASE).find(nombre)?.groupValues?.getOrNull(1)?.toIntOrNull()
+            if (m != null) return "Duración: $m min"
+            
+            if (series == 1 && reps != null && reps > 0) return "Duración: $reps min"
+            return "Ejercicio continuo"
+        }
+        return "Series: ${series ?: "-"} × ${reps ?: "-"} reps"
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -125,22 +148,32 @@ fun DetallesRutinaScreen(
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Divider()
                                     Spacer(modifier = Modifier.height(8.dp))
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
+                                    if (rutina.ejercicios.isEmpty()) {
                                         Text(
-                                            text = rutina.nombre_ejercicio ?: "Ejercicio",
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                    }
-                                    if (rutina.series != null && rutina.repeticiones != null) {
-                                        Text(
-                                            text = "Series: ${rutina.series} × ${rutina.repeticiones} reps",
+                                            text = "Esta rutina no tiene ejercicios.",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
+                                    } else {
+                                        rutina.ejercicios.forEach { ej ->
+                                            Column(modifier = Modifier.fillMaxWidth()) {
+                                                Text(
+                                                    text = ej.nombre_ejercicio ?: "Ejercicio",
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
+                                                Text(
+                                                    text = textoDetalleEjercicio(
+                                                        nombre = ej.nombre_ejercicio ?: "",
+                                                        series = ej.series,
+                                                        reps = ej.repeticiones
+                                                    ),
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                                Spacer(modifier = Modifier.height(10.dp))
+                                            }
+                                        }
                                     }
                                 }
                             }

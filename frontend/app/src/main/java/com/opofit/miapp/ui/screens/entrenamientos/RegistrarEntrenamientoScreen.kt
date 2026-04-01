@@ -14,8 +14,11 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,10 +67,23 @@ fun RegistrarEntrenamientoScreen(
     }
 
     var duracion by remember { mutableStateOf("") }
-    var rutinaId by remember { mutableStateOf("") }
+    var oposicionSeleccionada by remember { mutableStateOf("Guardia Civil") }
+    var tipoRutinaSeleccionada by remember { mutableStateOf("OPO") } 
+    var rutinaId by remember { mutableStateOf("") } 
 
     data class EjercicioRow(val idEjercicio: String = "", val valor: String = "")
     val ejercicios = remember { mutableStateListOf(EjercicioRow()) }
+
+    val oposiciones = listOf(
+        "Policía Nacional" to 1,
+        "Guardia Civil" to 2
+    )
+    val tiposRutina = listOf(
+        "Oposición (rutina oficial)" to "OPO",
+        "Personalizada" to "PERS"
+    )
+    var expandedOpo by remember { mutableStateOf(false) }
+    var expandedTipo by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.registradoExitoso) {
         if (uiState.registradoExitoso) {
@@ -119,15 +136,76 @@ fun RegistrarEntrenamientoScreen(
             }
 
             item {
-                OutlinedTextField(
-                    value = rutinaId,
-                    onValueChange = { rutinaId = it },
-                    label = { Text("ID de la Rutina (libre)") },
-                    placeholder = { Text("Ej: 1") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    ExposedDropdownMenuBox(
+                        expanded = expandedOpo,
+                        onExpandedChange = { expandedOpo = it }
+                    ) {
+                        OutlinedTextField(
+                            value = oposicionSeleccionada,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Oposición") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedOpo) },
+                            modifier = Modifier.fillMaxWidth().menuAnchor(),
+                            singleLine = true
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expandedOpo,
+                            onDismissRequest = { expandedOpo = false }
+                        ) {
+                            oposiciones.forEach { (label, _) ->
+                                DropdownMenuItem(
+                                    text = { Text(label) },
+                                    onClick = {
+                                        oposicionSeleccionada = label
+                                        expandedOpo = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    ExposedDropdownMenuBox(
+                        expanded = expandedTipo,
+                        onExpandedChange = { expandedTipo = it }
+                    ) {
+                        val tipoLabel = tiposRutina.firstOrNull { it.second == tipoRutinaSeleccionada }?.first ?: "Oposición (rutina oficial)"
+                        OutlinedTextField(
+                            value = tipoLabel,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Tipo de entrenamiento") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedTipo) },
+                            modifier = Modifier.fillMaxWidth().menuAnchor(),
+                            singleLine = true
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expandedTipo,
+                            onDismissRequest = { expandedTipo = false }
+                        ) {
+                            tiposRutina.forEach { (label, value) ->
+                                DropdownMenuItem(
+                                    text = { Text(label) },
+                                    onClick = {
+                                        tipoRutinaSeleccionada = value
+                                        expandedTipo = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = rutinaId,
+                        onValueChange = { rutinaId = it },
+                        label = { Text(if (tipoRutinaSeleccionada == "OPO") "ID rutina oficial" else "ID rutina personalizada") },
+                        placeholder = { Text("Ej: 1") },
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true
+                    )
+                }
             }
 
             item {
@@ -147,7 +225,7 @@ fun RegistrarEntrenamientoScreen(
                     OutlinedTextField(
                         value = row.idEjercicio,
                         onValueChange = { ejercicios[index] = row.copy(idEjercicio = it) },
-                        label = { Text("ID Ejercicio") },
+                        label = { Text("ID del ejercicio") },
                         modifier = Modifier.weight(1f),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true
@@ -192,6 +270,7 @@ fun RegistrarEntrenamientoScreen(
                     Button(
                         onClick = {
                             val mins = duracion.toIntOrNull() ?: 0
+                            val duracionSegundos = mins * 60
                             val realizados = ejercicios.mapNotNull { row ->
                                 val id = row.idEjercicio.toIntOrNull() ?: return@mapNotNull null
                                 val v = row.valor.toDoubleOrNull() ?: 0.0
@@ -199,9 +278,9 @@ fun RegistrarEntrenamientoScreen(
                             }
                             historialViewModel.registrarEntrenamiento(
                                 userId = userId,
-                                tipoRutina = "PERS",
+                                tipoRutina = tipoRutinaSeleccionada,
                                 idRutina = rutinaId.toIntOrNull() ?: 1,
-                                duracion = mins,
+                                duracion = duracionSegundos,
                                 ejercicios = realizados
                             )
                         },
