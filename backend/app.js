@@ -4,6 +4,10 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Railway (y otros proxies) envían X-Forwarded-For; express-rate-limit lo exige con trust proxy.
+app.set('trust proxy', 1);
+
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
