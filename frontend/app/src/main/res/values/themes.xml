@@ -2,4 +2,10 @@
 <resources>
 
     <style name="Theme.MiApp" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.MiApp.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#0D47A1</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.MiApp</item>
+    </style>
 </resources>

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.opofit.miapp.utils.ApiErrorParser
 import org.json.JSONObject
 import retrofit2.HttpException
 
@@ -97,11 +98,22 @@ class RutinasLibresViewModel(application: Application) : AndroidViewModel(applic
                 if (response.ok) {
                     cargarRutinas(userId)
                 } else {
-                    _uiState.update { it.copy(isLoading = false, error = response.message ?: "Error al eliminar rutina") }
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            error = response.msg ?: response.message ?: "Error al eliminar rutina"
+                        )
+                    }
                 }
+            } catch (e: HttpException) {
+                _uiState.update { it.copy(isLoading = false, error = ApiErrorParser.message(e)) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = e.message ?: "Error de conexión") }
             }
         }
+    }
+
+    fun limpiarError() {
+        _uiState.update { it.copy(error = "") }
     }
 }

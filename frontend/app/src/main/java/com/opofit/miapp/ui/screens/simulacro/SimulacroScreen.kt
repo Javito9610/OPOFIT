@@ -42,6 +42,7 @@ fun SimulacroScreen(
     var paso by remember { mutableIntStateOf(0) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf("") }
+    var errorCampo by remember { mutableStateOf("") }
     var guardando by remember { mutableStateOf(false) }
     var notaFinal by remember { mutableStateOf<String?>(null) }
     var detalleNotas by remember { mutableStateOf<List<Pair<String, Int?>>>(emptyList()) }
@@ -115,7 +116,14 @@ fun SimulacroScreen(
         ) {
             when {
                 loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                error.isNotBlank() -> Text(error, color = MaterialTheme.colorScheme.error)
+                error.isNotBlank() -> Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(error, color = MaterialTheme.colorScheme.error)
+                    OutlinedButton(onClick = onNavigateBack) { Text("Volver") }
+                }
                 notaFinal != null -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Resultado del simulacro", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     Text("Nota media estimada: $notaFinal / 10", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
@@ -195,18 +203,32 @@ fun SimulacroScreen(
                                     }
                                     OutlinedTextField(
                                         value = valores[pruebaActual.id_pruebas_oficiales] ?: segundos.toString(),
-                                        onValueChange = { valores[pruebaActual.id_pruebas_oficiales] = it },
+                                        onValueChange = {
+                                            valores[pruebaActual.id_pruebas_oficiales] = it
+                                            errorCampo = ""
+                                        },
                                         label = { Text(etiquetaEntrada(pruebaActual)) },
                                         modifier = Modifier.fillMaxWidth(),
-                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                        isError = errorCampo.isNotEmpty(),
+                                        supportingText = if (errorCampo.isNotEmpty()) {
+                                            { Text(errorCampo, color = MaterialTheme.colorScheme.error) }
+                                        } else null
                                     )
                                 } else {
                                     OutlinedTextField(
                                         value = valores[pruebaActual.id_pruebas_oficiales] ?: "",
-                                        onValueChange = { valores[pruebaActual.id_pruebas_oficiales] = it },
+                                        onValueChange = {
+                                            valores[pruebaActual.id_pruebas_oficiales] = it
+                                            errorCampo = ""
+                                        },
                                         label = { Text(etiquetaEntrada(pruebaActual)) },
                                         modifier = Modifier.fillMaxWidth(),
-                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                        isError = errorCampo.isNotEmpty(),
+                                        supportingText = if (errorCampo.isNotEmpty()) {
+                                            { Text(errorCampo, color = MaterialTheme.colorScheme.error) }
+                                        } else null
                                     )
                                 }
                             }
@@ -220,6 +242,7 @@ fun SimulacroScreen(
                                         paso--
                                         cronometroActivo = false
                                         segundos = 0
+                                        errorCampo = ""
                                     },
                                     modifier = Modifier.weight(1f)
                                 ) { Text("Anterior") }
@@ -232,12 +255,16 @@ fun SimulacroScreen(
                                     } else {
                                         valores[id]?.toDoubleOrNull()
                                     }
-                                    if (v == null) {
-                                        error = "Introduce un valor válido"
+                                    if (v == null || v < 0) {
+                                        errorCampo = if (esTiempo) {
+                                            "Indica el tiempo en segundos (usa el cronómetro o escribe el valor)"
+                                        } else {
+                                            "Indica cuántas repeticiones has conseguido"
+                                        }
                                         return@Button
                                     }
                                     valores[id] = v.toString()
-                                    error = ""
+                                    errorCampo = ""
                                     cronometroActivo = false
                                     segundos = 0
                                     if (paso < pruebas.size - 1) {

@@ -7,11 +7,14 @@ import androidx.lifecycle.viewModelScope
 import com.opofit.miapp.data.api.BackendAuthService
 import com.opofit.miapp.notifications.FcmRegistrar
 import com.opofit.miapp.data.local.SessionManager
+import com.opofit.miapp.data.local.UserSession
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.AuthResponse
 import com.opofit.miapp.domain.ValidationUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -56,74 +59,92 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 val inferredUserId = session.userId.toIntOrNull()
                     ?: decodeJwtUserId(session.token)
 
-                
-                if (session.token.isNotBlank()) {
-                    val meResult = backendService.me(session.token)
-                    meResult.fold(
-                        onSuccess = { me ->
-                            val user = me.user
-                            if (user != null) {
-                                sessionManager.saveSession(
-                                    token = session.token,
-                                    email = user.email,
-                                    userId = user.id_usuario.toString(),
-                                    userName = user.nombre,
-                                    genero = user.genero,
-                                    oposicionId = user.oposiciones_id_oposicion?.toString() ?: "",
-                                    peso = user.peso.toString(),
-                                    altura = user.altura.toString(),
-                                    imc = user.imc.toString()
-                                )
-                                _uiState.update { state ->
-                                    state.copy(
-                                        isLoggedIn = true,
-                                        isSessionChecked = true,
-                                        userId = user.id_usuario,
-                                        userEmail = user.email,
-                                        userName = user.nombre,
-                                        genero = user.genero,
-                                        oposicionId = user.oposiciones_id_oposicion,
-                                        peso = user.peso,
-                                        altura = user.altura,
-                                        imc = user.imc
-                                    )
-                                }
-                                registerFcm(session.token)
-                                return@launch
-                            }
-                        },
-                        onFailure = {
-                            
-                            sessionManager.logout()
-                            _uiState.update {
-                                it.copy(
-                                    isLoggedIn = false,
-                                    isSessionChecked = true,
-                                    error = "Tu sesión ha caducado o ya no es válida. Inicia sesión de nuevo."
-                                )
-                            }
-                            return@launch
-                        }
-                    )
+                if (session.token.isBlank()) {
+                    _uiState.update {
+                        it.copy(isLoggedIn = false, isSessionChecked = true)
+                    }
+                    return@launch
                 }
-                _uiState.update { state ->
-                    state.copy(
-                        isLoggedIn = session.isLoggedIn,
-                        isSessionChecked = true,
-                        userId = inferredUserId,
-                        userEmail = session.email,
-                        userName = session.userName,
-                        genero = session.genero.ifEmpty { null },
-                        oposicionId = session.oposicionId.toIntOrNull(),
-                        peso = session.peso.toDoubleOrNull(),
-                        altura = session.altura.toDoubleOrNull(),
-                        imc = session.imc.toDoubleOrNull()
-                    )
-                }
+
+                // Mostrar la app al instante con la sesión guardada (no esperar a Railway).
+                applyCachedSession(session, inferredUserId)
+
+                refreshSessionFromServer(session.token)
             } catch (e: Exception) {
                 Log.e("AuthViewModel", "Error restoring session", e)
                 _uiState.update { it.copy(isSessionChecked = true) }
             }
+        }
+    }
+
+    private fun applyCachedSession(
+        session: UserSession,
+        inferredUserId: Int?
+    ) {
+        _uiState.update { state ->
+            state.copy(
+                isLoggedIn = session.isLoggedIn,
+                isSessionChecked = true,
+                userId = inferredUserId,
+                userEmail = session.email,
+                userName = session.userName,
+                genero = session.genero.ifEmpty { null },
+                oposicionId = session.oposicionId.toIntOrNull(),
+                peso = session.peso.toDoubleOrNull(),
+                altura = session.altura.toDoubleOrNull(),
+                imc = session.imc.toDoubleOrNull()
+            )
+        }
+    }
+
+    private suspend fun refreshSessionFromServer(token: String) {
+        try {
+            val meResult = withTimeout(8_000) {
+                backendService.me(token)
+            }
+            meResult.fold(
+                onSuccess = { me ->
+                    val user = me.user ?: return
+                    sessionManager.saveSession(
+                        token = token,
+                        email = user.email,
+                        userId = user.id_usuario.toString(),
+                        userName = user.nombre,
+                        genero = user.genero,
+                        oposicionId = user.oposiciones_id_oposicion?.toString() ?: "",
+                        peso = user.peso.toString(),
+                        altura = user.altura.toString(),
+                        imc = user.imc.toString()
+                    )
+                    _uiState.update { state ->
+                        state.copy(
+                            isLoggedIn = true,
+                            userId = user.id_usuario,
+                            userEmail = user.email,
+                            userName = user.nombre,
+                            genero = user.genero,
+                            oposicionId = user.oposiciones_id_oposicion,
+                            peso = user.peso,
+                            altura = user.altura,
+                            imc = user.imc
+                        )
+                    }
+                    registerFcm(token)
+                },
+                onFailure = {
+                    sessionManager.logout()
+                    _uiState.update {
+                        it.copy(
+                            isLoggedIn = false,
+                            error = "Tu sesión ha caducado o ya no es válida. Inicia sesión de nuevo."
+                        )
+                    }
+                }
+            )
+        } catch (e: TimeoutCancellationException) {
+            Log.w("AuthViewModel", "Validación de sesión en segundo plano (timeout); se usa caché local")
+        } catch (e: Exception) {
+            Log.w("AuthViewModel", "Validación de sesión en segundo plano fallida", e)
         }
     }
 

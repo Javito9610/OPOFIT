@@ -44,16 +44,32 @@ class RutinaPersService {
     const connection = await db.getConnection();
     try {
       await connection.beginTransaction();
-      const [rutina] = await connection.query('SELECT id_rutina_pers FROM rutinas_pers WHERE id_rutina_pers = ? AND usuarios_id_usuario = ?', [idRutina, userId]);
+      const [rutina] = await connection.query(
+        'SELECT id_rutina_pers FROM rutinas_pers WHERE id_rutina_pers = ? AND usuarios_id_usuario = ?',
+        [idRutina, userId]
+      );
       if (rutina.length === 0) {
-        throw new Error("No se encontró la rutina o no tienes permiso para eliminarla");
+        const err = new Error("No se encontró la rutina o no tienes permiso para eliminarla");
+        err.code = 'NOT_FOUND';
+        throw err;
+      }
+      // El historial de entrenos referencia la rutina: desvincular antes de borrar (evita HTTP 500 por FK).
+      await connection.query(
+        'UPDATE historial_sesiones SET rutinas_pers_id_rutina_pers = NULL WHERE rutinas_pers_id_rutina_pers = ?',
+        [idRutina]
+      );
+      try {
+        await connection.query('DELETE FROM rutinas_compartidas WHERE id_rutina_pers = ?', [idRutina]);
+      } catch (e) {
+        if (e.code !== 'ER_NO_SUCH_TABLE') throw e;
       }
       await connection.query('DELETE FROM detalle_rutina_pers WHERE rutinas_pers_id_rutina_pers = ?', [idRutina]);
-      await connection.query('DELETE FROM rutinas_pers WHERE id_rutina_pers = ? AND usuarios_id_usuario = ?', [idRutina, userId]);
+      await connection.query(
+        'DELETE FROM rutinas_pers WHERE id_rutina_pers = ? AND usuarios_id_usuario = ?',
+        [idRutina, userId]
+      );
       await connection.commit();
-      return {
-        success: true
-      };
+      return { success: true };
     } catch (error) {
       await connection.rollback();
       throw error;

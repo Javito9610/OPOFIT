@@ -27,6 +27,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -72,6 +75,14 @@ fun RutinasLibresScreen(
 
     val userId = authState.userId ?: 0
     var rutinaAEliminar by remember { mutableStateOf<Pair<Int, String>?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.error) {
+        if (uiState.error.isNotEmpty() && !uiState.isLoading) {
+            snackbarHostState.showSnackbar(uiState.error)
+            rutinasLibresViewModel.limpiarError()
+        }
+    }
 
     LaunchedEffect(userId) {
         if (userId > 0) {
@@ -103,7 +114,8 @@ fun RutinasLibresScreen(
             ) {
                 Icon(Icons.Filled.Add, contentDescription = "Crear rutina", tint = MaterialTheme.colorScheme.onPrimary)
             }
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) { data -> Snackbar(snackbarData = data) } }
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -130,16 +142,8 @@ fun RutinasLibresScreen(
                 )
             }
             when {
-                uiState.isLoading -> {
+                uiState.isLoading && uiState.rutinas.isEmpty() -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-                uiState.error.isNotEmpty() -> {
-                    Text(
-                        text = uiState.error,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.align(Alignment.Center).padding(16.dp)
-                    )
                 }
                 uiState.rutinas.isEmpty() -> {
                     Column(
@@ -165,6 +169,13 @@ fun RutinasLibresScreen(
                             .fillMaxSize()
                             .padding(16.dp)
                     ) {
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(bottom = 8.dp)
+                        )
+                    }
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()

@@ -120,6 +120,12 @@ const eliminarRutina = async (req, res) => {
     });
   } catch (error) {
     console.error("Error en eliminarRutina:", error.message);
+    if (error.code === 'NOT_FOUND') {
+      return res.status(404).json({
+        ok: false,
+        msg: error.message
+      });
+    }
     res.status(500).json({
       ok: false,
       msg: "No se pudo eliminar la rutina"
