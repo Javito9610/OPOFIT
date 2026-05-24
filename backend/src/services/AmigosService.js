@@ -95,6 +95,43 @@ class AmigosService {
     return { idMensaje: ins.insertId };
   }
 
+  static async feedActividad(userId, limite = 25) {
+    const amigos = await AmigosService.listarAmigos(userId);
+    const ids = amigos.map((a) => a.amigo_id);
+    if (!ids.length) return [];
+    const placeholders = ids.map(() => '?').join(',');
+    const [entrenos] = await db.query(
+      `SELECT 'ENTRENO' AS tipo, h.fecha_entreno AS fecha, u.nombre AS usuario_nombre,
+              u.id_usuario AS usuario_id, h.duracion_oficial AS valor1, h.tipo_rutina AS valor2
+       FROM historial_sesiones h
+       JOIN usuarios u ON h.usuarios_id_usuario = u.id_usuario
+       WHERE h.usuarios_id_usuario IN (${placeholders})
+         AND h.fecha_entreno >= DATE_SUB(NOW(), INTERVAL 30 DAY)`,
+      ids
+    );
+    const [sims] = await db.query(
+      `SELECT 'SIMULACRO' AS tipo, s.fecha AS fecha, u.nombre AS usuario_nombre,
+              u.id_usuario AS usuario_id, s.nota_media AS valor1, s.oposiciones_id_oposicion AS valor2
+       FROM simulacros s
+       JOIN usuarios u ON s.usuarios_id_usuario = u.id_usuario
+       WHERE s.usuarios_id_usuario IN (${placeholders})
+         AND s.fecha >= DATE_SUB(NOW(), INTERVAL 30 DAY)`,
+      ids
+    );
+    const merged = [...(entrenos || []), ...(sims || [])]
+      .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+      .slice(0, limite);
+    return merged.map((r) => ({
+      tipo: r.tipo,
+      fecha: r.fecha,
+      usuarioNombre: r.usuario_nombre,
+      usuarioId: r.usuario_id,
+      detalle: r.tipo === 'ENTRENO'
+        ? `${r.valor2 || 'OPO'} · ${r.valor1} min`
+        : `Simulacro · nota ${r.valor1}/10`
+    }));
+  }
+
   static async obtenerChat(userId, otroId, limite = 50) {
     const [rows] = await db.query(
       `SELECT id_mensaje, id_remitente, id_destinatario, texto, enviado_en

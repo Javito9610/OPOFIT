@@ -17,7 +17,15 @@ data class RegistrarHistorialResponse(
     val ok: Boolean,
     val id: Int? = null,
     val msg: String? = null,
-    val message: String? = null
+    val message: String? = null,
+    val recordsRotos: List<RecordRotoItem>? = null
+)
+
+data class RecordRotoItem(
+    val idEjercicio: Int,
+    val nombreEjercicio: String,
+    val valorAnterior: Double? = null,
+    val valorNuevo: Double
 )
 
 data class PuntoEvolucion(

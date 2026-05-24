@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.DashboardResumen
+import com.opofit.miapp.data.responsemodels.FeedActividadItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,7 +21,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     data class HomeUiState(
         val loading: Boolean = true,
         val error: String = "",
-        val resumen: DashboardResumen? = null
+        val resumen: DashboardResumen? = null,
+        val feedAmigos: List<FeedActividadItem> = emptyList()
     )
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -38,7 +40,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 val resp = RetrofitClient.dashboardApi.resumen("Bearer $token", oposicionId)
                 if (resp.ok && resp.data != null) {
-                    _uiState.update { it.copy(loading = false, resumen = resp.data) }
+                    var feed = emptyList<FeedActividadItem>()
+                    try {
+                        val fr = RetrofitClient.amigosApi.feed("Bearer $token")
+                        if (fr.ok) feed = fr.data.orEmpty().take(5)
+                    } catch (_: Exception) { }
+                    _uiState.update { it.copy(loading = false, resumen = resp.data, feedAmigos = feed) }
                 } else {
                     _uiState.update {
                         it.copy(loading = false, error = resp.msg ?: "No se pudo cargar el resumen")

@@ -3,6 +3,7 @@ package com.opofit.miapp.data.api
 import com.opofit.miapp.data.responsemodels.AmigosListResponse
 import com.opofit.miapp.data.responsemodels.BuscarUsuariosResponse
 import com.opofit.miapp.data.responsemodels.ChatResponse
+import com.opofit.miapp.data.responsemodels.FeedActividadResponse
 import com.opofit.miapp.data.responsemodels.EnviarMensajeRequest
 import com.opofit.miapp.data.responsemodels.GenericOkResponse
 import com.opofit.miapp.data.responsemodels.ResponderAmistadRequest
@@ -17,6 +18,9 @@ import retrofit2.http.Query
 interface AmigosApi {
     @GET("/api/amigos")
     suspend fun listar(@Header("Authorization") token: String): AmigosListResponse
+
+    @GET("/api/amigos/feed")
+    suspend fun feed(@Header("Authorization") token: String): FeedActividadResponse
 
     @GET("/api/amigos/buscar")
     suspend fun buscar(

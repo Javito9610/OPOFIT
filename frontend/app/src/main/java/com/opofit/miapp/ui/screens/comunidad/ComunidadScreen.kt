@@ -15,6 +15,9 @@ import androidx.compose.ui.unit.dp
 import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.AmigoItem
+import com.opofit.miapp.data.responsemodels.FeedActividadItem
+import com.opofit.miapp.ui.components.EmptyState
+import com.opofit.miapp.ui.components.ProfileAvatar
 import com.opofit.miapp.data.responsemodels.EnviarMensajeRequest
 import com.opofit.miapp.data.responsemodels.ResponderAmistadRequest
 import com.opofit.miapp.data.responsemodels.SolicitarAmistadRequest
@@ -45,6 +48,23 @@ fun ComunidadScreen(
     var mensajes by remember { mutableStateOf<List<com.opofit.miapp.data.responsemodels.MensajeChat>>(emptyList()) }
     var textoMsg by remember { mutableStateOf("") }
     var msg by remember { mutableStateOf("") }
+    var feed by remember { mutableStateOf<List<FeedActividadItem>>(emptyList()) }
+    var loadingFeed by remember { mutableStateOf(false) }
+
+    fun cargarFeed() {
+        scope.launch {
+            loadingFeed = true
+            try {
+                val token = tokenManager.getToken().first() ?: ""
+                val r = RetrofitClient.amigosApi.feed("Bearer $token")
+                feed = if (r.ok) r.data.orEmpty() else emptyList()
+            } catch (e: Exception) {
+                msg = ApiErrorParser.message(e)
+            } finally {
+                loadingFeed = false
+            }
+        }
+    }
 
     fun cargarAmigos() {
         scope.launch {
@@ -61,7 +81,10 @@ fun ComunidadScreen(
         }
     }
 
-    LaunchedEffect(Unit) { cargarAmigos() }
+    LaunchedEffect(Unit) {
+        cargarAmigos()
+        cargarFeed()
+    }
 
     Scaffold(
         topBar = {
@@ -82,15 +105,69 @@ fun ComunidadScreen(
     ) { padding ->
         Column(Modifier.padding(padding)) {
             TabRow(selectedTabIndex = tab) {
-                Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text("Amigos") })
-                Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text("Buscar") })
-                Tab(selected = tab == 2, onClick = { tab = 2 }, text = { Text("Chat") })
+                Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text("Actividad") })
+                Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text("Amigos") })
+                Tab(selected = tab == 2, onClick = { tab = 2 }, text = { Text("Buscar") })
+                Tab(selected = tab == 3, onClick = { tab = 3 }, text = { Text("Chat") })
             }
             if (msg.isNotBlank()) {
                 Text(msg, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(12.dp))
             }
             when (tab) {
-                0 -> LazyColumn(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                0 -> {
+                    if (loadingFeed) {
+                        Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                    } else if (feed.isEmpty()) {
+                        EmptyState(
+                            emoji = "👥",
+                            title = "Sin actividad de amigos",
+                            message = "Añade amigos en Buscar para ver sus entrenos y simulacros aquí.",
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        LazyColumn(
+                            Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            items(feed) { f ->
+                                Card(Modifier.fillMaxWidth()) {
+                                    Row(
+                                        Modifier.padding(14.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                                    ) {
+                                        ProfileAvatar(f.usuarioNombre ?: "?", sizeDp = 44)
+                                        Column(Modifier.weight(1f)) {
+                                            Text(
+                                                f.usuarioNombre ?: "Opositor",
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            Text(
+                                                f.detalle ?: "",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            f.fecha?.let {
+                                                Text(
+                                                    DateFormatUtil.formatearFechaHora(it),
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                        Text(
+                                            if (f.tipo == "SIMULACRO") "🎯" else "💪",
+                                            style = MaterialTheme.typography.headlineSmall
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                1 -> LazyColumn(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (pendientes.isNotEmpty()) {
                         item { Text("Solicitudes pendientes", fontWeight = FontWeight.Bold) }
                         items(pendientes) { s ->
@@ -131,7 +208,7 @@ fun ComunidadScreen(
                                 .fillMaxWidth()
                                 .clickable {
                                     chatCon = a
-                                    tab = 2
+                                    tab = 3
                                     scope.launch {
                                         val token = tokenManager.getToken().first() ?: ""
                                         val c = RetrofitClient.amigosApi.chat("Bearer $token", a.amigo_id)
@@ -143,7 +220,7 @@ fun ComunidadScreen(
                         }
                     }
                 }
-                1 -> Column(Modifier.padding(16.dp)) {
+                2 -> Column(Modifier.padding(16.dp)) {
                     OutlinedTextField(
                         value = busqueda,
                         onValueChange = { busqueda = it },
@@ -185,7 +262,7 @@ fun ComunidadScreen(
                         }
                     }
                 }
-                2 -> Column(Modifier.padding(16.dp)) {
+                3 -> Column(Modifier.padding(16.dp)) {
                     if (chatCon == null) {
                         Text("Selecciona un amigo en la pestaña Amigos para chatear.")
                     } else {

@@ -1,5 +1,47 @@
 const db = require("../config/db");
+
 class ProgresoService {
+  static esMejorMarca(nombreEjercicio, valorNuevo, valorAnterior) {
+    if (valorAnterior == null || valorAnterior === undefined) return true;
+    const n = String(nombreEjercicio || "").toLowerCase();
+    const menorEsMejor =
+      n.includes("carrera") ||
+      n.includes("trote") ||
+      n.includes("rodaje") ||
+      n.includes("natación") ||
+      n.includes("natacion") ||
+      n.includes("sprint");
+    if (menorEsMejor) return Number(valorNuevo) < Number(valorAnterior);
+    return Number(valorNuevo) > Number(valorAnterior);
+  }
+
+  static async detectarRecords(userId, ejercicios) {
+    const records = [];
+    for (const item of ejercicios) {
+      const [prev] = await db.query(
+        `SELECT r.valor_conseguido, e.nombre AS nombre_ejercicio
+         FROM registro_resultados r
+         JOIN historial_sesiones h ON r.historial_sesiones_id_historial_sesiones = h.id_historial_sesion
+         JOIN ejercicios e ON r.ejercicios_id_ejercicio = e.id_ejercicio
+         WHERE h.usuarios_id_usuario = ? AND r.ejercicios_id_ejercicio = ?
+         ORDER BY h.fecha_entreno DESC
+         LIMIT 1`,
+        [userId, item.id_ejercicio]
+      );
+      const nombre = prev?.[0]?.nombre_ejercicio || `Ejercicio ${item.id_ejercicio}`;
+      const anterior = prev?.[0]?.valor_conseguido != null ? Number(prev[0].valor_conseguido) : null;
+      if (ProgresoService.esMejorMarca(nombre, item.valor, anterior)) {
+        records.push({
+          idEjercicio: item.id_ejercicio,
+          nombreEjercicio: nombre,
+          valorAnterior: anterior,
+          valorNuevo: Number(item.valor)
+        });
+      }
+    }
+    return records;
+  }
+
   static async registrarEntreno(datos) {
     const {
       userId,
@@ -8,6 +50,7 @@ class ProgresoService {
       duracion,
       ejercicios
     } = datos;
+    const recordsRotos = await ProgresoService.detectarRecords(userId, ejercicios);
     const connection = await db.getConnection();
     try {
       await connection.beginTransaction();
@@ -26,7 +69,8 @@ class ProgresoService {
       await connection.commit();
       return {
         success: true,
-        idHistorial
+        idHistorial,
+        recordsRotos
       };
     } catch (error) {
       await connection.rollback();

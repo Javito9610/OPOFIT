@@ -67,4 +67,13 @@ const enviarMensaje = async (req, res) => {
   }
 };
 
-module.exports = { listar, buscar, solicitar, responder, chat, enviarMensaje };
+const feed = async (req, res) => {
+  try {
+    const data = await AmigosService.feedActividad(req.usuario.id);
+    res.json({ ok: true, data });
+  } catch (e) {
+    res.status(500).json({ ok: false, msg: e.message });
+  }
+};
+
+module.exports = { listar, buscar, solicitar, responder, chat, enviarMensaje, feed };

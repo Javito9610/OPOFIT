@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.LocalFireDepartment
@@ -55,6 +56,8 @@ import com.opofit.miapp.ui.components.ErrorState
 import com.opofit.miapp.ui.components.ProfileAvatar
 import com.opofit.miapp.ui.components.SectionHeader
 import com.opofit.miapp.ui.components.StatCard
+import com.opofit.miapp.ui.components.WeekActivityChart
+import androidx.compose.material3.TextButton
 import com.opofit.miapp.ui.viewmodels.HomeViewModel
 
 private data class QuickLink(
@@ -101,7 +104,8 @@ fun HomeScreen(
         QuickLink("Libres", "Tus rutinas", Icons.Filled.Star, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, onNavigateToRutinasLibres),
         QuickLink("Ranking", "Clasificación", Icons.Filled.Leaderboard, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, onNavigateToRanking),
         QuickLink("Comunidad", "Amigos", Icons.Filled.Groups, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToComunidad),
-        QuickLink("Premium", "Más ventajas", Icons.Filled.Star, MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer, onNavigateToPremium)
+        QuickLink("Premium", "Más ventajas", Icons.Filled.Star, MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer, onNavigateToPremium),
+        QuickLink("Rutas GPS", "Próximamente", Icons.Filled.Explore, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), MaterialTheme.colorScheme.onSurfaceVariant, {})
     )
 
     Scaffold(
@@ -193,9 +197,13 @@ fun HomeScreen(
                         }
 
                         item {
+                            WeekActivityChart(dias = resumen?.graficaSemanal.orEmpty())
+                        }
+
+                        item {
                             SectionHeader(
                                 title = "Tu semana",
-                                subtitle = "Estilo Strava: actividad y constancia"
+                                subtitle = "Resumen rápido"
                             )
                             Spacer(Modifier.height(8.dp))
                             Row(
@@ -272,6 +280,55 @@ fun HomeScreen(
                                 ) {
                                     Icon(Icons.Filled.Timer, null, Modifier.size(20.dp))
                                     Text("Simulacro", modifier = Modifier.padding(start = 8.dp))
+                                }
+                            }
+                        }
+
+                        val feed = uiState.feedAmigos
+                        if (feed.isNotEmpty()) {
+                            item {
+                                SectionHeader(
+                                    title = "Actividad de amigos",
+                                    subtitle = "Feed estilo Strava"
+                                )
+                            }
+                            items(feed.size) { i ->
+                                val f = feed[i]
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onClick = onNavigateToComunidad,
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+                                    )
+                                ) {
+                                    Row(
+                                        Modifier.padding(12.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        ProfileAvatar(f.usuarioNombre ?: "?", sizeDp = 36)
+                                        Column(Modifier.weight(1f)) {
+                                            Text(
+                                                f.usuarioNombre ?: "Opositor",
+                                                fontWeight = FontWeight.SemiBold,
+                                                style = MaterialTheme.typography.titleSmall
+                                            )
+                                            Text(
+                                                f.detalle ?: "",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Text(
+                                            if (f.tipo == "SIMULACRO") "🎯" else "💪",
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                    }
+                                }
+                            }
+                            item {
+                                TextButton(onClick = onNavigateToComunidad, modifier = Modifier.fillMaxWidth()) {
+                                    Text("Ver todo en Comunidad")
                                 }
                             }
                         }

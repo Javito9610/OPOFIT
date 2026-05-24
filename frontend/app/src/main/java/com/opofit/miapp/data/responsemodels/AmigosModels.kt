@@ -41,3 +41,13 @@ data class MensajeChat(
 )
 
 data class ChatResponse(val ok: Boolean, val data: List<MensajeChat>?)
+
+data class FeedActividadItem(
+    val tipo: String,
+    val fecha: String?,
+    val usuarioNombre: String?,
+    val usuarioId: Int? = null,
+    val detalle: String?
+)
+
+data class FeedActividadResponse(val ok: Boolean, val data: List<FeedActividadItem>?)

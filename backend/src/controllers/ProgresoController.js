@@ -46,7 +46,8 @@ const guardarEntrenamiento = async (req, res) => {
     res.status(200).json({
       ok: true,
       msg: "Entrenamiento guardado correctamente",
-      id: resultado.idHistorial
+      id: resultado.idHistorial,
+      recordsRotos: resultado.recordsRotos || []
     });
   } catch (error) {
     console.error("Error en guardarEntrenamiento:", error.message);

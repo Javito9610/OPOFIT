@@ -20,7 +20,15 @@ data class DashboardResumen(
     val totalPruebas: Int? = null,
     val rankingPosicion: Int? = null,
     val rankingTotal: Int? = null,
-    val rankingNotaMedia: Double? = null
+    val rankingNotaMedia: Double? = null,
+    val graficaSemanal: List<DiaActividad>? = null
+)
+
+data class DiaActividad(
+    val dia: String? = null,
+    val etiqueta: String? = null,
+    val sesiones: Int = 0,
+    val minutos: Int = 0
 )
 
 data class UltimaSesionResumen(

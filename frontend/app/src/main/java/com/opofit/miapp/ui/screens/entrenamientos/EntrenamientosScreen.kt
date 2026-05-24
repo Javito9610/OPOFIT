@@ -49,6 +49,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.EjercicioRealizado
+import com.opofit.miapp.ui.components.RecordCelebrationDialog
+import com.opofit.miapp.ui.components.RestTimerSheet
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.HistorialViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasViewModel
@@ -64,7 +66,8 @@ private data class EjercicioEstado(
     var valorConseguido: String = "",
     val objetivoSegundos: Int? = null,
     val tipo: String? = null, 
-    var distancia: String = ""
+    var distancia: String = "",
+    val descansoSeg: Int = 90
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -103,6 +106,9 @@ fun EntrenamientosScreen(
     var expandedRutinas by remember { mutableStateOf(false) }
     var showObjetivoDialog by remember { mutableStateOf(false) }
     var objetivoEjercicioNombre by remember { mutableStateOf<String?>(null) }
+    var showRestTimer by remember { mutableStateOf(false) }
+    var restTimerSecs by remember { mutableIntStateOf(90) }
+    var nextEjercicioNombre by remember { mutableStateOf("") }
 
     fun objetivoSegundosDesdeNombre(nombre: String): Int? {
         val regex = Regex("(\\d+)\\s*min\\b", RegexOption.IGNORE_CASE)
@@ -150,12 +156,14 @@ fun EntrenamientosScreen(
             bloque.ejercicios.forEachIndexed { idx, ejercicio ->
                 val objetivo = objetivoSegundosDesdeNombre(ejercicio.nombre)
                 val tipo = tipoCardio(ejercicio.nombre)
+                val desc = (ejercicio.descanso ?: 0).let { if (it > 0) it else 90 }
                 ejerciciosEstado.add(
                     EjercicioEstado(
                         nombre = ejercicio.nombre,
                         idEjercicio = ejercicio.id_ejercicio ?: (selectedRutinaIndex * 100 + idx + 1),
                         objetivoSegundos = objetivo,
-                        tipo = tipo
+                        tipo = tipo,
+                        descansoSeg = desc
                     )
                 )
             }
@@ -222,13 +230,33 @@ fun EntrenamientosScreen(
         }
     }
 
-    LaunchedEffect(historialState.registradoExitoso) {
-        if (historialState.registradoExitoso) {
+    LaunchedEffect(historialState.registradoExitoso, historialState.recordsRotos) {
+        if (historialState.registradoExitoso && historialState.recordsRotos.isEmpty()) {
             cronometroActivo = false
             historialViewModel.resetRegistrado()
             onEntrenamientoFinalizado()
         }
     }
+
+    RecordCelebrationDialog(
+        records = historialState.recordsRotos,
+        onDismiss = {
+            if (historialState.registradoExitoso) {
+                cronometroActivo = false
+                historialViewModel.clearRecordsCelebration()
+                historialViewModel.resetRegistrado()
+                onEntrenamientoFinalizado()
+            }
+        }
+    )
+
+    RestTimerSheet(
+        visible = showRestTimer,
+        ejercicioNombre = nextEjercicioNombre,
+        initialSeconds = restTimerSecs,
+        onDismiss = { showRestTimer = false },
+        onSkip = { showRestTimer = false }
+    )
 
     val minutos = segundos / 60
     val segs = segundos % 60
@@ -429,7 +457,16 @@ fun EntrenamientosScreen(
                             Checkbox(
                                 checked = estado.completado,
                                 onCheckedChange = { checked ->
+                                    val wasDone = estado.completado
                                     ejerciciosEstado[index] = estado.copy(completado = checked)
+                                    if (checked && !wasDone) {
+                                        val nextIdx = index + 1
+                                        if (nextIdx < ejerciciosEstado.size) {
+                                            restTimerSecs = estado.descansoSeg.coerceIn(30, 300)
+                                            nextEjercicioNombre = ejerciciosEstado[nextIdx].nombre
+                                            showRestTimer = true
+                                        }
+                                    }
                                 }
                             )
                             Column(modifier = Modifier.weight(1f)) {

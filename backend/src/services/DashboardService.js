@@ -66,6 +66,7 @@ class DashboardService {
     );
     const nivelInfo = await RutinaService.calcularNotaYNivel(userId, idOposicion);
     const ranking = await RankingService.posicionUsuario(userId, idOposicion);
+    const graficaSemanal = await DashboardService.obtenerGraficaSemanal(userId);
 
     return {
       oposicionNombre: opo?.nombre || null,
@@ -89,8 +90,37 @@ class DashboardService {
       totalPruebas: nivelInfo.totalPruebas,
       rankingPosicion: ranking.posicion,
       rankingTotal: ranking.total,
-      rankingNotaMedia: ranking.notaMedia
+      rankingNotaMedia: ranking.notaMedia,
+      graficaSemanal
     };
+  }
+
+  static async obtenerGraficaSemanal(userId) {
+    const [rows] = await db.query(
+      `SELECT DATE(fecha_entreno) AS dia, COUNT(*) AS sesiones, COALESCE(SUM(duracion_oficial), 0) AS minutos
+       FROM historial_sesiones
+       WHERE usuarios_id_usuario = ?
+         AND fecha_entreno >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+       GROUP BY DATE(fecha_entreno)
+       ORDER BY dia ASC`,
+      [userId]
+    );
+    const map = new Map((rows || []).map((r) => [String(r.dia), r]));
+    const dias = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+    const out = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const row = map.get(key);
+      out.push({
+        dia: key,
+        etiqueta: dias[d.getDay()],
+        sesiones: Number(row?.sesiones || 0),
+        minutos: Number(row?.minutos || 0)
+      });
+    }
+    return out;
   }
 }
 

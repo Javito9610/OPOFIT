@@ -7,6 +7,7 @@ import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.EjercicioRealizado
 import com.opofit.miapp.data.responsemodels.PuntoEvolucion
+import com.opofit.miapp.data.responsemodels.RecordRotoItem
 import com.opofit.miapp.data.responsemodels.RegistrarHistorialRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +26,8 @@ class HistorialViewModel(application: Application) : AndroidViewModel(applicatio
         val isLoading: Boolean = false,
         val error: String = "",
         val evolucion: List<PuntoEvolucion> = emptyList(),
-        val registradoExitoso: Boolean = false
+        val registradoExitoso: Boolean = false,
+        val recordsRotos: List<RecordRotoItem> = emptyList()
     )
 
     private val _uiState = MutableStateFlow(HistorialUiState())
@@ -60,13 +62,19 @@ class HistorialViewModel(application: Application) : AndroidViewModel(applicatio
         ejercicios: List<EjercicioRealizado>
     ) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = "", registradoExitoso = false) }
+            _uiState.update { it.copy(isLoading = true, error = "", registradoExitoso = false, recordsRotos = emptyList()) }
             try {
                 val token = tokenManager.getToken().first() ?: ""
                 val body = RegistrarHistorialRequest(userId, tipoRutina, idRutina, duracion, ejercicios)
                 val response = RetrofitClient.progresoApi.registrarEntrenamiento("Bearer $token", body)
                 if (response.ok) {
-                    _uiState.update { it.copy(isLoading = false, registradoExitoso = true) }
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            registradoExitoso = true,
+                            recordsRotos = response.recordsRotos.orEmpty()
+                        )
+                    }
                 } else {
                     _uiState.update {
                         it.copy(
@@ -102,6 +110,10 @@ class HistorialViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun resetRegistrado() {
-        _uiState.update { it.copy(registradoExitoso = false, error = "") }
+        _uiState.update { it.copy(registradoExitoso = false, error = "", recordsRotos = emptyList()) }
+    }
+
+    fun clearRecordsCelebration() {
+        _uiState.update { it.copy(recordsRotos = emptyList()) }
     }
 }
