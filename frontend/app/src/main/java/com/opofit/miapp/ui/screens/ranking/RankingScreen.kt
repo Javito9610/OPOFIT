@@ -17,6 +17,7 @@ import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.RankingEntry
 import com.opofit.miapp.data.responsemodels.TogglePerfilPublicoRequest
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
+import com.opofit.miapp.utils.ApiErrorParser
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -46,7 +47,7 @@ fun RankingScreen(
                 val resp = RetrofitClient.rankingApi.getRanking("Bearer $token", oposicionId)
                 ranking = if (resp.ok) resp.data.orEmpty() else emptyList()
             } catch (e: Exception) {
-                error = e.message ?: "Error"
+                error = ApiErrorParser.message(e)
             } finally {
                 loading = false
             }

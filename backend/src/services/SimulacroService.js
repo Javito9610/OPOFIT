@@ -8,17 +8,27 @@ class SimulacroService {
     if (!existe) throw new Error('OPOSICION_NOT_FOUND');
     const [pruebas] = await db.query(
       `SELECT id_pruebas_oficiales, nombre_prueba, descripcion, mejor_si_es_menor,
-              COALESCE(unidad_entrada, IF(mejor_si_es_menor = 1, 's', 'reps')) AS unidad_entrada,
-              tipo_baremo, convocatoria_ref
+              unidad_entrada, tipo_baremo, convocatoria_ref
        FROM pruebas_oficiales
        WHERE oposiciones_id_oposicion = ?
        ORDER BY id_pruebas_oficiales ASC`,
       [idOposicion]
     );
     return (pruebas || []).map((p) => ({
-      ...p,
-      unidad: p.unidad_entrada || (Number(p.mejor_si_es_menor) === 1 ? 's' : 'reps')
+      id_pruebas_oficiales: p.id_pruebas_oficiales,
+      nombre_prueba: p.nombre_prueba,
+      descripcion: p.descripcion,
+      mejor_si_es_menor: p.mejor_si_es_menor,
+      tipo_baremo: p.tipo_baremo || 'PUNTUACION',
+      convocatoria_ref: p.convocatoria_ref,
+      unidad: SimulacroService.resolverUnidad(p)
     }));
+  }
+
+  static resolverUnidad(p) {
+    if (p.unidad_entrada === 's' || p.unidad_entrada === 'reps') return p.unidad_entrada;
+    if (Number(p.id_pruebas_oficiales) === 20) return 's';
+    return Number(p.mejor_si_es_menor) === 1 ? 's' : 'reps';
   }
 
   static async guardarSimulacro(userId, idOposicion, resultados) {

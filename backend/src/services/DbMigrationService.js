@@ -1,0 +1,146 @@
+const db = require('../config/db');
+
+/**
+ * Aplica migraciones de esquema en Railway/producción si faltan columnas o tablas.
+ * Idempotente: solo añade lo que no existe (no borra datos).
+ */
+class DbMigrationService {
+  static async columnExists(table, column) {
+    const [rows] = await db.query(
+      `SELECT 1 FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?
+       LIMIT 1`,
+      [table, column]
+    );
+    return rows.length > 0;
+  }
+
+  static async tableExists(table) {
+    const [rows] = await db.query(
+      `SELECT 1 FROM information_schema.TABLES
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?
+       LIMIT 1`,
+      [table]
+    );
+    return rows.length > 0;
+  }
+
+  static async addColumnIfMissing(table, column, definition) {
+    if (await DbMigrationService.columnExists(table, column)) return false;
+    await db.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
+    console.log(`[migrate] ${table}.${column} añadida`);
+    return true;
+  }
+
+  static async runOnStartup() {
+    try {
+      await DbMigrationService.addColumnIfMissing(
+        'usuarios',
+        'es_premium',
+        'TINYINT(1) NOT NULL DEFAULT 0'
+      );
+      await DbMigrationService.addColumnIfMissing(
+        'usuarios',
+        'premium_hasta',
+        'DATETIME NULL'
+      );
+      await DbMigrationService.addColumnIfMissing(
+        'usuarios',
+        'perfil_publico',
+        'TINYINT(1) NOT NULL DEFAULT 0'
+      );
+      await DbMigrationService.addColumnIfMissing(
+        'usuarios',
+        'fcm_token',
+        'VARCHAR(512) NULL'
+      );
+      await DbMigrationService.addColumnIfMissing(
+        'usuarios',
+        'es_admin',
+        'TINYINT(1) NOT NULL DEFAULT 0'
+      );
+
+      await DbMigrationService.addColumnIfMissing(
+        'oposiciones',
+        'incluida_gratis',
+        'TINYINT(1) NOT NULL DEFAULT 1'
+      );
+      await DbMigrationService.addColumnIfMissing(
+        'oposiciones',
+        'convocatoria_ref',
+        'VARCHAR(500) NULL'
+      );
+      await DbMigrationService.addColumnIfMissing(
+        'oposiciones',
+        'notas_usuario',
+        'TEXT NULL'
+      );
+
+      await DbMigrationService.addColumnIfMissing(
+        'pruebas_oficiales',
+        'convocatoria_ref',
+        'VARCHAR(500) NULL'
+      );
+      await DbMigrationService.addColumnIfMissing(
+        'pruebas_oficiales',
+        'fuente_legal',
+        'VARCHAR(500) NULL'
+      );
+      if (!(await DbMigrationService.columnExists('pruebas_oficiales', 'tipo_baremo'))) {
+        await db.query(
+          `ALTER TABLE pruebas_oficiales
+           ADD COLUMN tipo_baremo ENUM('PUNTUACION','APTO_NO_APTO') NOT NULL DEFAULT 'PUNTUACION'`
+        );
+        console.log('[migrate] pruebas_oficiales.tipo_baremo añadida');
+      }
+      await DbMigrationService.addColumnIfMissing(
+        'pruebas_oficiales',
+        'unidad_entrada',
+        "VARCHAR(10) NOT NULL DEFAULT 'reps'"
+      );
+
+      if (!(await DbMigrationService.tableExists('simulacros'))) {
+        await db.query(`
+          CREATE TABLE simulacros (
+            id_simulacro INT NOT NULL AUTO_INCREMENT,
+            fecha DATETIME NOT NULL,
+            nota_media DECIMAL(5,2) NULL,
+            usuarios_id_usuario INT NOT NULL,
+            oposiciones_id_oposicion INT NOT NULL,
+            PRIMARY KEY (id_simulacro),
+            INDEX fk_sim_usuario_idx (usuarios_id_usuario),
+            INDEX fk_sim_opo_idx (oposiciones_id_oposicion),
+            CONSTRAINT fk_sim_usuario FOREIGN KEY (usuarios_id_usuario) REFERENCES usuarios (id_usuario),
+            CONSTRAINT fk_sim_opo FOREIGN KEY (oposiciones_id_oposicion) REFERENCES oposiciones (id_oposicion)
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla simulacros creada');
+      }
+
+      if (!(await DbMigrationService.tableExists('simulacro_pruebas'))) {
+        await db.query(`
+          CREATE TABLE simulacro_pruebas (
+            id_simulacro_prueba INT NOT NULL AUTO_INCREMENT,
+            valor_registrado DECIMAL(10,2) NOT NULL,
+            nota_obtenida INT NULL,
+            simulacros_id_simulacro INT NOT NULL,
+            pruebas_oficiales_id_pruebas_oficiales INT NOT NULL,
+            PRIMARY KEY (id_simulacro_prueba),
+            CONSTRAINT fk_sp_sim FOREIGN KEY (simulacros_id_simulacro) REFERENCES simulacros (id_simulacro) ON DELETE CASCADE,
+            CONSTRAINT fk_sp_prueba FOREIGN KEY (pruebas_oficiales_id_pruebas_oficiales) REFERENCES pruebas_oficiales (id_pruebas_oficiales)
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla simulacro_pruebas creada');
+      }
+
+      await db.query('UPDATE oposiciones SET incluida_gratis = 1 WHERE incluida_gratis = 0 OR incluida_gratis IS NULL');
+
+      console.log('[migrate] Esquema comprobado OK');
+    } catch (e) {
+      console.error('[migrate] Error aplicando migraciones:', e.message);
+      throw e;
+    }
+  }
+}
+
+module.exports = DbMigrationService;

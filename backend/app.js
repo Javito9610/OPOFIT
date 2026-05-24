@@ -53,6 +53,17 @@ if (process.env.NOTIFICATIONS_CRON === 'true') {
   console.log('Cron de recordatorios activo (8:00 diario)');
 }
 
-app.listen(port, () => {
-  console.log(`Servidor ejecutandose en http://localhost:${port}`);
-});
+const DbMigrationService = require('./src/services/DbMigrationService');
+
+async function start() {
+  try {
+    await DbMigrationService.runOnStartup();
+  } catch (e) {
+    console.error('No se pudo aplicar migraciones de BD:', e.message);
+  }
+  app.listen(port, () => {
+    console.log(`Servidor ejecutandose en http://localhost:${port}`);
+  });
+}
+
+start();

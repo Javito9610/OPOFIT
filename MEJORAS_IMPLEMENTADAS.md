@@ -84,6 +84,8 @@ NOTIFICATIONS_CRON=true
 FIREBASE_SERVICE_ACCOUNT_JSON={...}
 ```
 
+**Importante (errores HTTP 500 en Premium / Ranking / Simulacro):** el backend nuevo usa columnas y tablas que no existían en la BD antigua. Al arrancar, el servidor aplica migraciones automáticas (`DbMigrationService`). Tras desplegar en Railway, revisa los logs: debe aparecer `[migrate] Esquema comprobado OK`. Si Premium sigue fallando al activar prueba, confirma `PREMIUM_DEV_MODE=true` en Railway.
+
 ### 3. Backend
 
 ```bash

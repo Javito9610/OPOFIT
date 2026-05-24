@@ -19,6 +19,7 @@ import com.opofit.miapp.data.responsemodels.GuardarSimulacroRequest
 import com.opofit.miapp.data.responsemodels.PruebaOficialSimulacro
 import com.opofit.miapp.data.responsemodels.ResultadoSimulacroItem
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
+import com.opofit.miapp.utils.ApiErrorParser
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -61,7 +62,7 @@ fun SimulacroScreen(
                 error = resp.msg ?: "No se pudieron cargar las pruebas"
             }
         } catch (e: Exception) {
-            error = e.message ?: "Error de conexión"
+            error = ApiErrorParser.message(e)
         } finally {
             loading = false
         }
@@ -236,7 +237,7 @@ fun SimulacroScreen(
                                                     error = resp.msg ?: "Error al guardar"
                                                 }
                                             } catch (e: Exception) {
-                                                error = e.message ?: "Error"
+                                                error = ApiErrorParser.message(e)
                                             } finally {
                                                 guardando = false
                                             }

@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
+import com.opofit.miapp.utils.ApiErrorParser
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -39,7 +40,7 @@ fun PremiumScreen(onNavigateBack: () -> Unit) {
                     premiumHasta = resp.data.premiumHasta
                 }
             } catch (e: Exception) {
-                msg = e.message ?: "Error"
+                msg = ApiErrorParser.message(e)
             } finally {
                 loading = false
             }
@@ -110,7 +111,7 @@ fun PremiumScreen(onNavigateBack: () -> Unit) {
                                 msg = resp.msg ?: if (resp.ok) "¡Premium activado!" else "No disponible"
                                 if (resp.ok) cargarEstado()
                             } catch (e: Exception) {
-                                msg = e.message ?: "Error (activa PREMIUM_DEV_MODE en el servidor)"
+                                msg = ApiErrorParser.message(e)
                             }
                         }
                     },
