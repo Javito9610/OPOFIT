@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.GuardarSimulacroRequest
+import com.opofit.miapp.data.responsemodels.PerfilTrasSimulacro
 import com.opofit.miapp.data.responsemodels.PruebaOficialSimulacro
 import com.opofit.miapp.data.responsemodels.ResultadoSimulacroItem
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
@@ -44,6 +45,11 @@ fun SimulacroScreen(
     var guardando by remember { mutableStateOf(false) }
     var notaFinal by remember { mutableStateOf<String?>(null) }
     var detalleNotas by remember { mutableStateOf<List<Pair<String, Int?>>>(emptyList()) }
+    var perfilTrasSimulacro by remember { mutableStateOf<PerfilTrasSimulacro?>(null) }
+    var ultimosResultados by remember { mutableStateOf<List<ResultadoSimulacroItem>>(emptyList()) }
+    var mostrarDialogoPerfil by remember { mutableStateOf(false) }
+    var aplicandoMarcas by remember { mutableStateOf(false) }
+    var mensajeExito by remember { mutableStateOf<String?>(null) }
 
     var cronometroActivo by remember { mutableStateOf(false) }
     var segundos by remember { mutableIntStateOf(0) }
@@ -113,10 +119,30 @@ fun SimulacroScreen(
                 notaFinal != null -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Resultado del simulacro", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     Text("Nota media estimada: $notaFinal / 10", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
+                    perfilTrasSimulacro?.let { p ->
+                        if (p.subirNivel) {
+                            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)) {
+                                Text(
+                                    "¡Has mejorado! Nivel proyectado: ${p.nivelTrasSimulacro} (antes ${p.nivelActual})",
+                                    modifier = Modifier.padding(12.dp),
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    }
                     detalleNotas.forEach { (nombre, nota) ->
                         Text("$nombre → ${nota?.toString() ?: "—"} pts")
                     }
-                    Button(onClick = onNavigateBack, modifier = Modifier.fillMaxWidth()) { Text("Volver") }
+                    mensajeExito?.let { msg ->
+                        Text(msg, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
+                    }
+                    if (perfilTrasSimulacro?.hayMejoras == true) {
+                        Button(
+                            onClick = { mostrarDialogoPerfil = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text("Actualizar marcas en mi perfil") }
+                    }
+                    OutlinedButton(onClick = onNavigateBack, modifier = Modifier.fillMaxWidth()) { Text("Volver") }
                 }
                 pruebas.isEmpty() -> Text(
                     "Tu oposición no tiene pruebas físicas deportivas en convocatoria (p. ej. Ayudante de Instituciones Penitenciarias). Consulta la ficha de tu oposición."
@@ -232,9 +258,14 @@ fun SimulacroScreen(
                                                 )
                                                 if (resp.ok && resp.data != null) {
                                                     notaFinal = resp.data.notaMedia
-                                                    detalleNotas = resp.data.detalle.map { d ->
+                                                    detalleNotas = (resp.data.detalle ?: emptyList()).map { d ->
                                                         val nombre = pruebas.find { it.id_pruebas_oficiales == d.id_prueba }?.nombre_prueba ?: "Prueba"
                                                         nombre to d.nota
+                                                    }
+                                                    perfilTrasSimulacro = resp.data.perfil
+                                                    ultimosResultados = resultados
+                                                    if (resp.data.perfil?.hayMejoras == true) {
+                                                        mostrarDialogoPerfil = true
                                                     }
                                                 } else {
                                                     error = resp.msg ?: "Error al guardar"
@@ -256,9 +287,65 @@ fun SimulacroScreen(
                     }
                 }
             }
-            if (guardando) {
+            if (guardando || aplicandoMarcas) {
                 CircularProgressIndicator(Modifier.align(Alignment.Center))
             }
         }
+    }
+
+    if (mostrarDialogoPerfil && perfilTrasSimulacro != null) {
+        val p = perfilTrasSimulacro!!
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoPerfil = false },
+            title = { Text("¿Actualizar tu perfil?") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Has superado marcas del simulacro respecto a tu perfil:")
+                    p.mejoras?.forEach { m ->
+                        val unidad = if (m.unidad == "s") "s" else "rep"
+                        val ant = m.valorAnterior?.let { String.format("%.2f", it) } ?: "—"
+                        Text("• ${m.nombrePrueba}: $ant → ${String.format("%.2f", m.valorNuevo)} $unidad (nota ${m.notaNueva})")
+                    }
+                    if (p.subirNivel) {
+                        Text(
+                            "Tu nivel pasaría a ${p.nivelTrasSimulacro} (nota media ${p.notaMediaTrasSimulacro}).",
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        aplicandoMarcas = true
+                        scope.launch {
+                            try {
+                                val token = tokenManager.getToken().first() ?: ""
+                                val resp = RetrofitClient.simulacroApi.aplicarMarcas(
+                                    "Bearer $token",
+                                    GuardarSimulacroRequest(oposicionId, ultimosResultados)
+                                )
+                                if (resp.ok) {
+                                    resp.data?.perfil?.let { perfilTrasSimulacro = it }
+                                    mensajeExito = resp.msg ?: "Perfil actualizado correctamente"
+                                    authViewModel.refreshSessionFromBackend()
+                                    mostrarDialogoPerfil = false
+                                } else {
+                                    error = resp.msg ?: "No se pudieron actualizar las marcas"
+                                }
+                            } catch (e: Exception) {
+                                error = ApiErrorParser.message(e)
+                            } finally {
+                                aplicandoMarcas = false
+                            }
+                        }
+                    }
+                ) { Text("Sí, actualizar perfil") }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarDialogoPerfil = false }) { Text("Ahora no") }
+            }
+        )
     }
 }

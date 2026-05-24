@@ -245,7 +245,11 @@ private fun RankingCard(entry: RankingEntry, onClick: () -> Unit) {
             Column(Modifier.weight(1f)) {
                 Text(entry.nombre, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(
-                    "${entry.pruebasCompletadas} pruebas registradas",
+                    if (entry.totalPruebasOpo != null && entry.totalPruebasOpo > 0) {
+                        "${entry.pruebasCompletadas} de ${entry.totalPruebasOpo} pruebas oficiales"
+                    } else {
+                        "${entry.pruebasCompletadas} pruebas registradas"
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

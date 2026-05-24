@@ -23,12 +23,9 @@ class RutinaService {
     }]] = await db.query(`SELECT COUNT(*) AS total_pruebas
              FROM pruebas_oficiales
              WHERE oposiciones_id_oposicion = ?`, [idOposicion]);
-    const [marcas] = await db.query(`
-            SELECT m.valord_record, p.id_pruebas_oficiales, p.mejor_si_es_menor
-            FROM marcas_perfil m
-            JOIN pruebas_oficiales p ON m.pruebas_oficiales_id_pruebas_oficiales = p.id_pruebas_oficiales
-            WHERE m.usuarios_id_usuario = ? AND p.oposiciones_id_oposicion = ?
-        `, [userId, idOposicion]);
+    const MarcasPerfilService = require('./MarcasPerfilService');
+    const BaremoService = require('./BaremoService');
+    const marcas = await MarcasPerfilService.obtenerMarcasPorPrueba(userId, idOposicion);
     const total = Number(total_pruebas || 0);
     const completadas = new Set(marcas.map(m => m.id_pruebas_oficiales)).size;
     const faltan = Math.max(0, total - completadas);
@@ -43,27 +40,15 @@ class RutinaService {
       };
     }
     let sumaNotas = 0;
-    let contadorPruebas = 0;
-    for (let m of marcas) {
-      const [baremoResultado] = await db.query(`
-                SELECT b.nota 
-                FROM baremos_puntuacion b
-                JOIN pruebas_oficiales p ON b.pruebas_oficiales_id_pruebas_oficiales = p.id_pruebas_oficiales
-                WHERE b.pruebas_oficiales_id_pruebas_oficiales = ? 
-                AND b.genero = ? 
-                AND (
-                    (p.mejor_si_es_menor = 1 AND ? <= b.marca_valor)
-                    OR 
-                    (p.mejor_si_es_menor = 0 AND ? >= b.marca_valor)
-                )
-                ORDER BY b.nota DESC 
-                LIMIT 1`, [m.id_pruebas_oficiales, generoDB, m.valord_record, m.valord_record]);
-      if (baremoResultado && baremoResultado.length > 0) {
-        sumaNotas += baremoResultado[0].nota;
-        contadorPruebas++;
-      }
+    for (const m of marcas) {
+      const nota = await BaremoService.calcularNotaPrueba(
+        m.id_pruebas_oficiales,
+        generoDB,
+        m.valord_record
+      );
+      sumaNotas += nota ?? 0;
     }
-    const notaMedia = contadorPruebas > 0 ? sumaNotas / contadorPruebas : 0;
+    const notaMedia = marcas.length > 0 ? sumaNotas / marcas.length : 0;
     let nivelSugerido = 'BASICO';
     if (notaMedia >= 5 && notaMedia < 8) {
       nivelSugerido = 'INTERMEDIO';

@@ -68,10 +68,34 @@ data class DetalleSimulacroPrueba(
     val nota: Int?
 )
 
+data class MejoraMarcaSimulacro(
+    val idPrueba: Int,
+    val nombrePrueba: String,
+    val valorAnterior: Double? = null,
+    val valorNuevo: Double,
+    val notaNueva: Int? = null,
+    val unidad: String? = null,
+    val esNueva: Boolean = false
+)
+
+data class PerfilTrasSimulacro(
+    val nivelActual: String? = null,
+    val notaMediaActual: String? = null,
+    val mejoras: List<MejoraMarcaSimulacro>? = null,
+    val hayMejoras: Boolean = false,
+    val nivelTrasSimulacro: String? = null,
+    val notaMediaTrasSimulacro: String? = null,
+    val subirNivel: Boolean = false,
+    val totalPruebasOpo: Int? = null,
+    val pruebasCompletadasPerfil: Int? = null
+)
+
 data class GuardarSimulacroResponse(
-    val idSimulacro: Int,
-    val notaMedia: String?,
-    val detalle: List<DetalleSimulacroPrueba>
+    val idSimulacro: Int? = null,
+    val notaMedia: String? = null,
+    val detalle: List<DetalleSimulacroPrueba>? = null,
+    val perfil: PerfilTrasSimulacro? = null,
+    val marcasActualizadas: Int? = null
 )
 
 data class SimulacroHistorialItem(
@@ -85,7 +109,8 @@ data class RankingEntry(
     val userId: Int,
     val nombre: String,
     val notaMedia: Double,
-    val pruebasCompletadas: Int
+    val pruebasCompletadas: Int,
+    val totalPruebasOpo: Int? = null
 )
 
 data class RankingDetallePrueba(

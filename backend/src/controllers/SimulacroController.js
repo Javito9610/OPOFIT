@@ -1,5 +1,6 @@
 const SimulacroService = require('../services/SimulacroService');
 const PremiumService = require('../services/PremiumService');
+const MarcasPerfilService = require('../services/MarcasPerfilService');
 
 const listarPruebas = async (req, res) => {
   try {
@@ -58,4 +59,43 @@ const historial = async (req, res) => {
   }
 };
 
-module.exports = { listarPruebas, guardar, historial };
+const aplicarMarcasPerfil = async (req, res) => {
+  try {
+    const userId = req.usuario?.id;
+    const { idOposicion, resultados } = req.body || {};
+    if (!idOposicion || !Array.isArray(resultados) || resultados.length === 0) {
+      return res.status(400).json({ ok: false, msg: 'Datos incompletos' });
+    }
+    const data = await MarcasPerfilService.aplicarMarcasDesdeSimulacro(
+      userId,
+      Number(idOposicion),
+      resultados.map((r) => ({
+        id_prueba: Number(r.id_prueba),
+        valor: Number(r.valor)
+      }))
+    );
+    res.json({
+      ok: true,
+      msg: data.subirNivel
+        ? `Perfil actualizado. Nuevo nivel: ${data.nivelTrasActualizar}`
+        : 'Marcas del perfil actualizadas',
+      data: {
+        perfil: {
+          nivelActual: data.nivelActual,
+          notaMediaActual: data.notaMediaActual,
+          mejoras: data.mejoras,
+          hayMejoras: false,
+          nivelTrasSimulacro: data.nivelTrasActualizar,
+          notaMediaTrasSimulacro: data.notaMediaTrasActualizar,
+          subirNivel: data.subirNivel,
+          pruebasCompletadasPerfil: data.pruebasCompletadas
+        },
+        marcasActualizadas: data.marcasActualizadas
+      }
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, msg: e.message });
+  }
+};
+
+module.exports = { listarPruebas, guardar, historial, aplicarMarcasPerfil };

@@ -1,6 +1,8 @@
 const db = require('../config/db');
 const BaremoService = require('./BaremoService');
 const PremiumService = require('./PremiumService');
+const MarcasPerfilService = require('./MarcasPerfilService');
+const RutinaService = require('./RutinasService');
 const UnidadPruebaHelper = require('../utils/UnidadPruebaHelper');
 
 class SimulacroService {
@@ -65,7 +67,39 @@ class SimulacroService {
         );
       }
       await connection.commit();
-      return { idSimulacro, notaMedia, detalle };
+
+      const resultadosNorm = resultados.map((r) => ({
+        id_prueba: r.id_prueba,
+        valor: r.valor
+      }));
+      const perfil = await MarcasPerfilService.analizarMejorasTrasSimulacro(
+        userId,
+        idOposicion,
+        resultadosNorm
+      );
+      const nivelProyectado = await MarcasPerfilService.nivelProyectadoConSimulacro(
+        userId,
+        idOposicion,
+        resultadosNorm
+      );
+      const subirNivel =
+        perfil.nivelActual &&
+        perfil.nivelActual !== 'INCOMPLETO' &&
+        nivelOrden(nivelProyectado.nivelSugerido) > nivelOrden(perfil.nivelActual);
+
+      return {
+        idSimulacro,
+        notaMedia,
+        detalle,
+        perfil: {
+          ...perfil,
+          nivelTrasSimulacro: nivelProyectado.nivelSugerido,
+          notaMediaTrasSimulacro: nivelProyectado.notaMedia,
+          subirNivel,
+          totalPruebasOpo: nivelProyectado.totalPruebas,
+          pruebasCompletadasPerfil: nivelProyectado.pruebasCompletadas
+        }
+      };
     } catch (e) {
       await connection.rollback();
       throw e;
@@ -85,6 +119,10 @@ class SimulacroService {
     );
     return rows || [];
   }
+}
+
+function nivelOrden(n) {
+  return { BASICO: 1, INTERMEDIO: 2, AVANZADO: 3, INCOMPLETO: 0 }[n] || 0;
 }
 
 module.exports = SimulacroService;

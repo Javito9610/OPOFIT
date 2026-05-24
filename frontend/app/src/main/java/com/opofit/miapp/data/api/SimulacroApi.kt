@@ -28,4 +28,10 @@ interface SimulacroApi {
         @Header("Authorization") token: String,
         @Path("idOposicion") idOposicion: Int
     ): SimulacroHistorialResponse
+
+    @POST("/api/simulacros/aplicar-marcas")
+    suspend fun aplicarMarcas(
+        @Header("Authorization") token: String,
+        @Body body: GuardarSimulacroRequest
+    ): GuardarSimulacroApiResponse
 }
