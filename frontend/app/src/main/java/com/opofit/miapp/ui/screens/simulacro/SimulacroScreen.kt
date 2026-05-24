@@ -82,6 +82,17 @@ fun SimulacroScreen(
         }
     }
 
+    LaunchedEffect(paso, pruebas.size) {
+        cronometroActivo = false
+        errorCampo = ""
+        val p = pruebas.getOrNull(paso) ?: return@LaunchedEffect
+        segundos = if (p.unidad == "s") {
+            valores[p.id_pruebas_oficiales]?.toDoubleOrNull()?.toInt() ?: 0
+        } else {
+            0
+        }
+    }
+
     fun formatTime(s: Int) = "%02d:%02d".format(s / 60, s % 60)
 
     val pruebaActual = pruebas.getOrNull(paso)
@@ -191,30 +202,42 @@ fun SimulacroScreen(
                                     Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 if (esTiempo) {
+                                    val idPrueba = pruebaActual.id_pruebas_oficiales
                                     Text("Modo cronómetro", fontWeight = FontWeight.SemiBold)
                                     Text(formatTime(segundos), style = MaterialTheme.typography.displayMedium)
                                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        Button(onClick = { cronometroActivo = !cronometroActivo }) {
+                                        Button(onClick = {
+                                            if (cronometroActivo) {
+                                                cronometroActivo = false
+                                                valores[idPrueba] = segundos.toString()
+                                                errorCampo = ""
+                                            } else {
+                                                cronometroActivo = true
+                                            }
+                                        }) {
                                             Text(if (cronometroActivo) "Parar" else "Iniciar")
                                         }
-                                        OutlinedButton(onClick = { cronometroActivo = false; segundos = 0 }) {
+                                        OutlinedButton(onClick = {
+                                            cronometroActivo = false
+                                            segundos = 0
+                                            valores.remove(idPrueba)
+                                            errorCampo = ""
+                                        }) {
                                             Text("Reset")
                                         }
                                     }
-                                    OutlinedTextField(
-                                        value = valores[pruebaActual.id_pruebas_oficiales] ?: segundos.toString(),
-                                        onValueChange = {
-                                            valores[pruebaActual.id_pruebas_oficiales] = it
-                                            errorCampo = ""
-                                        },
-                                        label = { Text(etiquetaEntrada(pruebaActual)) },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                        isError = errorCampo.isNotEmpty(),
-                                        supportingText = if (errorCampo.isNotEmpty()) {
-                                            { Text(errorCampo, color = MaterialTheme.colorScheme.error) }
-                                        } else null
+                                    Text(
+                                        "Al pulsar Siguiente se usará el tiempo del cronómetro (${segundos}s).",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
+                                    if (errorCampo.isNotEmpty()) {
+                                        Text(
+                                            errorCampo,
+                                            color = MaterialTheme.colorScheme.error,
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
                                 } else {
                                     OutlinedTextField(
                                         value = valores[pruebaActual.id_pruebas_oficiales] ?: "",
@@ -251,13 +274,17 @@ fun SimulacroScreen(
                                 onClick = {
                                     val id = pruebaActual!!.id_pruebas_oficiales
                                     val v = if (esTiempo) {
-                                        (valores[id]?.toDoubleOrNull() ?: segundos.toDouble())
+                                        cronometroActivo = false
+                                        if (segundos > 0) {
+                                            valores[id] = segundos.toString()
+                                            segundos.toDouble()
+                                        } else null
                                     } else {
                                         valores[id]?.toDoubleOrNull()
                                     }
                                     if (v == null || v < 0) {
                                         errorCampo = if (esTiempo) {
-                                            "Indica el tiempo en segundos (usa el cronómetro o escribe el valor)"
+                                            "Usa el cronómetro (Iniciar → Parar) y luego pulsa Siguiente"
                                         } else {
                                             "Indica cuántas repeticiones has conseguido"
                                         }
