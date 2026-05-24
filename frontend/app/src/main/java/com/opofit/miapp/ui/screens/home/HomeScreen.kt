@@ -12,9 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.ExitToApp
@@ -151,7 +148,7 @@ fun HomeScreen(
                 }
                 else -> {
                     LazyColumn(
-                        contentPadding = PaddingValues(16.dp),
+                        contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 28.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         item {
@@ -284,24 +281,28 @@ fun HomeScreen(
                         }
 
                         item {
-                            LazyVerticalGrid(
-                                columns = GridCells.Fixed(2),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(360.dp),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                verticalArrangement = Arrangement.spacedBy(10.dp),
-                                userScrollEnabled = false
-                            ) {
-                                items(quickLinks) { link ->
-                                    NavCard(
-                                        icon = link.icon,
-                                        title = link.title,
-                                        subtitle = link.subtitle,
-                                        containerColor = link.containerColor,
-                                        contentColor = link.contentColor,
-                                        onClick = link.onClick
-                                    )
+                            val rows = quickLinks.chunked(2)
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                rows.forEach { row ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        row.forEach { link ->
+                                            NavCard(
+                                                icon = link.icon,
+                                                title = link.title,
+                                                subtitle = link.subtitle,
+                                                containerColor = link.containerColor,
+                                                contentColor = link.contentColor,
+                                                onClick = link.onClick,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                        }
+                                        if (row.size == 1) {
+                                            Spacer(Modifier.weight(1f))
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -352,9 +353,11 @@ private fun NavCard(
     subtitle: String,
     containerColor: Color,
     contentColor: Color,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Card(
+        modifier = modifier,
         onClick = onClick,
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = containerColor, contentColor = contentColor),

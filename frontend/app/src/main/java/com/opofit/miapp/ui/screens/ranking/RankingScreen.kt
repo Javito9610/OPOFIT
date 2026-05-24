@@ -247,23 +247,22 @@ private fun PodiumRow(top3: List<RankingEntry>) {
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.Bottom
         ) {
-            top3.getOrNull(1)?.let { PodiumPlace(it, heightDp = 72, medal = "🥈") }
-            top3.getOrNull(0)?.let { PodiumPlace(it, heightDp = 96, medal = "🥇") }
-            top3.getOrNull(2)?.let { PodiumPlace(it, heightDp = 64, medal = "🥉") }
+            top3.getOrNull(1)?.let { PodiumPlace(it, medal = "🥈", emphasis = false) }
+            top3.getOrNull(0)?.let { PodiumPlace(it, medal = "🥇", emphasis = true) }
+            top3.getOrNull(2)?.let { PodiumPlace(it, medal = "🥉", emphasis = false) }
         }
     }
 }
 
 @Composable
-private fun PodiumPlace(entry: RankingEntry, heightDp: Int, medal: String) {
+private fun PodiumPlace(entry: RankingEntry, medal: String, emphasis: Boolean) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.height(heightDp.dp),
-        verticalArrangement = Arrangement.Bottom
+        modifier = Modifier.padding(horizontal = 2.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Bottom)
     ) {
         Text(medal, style = MaterialTheme.typography.titleLarge)
-        ProfileAvatar(entry.nombre, sizeDp = 40)
-        Spacer(Modifier.height(4.dp))
+        ProfileAvatar(entry.nombre, sizeDp = if (emphasis) 48 else 40)
         Text(
             entry.nombre.split(" ").firstOrNull() ?: entry.nombre,
             style = MaterialTheme.typography.labelMedium,
