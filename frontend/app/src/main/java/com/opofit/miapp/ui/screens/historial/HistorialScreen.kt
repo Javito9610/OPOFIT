@@ -192,7 +192,7 @@ fun HistorialScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Historial de Progreso") },
+                title = { Text("Tu actividad") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")

@@ -96,6 +96,9 @@ fun AppNavigation(
                 onNavigateToRanking = {
                     navController.navigate(NavDestinations.RANKING)
                 },
+                onNavigateToComunidad = {
+                    navController.navigate(NavDestinations.COMUNIDAD)
+                },
                 onNavigateToPremium = {
                     navController.navigate(NavDestinations.PREMIUM)
                 },

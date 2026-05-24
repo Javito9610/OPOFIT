@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -30,7 +31,7 @@ private sealed class BottomTab(
     object Inicio : BottomTab("tab_home", "Inicio", Icons.Filled.Home)
     object Rutinas : BottomTab("tab_rutinas", "Rutinas", Icons.Filled.FitnessCenter)
     object Perfil : BottomTab("tab_perfil", "Perfil", Icons.Filled.Person)
-    object Historial : BottomTab("tab_historial", "Historial", Icons.Filled.BarChart)
+    object Historial : BottomTab("tab_historial", "Actividad", Icons.Filled.BarChart)
 }
 
 @Composable
@@ -45,6 +46,7 @@ fun MainScreen(
     onNavigateToEditarPerfil: () -> Unit,
     onNavigateToSimulacro: () -> Unit,
     onNavigateToRanking: () -> Unit,
+    onNavigateToComunidad: () -> Unit,
     onNavigateToPremium: () -> Unit,
     onLogout: () -> Unit
 ) {
@@ -63,10 +65,14 @@ fun MainScreen(
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 8.dp
+            ) {
                 tabs.forEach { tab ->
+                    val selected = currentDestination?.hierarchy?.any { it.route == tab.route } == true
                     NavigationBarItem(
-                        selected = currentDestination?.hierarchy?.any { it.route == tab.route } == true,
+                        selected = selected,
                         onClick = {
                             innerNavController.navigate(tab.route) {
                                 popUpTo(innerNavController.graph.findStartDestination().id) {
@@ -79,7 +85,8 @@ fun MainScreen(
                         icon = {
                             Icon(imageVector = tab.icon, contentDescription = tab.label)
                         },
-                        label = { Text(tab.label) }
+                        label = { Text(tab.label) },
+                        alwaysShowLabel = selected
                     )
                 }
             }
@@ -116,9 +123,11 @@ fun MainScreen(
                     onNavigateToRutinasLibres = onNavigateToRutinasLibres,
                     onNavigateToSimulacro = onNavigateToSimulacro,
                     onNavigateToRanking = onNavigateToRanking,
+                    onNavigateToComunidad = onNavigateToComunidad,
                     onNavigateToPremium = onNavigateToPremium,
                     onLogout = onLogout,
-                    userName = authState.userName
+                    userName = authState.userName,
+                    oposicionId = authState.oposicionId ?: 1
                 )
             }
 

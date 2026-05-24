@@ -1,30 +1,73 @@
 package com.opofit.miapp.ui.screens.home
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Leaderboard
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Leaderboard
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.opofit.miapp.ui.components.ErrorState
+import com.opofit.miapp.ui.components.ProfileAvatar
+import com.opofit.miapp.ui.components.SectionHeader
+import com.opofit.miapp.ui.components.StatCard
+import com.opofit.miapp.ui.viewmodels.HomeViewModel
 
+private data class QuickLink(
+    val title: String,
+    val subtitle: String,
+    val icon: ImageVector,
+    val containerColor: Color,
+    val contentColor: Color,
+    val onClick: () -> Unit
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,20 +81,42 @@ fun HomeScreen(
     onNavigateToRutinasLibres: () -> Unit,
     onNavigateToSimulacro: () -> Unit = {},
     onNavigateToRanking: () -> Unit = {},
+    onNavigateToComunidad: () -> Unit = {},
     onNavigateToPremium: () -> Unit = {},
     onLogout: () -> Unit,
-    userName: String? = null
+    userName: String? = null,
+    oposicionId: Int = 1,
+    homeViewModel: HomeViewModel = viewModel()
 ) {
+    val uiState by homeViewModel.uiState.collectAsState()
+    val resumen = uiState.resumen
+    val displayName = userName?.trim().orEmpty().ifBlank { "Opositor" }
+
+    LaunchedEffect(oposicionId) {
+        homeViewModel.cargarResumen(oposicionId)
+    }
+
+    val quickLinks = listOf(
+        QuickLink("Rutinas", "Plan oficial", Icons.Filled.FitnessCenter, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary, onNavigateToRutinas),
+        QuickLink("Historial", "Progreso", Icons.Filled.BarChart, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToHistorial),
+        QuickLink("Perfil", "Marcas", Icons.Filled.Person, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary, onNavigateToPerfil),
+        QuickLink("Info", "Baremos", Icons.Filled.Info, MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer, onNavigateToInfoOposicion),
+        QuickLink("Libres", "Tus rutinas", Icons.Filled.Star, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, onNavigateToRutinasLibres),
+        QuickLink("Ranking", "Clasificación", Icons.Filled.Leaderboard, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, onNavigateToRanking),
+        QuickLink("Comunidad", "Amigos", Icons.Filled.Groups, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToComunidad),
+        QuickLink("Premium", "Más ventajas", Icons.Filled.Star, MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer, onNavigateToPremium)
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        "OpoFit",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
+                    Column {
+                        Text("OpoFit", fontWeight = FontWeight.ExtraBold)
+                        resumen?.oposicionNombre?.let {
+                            Text(it, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -59,202 +124,229 @@ fun HomeScreen(
                 ),
                 actions = {
                     IconButton(onClick = onNavigateToAjustes) {
-                        Icon(
-                            imageVector = Icons.Filled.Settings,
-                            contentDescription = "Ajustes",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
+                        Icon(Icons.Filled.Settings, "Ajustes", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                     IconButton(onClick = onLogout) {
-                        Icon(
-                            imageVector = Icons.Filled.ExitToApp,
-                            contentDescription = "Cerrar sesión",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
+                        Icon(Icons.Filled.ExitToApp, "Salir", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
             )
         }
     ) { innerPadding ->
-        LazyColumn(
+        PullToRefreshBox(
+            isRefreshing = uiState.loading && resumen != null,
+            onRefresh = { homeViewModel.refresh(oposicionId) },
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(innerPadding)
         ) {
-            
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.large,
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+            when {
+                uiState.loading && resumen == null -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+                uiState.error.isNotBlank() && resumen == null -> {
+                    ErrorState(uiState.error, onRetry = { homeViewModel.refresh(oposicionId) })
+                }
+                else -> {
+                    LazyColumn(
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = if (!userName.isNullOrBlank()) "¡Hola, $userName! 👋" else "¡Bienvenido a OpoFit! 👋",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Preparado para tu entrenamiento",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                            )
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = MaterialTheme.shapes.extraLarge,
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                )
+                            ) {
+                                Row(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(20.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    ProfileAvatar(displayName, sizeDp = 64)
+                                    Column(Modifier.weight(1f)) {
+                                        Text(
+                                            "Hola, $displayName",
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            resumen?.nivel?.let { nivelLabel(it) }
+                                                ?: "Completa tu perfil para calcular nivel",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
+                                        )
+                                        resumen?.notaMedia?.let { nota ->
+                                            Text(
+                                                "Nota media oficial: $nota / 10",
+                                                style = MaterialTheme.typography.labelLarge,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
-                        Text("🏋️", style = MaterialTheme.typography.displaySmall)
+
+                        item {
+                            SectionHeader(
+                                title = "Tu semana",
+                                subtitle = "Estilo Strava: actividad y constancia"
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                StatCard(
+                                    label = "Sesiones",
+                                    value = "${resumen?.sesionesSemana ?: 0}",
+                                    supporting = "últimos 7 días",
+                                    icon = Icons.Filled.FitnessCenter,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                StatCard(
+                                    label = "Minutos",
+                                    value = "${resumen?.minutosSemana ?: 0}",
+                                    supporting = "entrenando",
+                                    icon = Icons.Filled.Timer,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                StatCard(
+                                    label = "Racha",
+                                    value = "${resumen?.rachaDias ?: 0}",
+                                    supporting = if ((resumen?.rachaDias ?: 0) > 0) "días seguidos" else "sin racha",
+                                    icon = Icons.Filled.LocalFireDepartment,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+
+                        item {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                StatCard(
+                                    label = "Ranking",
+                                    value = resumen?.rankingPosicion?.let { "#$it" } ?: "—",
+                                    supporting = resumen?.rankingTotal?.let { "de $it opositores" },
+                                    icon = Icons.Filled.Leaderboard,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                StatCard(
+                                    label = "Simulacro",
+                                    value = resumen?.ultimoSimulacro?.notaMedia?.let { "$it" } ?: "—",
+                                    supporting = "última nota /10",
+                                    icon = Icons.Filled.TrendingUp,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+
+                        item {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Button(
+                                    onClick = onNavigateToEntrenamientos,
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary
+                                    )
+                                ) {
+                                    Icon(Icons.Filled.PlayArrow, null, Modifier.size(20.dp))
+                                    Text("Entrenar", modifier = Modifier.padding(start = 8.dp))
+                                }
+                                Button(
+                                    onClick = onNavigateToSimulacro,
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.secondary
+                                    )
+                                ) {
+                                    Icon(Icons.Filled.Timer, null, Modifier.size(20.dp))
+                                    Text("Simulacro", modifier = Modifier.padding(start = 8.dp))
+                                }
+                            }
+                        }
+
+                        item {
+                            SectionHeader(title = "Explorar", subtitle = "Todo tu preparador en un sitio")
+                        }
+
+                        item {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(360.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                userScrollEnabled = false
+                            ) {
+                                items(quickLinks) { link ->
+                                    NavCard(
+                                        icon = link.icon,
+                                        title = link.title,
+                                        subtitle = link.subtitle,
+                                        containerColor = link.containerColor,
+                                        contentColor = link.contentColor,
+                                        onClick = link.onClick
+                                    )
+                                }
+                            }
+                        }
+
+                        resumen?.ultimaSesion?.let { sesion ->
+                            item {
+                                Card(
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                                    )
+                                ) {
+                                    Column(Modifier.padding(14.dp)) {
+                                        Text(
+                                            "Última actividad",
+                                            fontWeight = FontWeight.SemiBold,
+                                            style = MaterialTheme.typography.titleSmall
+                                        )
+                                        Text(
+                                            "${sesion.tipo ?: "Entreno"} · ${sesion.duracionMin} min",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        item { Spacer(Modifier.height(8.dp)) }
                     }
                 }
             }
-
-            item {
-                Text(
-                    text = "¿Qué quieres hacer hoy?",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-
-            
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    NavCard(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.FitnessCenter,
-                        title = "Mis Rutinas",
-                        subtitle = "Plan personalizado",
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        onClick = onNavigateToRutinas
-                    )
-                    NavCard(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.PlayArrow,
-                        title = "Entrenamientos",
-                        subtitle = "Empieza a entrenar",
-                        containerColor = MaterialTheme.colorScheme.secondary,
-                        contentColor = MaterialTheme.colorScheme.onSecondary,
-                        onClick = onNavigateToEntrenamientos
-                    )
-                }
-            }
-
-            
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    NavCard(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.Person,
-                        title = "Mi Perfil",
-                        subtitle = "Marcas y nivel",
-                        containerColor = MaterialTheme.colorScheme.tertiary,
-                        contentColor = MaterialTheme.colorScheme.onTertiary,
-                        onClick = onNavigateToPerfil
-                    )
-                    NavCard(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.BarChart,
-                        title = "Historial",
-                        subtitle = "Tu progreso",
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        onClick = onNavigateToHistorial
-                    )
-                }
-            }
-
-            
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    NavCard(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.Info,
-                        title = "Info Oposición",
-                        subtitle = "Baremos y noticias",
-                        containerColor = MaterialTheme.colorScheme.secondary,
-                        contentColor = MaterialTheme.colorScheme.onSecondary,
-                        onClick = onNavigateToInfoOposicion
-                    )
-                    NavCard(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.Star,
-                        title = "Rutinas Libres",
-                        subtitle = "Crea tu rutina",
-                        containerColor = MaterialTheme.colorScheme.tertiary,
-                        contentColor = MaterialTheme.colorScheme.onTertiary,
-                        onClick = onNavigateToRutinasLibres
-                    )
-                }
-            }
-
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    NavCard(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.Timer,
-                        title = "Simulacro",
-                        subtitle = "Test oficial + nota",
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        onClick = onNavigateToSimulacro
-                    )
-                    NavCard(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.Leaderboard,
-                        title = "Ranking",
-                        subtitle = "Tu posición",
-                        containerColor = MaterialTheme.colorScheme.secondary,
-                        contentColor = MaterialTheme.colorScheme.onSecondary,
-                        onClick = onNavigateToRanking
-                    )
-                }
-            }
-
-            item {
-                NavCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    icon = Icons.Filled.EmojiEvents,
-                    title = "OpoFit Premium",
-                    subtitle = "Todas las oposiciones y baremos",
-                    containerColor = MaterialTheme.colorScheme.tertiary,
-                    contentColor = MaterialTheme.colorScheme.onTertiary,
-                    onClick = onNavigateToPremium
-                )
-            }
-
-            item { Spacer(modifier = Modifier.height(8.dp)) }
         }
     }
 }
 
+private fun nivelLabel(nivel: String): String = when (nivel.uppercase()) {
+    "AVANZADO" -> "Nivel avanzado"
+    "INTERMEDIO" -> "Nivel intermedio"
+    "BASICO" -> "Nivel básico"
+    "INCOMPLETO" -> "Perfil incompleto — registra todas las pruebas"
+    else -> nivel
+}
+
 @Composable
 private fun NavCard(
-    modifier: Modifier = Modifier,
     icon: ImageVector,
     title: String,
     subtitle: String,
@@ -263,38 +355,20 @@ private fun NavCard(
     onClick: () -> Unit
 ) {
     Card(
-        modifier = modifier,
         onClick = onClick,
         shape = MaterialTheme.shapes.large,
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = containerColor,
-            contentColor = contentColor
-        )
+        colors = CardDefaults.cardColors(containerColor = containerColor, contentColor = contentColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier
+            Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = contentColor,
-                modifier = Modifier.size(32.dp)
-            )
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = contentColor
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = contentColor.copy(alpha = 0.85f)
-            )
+            Icon(icon, null, tint = contentColor, modifier = Modifier.size(28.dp))
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(subtitle, style = MaterialTheme.typography.labelSmall, color = contentColor.copy(alpha = 0.85f))
         }
     }
 }

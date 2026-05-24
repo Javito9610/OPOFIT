@@ -8,18 +8,23 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.RankingDetallePrueba
 import com.opofit.miapp.data.responsemodels.RankingEntry
 import com.opofit.miapp.data.responsemodels.TogglePerfilPublicoRequest
+import com.opofit.miapp.ui.components.EmptyState
+import com.opofit.miapp.ui.components.ErrorState
+import com.opofit.miapp.ui.components.ProfileAvatar
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.utils.ApiErrorParser
 import kotlinx.coroutines.flow.first
@@ -137,73 +142,140 @@ fun RankingScreen(
             )
         }
     ) { padding ->
-        Column(
-            Modifier
+        PullToRefreshBox(
+            isRefreshing = loading && ranking.isNotEmpty(),
+            onRefresh = { cargar() },
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
         ) {
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
             ) {
-                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        "Solo aspirantes de tu misma oposición con perfil público.",
-                        style = MaterialTheme.typography.bodySmall
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
                     )
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Aparecer en el ranking")
-                        Switch(
-                            checked = perfilPublico,
-                            onCheckedChange = { checked ->
-                                perfilPublico = checked
-                                scope.launch {
-                                    try {
-                                        val token = tokenManager.getToken().first() ?: ""
-                                        RetrofitClient.rankingApi.togglePerfilPublico(
-                                            "Bearer $token",
-                                            TogglePerfilPublicoRequest(checked)
-                                        )
-                                        cargar()
-                                    } catch (_: Exception) { }
+                ) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            "Clasificación por nota media (estilo leaderboard). Solo perfiles públicos de tu oposición.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Aparecer en el ranking")
+                            Switch(
+                                checked = perfilPublico,
+                                onCheckedChange = { checked ->
+                                    perfilPublico = checked
+                                    scope.launch {
+                                        try {
+                                            val token = tokenManager.getToken().first() ?: ""
+                                            RetrofitClient.rankingApi.togglePerfilPublico(
+                                                "Bearer $token",
+                                                TogglePerfilPublicoRequest(checked)
+                                            )
+                                            cargar()
+                                        } catch (_: Exception) { }
+                                    }
+                                }
+                            )
+                        }
+                        OutlinedButton(onClick = onNavigateComunidad, modifier = Modifier.fillMaxWidth()) {
+                            Text("Comunidad: amigos y chat")
+                        }
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                when {
+                    loading && ranking.isEmpty() -> Box(
+                        Modifier.fillMaxWidth().weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) { CircularProgressIndicator() }
+                    error.isNotBlank() && ranking.isEmpty() -> ErrorState(error, onRetry = { cargar() })
+                    ranking.isEmpty() -> EmptyState(
+                        emoji = "🏆",
+                        title = "Sin clasificación aún",
+                        message = "Activa tu perfil público y registra las 3 marcas oficiales para aparecer y compararte con otros opositores.",
+                        modifier = Modifier.weight(1f),
+                        actionLabel = "Ir a mi perfil",
+                        onAction = onNavigateBack
+                    )
+                    else -> {
+                        val top3 = ranking.take(3)
+                        val resto = ranking.drop(3)
+                        LazyColumn(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            if (top3.isNotEmpty()) {
+                                item {
+                                    PodiumRow(top3)
                                 }
                             }
-                        )
-                    }
-                    OutlinedButton(onClick = onNavigateComunidad, modifier = Modifier.fillMaxWidth()) {
-                        Text("Comunidad: amigos y chat")
-                    }
-                }
-            }
-            Spacer(Modifier.height(12.dp))
-            when {
-                loading -> Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-                error.isNotBlank() -> Text(error, color = MaterialTheme.colorScheme.error)
-                ranking.isEmpty() -> Text(
-                    "Aún no hay clasificación. Activa tu perfil público y registra marcas en las pruebas oficiales.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                else -> LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(ranking) { entry ->
-                        RankingCard(entry, onClick = { abrirDetalle(entry) })
+                            items(resto) { entry ->
+                                RankingCard(entry, onClick = { abrirDetalle(entry) })
+                            }
+                        }
                     }
                 }
-            }
-            if (cargandoDetalle) {
-                LinearProgressIndicator(Modifier.fillMaxWidth())
+                if (cargandoDetalle) {
+                    LinearProgressIndicator(Modifier.fillMaxWidth())
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun PodiumRow(top3: List<RankingEntry>) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+        )
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            top3.getOrNull(1)?.let { PodiumPlace(it, heightDp = 72, medal = "🥈") }
+            top3.getOrNull(0)?.let { PodiumPlace(it, heightDp = 96, medal = "🥇") }
+            top3.getOrNull(2)?.let { PodiumPlace(it, heightDp = 64, medal = "🥉") }
+        }
+    }
+}
+
+@Composable
+private fun PodiumPlace(entry: RankingEntry, heightDp: Int, medal: String) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.height(heightDp.dp),
+        verticalArrangement = Arrangement.Bottom
+    ) {
+        Text(medal, style = MaterialTheme.typography.titleLarge)
+        ProfileAvatar(entry.nombre, sizeDp = 40)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            entry.nombre.split(" ").firstOrNull() ?: entry.nombre,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            maxLines = 1
+        )
+        Text(
+            String.format("%.1f", entry.notaMedia),
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -225,23 +297,22 @@ private fun RankingCard(entry: RankingEntry, onClick: () -> Unit) {
             Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape),
-                contentAlignment = Alignment.Center
+            ProfileAvatar(entry.nombre, sizeDp = 44)
+            Spacer(Modifier.width(4.dp))
+            Surface(
+                color = medalColor,
+                shape = CircleShape,
+                modifier = Modifier.size(28.dp)
             ) {
-                Surface(color = medalColor, modifier = Modifier.fillMaxSize()) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            "#${entry.posicion}",
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        "${entry.posicion}",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(8.dp))
             Column(Modifier.weight(1f)) {
                 Text(entry.nombre, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(

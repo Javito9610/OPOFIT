@@ -15,11 +15,7 @@ const getMiPosicion = async (req, res) => {
   try {
     const userId = req.usuario?.id;
     const { idOposicion } = req.params;
-    const idPrueba = req.query.idPrueba ? Number(req.query.idPrueba) : null;
-    if (!idPrueba) {
-      return res.status(400).json({ ok: false, msg: 'Indica idPrueba' });
-    }
-    const pos = await RankingService.posicionUsuario(userId, Number(idOposicion), idPrueba);
+    const pos = await RankingService.posicionUsuario(userId, Number(idOposicion));
     res.json({ ok: true, data: pos });
   } catch (e) {
     res.status(500).json({ ok: false, msg: e.message });
