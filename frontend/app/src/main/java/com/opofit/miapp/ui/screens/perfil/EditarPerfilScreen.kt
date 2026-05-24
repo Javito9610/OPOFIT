@@ -93,7 +93,10 @@ fun EditarPerfilScreen(
     val pruebasDisponibles = remember(perfilState.infoPruebas, unitDist) {
         perfilState.infoPruebas
             .distinctBy { it.id_pruebas_oficiales }
-            .map { Triple(it.id_pruebas_oficiales, Units.nombreConEquivalenciaDistancia(it.nombre_prueba, unitDist), it.mejor_si_es_menor ?: 0) }
+            .map {
+                val u = it.unidad ?: if ((it.mejor_si_es_menor ?: 0) == 1) "s" else "reps"
+                Triple(it.id_pruebas_oficiales, Units.nombreConEquivalenciaDistancia(it.nombre_prueba, unitDist), u)
+            }
     }
 
     val imc = remember(peso, altura, unitPeso) {
@@ -213,7 +216,7 @@ fun EditarPerfilScreen(
             itemsIndexed(marcas) { index, row ->
                 val expanded = expandedDropdownIndex == index
                 val selectedPruebaMeta = pruebasDisponibles.firstOrNull { it.first == row.idPrueba }
-                val esTiempo = (selectedPruebaMeta?.third ?: 0) == 1
+                val esTiempo = selectedPruebaMeta?.third == "s"
                 val unidadLabel = if (row.idPrueba != null) {
                     if (esTiempo) "Tiempo (segundos)" else "Repeticiones (nº)"
                 } else null

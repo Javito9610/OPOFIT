@@ -6,6 +6,7 @@ data class InfoPrueba(
     val descripcion: String?,
     val trucos: String?,
     val mejor_si_es_menor: Int? = null,
+    val unidad: String? = null,
     val genero: String?,
     val marca_valor: Double?,
     val nota: Double?

@@ -47,6 +47,7 @@ data class PruebaOficialSimulacro(
     val descripcion: String?,
     val mejor_si_es_menor: Int,
     val unidad: String,
+    val unidadEtiqueta: String? = null,
     val tipo_baremo: String? = null,
     val convocatoria_ref: String? = null
 )
@@ -83,11 +84,28 @@ data class RankingEntry(
     val posicion: Int,
     val userId: Int,
     val nombre: String,
+    val notaMedia: Double,
+    val pruebasCompletadas: Int
+)
+
+data class RankingDetallePrueba(
     val idPrueba: Int,
     val nombrePrueba: String,
     val valor: Double,
     val nota: Int,
     val unidad: String
+)
+
+data class RankingDetalleUsuario(
+    val userId: Int,
+    val nombre: String,
+    val notaMedia: Double?,
+    val pruebas: List<RankingDetallePrueba>?
+)
+
+data class RankingDetalleResponse(
+    val ok: Boolean,
+    val data: RankingDetalleUsuario?
 )
 
 data class MiPosicionResponse(

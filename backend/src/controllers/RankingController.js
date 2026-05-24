@@ -4,8 +4,7 @@ const db = require('../config/db');
 const getRanking = async (req, res) => {
   try {
     const { idOposicion } = req.params;
-    const idPrueba = req.query.idPrueba ? Number(req.query.idPrueba) : null;
-    const data = await RankingService.obtenerRanking(Number(idOposicion), idPrueba);
+    const data = await RankingService.obtenerRanking(Number(idOposicion));
     res.json({ ok: true, data });
   } catch (e) {
     res.status(500).json({ ok: false, msg: e.message });
@@ -41,4 +40,21 @@ const togglePerfilPublico = async (req, res) => {
   }
 };
 
-module.exports = { getRanking, getMiPosicion, togglePerfilPublico };
+const getDetalleUsuario = async (req, res) => {
+  try {
+    const { idOposicion, userId } = req.params;
+    const data = await RankingService.detalleUsuario(Number(userId), Number(idOposicion));
+    if (!data) return res.status(404).json({ ok: false, msg: 'Usuario no encontrado' });
+    if (data.error === 'DISTINTA_OPOSICION') {
+      return res.status(400).json({ ok: false, msg: 'El usuario no pertenece a esta oposición' });
+    }
+    if (!data.perfilPublico && data.userId !== req.usuario?.id) {
+      return res.status(403).json({ ok: false, msg: 'Perfil no público' });
+    }
+    res.json({ ok: true, data });
+  } catch (e) {
+    res.status(500).json({ ok: false, msg: e.message });
+  }
+};
+
+module.exports = { getRanking, getMiPosicion, togglePerfilPublico, getDetalleUsuario };

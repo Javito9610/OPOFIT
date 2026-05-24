@@ -38,6 +38,7 @@ app.use('/api/info', require('./src/routes/InfoPruebasRoute'));
 app.use('/api/ejercicios', require('./src/routes/EjerciciosRoute'));
 app.use('/api/simulacros', require('./src/routes/SimulacroRoute'));
 app.use('/api/ranking', require('./src/routes/RankingRoute'));
+app.use('/api/amigos', require('./src/routes/AmigosRoute'));
 app.use('/api/premium', require('./src/routes/PremiumRoute'));
 app.use('/api/notifications', require('./src/routes/NotificationRoute'));
 app.use('/api/admin', require('./src/routes/AdminRoute'));

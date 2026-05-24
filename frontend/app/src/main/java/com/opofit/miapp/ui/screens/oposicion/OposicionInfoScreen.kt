@@ -426,13 +426,13 @@ private fun NoticiasTab(
         
         item {
             Text(
-                text = "📡 Noticias RSS",
+                text = "📡 Noticias de tu oposición",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = "Fuentes oficiales actualizadas automáticamente",
+                text = "BOE y fuentes oficiales filtradas por convocatoria",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -566,7 +566,8 @@ private fun BaremosTab(
     }
 
     fun unidadParaPrueba(baremos: List<InfoPrueba>): String {
-        
+        val u = baremos.firstOrNull()?.unidad
+        if (u == "s" || u == "reps") return u
         val mejorSiEsMenor = baremos.firstOrNull()?.mejor_si_es_menor
         return if (mejorSiEsMenor == 1) "s" else "reps"
     }

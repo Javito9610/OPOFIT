@@ -1,11 +1,14 @@
 const db = require('../config/db');
 const BaremoService = require('./BaremoService');
 const PremiumService = require('./PremiumService');
+const UnidadPruebaHelper = require('../utils/UnidadPruebaHelper');
 
 class SimulacroService {
   static async listarPruebas(idOposicion, userId) {
     const existe = await PremiumService.puedeAccederOposicion(userId, idOposicion);
     if (!existe) throw new Error('OPOSICION_NOT_FOUND');
+    const [user] = await db.query('SELECT genero FROM usuarios WHERE id_usuario = ?', [userId]);
+    const genero = user?.[0]?.genero || 'HOMBRE';
     const [pruebas] = await db.query(
       `SELECT id_pruebas_oficiales, nombre_prueba, descripcion, mejor_si_es_menor,
               unidad_entrada, tipo_baremo, convocatoria_ref
@@ -21,14 +24,9 @@ class SimulacroService {
       mejor_si_es_menor: p.mejor_si_es_menor,
       tipo_baremo: p.tipo_baremo || 'PUNTUACION',
       convocatoria_ref: p.convocatoria_ref,
-      unidad: SimulacroService.resolverUnidad(p)
+      unidad: UnidadPruebaHelper.resolver(p, genero),
+      unidadEtiqueta: UnidadPruebaHelper.etiqueta(UnidadPruebaHelper.resolver(p, genero))
     }));
-  }
-
-  static resolverUnidad(p) {
-    if (p.unidad_entrada === 's' || p.unidad_entrada === 'reps') return p.unidad_entrada;
-    if (Number(p.id_pruebas_oficiales) === 20) return 's';
-    return Number(p.mejor_si_es_menor) === 1 ? 's' : 'reps';
   }
 
   static async guardarSimulacro(userId, idOposicion, resultados) {

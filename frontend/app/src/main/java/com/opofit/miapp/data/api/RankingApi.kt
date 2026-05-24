@@ -2,6 +2,7 @@ package com.opofit.miapp.data.api
 
 import com.opofit.miapp.data.responsemodels.GenericOkResponse
 import com.opofit.miapp.data.responsemodels.MiPosicionApiResponse
+import com.opofit.miapp.data.responsemodels.RankingDetalleResponse
 import com.opofit.miapp.data.responsemodels.RankingListResponse
 import com.opofit.miapp.data.responsemodels.TogglePerfilPublicoRequest
 import retrofit2.http.Body
@@ -31,4 +32,11 @@ interface RankingApi {
         @Header("Authorization") token: String,
         @Body body: TogglePerfilPublicoRequest
     ): GenericOkResponse
+
+    @GET("/api/ranking/{idOposicion}/usuario/{userId}")
+    suspend fun detalleUsuario(
+        @Header("Authorization") token: String,
+        @Path("idOposicion") idOposicion: Int,
+        @Path("userId") userId: Int
+    ): RankingDetalleResponse
 }

@@ -20,6 +20,7 @@ import com.opofit.miapp.ui.screens.rutinas.DetallesEjercicioScreen
 import com.opofit.miapp.ui.screens.rutinas.DetallesRutinaScreen
 import com.opofit.miapp.ui.screens.rutinas.RutinasLibresScreen
 import com.opofit.miapp.ui.screens.simulacro.SimulacroScreen
+import com.opofit.miapp.ui.screens.comunidad.ComunidadScreen
 import com.opofit.miapp.ui.screens.ranking.RankingScreen
 import com.opofit.miapp.ui.screens.premium.PremiumScreen
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
@@ -232,6 +233,14 @@ fun AppNavigation(
 
         composable(NavDestinations.RANKING) {
             RankingScreen(
+                authViewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateComunidad = { navController.navigate(NavDestinations.COMUNIDAD) }
+            )
+        }
+
+        composable(NavDestinations.COMUNIDAD) {
+            ComunidadScreen(
                 authViewModel = authViewModel,
                 onNavigateBack = { navController.popBackStack() }
             )

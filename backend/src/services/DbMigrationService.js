@@ -135,6 +135,74 @@ class DbMigrationService {
 
       await db.query('UPDATE oposiciones SET incluida_gratis = 1 WHERE incluida_gratis = 0 OR incluida_gratis IS NULL');
 
+      await db.query(
+        `UPDATE pruebas_oficiales SET unidad_entrada = 's'
+         WHERE mejor_si_es_menor = 1 AND (unidad_entrada IS NULL OR unidad_entrada = 'reps')`
+      );
+      await db.query(
+        `UPDATE pruebas_oficiales SET unidad_entrada = 's'
+         WHERE id_pruebas_oficiales IN (1, 3, 4, 5, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 21, 22)`
+      );
+      await db.query(
+        `UPDATE pruebas_oficiales SET unidad_entrada = 'reps'
+         WHERE id_pruebas_oficiales IN (2, 6, 10, 19) AND mejor_si_es_menor = 0`
+      );
+      await db.query(`UPDATE pruebas_oficiales SET unidad_entrada = 's' WHERE id_pruebas_oficiales = 20`);
+
+      if (!(await DbMigrationService.tableExists('amistades'))) {
+        await db.query(`
+          CREATE TABLE amistades (
+            id_amistad INT NOT NULL AUTO_INCREMENT,
+            id_usuario_a INT NOT NULL,
+            id_usuario_b INT NOT NULL,
+            estado ENUM('PENDIENTE','ACEPTADA','RECHAZADA') NOT NULL DEFAULT 'PENDIENTE',
+            solicitante_id INT NOT NULL,
+            creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_amistad),
+            UNIQUE KEY uk_par (id_usuario_a, id_usuario_b),
+            CONSTRAINT fk_am_a FOREIGN KEY (id_usuario_a) REFERENCES usuarios (id_usuario),
+            CONSTRAINT fk_am_b FOREIGN KEY (id_usuario_b) REFERENCES usuarios (id_usuario)
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla amistades creada');
+      }
+
+      if (!(await DbMigrationService.tableExists('mensajes_chat'))) {
+        await db.query(`
+          CREATE TABLE mensajes_chat (
+            id_mensaje INT NOT NULL AUTO_INCREMENT,
+            id_remitente INT NOT NULL,
+            id_destinatario INT NOT NULL,
+            texto VARCHAR(1000) NOT NULL,
+            leido TINYINT(1) NOT NULL DEFAULT 0,
+            enviado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_mensaje),
+            INDEX idx_chat_par (id_remitente, id_destinatario),
+            CONSTRAINT fk_msg_rem FOREIGN KEY (id_remitente) REFERENCES usuarios (id_usuario),
+            CONSTRAINT fk_msg_des FOREIGN KEY (id_destinatario) REFERENCES usuarios (id_usuario)
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla mensajes_chat creada');
+      }
+
+      if (!(await DbMigrationService.tableExists('rutinas_compartidas'))) {
+        await db.query(`
+          CREATE TABLE rutinas_compartidas (
+            id_compartida INT NOT NULL AUTO_INCREMENT,
+            id_rutina_pers INT NOT NULL,
+            id_propietario INT NOT NULL,
+            id_destinatario INT NOT NULL,
+            mensaje VARCHAR(255) NULL,
+            compartido_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_compartida),
+            CONSTRAINT fk_rc_rutina FOREIGN KEY (id_rutina_pers) REFERENCES rutinas_pers (id_rutina_pers),
+            CONSTRAINT fk_rc_prop FOREIGN KEY (id_propietario) REFERENCES usuarios (id_usuario),
+            CONSTRAINT fk_rc_dest FOREIGN KEY (id_destinatario) REFERENCES usuarios (id_usuario)
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla rutinas_compartidas creada');
+      }
+
       console.log('[migrate] Esquema comprobado OK');
     } catch (e) {
       console.error('[migrate] Error aplicando migraciones:', e.message);

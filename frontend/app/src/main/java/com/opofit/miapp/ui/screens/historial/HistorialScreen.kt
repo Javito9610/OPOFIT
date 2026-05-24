@@ -51,6 +51,7 @@ import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.HistorialViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasLibresViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasViewModel
+import com.opofit.miapp.utils.DateFormatUtil
 import com.opofit.miapp.utils.Units
 import kotlinx.coroutines.flow.collectLatest
 
@@ -402,7 +403,7 @@ fun HistorialScreen(
                 agrupado.entries.sortedByDescending { it.key }.forEach { (fecha, puntos) ->
                     item {
                         Text(
-                            text = fecha,
+                            text = DateFormatUtil.formatearSoloFecha(fecha),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary,
@@ -412,27 +413,30 @@ fun HistorialScreen(
                     items(puntos) { punto ->
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface
+                            )
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            Column(Modifier.padding(14.dp)) {
                                 Text(
-                                    text = punto.fecha_entreno,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.weight(1f)
+                                    DateFormatUtil.formatearFechaHora(punto.fecha_entreno),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+                                Spacer(Modifier.height(4.dp))
                                 Text(
-                                    text = "Valor: ${punto.valor_conseguido}",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.secondary
+                                    "Resultado: ${punto.valor_conseguido}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
                                 )
+                                punto.duracion_oficial?.let { d ->
+                                    Text(
+                                        "Duración sesión: ${if (d > 300) "${d / 60} min" else "$d s"}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
                             }
                         }
                     }

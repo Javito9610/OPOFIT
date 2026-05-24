@@ -30,4 +30,5 @@ object NavDestinations {
     const val SIMULACRO = "simulacro"
     const val RANKING = "ranking"
     const val PREMIUM = "premium"
+    const val COMUNIDAD = "comunidad"
 }

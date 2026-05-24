@@ -79,6 +79,9 @@ fun SimulacroScreen(
 
     val pruebaActual = pruebas.getOrNull(paso)
     val esTiempo = pruebaActual?.unidad == "s"
+    fun etiquetaEntrada(p: PruebaOficialSimulacro?) =
+        p?.unidadEtiqueta?.let { if (it == "segundos") "Tiempo (segundos)" else "Repeticiones" }
+            ?: if (p?.unidad == "s") "Tiempo (segundos)" else "Repeticiones conseguidas"
     val hayAptoNoApto = pruebas.any { it.tipo_baremo == "APTO_NO_APTO" }
 
     Scaffold(
@@ -167,7 +170,7 @@ fun SimulacroScreen(
                                     OutlinedTextField(
                                         value = valores[pruebaActual.id_pruebas_oficiales] ?: segundos.toString(),
                                         onValueChange = { valores[pruebaActual.id_pruebas_oficiales] = it },
-                                        label = { Text("Tiempo (segundos)") },
+                                        label = { Text(etiquetaEntrada(pruebaActual)) },
                                         modifier = Modifier.fillMaxWidth(),
                                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                                     )
@@ -175,7 +178,7 @@ fun SimulacroScreen(
                                     OutlinedTextField(
                                         value = valores[pruebaActual.id_pruebas_oficiales] ?: "",
                                         onValueChange = { valores[pruebaActual.id_pruebas_oficiales] = it },
-                                        label = { Text(if (pruebaActual.unidad == "s") "Tiempo (segundos)" else "Repeticiones conseguidas") },
+                                        label = { Text(etiquetaEntrada(pruebaActual)) },
                                         modifier = Modifier.fillMaxWidth(),
                                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                                     )
