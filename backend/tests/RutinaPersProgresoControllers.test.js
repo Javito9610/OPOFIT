@@ -1,10 +1,12 @@
 jest.mock('../src/services/RutinaPersService');
 jest.mock('../src/services/ProgresoService');
 jest.mock('../src/services/RutinasService');
+jest.mock('../src/services/PremiumService');
 jest.mock('../src/config/db');
 const rutinaPersService = require('../src/services/RutinaPersService');
 const progresoService = require('../src/services/ProgresoService');
 const RutinaService = require('../src/services/RutinasService');
+const PremiumService = require('../src/services/PremiumService');
 const {
   nuevaRutinaPersonalizada,
   misRutinas,
@@ -325,6 +327,9 @@ describe('RutinaController', () => {
       json: jest.fn().mockReturnThis()
     };
     jest.clearAllMocks();
+    PremiumService.puedeAccederOposicion.mockResolvedValue(true);
+    PremiumService.filtrarRutinaPorPremium.mockImplementation((_uid, rutina) => rutina);
+    PremiumService.getEstadoPremium.mockResolvedValue({ esPremium: false });
   });
   describe('getMiEntrenamiento', () => {
     test('debería devolver 400 si faltan parámetros', async () => {
@@ -350,7 +355,10 @@ describe('RutinaController', () => {
       RutinaService.calcularNotaYNivel.mockResolvedValue({
         notaMedia: '7.50',
         nivelSugerido: 'INTERMEDIO',
-        genero: 'HOMBRE'
+        genero: 'HOMBRE',
+        totalPruebas: 3,
+        pruebasCompletadas: 3,
+        pruebasFaltantes: 0
       });
       RutinaService.obtenerRutinaCompleta.mockResolvedValue([{
         id_rutina_opo: 2,
@@ -393,13 +401,16 @@ describe('InfoPruebasController', () => {
   let req, res;
   beforeEach(() => {
     req = {
-      params: {}
+      params: {},
+      usuario: { id: 1 }
     };
     res = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn().mockReturnThis()
     };
     jest.clearAllMocks();
+    PremiumService.puedeAccederOposicion.mockResolvedValue(true);
+    PremiumService.getEstadoPremium.mockResolvedValue({ esPremium: false });
   });
   describe('getInfoPruebas', () => {
     test('debería devolver 400 si faltan parámetros', async () => {
@@ -423,7 +434,9 @@ describe('InfoPruebasController', () => {
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         ok: true,
-        data: info
+        data: info,
+        esPremium: false,
+        baremosLimitados: true
       });
     });
     test('debería devolver 404 si no hay datos', async () => {

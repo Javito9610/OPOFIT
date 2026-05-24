@@ -25,4 +25,8 @@ object RetrofitClient {
     val usuarioApi: UsuarioApi by lazy { retrofit.create(UsuarioApi::class.java) }
     val infoPruebasApi: InfoPruebasApi by lazy { retrofit.create(InfoPruebasApi::class.java) }
     val ejerciciosApi: EjerciciosApi by lazy { retrofit.create(EjerciciosApi::class.java) }
+    val simulacroApi: SimulacroApi by lazy { retrofit.create(SimulacroApi::class.java) }
+    val rankingApi: RankingApi by lazy { retrofit.create(RankingApi::class.java) }
+    val premiumApi: PremiumApi by lazy { retrofit.create(PremiumApi::class.java) }
+    val notificationsApi: NotificationsApi by lazy { retrofit.create(NotificationsApi::class.java) }
 }

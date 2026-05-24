@@ -392,10 +392,28 @@ fun EntrenamientosScreen(
                 }
             }
 
+            val pasoActual = ejerciciosEstado.indexOfFirst { !it.completado }.let { if (it < 0) ejerciciosEstado.size - 1 else it }
+            if (ejerciciosEstado.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "Paso ${pasoActual + 1} de ${ejerciciosEstado.size}: ${ejerciciosEstado.getOrNull(pasoActual)?.nombre ?: ""}",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
             itemsIndexed(ejerciciosEstado) { index, estado ->
+                val esPasoActual = index == pasoActual && !estado.completado
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = if (esPasoActual) 6.dp else 2.dp),
+                    colors = if (esPasoActual) {
+                        CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                    } else {
+                        CardDefaults.cardColors()
+                    }
                 ) {
                     Column(
                         modifier = Modifier

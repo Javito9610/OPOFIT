@@ -80,7 +80,12 @@ class RutinaService {
     };
   }
   static async obtenerRutinaCompleta(idOposicion, nivel, genero) {
-    const [rutinas] = await db.query('SELECT DISTINCT id_rutina_opo, enfoque_tipo FROM rutinas_opo WHERE oposiciones_id_oposicion = ? AND nivel = ? AND genero = ?', [idOposicion, nivel, genero]);
+    const [rutinas] = await db.query(
+      `SELECT id_rutina_opo, enfoque_tipo, nivel
+       FROM rutinas_opo
+       WHERE oposiciones_id_oposicion = ? AND nivel = ? AND genero = ?`,
+      [idOposicion, nivel, genero]
+    );
     if (!rutinas || rutinas.length === 0) return null;
     const planCompleto = [];
     for (let r of rutinas) {
@@ -93,6 +98,7 @@ class RutinaService {
       planCompleto.push({
         id_rutina_opo: r.id_rutina_opo,
         bloque: r.enfoque_tipo,
+        nivel: r.nivel,
         ejercicios: ejercicios.map(e => ({
           ...e,
           unidad: RutinaService.inferUnidad(e.nombre)

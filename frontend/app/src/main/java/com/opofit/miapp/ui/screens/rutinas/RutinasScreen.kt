@@ -185,6 +185,24 @@ fun RutinasScreen(
                             }
                         }
 
+                        if (!uiState.msgPremium.isNullOrBlank()) {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                                )
+                            ) {
+                                Text(
+                                    text = uiState.msgPremium!!,
+                                    modifier = Modifier.padding(12.dp),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                            }
+                        }
+
                         if (uiState.rutinaCompleta.isEmpty() && !uiState.isLoading) {
                             val faltan = uiState.pruebasFaltantes ?: 0
                             Box(

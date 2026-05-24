@@ -1,4 +1,5 @@
 const infoPruebasService = require('../services/InfoPruebasService');
+const PremiumService = require('../services/PremiumService');
 const getInfoPruebas = async (req, res) => {
   try {
     const {
@@ -11,7 +12,14 @@ const getInfoPruebas = async (req, res) => {
         msg: "Oposición o género no especificados"
       });
     }
-    const listaInfoOpo = await infoPruebasService.getInfoPruebas(idOposicion, genero);
+    const userId = req.usuario?.id;
+    let esPremium = false;
+    if (userId) {
+      const estado = await PremiumService.getEstadoPremium(userId);
+      esPremium = estado.esPremium;
+    }
+    let listaInfoOpo = await infoPruebasService.getInfoPruebas(idOposicion, genero);
+    listaInfoOpo = PremiumService.limitarBaremos(esPremium, listaInfoOpo);
     if (!listaInfoOpo || listaInfoOpo.length === 0) {
       return res.status(404).json({
         ok: false,
@@ -20,7 +28,9 @@ const getInfoPruebas = async (req, res) => {
     }
     res.status(200).json({
       ok: true,
-      data: listaInfoOpo
+      data: listaInfoOpo,
+      esPremium,
+      baremosLimitados: !esPremium
     });
   } catch (error) {
     console.error("Error en getInfoPruebas:", error.message);

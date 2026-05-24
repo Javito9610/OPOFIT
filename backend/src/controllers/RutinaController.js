@@ -1,4 +1,5 @@
 const RutinaService = require('../services/RutinasService');
+const PremiumService = require('../services/PremiumService');
 const db = require('../config/db');
 const getMiEntrenamiento = async (req, res) => {
   try {
@@ -13,6 +14,11 @@ const getMiEntrenamiento = async (req, res) => {
         msg: "Faltan datos obligatorios (userId o idOposicion)"
       });
     }
+    const existeOpo = await PremiumService.puedeAccederOposicion(userId, idOposicion);
+    if (!existeOpo) {
+      return res.status(404).json({ ok: false, msg: 'Oposición no encontrada' });
+    }
+    const premium = await PremiumService.getEstadoPremium(userId);
     const resultadoCalculo = await RutinaService.calcularNotaYNivel(userId, idOposicion);
     if (!resultadoCalculo) {
       return res.status(404).json({
@@ -50,22 +56,42 @@ const getMiEntrenamiento = async (req, res) => {
         }
       });
     }
-    const rutinaCompleta = await RutinaService.obtenerRutinaCompleta(idOposicion, nivelSugerido, genero);
+    const nivelParaRutinas =
+      !premium.esPremium && nivelSugerido !== 'INCOMPLETO' && nivelSugerido !== 'BASICO'
+        ? 'BASICO'
+        : nivelSugerido;
+    let rutinaCompleta = await RutinaService.obtenerRutinaCompleta(
+      idOposicion,
+      nivelParaRutinas,
+      genero
+    );
+    if (!rutinaCompleta && nivelParaRutinas !== nivelSugerido) {
+      rutinaCompleta = await RutinaService.obtenerRutinaCompleta(idOposicion, 'BASICO', genero);
+    }
     if (!rutinaCompleta) {
       return res.status(404).json({
         ok: false,
-        msg: `No se encontro ninguna rutina para el nivel ${nivelSugerido} en esta oposición`
+        msg: `No se encontró rutina para el nivel ${nivelParaRutinas} en esta oposición`
       });
     }
+    const nivelPremiumBloqueado =
+      !premium.esPremium && ['INTERMEDIO', 'AVANZADO'].includes(nivelSugerido);
     return res.status(200).json({
       ok: true,
       data: {
         notaActual: notaMedia,
         nivelAsignado: nivelSugerido,
+        nivelRutinasMostradas: nivelParaRutinas,
         rutinaCompleta,
         totalPruebas,
         pruebasCompletadas,
-        pruebasFaltantes
+        pruebasFaltantes,
+        esPremium: premium.esPremium,
+        nivelPremiumBloqueado,
+        msgPremium:
+          nivelPremiumBloqueado
+            ? `Tu nivel calculado es ${nivelSugerido}. Con Premium desbloqueas rutinas INTERMEDIO y AVANZADO.`
+            : null
       }
     });
   } catch (error) {

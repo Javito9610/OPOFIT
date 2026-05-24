@@ -31,7 +31,8 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun OposicionInfoScreen(
     authViewModel: AuthViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigatePremium: () -> Unit = {}
 ) {
     val authState by authViewModel.uiState.collectAsState()
     val oposicionId = authState.oposicionId ?: 1
@@ -139,7 +140,24 @@ fun OposicionInfoScreen(
                     }
                 }
                 else -> {
-                    
+                    val avisoConvocatoria = oposicion?.convocatoria_ref?.takeIf { it.isNotBlank() }
+                        ?: oposicion?.notas_usuario?.takeIf { it.isNotBlank() }
+                    if (avisoConvocatoria != null) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            )
+                        ) {
+                            Text(
+                                avisoConvocatoria,
+                                modifier = Modifier.padding(12.dp),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
                     ScrollableTabRow(
                         selectedTabIndex = selectedTab,
                         edgePadding = 8.dp

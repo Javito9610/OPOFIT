@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.opofit.miapp.data.api.BackendAuthService
+import com.opofit.miapp.notifications.FcmRegistrar
 import com.opofit.miapp.data.local.SessionManager
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.AuthResponse
@@ -87,6 +88,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                                         imc = user.imc
                                     )
                                 }
+                                registerFcm(session.token)
                                 return@launch
                             }
                         },
@@ -190,6 +192,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             altura = response.user?.altura,
                             imc = response.user?.imc
                         )}
+                        registerFcm(response.token)
                     },
                     onFailure = { error ->
                         _uiState.update { it.copy(
@@ -263,6 +266,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             altura = response.user?.altura ?: altura,
                             imc = response.user?.imc
                         )}
+                        registerFcm(response.token)
                     },
                     onFailure = { error ->
                         _uiState.update { it.copy(
@@ -317,6 +321,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     altura = response.user?.altura,
                     imc = response.user?.imc
                 )}
+                registerFcm(response.token)
             },
             onFailure = { error ->
                 _uiState.update { it.copy(
@@ -440,5 +445,12 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun resetState() {
         _uiState.value = AuthUiState()
+    }
+
+    private fun registerFcm(token: String?) {
+        if (token.isNullOrBlank()) return
+        viewModelScope.launch(Dispatchers.IO) {
+            FcmRegistrar.registrarTokenEnBackend("Bearer $token")
+        }
     }
 }

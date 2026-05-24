@@ -8,6 +8,7 @@ USE `mydb` ;
 CREATE TABLE IF NOT EXISTS `mydb`.`oposiciones` (
   `id_oposicion` INT NOT NULL AUTO_INCREMENT,
   `nombre` VARCHAR(200) NOT NULL,
+  `incluida_gratis` TINYINT(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id_oposicion`))
 ENGINE = InnoDB;
 

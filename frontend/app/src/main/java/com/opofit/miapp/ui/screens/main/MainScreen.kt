@@ -43,6 +43,9 @@ fun MainScreen(
     onNavigateToCrearRutina: () -> Unit,
     onNavigateToDetallesRutina: (Int) -> Unit,
     onNavigateToEditarPerfil: () -> Unit,
+    onNavigateToSimulacro: () -> Unit,
+    onNavigateToRanking: () -> Unit,
+    onNavigateToPremium: () -> Unit,
     onLogout: () -> Unit
 ) {
     val innerNavController = rememberNavController()
@@ -111,6 +114,9 @@ fun MainScreen(
                     onNavigateToAjustes = onNavigateToAjustes,
                     onNavigateToInfoOposicion = onNavigateToInfoOposicion,
                     onNavigateToRutinasLibres = onNavigateToRutinasLibres,
+                    onNavigateToSimulacro = onNavigateToSimulacro,
+                    onNavigateToRanking = onNavigateToRanking,
+                    onNavigateToPremium = onNavigateToPremium,
                     onLogout = onLogout,
                     userName = authState.userName
                 )

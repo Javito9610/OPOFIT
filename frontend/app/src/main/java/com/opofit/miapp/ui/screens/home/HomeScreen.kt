@@ -11,7 +11,10 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,6 +36,9 @@ fun HomeScreen(
     onNavigateToAjustes: () -> Unit,
     onNavigateToInfoOposicion: () -> Unit,
     onNavigateToRutinasLibres: () -> Unit,
+    onNavigateToSimulacro: () -> Unit = {},
+    onNavigateToRanking: () -> Unit = {},
+    onNavigateToPremium: () -> Unit = {},
     onLogout: () -> Unit,
     userName: String? = null
 ) {
@@ -201,6 +207,44 @@ fun HomeScreen(
                         onClick = onNavigateToRutinasLibres
                     )
                 }
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    NavCard(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Filled.Timer,
+                        title = "Simulacro",
+                        subtitle = "Test oficial + nota",
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        onClick = onNavigateToSimulacro
+                    )
+                    NavCard(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Filled.Leaderboard,
+                        title = "Ranking",
+                        subtitle = "Tu posición",
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary,
+                        onClick = onNavigateToRanking
+                    )
+                }
+            }
+
+            item {
+                NavCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    icon = Icons.Filled.EmojiEvents,
+                    title = "OpoFit Premium",
+                    subtitle = "Todas las oposiciones y baremos",
+                    containerColor = MaterialTheme.colorScheme.tertiary,
+                    contentColor = MaterialTheme.colorScheme.onTertiary,
+                    onClick = onNavigateToPremium
+                )
             }
 
             item { Spacer(modifier = Modifier.height(8.dp)) }

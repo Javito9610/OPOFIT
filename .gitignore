@@ -24,3 +24,6 @@ google-services.json
 # Sensitive files
 .env
 config/secrets.json
+../keys/
+keys/
+*firebase*adminsdk*.json

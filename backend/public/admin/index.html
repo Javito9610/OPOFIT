@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpoFit — Panel Admin</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <header>
+    <h1>OpoFit Backoffice</h1>
+    <p>Gestión de oposiciones, ejercicios, pruebas y notificaciones</p>
+  </header>
+  <section class="config">
+    <label>URL API <input id="apiBase" type="url" placeholder="https://opofit-production.up.railway.app/" /></label>
+    <label>Clave admin (X-Admin-Key) <input id="adminKey" type="password" /></label>
+    <button id="btnSaveConfig">Guardar configuración local</button>
+  </section>
+  <nav class="tabs">
+    <button data-tab="oposiciones" class="active">Oposiciones</button>
+    <button data-tab="ejercicios">Ejercicios</button>
+    <button data-tab="pruebas">Pruebas oficiales</button>
+    <button data-tab="baremos">Baremos</button>
+    <button data-tab="push">Notificaciones</button>
+  </nav>
+  <main id="panel"></main>
+  <div id="toast"></div>
+  <script src="admin.js"></script>
+</body>
+</html>

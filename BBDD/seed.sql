@@ -22,9 +22,9 @@ DELETE FROM `oposiciones`;
 SET FOREIGN_KEY_CHECKS=1;
 SET SQL_SAFE_UPDATES=1;
 
-INSERT INTO `oposiciones` (`id_oposicion`, `nombre`) VALUES
-(1, 'Policía Nacional - Escala Básica'),
-(2, 'Guardia Civil - Acceso Libre');
+INSERT INTO `oposiciones` (`id_oposicion`, `nombre`, `incluida_gratis`) VALUES
+(1, 'Policía Nacional - Escala Básica', 1),
+(2, 'Guardia Civil - Acceso Libre', 1);
 
 INSERT INTO `pruebas_oficiales` (`id_pruebas_oficiales`, `nombre_prueba`, `descripcion`, `trucos`, `oposiciones_id_oposicion`, `mejor_si_es_menor`) VALUES
 (1, 'Circuito de agilidad',

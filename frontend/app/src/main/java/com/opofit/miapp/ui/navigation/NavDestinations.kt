@@ -27,4 +27,7 @@ object NavDestinations {
     const val AJUSTES = "ajustes"
 
     const val INFO_OPOSICION = "info_oposicion"
+    const val SIMULACRO = "simulacro"
+    const val RANKING = "ranking"
+    const val PREMIUM = "premium"
 }

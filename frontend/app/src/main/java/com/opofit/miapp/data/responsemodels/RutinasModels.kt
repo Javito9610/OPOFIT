@@ -22,7 +22,11 @@ data class RutinasData(
     val rutinaCompleta: List<BloqueRutina>,
     val totalPruebas: Int? = null,
     val pruebasCompletadas: Int? = null,
-    val pruebasFaltantes: Int? = null
+    val pruebasFaltantes: Int? = null,
+    val esPremium: Boolean? = null,
+    val nivelRutinasMostradas: String? = null,
+    val nivelPremiumBloqueado: Boolean? = null,
+    val msgPremium: String? = null
 )
 
 data class RutinasResponse(

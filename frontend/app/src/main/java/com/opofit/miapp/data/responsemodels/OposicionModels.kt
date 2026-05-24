@@ -2,7 +2,9 @@ package com.opofit.miapp.data.responsemodels
 
 data class Oposicion(
     val id_oposicion: Int,
-    val nombre: String
+    val nombre: String,
+    val convocatoria_ref: String? = null,
+    val notas_usuario: String? = null
 )
 
 data class OposicionesListResponse(
@@ -14,7 +16,10 @@ data class PruebaOposicion(
     val id_pruebas_oficiales: Int? = null,
     val nombre_prueba: String = "",
     val descripcion: String? = null,
-    val trucos: String? = null
+    val trucos: String? = null,
+    val fuente_legal: String? = null,
+    val convocatoria_ref: String? = null,
+    val tipo_baremo: String? = null
 )
 
 data class NoticiaOposicion(

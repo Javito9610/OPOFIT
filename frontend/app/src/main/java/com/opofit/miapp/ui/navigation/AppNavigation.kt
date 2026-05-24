@@ -19,6 +19,9 @@ import com.opofit.miapp.ui.screens.rutinas.CrearRutinaScreen
 import com.opofit.miapp.ui.screens.rutinas.DetallesEjercicioScreen
 import com.opofit.miapp.ui.screens.rutinas.DetallesRutinaScreen
 import com.opofit.miapp.ui.screens.rutinas.RutinasLibresScreen
+import com.opofit.miapp.ui.screens.simulacro.SimulacroScreen
+import com.opofit.miapp.ui.screens.ranking.RankingScreen
+import com.opofit.miapp.ui.screens.premium.PremiumScreen
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 
 @Composable
@@ -85,6 +88,15 @@ fun AppNavigation(
                 },
                 onNavigateToEditarPerfil = {
                     navController.navigate(NavDestinations.EDITAR_PERFIL)
+                },
+                onNavigateToSimulacro = {
+                    navController.navigate(NavDestinations.SIMULACRO)
+                },
+                onNavigateToRanking = {
+                    navController.navigate(NavDestinations.RANKING)
+                },
+                onNavigateToPremium = {
+                    navController.navigate(NavDestinations.PREMIUM)
                 },
                 onLogout = {
                     authViewModel.logout()
@@ -205,8 +217,28 @@ fun AppNavigation(
         composable(NavDestinations.INFO_OPOSICION) {
             OposicionInfoScreen(
                 authViewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigatePremium = { navController.navigate(NavDestinations.PREMIUM) }
+            )
+        }
+
+        composable(NavDestinations.SIMULACRO) {
+            SimulacroScreen(
+                authViewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigatePremium = { navController.navigate(NavDestinations.PREMIUM) }
+            )
+        }
+
+        composable(NavDestinations.RANKING) {
+            RankingScreen(
+                authViewModel = authViewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
+        }
+
+        composable(NavDestinations.PREMIUM) {
+            PremiumScreen(onNavigateBack = { navController.popBackStack() })
         }
     }
 }

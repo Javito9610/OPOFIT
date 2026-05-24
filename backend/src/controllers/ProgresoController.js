@@ -49,12 +49,6 @@ const guardarEntrenamiento = async (req, res) => {
       id: resultado.idHistorial
     });
   } catch (error) {
-    if (error.message?.includes("Ya has registrado este entrenamiento hoy")) {
-      return res.status(409).json({
-        ok: false,
-        msg: error.message
-      });
-    }
     console.error("Error en guardarEntrenamiento:", error.message);
     res.status(500).json({
       ok: false,

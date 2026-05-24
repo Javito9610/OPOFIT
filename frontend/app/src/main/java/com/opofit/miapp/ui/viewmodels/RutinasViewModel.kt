@@ -28,7 +28,9 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
         val oposicionesLoading: Boolean = false,
         val pruebasFaltantes: Int? = null,
         val totalPruebas: Int? = null,
-        val pruebasCompletadas: Int? = null
+        val pruebasCompletadas: Int? = null,
+        val msgPremium: String? = null,
+        val nivelPremiumBloqueado: Boolean = false
     )
 
     private val _uiState = MutableStateFlow(RutinasUiState())
@@ -54,6 +56,8 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
                             pruebasFaltantes = data.pruebasFaltantes,
                             totalPruebas = data.totalPruebas,
                             pruebasCompletadas = data.pruebasCompletadas,
+                            msgPremium = data.msgPremium,
+                            nivelPremiumBloqueado = data.nivelPremiumBloqueado == true,
                             error = if (bloqueadoPorPruebas) "" else (response.msg ?: "")
                         )
                     }

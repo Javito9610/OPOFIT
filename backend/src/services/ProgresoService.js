@@ -10,16 +10,6 @@ class ProgresoService {
     } = datos;
     const connection = await db.getConnection();
     try {
-      const sqlCheck = `
-                SELECT id_historial_sesion 
-                FROM historial_sesiones 
-                WHERE usuarios_id_usuario = ? 
-                AND ${tipoRutina === 'OPO' ? 'rutinas_opo_id_rutina_opo' : 'rutinas_pers_id_rutina_pers'} = ?
-                AND DATE(fecha_entreno) = CURDATE()`;
-      const [existente] = await connection.query(sqlCheck, [userId, idRutina]);
-      if (existente.length > 0) {
-        throw new Error("Ya has registrado este entrenamiento hoy. ¡Mañana más!");
-      }
       await connection.beginTransaction();
       const sqlHistorial = `INSERT INTO historial_sesiones 
                 (fecha_entreno, tipo_rutina, duracion_oficial, usuarios_id_usuario, ${tipoRutina === 'OPO' ? 'rutinas_opo_id_rutina_opo' : 'rutinas_pers_id_rutina_pers'})

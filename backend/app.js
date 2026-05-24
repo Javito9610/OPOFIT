@@ -36,6 +36,23 @@ app.use('/api/rutinas-pers', require('./src/routes/RutinaPersRoute'));
 app.use('/api/historial', require('./src/routes/ProgresoRoute'));
 app.use('/api/info', require('./src/routes/InfoPruebasRoute'));
 app.use('/api/ejercicios', require('./src/routes/EjerciciosRoute'));
+app.use('/api/simulacros', require('./src/routes/SimulacroRoute'));
+app.use('/api/ranking', require('./src/routes/RankingRoute'));
+app.use('/api/premium', require('./src/routes/PremiumRoute'));
+app.use('/api/notifications', require('./src/routes/NotificationRoute'));
+app.use('/api/admin', require('./src/routes/AdminRoute'));
+
+if (process.env.NOTIFICATIONS_CRON === 'true') {
+  const cron = require('node-cron');
+  const NotificationService = require('./src/services/NotificationService');
+  cron.schedule('0 8 * * *', () => {
+    NotificationService.enviarRecordatorioEntreno()
+      .then((r) => console.log('[cron] Recordatorios:', r))
+      .catch((e) => console.error('[cron] Error:', e.message));
+  });
+  console.log('Cron de recordatorios activo (8:00 diario)');
+}
+
 app.listen(port, () => {
   console.log(`Servidor ejecutandose en http://localhost:${port}`);
 });
