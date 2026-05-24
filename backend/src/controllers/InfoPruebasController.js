@@ -30,7 +30,7 @@ const getInfoPruebas = async (req, res) => {
       ok: true,
       data: listaInfoOpo,
       esPremium,
-      baremosLimitados: !esPremium
+      baremosLimitados: false
     });
   } catch (error) {
     console.error("Error en getInfoPruebas:", error.message);

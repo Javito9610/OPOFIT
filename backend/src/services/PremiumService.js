@@ -2,13 +2,12 @@ const db = require('../config/db');
 
 /**
  * Modelo freemium por funcionalidad (todas las oposiciones tienen parte gratis):
- * GRATIS: rutinas BASICO, baremos parciales, simulacro, info oposición, 1 oposición activa en perfil
- * PREMIUM: rutinas INTERMEDIO+AVANZADO, baremos completos, historial simulacros, ranking ampliado
+ * GRATIS: rutinas BASICO, baremos oficiales completos, simulacro, info oposición
+ * PREMIUM: rutinas INTERMEDIO+AVANZADO, historial simulacros, ranking ampliado
  */
 class PremiumService {
   static NIVELES_GRATIS = ['BASICO'];
   static NIVELES_PREMIUM = ['INTERMEDIO', 'AVANZADO'];
-  static BAREMOS_GRATIS_POR_PRUEBA = 4;
 
   static async getEstadoPremium(userId) {
     const [rows] = await db.query(
@@ -67,19 +66,9 @@ class PremiumService {
     });
   }
 
-  static limitarBaremos(esPremium, lista) {
-    if (esPremium || !lista?.length) return lista;
-    const byPrueba = {};
-    for (const row of lista) {
-      const id = row.id_pruebas_oficiales;
-      if (!byPrueba[id]) byPrueba[id] = [];
-      byPrueba[id].push(row);
-    }
-    const out = [];
-    for (const rows of Object.values(byPrueba)) {
-      out.push(...rows.slice(0, PremiumService.BAREMOS_GRATIS_POR_PRUEBA));
-    }
-    return out;
+  /** Tablas oficiales 0–10: visibles para todos (referencia pública de convocatoria). */
+  static limitarBaremos(_esPremium, lista) {
+    return lista;
   }
 
   static async puedeVerHistorialSimulacros(userId) {

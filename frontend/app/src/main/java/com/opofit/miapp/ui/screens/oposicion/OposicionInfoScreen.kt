@@ -575,6 +575,20 @@ private fun BaremosTab(
     fun nombrePruebaConConversion(nombre: String): String =
         Units.nombreConEquivalenciaDistancia(nombre, unitDist)
 
+    fun formatNota(nota: Double?): String {
+        if (nota == null) return "-"
+        val entera = nota.toLong()
+        return if (nota == entera.toDouble()) entera.toString() else String.format("%.1f", nota)
+    }
+
+    fun formatMarca(valor: Double?, unidad: String): String {
+        if (valor == null) return "-"
+        if (unidad != "s") return valor.toInt().toString()
+        val entera = valor.toLong()
+        return if (valor == entera.toDouble()) entera.toString()
+        else String.format("%.2f", valor).trimEnd('0').trimEnd('.')
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -635,24 +649,20 @@ private fun BaremosTab(
                                 )
                             }
 
-                            baremos.forEach { baremo ->
+                            baremos
+                                .sortedBy { it.nota ?: 0.0 }
+                                .forEach { baremo ->
                                 Row(
                                     modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        text = if (unidad == "s") {
-                                            
-                                            "${baremo.marca_valor ?: "-"}"
-                                        } else {
-                                            
-                                            baremo.marca_valor?.toInt()?.toString() ?: "-"
-                                        },
+                                        text = formatMarca(baremo.marca_valor, unidad),
                                         style = MaterialTheme.typography.bodyMedium,
                                         modifier = Modifier.weight(1f)
                                     )
                                     Text(
-                                        text = baremo.nota?.let { String.format("%.1f", it) } ?: "-",
+                                        text = formatNota(baremo.nota),
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.primary

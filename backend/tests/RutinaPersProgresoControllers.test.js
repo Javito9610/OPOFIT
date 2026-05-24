@@ -436,7 +436,7 @@ describe('InfoPruebasController', () => {
         ok: true,
         data: info,
         esPremium: false,
-        baremosLimitados: true
+        baremosLimitados: false
       });
     });
     test('debería devolver 404 si no hay datos', async () => {

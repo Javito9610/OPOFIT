@@ -77,13 +77,13 @@ fun PremiumScreen(onNavigateBack: () -> Unit) {
             Text("Desbloquea todo OpoFit", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             val beneficios = listOf(
                 "Rutinas INTERMEDIO y AVANZADO (gratis: nivel BÁSICO en todas las oposiciones)",
-                "Baremos completos en cada prueba",
+                "Historial completo de simulacros",
                 "Historial de simulacros guardado",
                 "Ranking completo entre aspirantes",
                 "Bomberos, Policía Local, Penitenciarias, Ejército y más"
             )
             Text(
-                "Todas las oposiciones incluyen contenido gratuito: pruebas, simulacro, rutinas básicas y baremos parciales.",
+                "Todas las oposiciones incluyen contenido gratuito: pruebas, simulacro, rutinas básicas y baremos oficiales completos (0–10).",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
