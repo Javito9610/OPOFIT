@@ -14,7 +14,8 @@ object NavDestinations {
     const val RUTINAS_LIBRES = "rutinas_libres"
     const val DETALLES_RUTINA = "detalles_rutina/{rutina_id}"
 
-    const val ENTRENAMIENTOS = "entrenamientos?enfoque={enfoque}"
+    const val ENTRENAMIENTOS =
+        "entrenamientos?enfoque={enfoque}&idPlanDia={idPlanDia}&idRutinaOpo={idRutinaOpo}"
     const val ENTRENAMIENTO_PERS = "entrenamiento_pers/{rutina_id}"
     const val REGISTRAR_ENTRENAMIENTO = "registrar_entrenamiento"
     const val DETALLES_EJERCICIO = "detalles_ejercicio/{ejercicio_id}"

@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -52,8 +53,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.data.local.TokenManager
+import com.opofit.miapp.ui.components.PlanCalendarioMes
 import com.opofit.miapp.ui.components.PlanDiaCard
 import com.opofit.miapp.ui.components.SectionHeader
+import java.time.YearMonth
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasViewModel
 import com.opofit.miapp.utils.Units
@@ -65,7 +68,7 @@ import kotlinx.coroutines.flow.collectLatest
 fun RutinasScreen(
     authViewModel: AuthViewModel,
     onNavigateBack: () -> Unit,
-    onNavigateToEntrenamientos: (String?) -> Unit,
+    onNavigateToEntrenamientos: (enfoque: String?, idPlanDia: Int?, idRutinaOpo: Int?) -> Unit,
     onNavigateToRutinasLibres: () -> Unit,
     onNavigateToEditarPerfil: () -> Unit,
     rutinasViewModel: RutinasViewModel = viewModel()
@@ -97,6 +100,15 @@ fun RutinasScreen(
         "⚡ Velocidad" to "VELOCIDAD"
     )
     var selectedTab by remember { mutableIntStateOf(0) }
+    var vistaPlan by remember { mutableIntStateOf(0) }
+    val mesActual = remember { YearMonth.now() }
+    var mesCalendario by remember { mutableStateOf(mesActual) }
+
+    LaunchedEffect(userId, oposicionId, mesCalendario) {
+        if (userId > 0) {
+            rutinasViewModel.cargarCalendario(userId, oposicionId, mesCalendario.year, mesCalendario.monthValue)
+        }
+    }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
@@ -325,6 +337,47 @@ fun RutinasScreen(
                                     .fillMaxWidth()
                                     .weight(1f)
                             ) {
+                                TabRow(selectedTabIndex = vistaPlan) {
+                                    Tab(selected = vistaPlan == 0, onClick = { vistaPlan = 0 }, text = { Text("Semana") })
+                                    Tab(selected = vistaPlan == 1, onClick = { vistaPlan = 1 }, text = { Text("Mes") })
+                                }
+                                if (vistaPlan == 1) {
+                                    val cal = uiState.calendario
+                                    Row(
+                                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        OutlinedButton(onClick = { mesCalendario = mesCalendario.minusMonths(1) }) {
+                                            Text("‹")
+                                        }
+                                        Text(
+                                            "${mesCalendario.monthValue}/${mesCalendario.year}",
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        OutlinedButton(onClick = { mesCalendario = mesCalendario.plusMonths(1) }) {
+                                            Text("›")
+                                        }
+                                    }
+                                    if (cal != null) {
+                                        PlanCalendarioMes(
+                                            year = cal.year,
+                                            month = cal.month,
+                                            dias = cal.dias,
+                                            onDiaClick = { d ->
+                                                val dia = plan.semana.find { it.id_plan_dia == d.id_plan_dia }
+                                                if (dia != null) {
+                                                    onNavigateToEntrenamientos(
+                                                        dia.enfoque,
+                                                        dia.id_plan_dia,
+                                                        dia.id_rutina_opo
+                                                    )
+                                                }
+                                            },
+                                            modifier = Modifier.padding(horizontal = 12.dp)
+                                        )
+                                    }
+                                }
                                 LazyColumn(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -332,18 +385,39 @@ fun RutinasScreen(
                                         .padding(horizontal = 16.dp),
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    item {
-                                        SectionHeader(
-                                            title = "Microciclo · ${plan.dias_por_semana} días",
-                                            subtitle = "Nivel ${uiState.nivelAsignado} · basado en opofit_banco_planes"
-                                        )
-                                    }
-                                    items(plan.semana.size) { i ->
-                                        PlanDiaCard(
-                                            dia = plan.semana[i],
-                                            onEntrenar = onNavigateToEntrenamientos,
-                                            expanded = !plan.semana[i].es_hoy
-                                        )
+                                    if (vistaPlan == 0) {
+                                        item {
+                                            SectionHeader(
+                                                title = "Microciclo · ${plan.dias_por_semana} días",
+                                                subtitle = "14 oposiciones · prescripción ejercicio a ejercicio (banco OpoFit)"
+                                            )
+                                        }
+                                        items(plan.semana.size) { i ->
+                                            val dia = plan.semana[i]
+                                            Card(Modifier.fillMaxWidth()) {
+                                                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                    PlanDiaCard(
+                                                        dia = dia,
+                                                        onEntrenar = onNavigateToEntrenamientos,
+                                                        expanded = !dia.es_hoy
+                                                    )
+                                                    dia.ejercicios.take(4).forEach { ej ->
+                                                        Text(
+                                                            "• ${ej.series}×${ej.repeticiones} ${ej.nombre}",
+                                                            style = MaterialTheme.typography.bodySmall,
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                    }
+                                                    if (dia.ejercicios.size > 4) {
+                                                        Text(
+                                                            "+${dia.ejercicios.size - 4} ejercicios más",
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = MaterialTheme.colorScheme.primary
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                                 Column(
@@ -355,7 +429,13 @@ fun RutinasScreen(
                                     val hoy = plan.sesion_hoy
                                     if (hoy != null && !hoy.completada) {
                                         Button(
-                                            onClick = { onNavigateToEntrenamientos(hoy.enfoque) },
+                                            onClick = {
+                                                onNavigateToEntrenamientos(
+                                                    hoy.enfoque,
+                                                    hoy.id_plan_dia,
+                                                    hoy.id_rutina_opo
+                                                )
+                                            },
                                             modifier = Modifier.fillMaxWidth()
                                         ) {
                                             Text("Empezar ${hoy.nombre_dia.lowercase()}")
@@ -479,7 +559,16 @@ fun RutinasScreen(
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     Button(
-                                        onClick = { onNavigateToEntrenamientos(selectedEnfoque) },
+                                        onClick = {
+                                            val sesion = uiState.planSemanal?.semana?.find {
+                                                it.enfoque == selectedEnfoque
+                                            }
+                                            onNavigateToEntrenamientos(
+                                                selectedEnfoque,
+                                                sesion?.id_plan_dia,
+                                                sesion?.id_rutina_opo
+                                            )
+                                        },
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Text("💪 Comenzar Entrenamiento")

@@ -95,7 +95,9 @@ class DashboardService {
           titulo: sesion.titulo,
           descripcion: sesion.descripcion,
           esHoy: !!plan?.sesion_hoy,
-          completada: sesion.completada
+          completada: sesion.completada,
+          id_plan_dia: sesion.id_plan_dia,
+          id_rutina_opo: sesion.id_rutina_opo
         };
       }
     }

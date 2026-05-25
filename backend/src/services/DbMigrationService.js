@@ -246,11 +246,52 @@ class DbMigrationService {
       await DbMigrationService.addColumnIfMissing('ejercicios', 'grupo_muscular', 'VARCHAR(80) NULL');
       await DbMigrationService.addColumnIfMissing('ejercicios', 'equipamiento', 'VARCHAR(120) NULL');
 
-      const PlanesService = require('./PlanesService');
-      await PlanesService.seedPlanesFromRutinas();
+      if (!(await DbMigrationService.tableExists('plan_dia_ejercicios'))) {
+        await db.query(`
+          CREATE TABLE plan_dia_ejercicios (
+            id_plan_dia_ejercicio INT NOT NULL AUTO_INCREMENT,
+            plan_dias_id INT NOT NULL,
+            orden TINYINT NOT NULL,
+            nombre_prescripcion VARCHAR(255) NOT NULL,
+            ejercicios_id_ejercicio INT NULL,
+            series INT NOT NULL DEFAULT 1,
+            repeticiones INT NOT NULL DEFAULT 10,
+            descanso INT NOT NULL DEFAULT 90,
+            notas VARCHAR(40) NULL,
+            PRIMARY KEY (id_plan_dia_ejercicio),
+            INDEX idx_pde_plan_dia (plan_dias_id),
+            CONSTRAINT fk_pde_plan_dia FOREIGN KEY (plan_dias_id) REFERENCES plan_dias (id_plan_dia) ON DELETE CASCADE,
+            CONSTRAINT fk_pde_ejercicio FOREIGN KEY (ejercicios_id_ejercicio) REFERENCES ejercicios (id_ejercicio)
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla plan_dia_ejercicios creada');
+      }
+
+      if (!(await DbMigrationService.tableExists('app_meta'))) {
+        await db.query(`
+          CREATE TABLE app_meta (
+            clave VARCHAR(64) PRIMARY KEY,
+            valor VARCHAR(32) NOT NULL
+          ) ENGINE=InnoDB
+        `);
+      }
+
+      await DbMigrationService.addColumnIfMissing(
+        'usuarios',
+        'hora_recordatorio_entreno',
+        "TIME NULL DEFAULT '18:00:00'"
+      );
+      await DbMigrationService.addColumnIfMissing(
+        'usuarios',
+        'recordatorio_entreno_activo',
+        'TINYINT(1) NOT NULL DEFAULT 1'
+      );
 
       const EjerciciosCatalogoService = require('./EjerciciosCatalogoService');
       await EjerciciosCatalogoService.seedCatalogoAmpliado();
+
+      const BancoPlanesImportService = require('./BancoPlanesImportService');
+      await BancoPlanesImportService.importarBancoCompleto(false);
 
       console.log('[migrate] Esquema comprobado OK');
     } catch (e) {

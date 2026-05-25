@@ -24,7 +24,9 @@ data class ActualizarPerfilResponse(
 data class ActualizarAjustesRequest(
     val userId: Int,
     val unidadPeso: String,
-    val unidadDistancia: String
+    val unidadDistancia: String,
+    val horaRecordatorio: Int? = null,
+    val recordatorioActivo: Boolean? = null
 )
 
 data class ActualizarAjustesResponse(

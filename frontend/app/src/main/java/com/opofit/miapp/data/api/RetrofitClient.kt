@@ -42,4 +42,5 @@ object RetrofitClient {
     val notificationsApi: NotificationsApi by lazy { retrofit.create(NotificationsApi::class.java) }
     val amigosApi: AmigosApi by lazy { retrofit.create(AmigosApi::class.java) }
     val dashboardApi: DashboardApi by lazy { retrofit.create(DashboardApi::class.java) }
+    val planesApi: PlanesApi by lazy { retrofit.create(PlanesApi::class.java) }
 }

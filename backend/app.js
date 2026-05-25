@@ -39,6 +39,7 @@ app.use('/api/ejercicios', require('./src/routes/EjerciciosRoute'));
 app.use('/api/simulacros', require('./src/routes/SimulacroRoute'));
 app.use('/api/ranking', require('./src/routes/RankingRoute'));
 app.use('/api/dashboard', require('./src/routes/DashboardRoute'));
+app.use('/api/planes', require('./src/routes/PlanesRoute'));
 app.use('/api/amigos', require('./src/routes/AmigosRoute'));
 app.use('/api/premium', require('./src/routes/PremiumRoute'));
 app.use('/api/notifications', require('./src/routes/NotificationRoute'));
@@ -47,12 +48,12 @@ app.use('/api/admin', require('./src/routes/AdminRoute'));
 if (process.env.NOTIFICATIONS_CRON === 'true') {
   const cron = require('node-cron');
   const NotificationService = require('./src/services/NotificationService');
-  cron.schedule('0 8 * * *', () => {
+  cron.schedule('0 * * * *', () => {
     NotificationService.enviarRecordatorioEntreno()
       .then((r) => console.log('[cron] Recordatorios:', r))
       .catch((e) => console.error('[cron] Error:', e.message));
   });
-  console.log('Cron de recordatorios activo (8:00 diario)');
+  console.log('Cron de recordatorios activo (cada hora, hora preferida del usuario)');
 }
 
 const DbMigrationService = require('./src/services/DbMigrationService');

@@ -31,7 +31,9 @@ data class EntrenoHoyResumen(
     val titulo: String? = null,
     val descripcion: String? = null,
     val esHoy: Boolean = false,
-    val completada: Boolean = false
+    val completada: Boolean = false,
+    val id_plan_dia: Int? = null,
+    val id_rutina_opo: Int? = null
 )
 
 data class DiaActividad(

@@ -78,6 +78,8 @@ fun EntrenamientosScreen(
     onNavigateBack: () -> Unit,
     onEntrenamientoFinalizado: () -> Unit,
     initialEnfoque: String = "",
+    initialPlanDiaId: Int? = null,
+    initialRutinaOpoId: Int? = null,
     rutinasViewModel: RutinasViewModel = viewModel(),
     historialViewModel: HistorialViewModel = viewModel()
 ) {
@@ -150,23 +152,33 @@ fun EntrenamientosScreen(
         }
     }
 
-    LaunchedEffect(selectedRutinaIndex, rutinasState.rutinaCompleta) {
+    LaunchedEffect(selectedRutinaIndex, rutinasState.rutinaCompleta, initialPlanDiaId, rutinasState.planSemanal) {
         ejerciciosEstado.clear()
-        val bloque = rutinasState.rutinaCompleta.getOrNull(selectedRutinaIndex)
-        if (bloque != null) {
-            bloque.ejercicios.forEachIndexed { idx, ejercicio ->
-                val objetivo = objetivoSegundosDesdeNombre(ejercicio.nombre)
-                val tipo = tipoCardio(ejercicio.nombre)
-                val desc = (ejercicio.descanso ?: 0).let { if (it > 0) it else 90 }
-                ejerciciosEstado.add(
-                    EjercicioEstado(
-                        nombre = ejercicio.nombre,
-                        idEjercicio = ejercicio.id_ejercicio ?: (selectedRutinaIndex * 100 + idx + 1),
-                        objetivoSegundos = objetivo,
-                        tipo = tipo,
-                        descansoSeg = desc
-                    )
+        val diaPlan = initialPlanDiaId?.let { id ->
+            rutinasState.planSemanal?.semana?.find { it.id_plan_dia == id }
+        }
+        fun agregarEjercicio(nombre: String, idEjercicio: Int?, descanso: Int, idx: Int) {
+            val objetivo = objetivoSegundosDesdeNombre(nombre)
+            val tipo = tipoCardio(nombre)
+            val desc = if (descanso > 0) descanso else 90
+            ejerciciosEstado.add(
+                EjercicioEstado(
+                    nombre = nombre,
+                    idEjercicio = idEjercicio ?: (selectedRutinaIndex * 100 + idx + 1),
+                    objetivoSegundos = objetivo,
+                    tipo = tipo,
+                    descansoSeg = desc
                 )
+            )
+        }
+        val planEj = diaPlan?.ejercicios?.takeIf { it.isNotEmpty() }
+        if (planEj != null) {
+            planEj.forEachIndexed { idx, ej ->
+                agregarEjercicio(ej.nombre, ej.id_ejercicio, ej.descanso, idx)
+            }
+        } else {
+            rutinasState.rutinaCompleta.getOrNull(selectedRutinaIndex)?.ejercicios?.forEachIndexed { idx, ej ->
+                agregarEjercicio(ej.nombre, ej.id_ejercicio, ej.descanso, idx)
             }
         }
         cronometroActivo = false
@@ -596,7 +608,10 @@ fun EntrenamientosScreen(
                             val realizados = ejerciciosEstado
                                 .filter { it.completado }
                                 .map { EjercicioRealizado(it.idEjercicio, it.valorConseguido.toDoubleOrNull() ?: 0.0) }
-                            val rutinaOpoId = rutinasState.rutinaCompleta.getOrNull(selectedRutinaIndex)?.id_rutina_opo ?: 1
+                            val rutinaOpoId = initialRutinaOpoId
+                                ?: rutinasState.planSemanal?.semana?.find { it.id_plan_dia == initialPlanDiaId }?.id_rutina_opo
+                                ?: rutinasState.rutinaCompleta.getOrNull(selectedRutinaIndex)?.id_rutina_opo
+                                ?: 1
                             historialViewModel.registrarEntrenamiento(
                                 userId = userId,
                                 tipoRutina = "OPO",

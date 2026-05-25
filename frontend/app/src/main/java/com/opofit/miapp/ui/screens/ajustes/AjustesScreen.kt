@@ -31,6 +31,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -40,7 +41,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -68,6 +71,8 @@ fun AjustesScreen(
     var unidadDistancia by remember { mutableStateOf("km") }
     var expandedPeso by remember { mutableStateOf(false) }
     var expandedDistancia by remember { mutableStateOf(false) }
+    var horaRecordatorio by remember { mutableIntStateOf(18) }
+    var recordatorioActivo by remember { mutableStateOf(true) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     var mostrarDialogoEliminar by remember { mutableStateOf(false) }
@@ -267,6 +272,40 @@ fun AjustesScreen(
                 }
             }
 
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Recordatorio de entreno", fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "Te avisamos a la hora que elijas si hoy tienes sesión pendiente en tu plan.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Activar recordatorio")
+                        Switch(
+                            checked = recordatorioActivo,
+                            onCheckedChange = { recordatorioActivo = it }
+                        )
+                    }
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        (7..21).forEach { h ->
+                            FilterChip(
+                                selected = horaRecordatorio == h,
+                                onClick = { horaRecordatorio = h },
+                                label = { Text("${h}:00") }
+                            )
+                        }
+                    }
+                }
+            }
+
             if (uiState.error.isNotEmpty()) {
                 Text(
                     text = uiState.error,
@@ -281,7 +320,15 @@ fun AjustesScreen(
                 }
             } else {
                 Button(
-                    onClick = { ajustesViewModel.guardarAjustes(userId, unidadPeso, unidadDistancia) },
+                    onClick = {
+                        ajustesViewModel.guardarAjustes(
+                            userId,
+                            unidadPeso,
+                            unidadDistancia,
+                            horaRecordatorio,
+                            recordatorioActivo
+                        )
+                    },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Guardar Ajustes")

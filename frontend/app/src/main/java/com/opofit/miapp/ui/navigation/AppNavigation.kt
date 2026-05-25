@@ -68,9 +68,11 @@ fun AppNavigation(
         composable(NavDestinations.MAIN) {
             MainScreen(
                 authViewModel = authViewModel,
-                onNavigateToEntrenamientos = { enfoque ->
+                onNavigateToEntrenamientos = { enfoque, idPlanDia, idRutinaOpo ->
                     val e = enfoque?.takeIf { it.isNotBlank() } ?: ""
-                    navController.navigate("entrenamientos?enfoque=$e")
+                    navController.navigate(
+                        "entrenamientos?enfoque=$e&idPlanDia=${idPlanDia ?: 0}&idRutinaOpo=${idRutinaOpo ?: 0}"
+                    )
                 },
                 onNavigateToAjustes = {
                     navController.navigate(NavDestinations.AJUSTES)
@@ -166,16 +168,24 @@ fun AppNavigation(
 
         composable(
             route = NavDestinations.ENTRENAMIENTOS,
-            arguments = listOf(navArgument("enfoque") { type = NavType.StringType; defaultValue = "" })
+            arguments = listOf(
+                navArgument("enfoque") { type = NavType.StringType; defaultValue = "" },
+                navArgument("idPlanDia") { type = NavType.IntType; defaultValue = 0 },
+                navArgument("idRutinaOpo") { type = NavType.IntType; defaultValue = 0 }
+            )
         ) { backStackEntry ->
             val enfoque = backStackEntry.arguments?.getString("enfoque").orEmpty()
+            val idPlanDia = backStackEntry.arguments?.getInt("idPlanDia") ?: 0
+            val idRutinaOpo = backStackEntry.arguments?.getInt("idRutinaOpo") ?: 0
             EntrenamientosScreen(
                 authViewModel = authViewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onEntrenamientoFinalizado = {
                     navController.popBackStack()
                 },
-                initialEnfoque = enfoque
+                initialEnfoque = enfoque,
+                initialPlanDiaId = idPlanDia.takeIf { it > 0 },
+                initialRutinaOpoId = idRutinaOpo.takeIf { it > 0 }
             )
         }
 

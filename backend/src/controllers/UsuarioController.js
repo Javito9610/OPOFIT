@@ -157,7 +157,9 @@ const actualizarSettings = async (req, res) => {
     const {
       userId,
       unidadPeso,
-      unidadDistancia
+      unidadDistancia,
+      horaRecordatorio,
+      recordatorioActivo
     } = req.body;
     if (!userId || !unidadPeso || !unidadDistancia) {
       return res.status(400).json({
@@ -172,6 +174,19 @@ const actualizarSettings = async (req, res) => {
       });
     }
     await db.query('UPDATE settings SET unidad_peso = ?, unidad_distancia = ? WHERE usuarios_id_usuario = ?', [unidadPeso, unidadDistancia, userId]);
+    if (horaRecordatorio != null) {
+      const h = String(horaRecordatorio).match(/^\d{1,2}/)?.[0] || '18';
+      await db.query('UPDATE usuarios SET hora_recordatorio_entreno = ? WHERE id_usuario = ?', [
+        `${h.padStart(2, '0')}:00:00`,
+        userId
+      ]);
+    }
+    if (recordatorioActivo != null) {
+      await db.query('UPDATE usuarios SET recordatorio_entreno_activo = ? WHERE id_usuario = ?', [
+        recordatorioActivo ? 1 : 0,
+        userId
+      ]);
+    }
     res.status(200).json({
       ok: true,
       msg: "Ajustes guardados"

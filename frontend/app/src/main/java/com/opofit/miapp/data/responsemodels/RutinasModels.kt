@@ -42,6 +42,30 @@ data class DiaPlan(
     val ejercicios: List<EjercicioPlan> = emptyList()
 )
 
+data class DiaCalendario(
+    val fecha: String,
+    val dia: Int,
+    val tiene_entreno: Boolean = false,
+    val id_plan_dia: Int? = null,
+    val enfoque: String? = null,
+    val titulo: String? = null,
+    val completada: Boolean = false,
+    val es_hoy: Boolean = false
+)
+
+data class PlanCalendario(
+    val year: Int,
+    val month: Int,
+    val dias: List<DiaCalendario> = emptyList(),
+    val semana: List<DiaPlan>? = null
+)
+
+data class PlanCalendarioResponse(
+    val ok: Boolean,
+    val data: PlanCalendario? = null,
+    val msg: String? = null
+)
+
 data class PlanSemanal(
     val id_plan: Int,
     val dias_por_semana: Int,

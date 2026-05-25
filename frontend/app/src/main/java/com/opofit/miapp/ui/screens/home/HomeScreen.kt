@@ -75,7 +75,7 @@ private data class QuickLink(
 @Composable
 fun HomeScreen(
     onNavigateToRutinas: () -> Unit,
-    onNavigateToEntrenamientos: (String?) -> Unit = { },
+    onNavigateToEntrenamientos: (enfoque: String?, idPlanDia: Int?, idRutinaOpo: Int?) -> Unit = { _, _, _ -> },
     onNavigateToPerfil: () -> Unit,
     onNavigateToHistorial: () -> Unit,
     onNavigateToAjustes: () -> Unit,
@@ -205,7 +205,13 @@ fun HomeScreen(
                                         titulo = if (hoy.esHoy) "Entreno de hoy" else "Próximo entreno",
                                         subtitulo = "${hoy.nombreDia ?: ""} · ${hoy.titulo ?: enfoqueLabel(hoy.enfoque!!)}",
                                         enfoque = hoy.enfoque!!,
-                                        onEmpezar = { onNavigateToEntrenamientos(hoy.enfoque) }
+                                        onEmpezar = {
+                                            onNavigateToEntrenamientos(
+                                                hoy.enfoque,
+                                                hoy.id_plan_dia,
+                                                hoy.id_rutina_opo
+                                            )
+                                        }
                                     )
                                 }
                             }
@@ -277,7 +283,10 @@ fun HomeScreen(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Button(
-                                    onClick = { onNavigateToEntrenamientos(resumen?.entrenoHoy?.enfoque) },
+                                    onClick = {
+                                        val h = resumen?.entrenoHoy
+                                        onNavigateToEntrenamientos(h?.enfoque, h?.id_plan_dia, h?.id_rutina_opo)
+                                    },
                                     modifier = Modifier.weight(1f),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = MaterialTheme.colorScheme.primary

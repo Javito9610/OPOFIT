@@ -27,7 +27,9 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
         val cuentaEliminada: Boolean = false,
         val unidadPeso: String = "kg",
         val unidadDistancia: String = "km",
-        val darkMode: Boolean = false
+        val darkMode: Boolean = false,
+        val horaRecordatorio: Int = 18,
+        val recordatorioActivo: Boolean = true
     )
 
     private val _uiState = MutableStateFlow(AjustesUiState())
@@ -58,12 +60,24 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun guardarAjustes(userId: Int, unidadPeso: String, unidadDistancia: String) {
+    fun guardarAjustes(
+        userId: Int,
+        unidadPeso: String,
+        unidadDistancia: String,
+        horaRecordatorio: Int = 18,
+        recordatorioActivo: Boolean = true
+    ) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = "", guardadoExitoso = false) }
             try {
                 val token = tokenManager.getToken().first() ?: ""
-                val body = ActualizarAjustesRequest(userId, unidadPeso, unidadDistancia)
+                val body = ActualizarAjustesRequest(
+                    userId,
+                    unidadPeso,
+                    unidadDistancia,
+                    horaRecordatorio,
+                    recordatorioActivo
+                )
                 val response = RetrofitClient.usuarioApi.actualizarAjustes("Bearer $token", body)
                 if (response.ok) {
                     tokenManager.saveUnitPeso(unidadPeso)

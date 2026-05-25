@@ -7,6 +7,7 @@ import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.BloqueRutina
 import com.opofit.miapp.data.responsemodels.Oposicion
+import com.opofit.miapp.data.responsemodels.PlanCalendario
 import com.opofit.miapp.data.responsemodels.PlanSemanal
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +27,7 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
         val nivelAsignado: String = "",
         val rutinaCompleta: List<BloqueRutina> = emptyList(),
         val planSemanal: PlanSemanal? = null,
+        val calendario: PlanCalendario? = null,
         val oposiciones: List<Oposicion> = emptyList(),
         val oposicionesLoading: Boolean = false,
         val pruebasFaltantes: Int? = null,
@@ -70,6 +72,20 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = e.message ?: "Error de conexión") }
             }
+        }
+    }
+
+    fun cargarCalendario(userId: Int, oposicionId: Int, year: Int, month: Int) {
+        viewModelScope.launch {
+            try {
+                val token = tokenManager.getToken().first() ?: ""
+                val response = RetrofitClient.planesApi.getCalendario(
+                    "Bearer $token", oposicionId, year, month
+                )
+                if (response.ok) {
+                    _uiState.update { it.copy(calendario = response.data) }
+                }
+            } catch (_: Exception) { }
         }
     }
 

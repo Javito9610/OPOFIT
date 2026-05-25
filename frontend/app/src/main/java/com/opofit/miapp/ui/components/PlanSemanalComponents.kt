@@ -44,7 +44,7 @@ fun enfoqueLabel(enfoque: String): String = when (enfoque.uppercase()) {
 fun PlanDiaCard(
     dia: DiaPlan,
     modifier: Modifier = Modifier,
-    onEntrenar: (String) -> Unit,
+    onEntrenar: (enfoque: String, idPlanDia: Int, idRutinaOpo: Int) -> Unit,
     expanded: Boolean = false
 ) {
     val container = when {
@@ -105,7 +105,7 @@ fun PlanDiaCard(
             )
             if (dia.es_hoy && !dia.completada) {
                 Button(
-                    onClick = { onEntrenar(dia.enfoque) },
+                    onClick = { onEntrenar(dia.enfoque, dia.id_plan_dia, dia.id_rutina_opo) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.Filled.PlayArrow, contentDescription = null)
@@ -114,7 +114,7 @@ fun PlanDiaCard(
                 }
             } else if (!dia.completada && expanded) {
                 OutlinedButton(
-                    onClick = { onEntrenar(dia.enfoque) },
+                    onClick = { onEntrenar(dia.enfoque, dia.id_plan_dia, dia.id_rutina_opo) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Entrenar ${enfoqueLabel(dia.enfoque).lowercase()}")
