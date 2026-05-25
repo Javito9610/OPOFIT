@@ -1,7 +1,13 @@
 const EjerciciosService = require('../services/EjerciciosService');
 const listarEjercicios = async (req, res) => {
   try {
-    const ejercicios = await EjerciciosService.listarTodos();
+    const { categoria, pilar, busqueda, limite } = req.query;
+    const ejercicios = await EjerciciosService.listarTodos({
+      categoria,
+      pilar,
+      busqueda,
+      limite
+    });
     res.status(200).json({
       ok: true,
       data: ejercicios

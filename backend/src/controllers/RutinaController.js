@@ -1,4 +1,5 @@
 const RutinaService = require('../services/RutinasService');
+const PlanesService = require('../services/PlanesService');
 const PremiumService = require('../services/PremiumService');
 const db = require('../config/db');
 const getMiEntrenamiento = async (req, res) => {
@@ -76,6 +77,14 @@ const getMiEntrenamiento = async (req, res) => {
     }
     const nivelPremiumBloqueado =
       !premium.esPremium && ['INTERMEDIO', 'AVANZADO'].includes(nivelSugerido);
+
+    const planSemanal = await PlanesService.obtenerPlanSemanal(
+      userId,
+      idOposicion,
+      nivelParaRutinas,
+      genero
+    );
+
     return res.status(200).json({
       ok: true,
       data: {
@@ -83,6 +92,7 @@ const getMiEntrenamiento = async (req, res) => {
         nivelAsignado: nivelSugerido,
         nivelRutinasMostradas: nivelParaRutinas,
         rutinaCompleta,
+        planSemanal,
         totalPruebas,
         pruebasCompletadas,
         pruebasFaltantes,
@@ -90,7 +100,7 @@ const getMiEntrenamiento = async (req, res) => {
         nivelPremiumBloqueado,
         msgPremium:
           nivelPremiumBloqueado
-            ? `Tu nivel calculado es ${nivelSugerido}. Con Premium desbloqueas rutinas INTERMEDIO y AVANZADO.`
+            ? `Tu nivel calculado es ${nivelSugerido}. Con Premium desbloqueas planes INTERMEDIO y AVANZADO.`
             : null
       }
     });

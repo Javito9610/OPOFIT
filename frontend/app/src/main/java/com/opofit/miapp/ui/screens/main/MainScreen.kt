@@ -29,7 +29,7 @@ private sealed class BottomTab(
     val icon: ImageVector
 ) {
     object Inicio : BottomTab("tab_home", "Inicio", Icons.Filled.Home)
-    object Rutinas : BottomTab("tab_rutinas", "Rutinas", Icons.Filled.FitnessCenter)
+    object Rutinas : BottomTab("tab_rutinas", "Plan", Icons.Filled.FitnessCenter)
     object Perfil : BottomTab("tab_perfil", "Perfil", Icons.Filled.Person)
     object Historial : BottomTab("tab_historial", "Actividad", Icons.Filled.BarChart)
 }
@@ -105,7 +105,7 @@ fun MainScreen(
                             launchSingleTop = true; restoreState = true
                         }
                     },
-                    onNavigateToEntrenamientos = { onNavigateToEntrenamientos(null) },
+                    onNavigateToEntrenamientos = onNavigateToEntrenamientos,
                     onNavigateToPerfil = {
                         innerNavController.navigate(BottomTab.Perfil.route) {
                             popUpTo(innerNavController.graph.findStartDestination().id) { saveState = true }

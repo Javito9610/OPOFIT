@@ -203,6 +203,55 @@ class DbMigrationService {
         console.log('[migrate] tabla rutinas_compartidas creada');
       }
 
+      if (!(await DbMigrationService.tableExists('planes_entrenamiento'))) {
+        await db.query(`
+          CREATE TABLE planes_entrenamiento (
+            id_plan INT NOT NULL AUTO_INCREMENT,
+            oposiciones_id_oposicion INT NOT NULL,
+            nivel ENUM('BASICO','INTERMEDIO','AVANZADO') NOT NULL,
+            genero ENUM('HOMBRE','MUJER') NOT NULL,
+            nombre VARCHAR(200) NOT NULL,
+            dias_por_semana TINYINT NOT NULL DEFAULT 5,
+            fuente VARCHAR(80) NULL DEFAULT 'opofit_banco_planes',
+            PRIMARY KEY (id_plan),
+            UNIQUE KEY uniq_plan_opo_nivel_gen (oposiciones_id_oposicion, nivel, genero),
+            CONSTRAINT fk_plan_opo FOREIGN KEY (oposiciones_id_oposicion) REFERENCES oposiciones (id_oposicion)
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla planes_entrenamiento creada');
+      }
+
+      if (!(await DbMigrationService.tableExists('plan_dias'))) {
+        await db.query(`
+          CREATE TABLE plan_dias (
+            id_plan_dia INT NOT NULL AUTO_INCREMENT,
+            planes_id_plan INT NOT NULL,
+            dia_semana TINYINT NOT NULL COMMENT '1=Lunes..7=Domingo',
+            orden TINYINT NOT NULL,
+            enfoque_tipo ENUM('FUERZA','RESISTENCIA','VELOCIDAD') NOT NULL,
+            rutinas_opo_id INT NOT NULL,
+            titulo_sesion VARCHAR(200) NOT NULL,
+            descripcion_sesion TEXT NULL,
+            PRIMARY KEY (id_plan_dia),
+            UNIQUE KEY uniq_plan_dia (planes_id_plan, dia_semana),
+            CONSTRAINT fk_pd_plan FOREIGN KEY (planes_id_plan) REFERENCES planes_entrenamiento (id_plan) ON DELETE CASCADE,
+            CONSTRAINT fk_pd_rutina FOREIGN KEY (rutinas_opo_id) REFERENCES rutinas_opo (id_rutina_opo)
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla plan_dias creada');
+      }
+
+      await DbMigrationService.addColumnIfMissing('ejercicios', 'categoria', "VARCHAR(60) NULL");
+      await DbMigrationService.addColumnIfMissing('ejercicios', 'pilar', "ENUM('FUERZA','RESISTENCIA','VELOCIDAD','MOVILIDAD','CORE') NULL");
+      await DbMigrationService.addColumnIfMissing('ejercicios', 'grupo_muscular', 'VARCHAR(80) NULL');
+      await DbMigrationService.addColumnIfMissing('ejercicios', 'equipamiento', 'VARCHAR(120) NULL');
+
+      const PlanesService = require('./PlanesService');
+      await PlanesService.seedPlanesFromRutinas();
+
+      const EjerciciosCatalogoService = require('./EjerciciosCatalogoService');
+      await EjerciciosCatalogoService.seedCatalogoAmpliado();
+
       console.log('[migrate] Esquema comprobado OK');
     } catch (e) {
       console.error('[migrate] Error aplicando migraciones:', e.message);

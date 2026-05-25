@@ -52,9 +52,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.opofit.miapp.ui.components.EntrenoHoyHeroCard
 import com.opofit.miapp.ui.components.ErrorState
 import com.opofit.miapp.ui.components.ProfileAvatar
 import com.opofit.miapp.ui.components.SectionHeader
+import com.opofit.miapp.ui.components.enfoqueLabel
 import com.opofit.miapp.ui.components.StatCard
 import com.opofit.miapp.ui.components.WeekActivityChart
 import androidx.compose.material3.TextButton
@@ -73,7 +75,7 @@ private data class QuickLink(
 @Composable
 fun HomeScreen(
     onNavigateToRutinas: () -> Unit,
-    onNavigateToEntrenamientos: () -> Unit,
+    onNavigateToEntrenamientos: (String?) -> Unit = { },
     onNavigateToPerfil: () -> Unit,
     onNavigateToHistorial: () -> Unit,
     onNavigateToAjustes: () -> Unit,
@@ -97,11 +99,11 @@ fun HomeScreen(
     }
 
     val quickLinks = listOf(
-        QuickLink("Rutinas", "Plan oficial", Icons.Filled.FitnessCenter, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary, onNavigateToRutinas),
+        QuickLink("Plan", "Entreno semanal", Icons.Filled.FitnessCenter, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary, onNavigateToRutinas),
         QuickLink("Historial", "Progreso", Icons.Filled.BarChart, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToHistorial),
         QuickLink("Perfil", "Marcas", Icons.Filled.Person, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary, onNavigateToPerfil),
         QuickLink("Info", "Baremos", Icons.Filled.Info, MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer, onNavigateToInfoOposicion),
-        QuickLink("Libres", "Tus rutinas", Icons.Filled.Star, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, onNavigateToRutinasLibres),
+        QuickLink("Libres", "Banco ejercicios", Icons.Filled.Star, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, onNavigateToRutinasLibres),
         QuickLink("Ranking", "Clasificación", Icons.Filled.Leaderboard, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, onNavigateToRanking),
         QuickLink("Comunidad", "Amigos", Icons.Filled.Groups, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToComunidad),
         QuickLink("Premium", "Más ventajas", Icons.Filled.Star, MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer, onNavigateToPremium),
@@ -196,6 +198,19 @@ fun HomeScreen(
                             }
                         }
 
+                        resumen?.entrenoHoy?.let { hoy ->
+                            if (!hoy.completada && !hoy.enfoque.isNullOrBlank()) {
+                                item {
+                                    EntrenoHoyHeroCard(
+                                        titulo = if (hoy.esHoy) "Entreno de hoy" else "Próximo entreno",
+                                        subtitulo = "${hoy.nombreDia ?: ""} · ${hoy.titulo ?: enfoqueLabel(hoy.enfoque!!)}",
+                                        enfoque = hoy.enfoque!!,
+                                        onEmpezar = { onNavigateToEntrenamientos(hoy.enfoque) }
+                                    )
+                                }
+                            }
+                        }
+
                         item {
                             WeekActivityChart(dias = resumen?.graficaSemanal.orEmpty())
                         }
@@ -262,7 +277,7 @@ fun HomeScreen(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Button(
-                                    onClick = onNavigateToEntrenamientos,
+                                    onClick = { onNavigateToEntrenamientos(resumen?.entrenoHoy?.enfoque) },
                                     modifier = Modifier.weight(1f),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = MaterialTheme.colorScheme.primary

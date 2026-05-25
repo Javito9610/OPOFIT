@@ -1,5 +1,7 @@
 const db = require('../config/db');
 const RutinaService = require('./RutinasService');
+const PlanesService = require('./PlanesService');
+const PremiumService = require('./PremiumService');
 const RankingService = require('./RankingService');
 
 class DashboardService {
@@ -68,6 +70,36 @@ class DashboardService {
     const ranking = await RankingService.posicionUsuario(userId, idOposicion);
     const graficaSemanal = await DashboardService.obtenerGraficaSemanal(userId);
 
+    let entrenoHoy = null;
+    if (
+      nivelInfo.nivelSugerido &&
+      (nivelInfo.pruebasFaltantes ?? 0) === 0 &&
+      nivelInfo.genero
+    ) {
+      const premium = await PremiumService.getEstadoPremium(userId);
+      const nivelPlan =
+        !premium.esPremium && nivelInfo.nivelSugerido !== 'BASICO'
+          ? 'BASICO'
+          : nivelInfo.nivelSugerido;
+      const plan = await PlanesService.obtenerPlanSemanal(
+        userId,
+        idOposicion,
+        nivelPlan,
+        nivelInfo.genero
+      );
+      const sesion = plan?.sesion_hoy || plan?.proxima_sesion;
+      if (sesion) {
+        entrenoHoy = {
+          nombreDia: sesion.nombre_dia,
+          enfoque: sesion.enfoque,
+          titulo: sesion.titulo,
+          descripcion: sesion.descripcion,
+          esHoy: !!plan?.sesion_hoy,
+          completada: sesion.completada
+        };
+      }
+    }
+
     return {
       oposicionNombre: opo?.nombre || null,
       sesionesSemana: Number(semana?.sesiones || 0),
@@ -91,7 +123,8 @@ class DashboardService {
       rankingPosicion: ranking.posicion,
       rankingTotal: ranking.total,
       rankingNotaMedia: ranking.notaMedia,
-      graficaSemanal
+      graficaSemanal,
+      entrenoHoy
     };
   }
 

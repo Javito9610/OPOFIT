@@ -52,6 +52,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.data.local.TokenManager
+import com.opofit.miapp.ui.components.PlanDiaCard
+import com.opofit.miapp.ui.components.SectionHeader
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasViewModel
 import com.opofit.miapp.utils.Units
@@ -100,7 +102,7 @@ fun RutinasScreen(
         contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
         topBar = {
             TopAppBar(
-                title = { Text("Mi Entrenamiento") },
+                title = { Text("Plan de entrenamiento") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
@@ -203,7 +205,11 @@ fun RutinasScreen(
                             }
                         }
 
-                        if (uiState.rutinaCompleta.isEmpty() && !uiState.isLoading) {
+                        if (
+                            uiState.rutinaCompleta.isEmpty() &&
+                            uiState.planSemanal?.semana.isNullOrEmpty() &&
+                            !uiState.isLoading
+                        ) {
                             val faltan = uiState.pruebasFaltantes ?: 0
                             Box(
                                 modifier = Modifier
@@ -309,6 +315,57 @@ fun RutinasScreen(
                                         ) {
                                             Text("Ver rutinas libres (mientras tanto)")
                                         }
+                                    }
+                                }
+                            }
+                        } else if (uiState.planSemanal?.semana?.isNotEmpty() == true) {
+                            val plan = uiState.planSemanal!!
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                            ) {
+                                LazyColumn(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f)
+                                        .padding(horizontal = 16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    item {
+                                        SectionHeader(
+                                            title = "Microciclo · ${plan.dias_por_semana} días",
+                                            subtitle = "Nivel ${uiState.nivelAsignado} · basado en opofit_banco_planes"
+                                        )
+                                    }
+                                    items(plan.semana.size) { i ->
+                                        PlanDiaCard(
+                                            dia = plan.semana[i],
+                                            onEntrenar = onNavigateToEntrenamientos,
+                                            expanded = !plan.semana[i].es_hoy
+                                        )
+                                    }
+                                }
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    val hoy = plan.sesion_hoy
+                                    if (hoy != null && !hoy.completada) {
+                                        Button(
+                                            onClick = { onNavigateToEntrenamientos(hoy.enfoque) },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text("Empezar ${hoy.nombre_dia.lowercase()}")
+                                        }
+                                    }
+                                    OutlinedButton(
+                                        onClick = onNavigateToRutinasLibres,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("Banco de ejercicios · rutinas libres")
                                     }
                                 }
                             }

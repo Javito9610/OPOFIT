@@ -100,15 +100,22 @@ fun CrearRutinaScreen(
 
     var ejerciciosDisponibles by remember { mutableStateOf<List<Ejercicio>>(emptyList()) }
     var errorCargaEjercicios by remember { mutableStateOf("") }
+    var busquedaEjercicio by remember { mutableStateOf("") }
+    var filtroPilar by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(busquedaEjercicio, filtroPilar) {
         try {
             val token = tokenManager.getToken().first() ?: ""
-            val response = RetrofitClient.ejerciciosApi.listarEjercicios("Bearer $token")
+            val response = RetrofitClient.ejerciciosApi.listarEjercicios(
+                "Bearer $token",
+                busqueda = busquedaEjercicio.ifBlank { null },
+                pilar = filtroPilar
+            )
             if (response.ok && response.data != null) {
                 ejerciciosDisponibles = response.data
+                errorCargaEjercicios = ""
             } else {
                 errorCargaEjercicios = "No se pudieron cargar los ejercicios"
             }
@@ -127,7 +134,7 @@ fun CrearRutinaScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Crear Rutina") },
+                title = { Text("Nueva rutina libre") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
@@ -160,10 +167,26 @@ fun CrearRutinaScreen(
 
             item {
                 Text(
-                    text = "Ejercicios",
+                    text = "Banco de ejercicios (${ejerciciosDisponibles.size})",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground
                 )
+                OutlinedTextField(
+                    value = busquedaEjercicio,
+                    onValueChange = { busquedaEjercicio = it },
+                    label = { Text("Buscar ejercicio") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(null to "Todos", "FUERZA" to "Fuerza", "RESISTENCIA" to "Resist.", "VELOCIDAD" to "Veloc.")
+                        .forEach { (pilar, label) ->
+                            OutlinedButton(
+                                onClick = { filtroPilar = pilar },
+                                enabled = filtroPilar != pilar
+                            ) { Text(label) }
+                        }
+                }
                 if (errorCargaEjercicios.isNotEmpty()) {
                     Text(
                         text = errorCargaEjercicios,

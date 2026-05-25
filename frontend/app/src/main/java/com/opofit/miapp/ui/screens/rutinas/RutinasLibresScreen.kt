@@ -94,7 +94,7 @@ fun RutinasLibresScreen(
         contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
         topBar = {
             TopAppBar(
-                title = { Text("Rutinas Personalizadas") },
+                title = { Text("Rutinas libres") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")

@@ -7,6 +7,7 @@ import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.BloqueRutina
 import com.opofit.miapp.data.responsemodels.Oposicion
+import com.opofit.miapp.data.responsemodels.PlanSemanal
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,6 +25,7 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
         val notaActual: String = "",
         val nivelAsignado: String = "",
         val rutinaCompleta: List<BloqueRutina> = emptyList(),
+        val planSemanal: PlanSemanal? = null,
         val oposiciones: List<Oposicion> = emptyList(),
         val oposicionesLoading: Boolean = false,
         val pruebasFaltantes: Int? = null,
@@ -53,6 +55,7 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
                             notaActual = data.notaActual,
                             nivelAsignado = data.nivelAsignado,
                             rutinaCompleta = data.rutinaCompleta,
+                            planSemanal = data.planSemanal,
                             pruebasFaltantes = data.pruebasFaltantes,
                             totalPruebas = data.totalPruebas,
                             pruebasCompletadas = data.pruebasCompletadas,
