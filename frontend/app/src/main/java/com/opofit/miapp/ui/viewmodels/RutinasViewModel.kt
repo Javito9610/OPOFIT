@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import com.opofit.miapp.utils.ApiErrorParser
 import kotlinx.coroutines.launch
 
 class RutinasViewModel(application: Application) : AndroidViewModel(application) {
@@ -70,7 +71,7 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
                     _uiState.update { it.copy(isLoading = false, error = response.msg ?: "No se pudo cargar la rutina") }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Error de conexión") }
+                _uiState.update { it.copy(isLoading = false, error = ApiErrorParser.message(e)) }
             }
         }
     }

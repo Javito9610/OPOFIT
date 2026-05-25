@@ -291,9 +291,10 @@ class DbMigrationService {
       await EjerciciosCatalogoService.seedCatalogoAmpliado();
 
       const BancoPlanesImportService = require('./BancoPlanesImportService');
-      await BancoPlanesImportService.importarBancoCompleto(false);
+      const banco = await BancoPlanesImportService.importarBancoCompleto(false);
 
       console.log('[migrate] Esquema comprobado OK');
+      return { banco };
     } catch (e) {
       console.error('[migrate] Error aplicando migraciones:', e.message);
       throw e;

@@ -22,8 +22,8 @@ const getResumen = async (req, res) => {
     const data = await DashboardService.obtenerResumen(userId, idOposicion);
     res.json({ ok: true, data });
   } catch (e) {
-    console.error('Dashboard:', e.message);
-    res.status(500).json({ ok: false, msg: e.message });
+    console.error('Dashboard:', e.message, e.stack);
+    res.status(500).json({ ok: false, msg: 'No se pudo cargar el resumen' });
   }
 };
 

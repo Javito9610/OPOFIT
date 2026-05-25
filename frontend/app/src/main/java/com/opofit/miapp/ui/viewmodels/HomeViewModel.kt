@@ -7,6 +7,7 @@ import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.DashboardResumen
 import com.opofit.miapp.data.responsemodels.FeedActividadItem
+import com.opofit.miapp.utils.ApiErrorParser
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -53,7 +54,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(loading = false, error = e.message ?: "Error de conexión")
+                    it.copy(loading = false, error = ApiErrorParser.message(e))
                 }
             }
         }

@@ -78,12 +78,17 @@ const getMiEntrenamiento = async (req, res) => {
     const nivelPremiumBloqueado =
       !premium.esPremium && ['INTERMEDIO', 'AVANZADO'].includes(nivelSugerido);
 
-    const planSemanal = await PlanesService.obtenerPlanSemanal(
-      userId,
-      idOposicion,
-      nivelParaRutinas,
-      genero
-    );
+    let planSemanal = null;
+    try {
+      planSemanal = await PlanesService.obtenerPlanSemanal(
+        userId,
+        idOposicion,
+        nivelParaRutinas,
+        genero
+      );
+    } catch (planErr) {
+      console.error('planSemanal:', planErr.message);
+    }
 
     return res.status(200).json({
       ok: true,

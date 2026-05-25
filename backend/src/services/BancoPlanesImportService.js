@@ -3,7 +3,15 @@ const path = require('path');
 const db = require('../config/db');
 const RutinaService = require('./RutinasService');
 
-const JSON_PATH = path.resolve(__dirname, '../data/banco-planes-parsed.json');
+function resolveBancoJsonPath() {
+  const candidates = [
+    path.resolve(__dirname, '../../data/banco-planes-parsed.json'),
+    path.resolve(__dirname, '../data/banco-planes-parsed.json'),
+    path.join(process.cwd(), 'data/banco-planes-parsed.json')
+  ];
+  return candidates.find((p) => fs.existsSync(p)) || candidates[0];
+}
+
 const BANCO_VERSION = 2;
 
 class BancoPlanesImportService {
@@ -29,41 +37,77 @@ class BancoPlanesImportService {
   }
 
   static async ensureOposiciones(data) {
+    const DbMigrationService = require('./DbMigrationService');
+    const tieneGratis = await DbMigrationService.columnExists('oposiciones', 'incluida_gratis');
     for (const opo of data.oposiciones) {
       const [ex] = await db.query('SELECT id_oposicion FROM oposiciones WHERE id_oposicion = ?', [
         opo.idPreferido
       ]);
       if (ex.length) {
-        await db.query(
-          'UPDATE oposiciones SET nombre = ?, incluida_gratis = 1 WHERE id_oposicion = ?',
-          [opo.nombre, opo.idPreferido]
-        );
-      } else {
+        if (tieneGratis) {
+          await db.query(
+            'UPDATE oposiciones SET nombre = ?, incluida_gratis = 1 WHERE id_oposicion = ?',
+            [opo.nombre, opo.idPreferido]
+          );
+        } else {
+          await db.query('UPDATE oposiciones SET nombre = ? WHERE id_oposicion = ?', [
+            opo.nombre,
+            opo.idPreferido
+          ]);
+        }
+      } else if (tieneGratis) {
         await db.query(
           'INSERT INTO oposiciones (id_oposicion, nombre, incluida_gratis) VALUES (?, ?, 1)',
           [opo.idPreferido, opo.nombre]
         );
+      } else {
+        await db.query('INSERT INTO oposiciones (id_oposicion, nombre) VALUES (?, ?)', [
+          opo.idPreferido,
+          opo.nombre
+        ]);
       }
     }
   }
 
   static async importarBancoCompleto(force = false) {
-    const [[meta]] = await db.query(
-      `SELECT valor FROM app_meta WHERE clave = 'banco_planes_version' LIMIT 1`
-    ).catch(() => [[null]]);
+    let meta = null;
+    try {
+      const [rows] = await db.query(
+        `SELECT valor FROM app_meta WHERE clave = 'banco_planes_version' LIMIT 1`
+      );
+      meta = rows[0];
+    } catch (_) {
+      /* app_meta puede no existir aún */
+    }
 
     if (!force && meta?.valor === String(BANCO_VERSION)) {
-      return { skipped: true, version: BANCO_VERSION };
+      const [[{ n }]] = await db.query(
+        `SELECT COUNT(*) AS n FROM planes_entrenamiento WHERE fuente = 'opofit_banco_planes'`
+      );
+      if (Number(n) > 0) {
+        return { skipped: true, version: BANCO_VERSION };
+      }
+      console.warn('[banco] Versión marcada pero sin planes; reimportando…');
     }
 
-    if (!fs.existsSync(JSON_PATH)) {
-      throw new Error(`Falta ${JSON_PATH}. Ejecuta: node scripts/parse-banco-planes.js`);
+    const jsonPath = resolveBancoJsonPath();
+    if (!fs.existsSync(jsonPath)) {
+      console.error(`[banco] No se encuentra banco-planes-parsed.json (buscado en ${jsonPath})`);
+      return { skipped: true, error: 'JSON_NOT_FOUND' };
     }
-    const data = JSON.parse(fs.readFileSync(JSON_PATH, 'utf8'));
+
+    const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
     await BancoPlanesImportService.ensureOposiciones(data);
 
-    await db.query('DELETE pde FROM plan_dia_ejercicios pde INNER JOIN plan_dias pd ON pde.plan_dias_id = pd.id_plan_dia');
-    await db.query('DELETE FROM plan_dias');
+    const DbMigrationService = require('./DbMigrationService');
+    if (await DbMigrationService.tableExists('plan_dia_ejercicios')) {
+      await db.query(
+        'DELETE pde FROM plan_dia_ejercicios pde INNER JOIN plan_dias pd ON pde.plan_dias_id = pd.id_plan_dia'
+      );
+    }
+    if (await DbMigrationService.tableExists('plan_dias')) {
+      await db.query('DELETE FROM plan_dias');
+    }
     await db.query('DELETE FROM planes_entrenamiento WHERE fuente = ?', ['opofit_banco_planes']);
 
     let totalEjercicios = 0;
@@ -121,7 +165,7 @@ class BancoPlanesImportService {
               dia.orden,
               dia.enfoque,
               idRutinaOpo,
-              dia.titulo || dia.descripcion?.slice(0, 200),
+              String(dia.titulo || dia.descripcion || 'Sesión').slice(0, 200),
               dia.descripcion
             ]
           );

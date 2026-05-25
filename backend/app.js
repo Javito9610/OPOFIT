@@ -59,14 +59,20 @@ if (process.env.NOTIFICATIONS_CRON === 'true') {
 const DbMigrationService = require('./src/services/DbMigrationService');
 
 async function start() {
-  try {
-    await DbMigrationService.runOnStartup();
-  } catch (e) {
-    console.error('No se pudo aplicar migraciones de BD:', e.message);
-  }
   app.listen(port, () => {
     console.log(`Servidor ejecutandose en http://localhost:${port}`);
   });
+  DbMigrationService.runOnStartup()
+    .then((r) => {
+      if (r?.banco?.error === 'JSON_NOT_FOUND') {
+        console.error('[startup] Banco de planes: JSON no encontrado en el despliegue');
+      } else if (r?.banco && !r.banco.skipped) {
+        console.log('[startup] Banco de planes importado:', r.banco.dias, 'días');
+      }
+    })
+    .catch((e) => {
+      console.error('No se pudo aplicar migraciones de BD:', e.message);
+    });
 }
 
 start();

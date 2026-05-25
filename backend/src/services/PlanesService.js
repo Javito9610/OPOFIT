@@ -5,17 +5,19 @@ const BancoPlanesImportService = require('./BancoPlanesImportService');
 const NOMBRES_DIA = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
 class PlanesService {
-  static async ensureBancoCargado() {
-    await BancoPlanesImportService.importarBancoCompleto(false);
+  static normalizarGenero(genero) {
+    const g = String(genero || '').toUpperCase();
+    return g.includes('MUJER') ? 'MUJER' : 'HOMBRE';
   }
 
   static async obtenerPlanId(idOposicion, nivel, genero) {
+    const generoDb = PlanesService.normalizarGenero(genero);
     const [rows] = await db.query(
       `SELECT id_plan FROM planes_entrenamiento
        WHERE oposiciones_id_oposicion = ? AND nivel = ? AND genero = ?
          AND fuente = 'opofit_banco_planes'
        LIMIT 1`,
-      [idOposicion, nivel, genero]
+      [idOposicion, nivel, generoDb]
     );
     return rows[0]?.id_plan ?? null;
   }
@@ -98,7 +100,6 @@ class PlanesService {
   }
 
   static async obtenerPlanSemanal(userId, idOposicion, nivel, genero) {
-    await PlanesService.ensureBancoCargado();
     const idPlan = await PlanesService.obtenerPlanId(idOposicion, nivel, genero);
     if (!idPlan) return null;
 

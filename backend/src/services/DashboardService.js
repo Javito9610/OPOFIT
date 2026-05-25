@@ -81,12 +81,17 @@ class DashboardService {
         !premium.esPremium && nivelInfo.nivelSugerido !== 'BASICO'
           ? 'BASICO'
           : nivelInfo.nivelSugerido;
-      const plan = await PlanesService.obtenerPlanSemanal(
-        userId,
-        idOposicion,
-        nivelPlan,
-        nivelInfo.genero
-      );
+      let plan = null;
+      try {
+        plan = await PlanesService.obtenerPlanSemanal(
+          userId,
+          idOposicion,
+          nivelPlan,
+          nivelInfo.genero
+        );
+      } catch (planErr) {
+        console.error('Dashboard planSemanal:', planErr.message);
+      }
       const sesion = plan?.sesion_hoy || plan?.proxima_sesion;
       if (sesion) {
         entrenoHoy = {
