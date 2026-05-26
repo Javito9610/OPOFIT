@@ -287,6 +287,40 @@ class DbMigrationService {
         'TINYINT(1) NOT NULL DEFAULT 1'
       );
 
+      await DbMigrationService.addColumnIfMissing(
+        'historial_sesiones',
+        'gps_actividad_uuid',
+        'VARCHAR(64) NULL'
+      );
+
+      await DbMigrationService.addColumnIfMissing(
+        'historial_sesiones',
+        'gps_actividad_uuid',
+        'VARCHAR(64) NULL'
+      );
+
+      if (!(await DbMigrationService.tableExists('integraciones_oauth'))) {
+        await db.query(`
+          CREATE TABLE integraciones_oauth (
+            id_integracion INT NOT NULL AUTO_INCREMENT,
+            usuarios_id_usuario INT NOT NULL,
+            provider ENUM('STRAVA','POLAR') NOT NULL,
+            external_user_id VARCHAR(64) NULL,
+            access_token VARCHAR(255) NOT NULL,
+            refresh_token VARCHAR(255) NULL,
+            expires_at BIGINT NULL,
+            scope VARCHAR(255) NULL,
+            last_sync_at TIMESTAMP NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_integracion),
+            UNIQUE KEY uniq_user_provider (usuarios_id_usuario, provider),
+            CONSTRAINT fk_integ_usuario FOREIGN KEY (usuarios_id_usuario) REFERENCES usuarios (id_usuario) ON DELETE CASCADE
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla integraciones_oauth creada');
+      }
+
       if (!(await DbMigrationService.tableExists('gps_actividades'))) {
         await db.query(`
           CREATE TABLE gps_actividades (
@@ -319,6 +353,17 @@ class DbMigrationService {
         `);
         console.log('[migrate] tabla gps_actividades creada');
       }
+
+      await DbMigrationService.addColumnIfMissing(
+        'gps_actividades',
+        'origen',
+        "VARCHAR(24) NOT NULL DEFAULT 'LOCAL'"
+      );
+      await DbMigrationService.addColumnIfMissing(
+        'gps_actividades',
+        'external_id',
+        'VARCHAR(64) NULL'
+      );
 
       const EjerciciosCatalogoService = require('./EjerciciosCatalogoService');
       await EjerciciosCatalogoService.seedCatalogoAmpliado();

@@ -91,6 +91,8 @@ class TokenManager(private val context: Context) {
 
     suspend fun savePeso(peso: String) {
         context.dataStore.edit { preferences -> preferences[USER_PESO_KEY] = peso }
+        val kg = peso.replace(",", ".").toDoubleOrNull()
+        com.opofit.miapp.gps.service.WeightPreferences.save(context, kg)
     }
 
     fun getPeso(): Flow<String?> = context.dataStore.data.map { preferences -> preferences[USER_PESO_KEY] }

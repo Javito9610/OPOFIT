@@ -10,7 +10,8 @@ data class RegistrarHistorialRequest(
     val tipoRutina: String,
     val idRutina: Int,
     val duracion: Int,
-    val ejercicios: List<EjercicioRealizado>
+    val ejercicios: List<EjercicioRealizado>,
+    val gpsActividadUuid: String? = null
 )
 
 data class RegistrarHistorialResponse(

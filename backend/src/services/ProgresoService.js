@@ -48,16 +48,21 @@ class ProgresoService {
       tipoRutina,
       idRutina,
       duracion,
-      ejercicios
+      ejercicios,
+      gpsActividadUuid = null
     } = datos;
     const recordsRotos = await ProgresoService.detectarRecords(userId, ejercicios);
     const connection = await db.getConnection();
     try {
       await connection.beginTransaction();
-      const sqlHistorial = `INSERT INTO historial_sesiones 
-                (fecha_entreno, tipo_rutina, duracion_oficial, usuarios_id_usuario, ${tipoRutina === 'OPO' ? 'rutinas_opo_id_rutina_opo' : 'rutinas_pers_id_rutina_pers'})
-                VALUES (NOW(), ?, ?, ?, ?)`;
-      const [resHistorial] = await connection.query(sqlHistorial, [tipoRutina, duracion, userId, idRutina]);
+      const rutinaCol = tipoRutina === 'OPO' ? 'rutinas_opo_id_rutina_opo' : 'rutinas_pers_id_rutina_pers';
+      const sqlHistorial = `INSERT INTO historial_sesiones
+                (fecha_entreno, tipo_rutina, duracion_oficial, usuarios_id_usuario, ${rutinaCol}, gps_actividad_uuid)
+                VALUES (NOW(), ?, ?, ?, ?, ?)`;
+      const [resHistorial] = await connection.query(
+        sqlHistorial,
+        [tipoRutina, duracion, userId, idRutina, gpsActividadUuid]
+      );
       const idHistorial = resHistorial.insertId;
       const sqlResultados = `
                 INSERT INTO registro_resultados 

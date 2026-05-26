@@ -44,4 +44,6 @@ object RetrofitClient {
     val dashboardApi: DashboardApi by lazy { retrofit.create(DashboardApi::class.java) }
     val planesApi: PlanesApi by lazy { retrofit.create(PlanesApi::class.java) }
     val gpsApi: GpsApi by lazy { retrofit.create(GpsApi::class.java) }
+    val historialAvanzadoApi: HistorialAvanzadoApi by lazy { retrofit.create(HistorialAvanzadoApi::class.java) }
+    val integracionesApi: IntegracionesApi by lazy { retrofit.create(IntegracionesApi::class.java) }
 }

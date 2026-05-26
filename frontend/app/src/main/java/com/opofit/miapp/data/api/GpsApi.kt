@@ -32,11 +32,20 @@ data class GpsActivityPayload(
     val minPaceSecPerKm: Double,
     val maxPaceSecPerKm: Double,
     val elevationGainM: Double,
+    val elevationLossM: Double,
     val elevationMinM: Double?,
     val elevationMaxM: Double?,
     val avgCadenceSpm: Double?,
+    val maxCadenceSpm: Int?,
+    val avgHrBpm: Int?,
+    val maxHrBpm: Int?,
+    val minHrBpm: Int?,
+    val kcal: Int?,
     val points: List<Map<String, Any?>>,
-    val splits: List<Map<String, Any?>>
+    val splits: List<Map<String, Any?>>,
+    val splitsMile: List<Map<String, Any?>>,
+    val splitsTime: List<Map<String, Any?>>,
+    val bestSegments: List<Map<String, Any?>>
 )
 
 interface GpsApi {

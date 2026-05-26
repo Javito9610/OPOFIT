@@ -1,6 +1,5 @@
 package com.opofit.miapp.gps.ui
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,11 +16,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,10 +39,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -59,10 +58,27 @@ import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.opofit.miapp.gps.model.ActivitySummary
 import com.opofit.miapp.gps.model.SplitKm
+import com.opofit.miapp.gps.model.SplitMile
+import com.opofit.miapp.gps.model.SplitTime
 import com.opofit.miapp.gps.util.GpsMetrics
+import com.opofit.miapp.gps.util.GpxExport
+import com.opofit.miapp.ui.components.LineAreaChart
+import com.opofit.miapp.ui.components.MetricBadge
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
+private val SpeedPalette = listOf(
+    Color(0xFFB71C1C),
+    Color(0xFFEF6C00),
+    Color(0xFFFBC02D),
+    Color(0xFF388E3C),
+    Color(0xFF1565C0)
+)
+
+private enum class SplitMode(val label: String) {
+    KM("Por km"), MILE("Por milla"), TIME("Cada 5 min")
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,6 +89,7 @@ fun GpsActivityDetailScreen(
 ) {
     val activity: ActivitySummary? = remember(activityId) { viewModel.get(activityId) }
     var showDelete by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     if (activity == null) {
         Scaffold(
@@ -119,7 +136,7 @@ fun GpsActivityDetailScreen(
                     Column {
                         Text("${activity.type.emoji} ${activity.type.display}", fontWeight = FontWeight.SemiBold)
                         Text(
-                            SimpleDateFormat("EEEE d MMM · HH:mm", Locale("es", "ES"))
+                            SimpleDateFormat("EEEE d MMM · HH:mm", Locale.forLanguageTag("es-ES"))
                                 .format(Date(activity.startedAtMs)),
                             style = MaterialTheme.typography.labelSmall
                         )
@@ -131,6 +148,16 @@ fun GpsActivityDetailScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = {
+                        val intent = GpxExport.shareIntent(context, activity)
+                        if (intent != null) {
+                            context.startActivity(
+                                android.content.Intent.createChooser(intent, "Compartir GPX")
+                            )
+                        }
+                    }) {
+                        Icon(Icons.Filled.Share, "Compartir GPX")
+                    }
                     IconButton(onClick = { showDelete = true }) {
                         Icon(Icons.Filled.Delete, "Borrar")
                     }
@@ -152,20 +179,17 @@ fun GpsActivityDetailScreen(
             item { RouteMap(activity) }
             item { OverviewCard(activity) }
             item { MetricsGrid(activity) }
+            if (activity.bestSegments.isNotEmpty()) {
+                item { BestSegmentsCard(activity) }
+            }
             if (activity.points.any { it.altitude != null }) {
                 item { ElevationChartCard(activity) }
             }
-            item { PaceChartCard(activity) }
-            if (activity.splits.isNotEmpty()) {
-                item {
-                    Text(
-                        "Parciales por km",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-                items(activity.splits) { split -> SplitRow(split) }
+            if (activity.points.any { it.hrBpm != null }) {
+                item { HrChartCard(activity) }
             }
+            item { PaceChartCard(activity) }
+            item { SplitsCard(activity) }
         }
     }
 }
@@ -173,6 +197,7 @@ fun GpsActivityDetailScreen(
 @Composable
 private fun RouteMap(activity: ActivitySummary) {
     val pts = remember(activity.id) { activity.points.map { LatLng(it.lat, it.lng) } }
+    val buckets = remember(activity.id) { GpsMetrics.colorBucketsBySpeed(activity.points) }
     val cameraPositionState = rememberCameraPositionState {
         val first = pts.firstOrNull() ?: LatLng(40.4168, -3.7038)
         position = CameraPosition.fromLatLngZoom(first, 14f)
@@ -187,28 +212,63 @@ private fun RouteMap(activity: ActivitySummary) {
         }
     }
     Card(modifier = Modifier.fillMaxWidth()) {
-        Box(modifier = Modifier.fillMaxWidth().height(220.dp)) {
-            GoogleMap(
-                modifier = Modifier.fillMaxSize(),
-                cameraPositionState = cameraPositionState,
-                properties = MapProperties(mapType = MapType.NORMAL),
-                uiSettings = MapUiSettings(
-                    zoomControlsEnabled = false,
-                    compassEnabled = false,
-                    scrollGesturesEnabled = false,
-                    zoomGesturesEnabled = false
-                )
-            ) {
-                if (pts.size >= 2) {
-                    Polyline(points = pts, color = Color(0xFF1565C0), width = 10f)
-                    Marker(state = MarkerState(pts.first()), title = "Inicio")
-                    Marker(state = MarkerState(pts.last()), title = "Fin")
+        Column {
+            Box(modifier = Modifier.fillMaxWidth().height(240.dp)) {
+                GoogleMap(
+                    modifier = Modifier.fillMaxSize(),
+                    cameraPositionState = cameraPositionState,
+                    properties = MapProperties(mapType = MapType.NORMAL),
+                    uiSettings = MapUiSettings(
+                        zoomControlsEnabled = false,
+                        compassEnabled = false,
+                        scrollGesturesEnabled = false,
+                        zoomGesturesEnabled = false
+                    )
+                ) {
+                    if (pts.size >= 2) {
+                        // Pintamos la polilínea por segmentos coloreada según velocidad.
+                        val segCount = (pts.size - 1).coerceAtMost(buckets.size - 1)
+                        for (i in 0 until segCount) {
+                            val bucket = buckets.getOrNull(i + 1)?.coerceIn(0, SpeedPalette.size - 1) ?: 2
+                            Polyline(
+                                points = listOf(pts[i], pts[i + 1]),
+                                color = SpeedPalette[bucket],
+                                width = 12f
+                            )
+                        }
+                        Marker(state = MarkerState(pts.first()), title = "Inicio")
+                        Marker(state = MarkerState(pts.last()), title = "Fin")
+                    }
+                }
+                if (pts.isEmpty()) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Sin trazado GPS", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
-            if (pts.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            if (pts.size >= 2) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        "Sin trazado GPS",
+                        "Color por velocidad",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        SpeedPalette.forEach { c ->
+                            Box(
+                                Modifier
+                                    .size(width = 24.dp, height = 6.dp)
+                                    .background(c, MaterialTheme.shapes.small)
+                            )
+                        }
+                    }
+                    Text(
+                        "lento → rápido",
+                        style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -231,6 +291,13 @@ private fun OverviewCard(a: ActivitySummary) {
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            a.kcal?.takeIf { it > 0 }?.let {
+                Text(
+                    "$it kcal estimadas",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
         }
     }
 }
@@ -239,47 +306,69 @@ private fun OverviewCard(a: ActivitySummary) {
 private fun MetricsGrid(a: ActivitySummary) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            MetricCard("Velocidad media", GpsMetrics.formatSpeedKmh(a.avgSpeedMps), Modifier.weight(1f))
-            MetricCard("Vel. máxima", GpsMetrics.formatSpeedKmh(a.maxSpeedMps), Modifier.weight(1f))
+            MetricBadge("Velocidad media", GpsMetrics.formatSpeedKmh(a.avgSpeedMps), Modifier.weight(1f))
+            MetricBadge("Vel. máxima", GpsMetrics.formatSpeedKmh(a.maxSpeedMps), Modifier.weight(1f))
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            MetricCard("Ritmo mejor", "${GpsMetrics.formatPace(a.minPaceSecPerKm)}/km", Modifier.weight(1f))
-            MetricCard("Ritmo peor", "${GpsMetrics.formatPace(a.maxPaceSecPerKm)}/km", Modifier.weight(1f))
+            MetricBadge("Ritmo mejor", "${GpsMetrics.formatPace(a.minPaceSecPerKm)}/km", Modifier.weight(1f))
+            MetricBadge("Ritmo peor", "${GpsMetrics.formatPace(a.maxPaceSecPerKm)}/km", Modifier.weight(1f))
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            MetricCard(
+            MetricBadge(
                 "Altitud máx",
                 a.elevationMaxM?.let { "${it.toInt()} m" } ?: "—",
                 Modifier.weight(1f)
             )
-            MetricCard(
+            MetricBadge(
                 "Altitud mín",
                 a.elevationMinM?.let { "${it.toInt()} m" } ?: "—",
                 Modifier.weight(1f)
             )
-            MetricCard(
-                "Desnivel +",
-                "${a.elevationGainM.toInt()} m",
-                Modifier.weight(1f)
-            )
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            MetricBadge("Desnivel +", "${a.elevationGainM.toInt()} m", Modifier.weight(1f))
+            MetricBadge("Desnivel −", "${a.elevationLossM.toInt()} m", Modifier.weight(1f))
+        }
+        if (a.avgHrBpm != null || a.maxHrBpm != null) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                MetricBadge("♥ medio", a.avgHrBpm?.let { "$it bpm" } ?: "—", Modifier.weight(1f))
+                MetricBadge("♥ máx", a.maxHrBpm?.let { "$it bpm" } ?: "—", Modifier.weight(1f))
+                MetricBadge("♥ mín", a.minHrBpm?.let { "$it bpm" } ?: "—", Modifier.weight(1f))
+            }
         }
         a.avgCadenceSpm?.let {
-            MetricCard("Cadencia media", "${it.toInt()} ppm", Modifier.fillMaxWidth())
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                MetricBadge("Cadencia media", "${it.toInt()} ppm", Modifier.weight(1f))
+                a.maxCadenceSpm?.let { mx ->
+                    MetricBadge("Cadencia máx", "$mx ppm", Modifier.weight(1f))
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun MetricCard(label: String, value: String, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
-    ) {
-        Column(Modifier.padding(12.dp)) {
-            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+private fun BestSegmentsCard(a: ActivitySummary) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                "Mejores parciales",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            a.bestSegments.forEach { seg ->
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(seg.label, style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        "${GpsMetrics.formatDuration(seg.durationSec)}  ·  ${GpsMetrics.formatPace(seg.paceSecPerKm)}/km",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
         }
     }
 }
@@ -288,23 +377,51 @@ private fun MetricCard(label: String, value: String, modifier: Modifier = Modifi
 private fun ElevationChartCard(activity: ActivitySummary) {
     val altitudes = remember(activity.id) { activity.points.mapNotNull { it.altitude } }
     if (altitudes.size < 2) return
-    val minA = altitudes.min()
-    val maxA = altitudes.max()
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp)) {
             Text("Altitud", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             Text(
-                "${minA.toInt()} – ${maxA.toInt()} m  ·  desnivel +${activity.elevationGainM.toInt()} m",
+                "${altitudes.min().toInt()} – ${altitudes.max().toInt()} m · +${activity.elevationGainM.toInt()} / −${activity.elevationLossM.toInt()} m",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            LineChart(
+            LineAreaChart(
                 values = altitudes,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp)
+                    .height(140.dp)
                     .padding(top = 8.dp),
-                strokeColor = Color(0xFF2E7D32)
+                lineColor = Color(0xFF2E7D32),
+                fillTop = Color(0xFF2E7D32).copy(alpha = 0.35f),
+                fillBottom = Color(0xFF2E7D32).copy(alpha = 0.05f),
+                yFormatter = { "${it.toInt()}m" }
+            )
+        }
+    }
+}
+
+@Composable
+private fun HrChartCard(activity: ActivitySummary) {
+    val hrs = remember(activity.id) { activity.points.mapNotNull { it.hrBpm?.toDouble() } }
+    if (hrs.size < 2) return
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp)) {
+            Text("Pulso", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(
+                "${activity.minHrBpm ?: hrs.min().toInt()} – ${activity.maxHrBpm ?: hrs.max().toInt()} bpm · medio ${activity.avgHrBpm ?: hrs.average().toInt()} bpm",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            LineAreaChart(
+                values = hrs,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(140.dp)
+                    .padding(top = 8.dp),
+                lineColor = Color(0xFFD32F2F),
+                fillTop = Color(0xFFD32F2F).copy(alpha = 0.35f),
+                fillBottom = Color(0xFFD32F2F).copy(alpha = 0.0f),
+                yFormatter = { "${it.toInt()}" }
             )
         }
     }
@@ -312,96 +429,154 @@ private fun ElevationChartCard(activity: ActivitySummary) {
 
 @Composable
 private fun PaceChartCard(activity: ActivitySummary) {
-    val splits = activity.splits.filter { it.paceSecPerKm > 0 }
-    if (splits.size < 2) {
-        if (activity.points.size >= 4) {
-            val speeds = activity.points.mapNotNull { it.speedMps?.toDouble() }
-            if (speeds.size >= 4) {
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(14.dp)) {
-                        Text(
-                            "Velocidad",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        LineChart(
-                            values = speeds.map { it * 3.6 },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(120.dp)
-                                .padding(top = 8.dp),
-                            strokeColor = Color(0xFF1565C0)
-                        )
-                    }
+    val paceValues = activity.splits.filter { it.paceSecPerKm > 0 }.map { it.paceSecPerKm }
+    if (paceValues.size >= 2) {
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(14.dp)) {
+                Text("Ritmo por km", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                LineAreaChart(
+                    values = paceValues,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp)
+                        .padding(top = 8.dp),
+                    lineColor = Color(0xFF6A1B9A),
+                    fillTop = Color(0xFF6A1B9A).copy(alpha = 0.3f),
+                    fillBottom = Color(0xFF6A1B9A).copy(alpha = 0.0f),
+                    invertY = true,
+                    yFormatter = { GpsMetrics.formatPace(it) },
+                    xLabels = activity.splits.map { "km${it.km}" }
+                )
+            }
+        }
+    } else {
+        val speeds = activity.points.mapNotNull { it.speedMps?.toDouble() }
+        if (speeds.size >= 4) {
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(14.dp)) {
+                    Text("Velocidad", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    LineAreaChart(
+                        values = speeds.map { it * 3.6 },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp)
+                            .padding(top = 8.dp),
+                        lineColor = Color(0xFF1565C0),
+                        yFormatter = { "%.1f".format(it) }
+                    )
                 }
             }
         }
-        return
-    }
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(14.dp)) {
-            Text("Ritmo por km", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            LineChart(
-                values = splits.map { it.paceSecPerKm },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp)
-                    .padding(top = 8.dp),
-                strokeColor = Color(0xFF6A1B9A),
-                invert = true
-            )
-        }
     }
 }
 
 @Composable
-private fun LineChart(
-    values: List<Double>,
-    modifier: Modifier = Modifier,
-    strokeColor: Color,
-    invert: Boolean = false
-) {
-    if (values.size < 2) return
-    val minV = values.min()
-    val maxV = values.max()
-    val range = (maxV - minV).coerceAtLeast(0.0001)
-    Box(modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))) {
-        Canvas(modifier = Modifier.fillMaxSize().padding(8.dp)) {
-            val path = Path()
-            val w = size.width
-            val h = size.height
-            values.forEachIndexed { i, v ->
-                val x = if (values.size == 1) w / 2 else w * i / (values.size - 1)
-                val normalized = ((v - minV) / range).toFloat().coerceIn(0f, 1f)
-                val y = if (invert) normalized * h else (1f - normalized) * h
-                if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+private fun SplitsCard(activity: ActivitySummary) {
+    val hasKm = activity.splits.isNotEmpty()
+    val hasMile = activity.splitsMile.isNotEmpty()
+    val hasTime = activity.splitsTime.isNotEmpty()
+    if (!hasKm && !hasMile && !hasTime) return
+    var mode by remember {
+        mutableStateOf(
+            when {
+                hasKm -> SplitMode.KM
+                hasMile -> SplitMode.MILE
+                else -> SplitMode.TIME
             }
-            drawPath(path, color = strokeColor, style = Stroke(width = 4f))
-            val firstX = 0f
-            val firstNorm = ((values.first() - minV) / range).toFloat().coerceIn(0f, 1f)
-            val firstY = if (invert) firstNorm * h else (1f - firstNorm) * h
-            drawCircle(strokeColor, radius = 4f, center = Offset(firstX, firstY))
+        )
+    }
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Parciales", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                if (hasKm) FilterChip(
+                    selected = mode == SplitMode.KM,
+                    onClick = { mode = SplitMode.KM },
+                    label = { Text(SplitMode.KM.label) }
+                )
+                if (hasMile) FilterChip(
+                    selected = mode == SplitMode.MILE,
+                    onClick = { mode = SplitMode.MILE },
+                    label = { Text(SplitMode.MILE.label) }
+                )
+                if (hasTime) FilterChip(
+                    selected = mode == SplitMode.TIME,
+                    onClick = { mode = SplitMode.TIME },
+                    label = { Text(SplitMode.TIME.label) }
+                )
+            }
+            HorizontalDivider()
+            when (mode) {
+                SplitMode.KM -> activity.splits.forEach { SplitKmRow(it) }
+                SplitMode.MILE -> activity.splitsMile.forEach { SplitMileRow(it) }
+                SplitMode.TIME -> activity.splitsTime.forEach { SplitTimeRow(it) }
+            }
         }
     }
 }
 
 @Composable
-private fun SplitRow(split: SplitKm) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+private fun SplitKmRow(split: SplitKm) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+    ) {
         Row(
-            Modifier.padding(12.dp),
+            Modifier.padding(10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("KM ${split.km}", fontWeight = FontWeight.SemiBold, modifier = Modifier.size(width = 70.dp, height = 24.dp))
-            Text(GpsMetrics.formatDuration(split.durationSec))
-            Text("${GpsMetrics.formatPace(split.paceSecPerKm)}/km", fontWeight = FontWeight.SemiBold)
+            Text("KM ${split.km}", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            Text(GpsMetrics.formatDuration(split.durationSec), modifier = Modifier.weight(1f))
             Text(
-                "+${split.elevationGainM.toInt()} m",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.labelSmall
+                "${GpsMetrics.formatPace(split.paceSecPerKm)}/km",
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1.2f)
+            )
+            split.avgHrBpm?.let {
+                Text("♥$it", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SplitMileRow(split: SplitMile) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+    ) {
+        Row(
+            Modifier.padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Milla ${split.mile}", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            Text(GpsMetrics.formatDuration(split.durationSec), modifier = Modifier.weight(1f))
+            val paceSecPerKm = split.durationSec / 1.609344
+            Text("${GpsMetrics.formatPace(paceSecPerKm)}/km", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1.2f))
+        }
+    }
+}
+
+@Composable
+private fun SplitTimeRow(split: SplitTime) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+    ) {
+        Row(
+            Modifier.padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Bloque ${split.index}", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            Text(GpsMetrics.formatDistance(split.distanceM), modifier = Modifier.weight(1f))
+            Text(
+                "${GpsMetrics.formatPace(split.avgPaceSecPerKm)}/km",
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1.2f)
             )
         }
-        HorizontalDivider()
     }
 }

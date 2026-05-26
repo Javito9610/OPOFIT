@@ -36,4 +36,10 @@ object NavDestinations {
     const val GPS_HUB = "gps_hub"
     const val GPS_RECORDING = "gps_recording"
     const val GPS_ACTIVITY_DETAIL = "gps_activity/{activity_id}"
+
+    const val HISTORIAL_SESION_DETALLE = "historial_sesion/{sesion_id}"
+    const val HISTORIAL_EJERCICIO = "historial_ejercicio/{ejercicio_id}"
+    const val HISTORIAL_PLAN = "historial_plan/{plan_id}"
+
+    const val MIS_DISPOSITIVOS = "mis_dispositivos"
 }

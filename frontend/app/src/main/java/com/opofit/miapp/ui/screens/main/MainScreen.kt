@@ -49,6 +49,10 @@ fun MainScreen(
     onNavigateToComunidad: () -> Unit,
     onNavigateToPremium: () -> Unit,
     onNavigateToGps: () -> Unit,
+    onNavigateToSesionDetalle: (Int) -> Unit,
+    onNavigateToEjercicioHistorial: (Int) -> Unit,
+    onNavigateToPlanHistorial: (Int) -> Unit,
+    onNavigateToMisDispositivos: () -> Unit,
     onLogout: () -> Unit
 ) {
     val innerNavController = rememberNavController()
@@ -127,6 +131,7 @@ fun MainScreen(
                     onNavigateToComunidad = onNavigateToComunidad,
                     onNavigateToPremium = onNavigateToPremium,
                     onNavigateToGps = onNavigateToGps,
+                    onNavigateToMisDispositivos = onNavigateToMisDispositivos,
                     onLogout = onLogout,
                     userName = authState.userName,
                     oposicionId = authState.oposicionId ?: 1
@@ -144,7 +149,8 @@ fun MainScreen(
                     },
                     onNavigateToEntrenamientos = { e, p, r -> onNavigateToEntrenamientos(e, p, r) },
                     onNavigateToRutinasLibres = onNavigateToRutinasLibres,
-                    onNavigateToEditarPerfil = onNavigateToEditarPerfil
+                    onNavigateToEditarPerfil = onNavigateToEditarPerfil,
+                    onNavigateToPlanHistorial = onNavigateToPlanHistorial
                 )
             }
 
@@ -169,7 +175,10 @@ fun MainScreen(
                             popUpTo(innerNavController.graph.findStartDestination().id) { saveState = true }
                             launchSingleTop = true; restoreState = true
                         }
-                    }
+                    },
+                    onOpenSesion = onNavigateToSesionDetalle,
+                    onOpenEjercicio = onNavigateToEjercicioHistorial,
+                    onOpenPlan = onNavigateToPlanHistorial
                 )
             }
         }

@@ -10,6 +10,10 @@ import com.opofit.miapp.gps.ui.GpsActivityDetailScreen
 import com.opofit.miapp.gps.ui.GpsHubScreen
 import com.opofit.miapp.gps.ui.GpsRecordingScreen
 import com.opofit.miapp.ui.screens.ajustes.AjustesScreen
+import com.opofit.miapp.ui.screens.historial.EjercicioHistorialScreen
+import com.opofit.miapp.ui.screens.historial.PlanHistorialScreen
+import com.opofit.miapp.ui.screens.historial.SesionDetalleScreen
+import com.opofit.miapp.ui.screens.integraciones.MisDispositivosScreen
 import com.opofit.miapp.ui.screens.auth.LoginScreen
 import com.opofit.miapp.ui.screens.auth.RegisterScreen
 import com.opofit.miapp.ui.screens.entrenamientos.EntrenamientosScreen
@@ -110,6 +114,18 @@ fun AppNavigation(
                 onNavigateToGps = {
                     navController.navigate(NavDestinations.GPS_HUB)
                 },
+                onNavigateToSesionDetalle = { id ->
+                    navController.navigate("historial_sesion/$id")
+                },
+                onNavigateToEjercicioHistorial = { id ->
+                    navController.navigate("historial_ejercicio/$id")
+                },
+                onNavigateToPlanHistorial = { id ->
+                    navController.navigate("historial_plan/$id")
+                },
+                onNavigateToMisDispositivos = {
+                    navController.navigate(NavDestinations.MIS_DISPOSITIVOS)
+                },
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate(NavDestinations.LOGIN) {
@@ -168,7 +184,8 @@ fun AppNavigation(
                 rutinaId = rutinaId,
                 authViewModel = authViewModel,
                 onNavigateBack = { navController.popBackStack() },
-                onEntrenamientoFinalizado = { navController.popBackStack() }
+                onEntrenamientoFinalizado = { navController.popBackStack() },
+                onNavigateToGps = { navController.navigate(NavDestinations.GPS_HUB) }
             )
         }
 
@@ -296,6 +313,49 @@ fun AppNavigation(
             val id = backStackEntry.arguments?.getString("activity_id") ?: ""
             GpsActivityDetailScreen(
                 activityId = id,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = NavDestinations.HISTORIAL_SESION_DETALLE,
+            arguments = listOf(navArgument("sesion_id") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getInt("sesion_id") ?: 0
+            SesionDetalleScreen(
+                sesionId = id,
+                onNavigateBack = { navController.popBackStack() },
+                onOpenEjercicio = { idEj -> navController.navigate("historial_ejercicio/$idEj") },
+                onOpenPlan = { idPlan -> navController.navigate("historial_plan/$idPlan") },
+                onOpenGpsActividad = { uuid -> navController.navigate("gps_activity/$uuid") }
+            )
+        }
+
+        composable(
+            route = NavDestinations.HISTORIAL_EJERCICIO,
+            arguments = listOf(navArgument("ejercicio_id") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getInt("ejercicio_id") ?: 0
+            EjercicioHistorialScreen(
+                idEjercicio = id,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = NavDestinations.HISTORIAL_PLAN,
+            arguments = listOf(navArgument("plan_id") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getInt("plan_id") ?: 0
+            PlanHistorialScreen(
+                idPlan = id,
+                onNavigateBack = { navController.popBackStack() },
+                onOpenSesion = { idSes -> navController.navigate("historial_sesion/$idSes") }
+            )
+        }
+
+        composable(NavDestinations.MIS_DISPOSITIVOS) {
+            MisDispositivosScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

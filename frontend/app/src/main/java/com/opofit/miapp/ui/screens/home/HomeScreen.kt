@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -86,6 +87,7 @@ fun HomeScreen(
     onNavigateToComunidad: () -> Unit = {},
     onNavigateToPremium: () -> Unit = {},
     onNavigateToGps: () -> Unit = {},
+    onNavigateToMisDispositivos: () -> Unit = {},
     onLogout: () -> Unit,
     userName: String? = null,
     oposicionId: Int = 1,
@@ -108,7 +110,8 @@ fun HomeScreen(
         QuickLink("Ranking", "Clasificación", Icons.Filled.Leaderboard, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, onNavigateToRanking),
         QuickLink("Comunidad", "Amigos", Icons.Filled.Groups, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToComunidad),
         QuickLink("Premium", "Más ventajas", Icons.Filled.Star, MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer, onNavigateToPremium),
-        QuickLink("Rutas GPS", "Carrera · Bici · Paseo", Icons.Filled.Explore, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary, onNavigateToGps)
+        QuickLink("Rutas GPS", "Carrera · Bici · Paseo", Icons.Filled.Explore, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary, onNavigateToGps),
+        QuickLink("Dispositivos", "Reloj y banda", Icons.Filled.Watch, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, onNavigateToMisDispositivos)
     )
 
     Scaffold(

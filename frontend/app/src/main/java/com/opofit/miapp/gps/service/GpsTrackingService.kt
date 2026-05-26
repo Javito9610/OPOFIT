@@ -9,6 +9,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
@@ -43,12 +47,22 @@ class GpsTrackingService : Service() {
     private lateinit var fused: FusedLocationProviderClient
     private var locationCallback: LocationCallback? = null
     private var timerJob: Job? = null
+    private var sensorManager: SensorManager? = null
+    private var stepListener: SensorEventListener? = null
+    private var hrBle: HrBleManager? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
         fused = LocationServices.getFusedLocationProviderClient(this)
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as? SensorManager
+        hrBle = HrBleManager.get(this).also { manager ->
+            manager.setListeners(
+                onHr = { bpm -> GpsTracker.onHrSample(bpm) },
+                onConnection = { name, connected -> GpsTracker.onHrDeviceChanged(name, connected) }
+            )
+        }
         ensureChannel()
     }
 
@@ -79,18 +93,49 @@ class GpsTrackingService : Service() {
             stopSelf()
             return
         }
-        GpsTracker.begin(type)
+        val weight = WeightPreferences.get(this)
+        GpsTracker.begin(type, weight)
         startInForeground()
         startLocationUpdates()
+        startStepSensor(type)
         startTimer()
     }
 
     private fun stopSession() {
         stopLocationUpdates()
+        stopStepSensor()
         timerJob?.cancel()
         timerJob = null
         ContextCompat.getMainExecutor(this).execute { stopForegroundCompat() }
         stopSelf()
+    }
+
+    private fun startStepSensor(type: ActivityType) {
+        stopStepSensor()
+        if (type == ActivityType.BIKE) return
+        val activityRecGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContextCompat.checkSelfPermission(
+                this, Manifest.permission.ACTIVITY_RECOGNITION
+            ) == PackageManager.PERMISSION_GRANTED
+        } else true
+        if (!activityRecGranted) return
+        val sm = sensorManager ?: return
+        val sensor = sm.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR) ?: return
+        val listener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent?) {
+                if (event?.sensor?.type == Sensor.TYPE_STEP_DETECTOR) {
+                    GpsTracker.onStepDetected()
+                }
+            }
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        }
+        stepListener = listener
+        sm.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_FASTEST)
+    }
+
+    private fun stopStepSensor() {
+        stepListener?.let { sensorManager?.unregisterListener(it) }
+        stepListener = null
     }
 
     private fun startInForeground() {
@@ -227,6 +272,7 @@ class GpsTrackingService : Service() {
 
     override fun onDestroy() {
         stopLocationUpdates()
+        stopStepSensor()
         timerJob?.cancel()
         scope.cancel()
         super.onDestroy()

@@ -13,6 +13,7 @@ import com.opofit.miapp.gps.model.GpsTrackingState
 import com.opofit.miapp.gps.service.GpsLastResult
 import com.opofit.miapp.gps.service.GpsTracker
 import com.opofit.miapp.gps.service.GpsTrackingService
+import com.opofit.miapp.gps.service.HrBleManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,6 +27,10 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repo = GpsRepository.get(application)
     private val tokenManager = TokenManager(application)
+    private val hrBle = HrBleManager.get(application)
+
+    val hrState: StateFlow<HrBleManager.State> = hrBle.state
+    val hrFound: StateFlow<List<HrBleManager.FoundDevice>> = hrBle.found
 
     data class HistoryState(
         val loading: Boolean = false,
@@ -101,9 +106,15 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
                     minPaceSecPerKm = summary.minPaceSecPerKm,
                     maxPaceSecPerKm = summary.maxPaceSecPerKm,
                     elevationGainM = summary.elevationGainM,
+                    elevationLossM = summary.elevationLossM,
                     elevationMinM = summary.elevationMinM,
                     elevationMaxM = summary.elevationMaxM,
                     avgCadenceSpm = summary.avgCadenceSpm,
+                    maxCadenceSpm = summary.maxCadenceSpm,
+                    avgHrBpm = summary.avgHrBpm,
+                    maxHrBpm = summary.maxHrBpm,
+                    minHrBpm = summary.minHrBpm,
+                    kcal = summary.kcal,
                     points = summary.points.map { p ->
                         mapOf(
                             "lat" to p.lat,
@@ -111,6 +122,8 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
                             "altitude" to p.altitude,
                             "speedMps" to p.speedMps,
                             "accuracyM" to p.accuracyM,
+                            "cadenceSpm" to p.cadenceSpm,
+                            "hrBpm" to p.hrBpm,
                             "timestampMs" to p.timestampMs
                         )
                     },
@@ -119,7 +132,33 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
                             "km" to s.km,
                             "durationSec" to s.durationSec,
                             "paceSecPerKm" to s.paceSecPerKm,
+                            "elevationGainM" to s.elevationGainM,
+                            "avgHrBpm" to s.avgHrBpm,
+                            "avgCadenceSpm" to s.avgCadenceSpm
+                        )
+                    },
+                    splitsMile = summary.splitsMile.map { s ->
+                        mapOf(
+                            "mile" to s.mile,
+                            "durationSec" to s.durationSec,
+                            "paceSecPerMi" to s.paceSecPerMi,
                             "elevationGainM" to s.elevationGainM
+                        )
+                    },
+                    splitsTime = summary.splitsTime.map { s ->
+                        mapOf(
+                            "index" to s.index,
+                            "durationSec" to s.durationSec,
+                            "distanceM" to s.distanceM,
+                            "avgPaceSecPerKm" to s.avgPaceSecPerKm
+                        )
+                    },
+                    bestSegments = summary.bestSegments.map { b ->
+                        mapOf(
+                            "label" to b.label,
+                            "distanceM" to b.distanceM,
+                            "durationSec" to b.durationSec,
+                            "paceSecPerKm" to b.paceSecPerKm
                         )
                     }
                 )
@@ -137,6 +176,12 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
         GpsTracker.finish()
         GpsTrackingService.stop(getApplication())
     }
+
+    fun startHrScan() = hrBle.startScan()
+    fun stopHrScan() = hrBle.stopScan()
+    fun connectHr(device: HrBleManager.FoundDevice) = hrBle.connect(device)
+    fun disconnectHr() = hrBle.disconnect()
+    fun hrManager(): HrBleManager = hrBle
 
     fun loadHistory() {
         viewModelScope.launch {

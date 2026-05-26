@@ -16,6 +16,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -53,7 +54,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.EjercicioRealizado
+import com.opofit.miapp.data.responsemodels.EjercicioPlan
 import com.opofit.miapp.gps.service.GpsLastResult
+import com.opofit.miapp.gps.util.TcxExport
 import com.opofit.miapp.ui.components.RecordCelebrationDialog
 import com.opofit.miapp.ui.components.RestTimerSheet
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
@@ -256,8 +259,10 @@ fun EntrenamientosScreen(
     }
 
     val gpsLast by GpsLastResult.value.collectAsState()
+    var gpsActividadUuid by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(gpsLast?.id) {
         val summary = gpsLast ?: return@LaunchedEffect
+        gpsActividadUuid = summary.id
         val idx = ejerciciosEstado.indexOfFirst { !it.completado && esEjercicioGps(it.nombre, it.tipo) }
         if (idx >= 0) {
             val km = summary.distanceM / 1000.0
@@ -434,6 +439,42 @@ fun EntrenamientosScreen(
                             enabled = segundos > 0
                         ) {
                             Text("Reiniciar")
+                        }
+                    }
+                }
+
+                item {
+                    val planEjercicios = initialPlanDiaId?.let { id ->
+                        rutinasState.planSemanal?.semana?.find { it.id_plan_dia == id }?.ejercicios
+                    } ?: rutinasState.rutinaCompleta.getOrNull(selectedRutinaIndex)?.ejercicios?.map { ej ->
+                        EjercicioPlan(
+                            id_ejercicio = ej.id_ejercicio,
+                            nombre = ej.nombre,
+                            video_url = ej.video_url,
+                            series = ej.series,
+                            repeticiones = ej.repeticiones,
+                            descanso = ej.descanso,
+                            unidad = ej.unidad
+                        )
+                    }
+                    if (!planEjercicios.isNullOrEmpty()) {
+                        OutlinedButton(
+                            onClick = {
+                                val steps = TcxExport.stepsFromEjercicios(planEjercicios)
+                                val titulo = rutinasState.rutinaCompleta.getOrNull(selectedRutinaIndex)?.bloque
+                                    ?: "Entreno OpoFit"
+                                val intent = TcxExport.shareIntent(context, titulo, steps)
+                                if (intent != null) {
+                                    context.startActivity(
+                                        android.content.Intent.createChooser(intent, "Enviar al reloj")
+                                    )
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Filled.UploadFile, null, Modifier.size(18.dp))
+                            Spacer(Modifier.size(6.dp))
+                            Text("Enviar entrenamiento al reloj (TCX)")
                         }
                     }
                 }
@@ -658,7 +699,8 @@ fun EntrenamientosScreen(
                                 tipoRutina = "OPO",
                                 idRutina = rutinaOpoId,
                                 duracion = segundos,
-                                ejercicios = realizados
+                                ejercicios = realizados,
+                                gpsActividadUuid = gpsActividadUuid
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),

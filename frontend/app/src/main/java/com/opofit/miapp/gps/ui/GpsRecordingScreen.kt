@@ -8,9 +8,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
@@ -49,6 +50,14 @@ import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.opofit.miapp.gps.model.GpsTrackingState
 import com.opofit.miapp.gps.util.GpsMetrics
+
+private val SpeedPalette = listOf(
+    Color(0xFFD32F2F),
+    Color(0xFFEF6C00),
+    Color(0xFFFBC02D),
+    Color(0xFF388E3C),
+    Color(0xFF0288D1)
+)
 
 @Composable
 fun GpsRecordingScreen(
@@ -100,6 +109,8 @@ fun GpsRecordingScreen(
                     Text("Distancia: ${GpsMetrics.formatDistance(state.distanceM)}")
                     Text("Duración: ${GpsMetrics.formatDuration(state.durationSec)}")
                     Text("Ritmo medio: ${GpsMetrics.formatPace(state.avgPaceSecPerKm)}/km")
+                    if (state.kcal > 0) Text("Calorías estimadas: ${state.kcal} kcal")
+                    state.avgHrBpm?.let { Text("Pulso medio: $it bpm") }
                 }
             }
         )
@@ -120,7 +131,7 @@ fun GpsRecordingScreen(
 
         Surface(
             tonalElevation = 6.dp,
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.97f),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
@@ -141,12 +152,41 @@ fun GpsRecordingScreen(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+                    MetricBlock(
+                        "Ritmo ahora",
+                        "${GpsMetrics.formatPace(state.instantPaceSecPerKm)}/km"
+                    )
                     MetricBlock("Velocidad", GpsMetrics.formatSpeedKmh(state.currentSpeedMps.toDouble()))
                     MetricBlock(
                         "Altitud",
                         state.currentAltitudeM?.let { "${it.toInt()} m" } ?: "—"
                     )
-                    MetricBlock("Desnivel", "+${state.elevationGainM.toInt()} m")
+                }
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    MetricBlock("Desnivel +", "${state.elevationGainM.toInt()} m")
+                    MetricBlock("Desnivel −", "${state.elevationLossM.toInt()} m")
+                    MetricBlock("kcal", state.kcal.toString())
+                }
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    MetricBlock(
+                        "Cadencia",
+                        state.currentCadenceSpm?.let { "$it ppm" } ?: "—"
+                    )
+                    MetricBlock(
+                        "♥ Pulso",
+                        state.currentHrBpm?.let { "$it bpm" }
+                            ?: if (state.hrDeviceConnected) "esperando…" else "—"
+                    )
+                    MetricBlock(
+                        "Vel. máx",
+                        GpsMetrics.formatSpeedKmh(state.maxSpeedMps.toDouble())
+                    )
                 }
                 Row(
                     Modifier.fillMaxWidth(),
@@ -159,7 +199,7 @@ fun GpsRecordingScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
                             Icon(Icons.Filled.PlayArrow, null)
-                            Spacer(Modifier.padding(start = 6.dp))
+                            Spacer(Modifier.size(6.dp))
                             Text("Reanudar")
                         }
                     } else {
@@ -168,7 +208,7 @@ fun GpsRecordingScreen(
                             modifier = Modifier.weight(1f)
                         ) {
                             Icon(Icons.Filled.Pause, null)
-                            Spacer(Modifier.padding(start = 6.dp))
+                            Spacer(Modifier.size(6.dp))
                             Text("Pausar")
                         }
                     }
@@ -178,16 +218,31 @@ fun GpsRecordingScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                     ) {
                         Icon(Icons.Filled.Stop, null)
-                        Spacer(Modifier.padding(start = 6.dp))
+                        Spacer(Modifier.size(6.dp))
                         Text("Finalizar")
                     }
                 }
-                Text(
-                    state.lastErrorMsg ?: "${state.type.emoji} ${state.type.display}" +
-                        if (state.paused) " · En pausa" else "",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (state.hrDeviceConnected) {
+                        Icon(
+                            Icons.Filled.Favorite,
+                            null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(Modifier.size(4.dp))
+                    }
+                    Text(
+                        state.lastErrorMsg
+                            ?: buildString {
+                                append("${state.type.emoji} ${state.type.display}")
+                                if (state.hrDeviceConnected) append(" · ${state.hrDeviceName ?: "Banda BLE"}")
+                                if (state.paused) append(" · En pausa")
+                            },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
@@ -263,3 +318,5 @@ internal fun MapWithRoute(state: GpsTrackingState, cameraPositionState: CameraPo
         }
     }
 }
+
+internal val SpeedPaletteRef = SpeedPalette

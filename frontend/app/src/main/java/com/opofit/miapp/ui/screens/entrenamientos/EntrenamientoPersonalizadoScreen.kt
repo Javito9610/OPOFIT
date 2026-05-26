@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -22,6 +23,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -44,10 +46,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.layout.size
 import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.EjercicioRealizado
 import com.opofit.miapp.data.responsemodels.RegistrarHistorialRequest
+import com.opofit.miapp.gps.service.GpsLastResult
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasLibresViewModel
 import com.opofit.miapp.utils.Units
@@ -64,6 +68,7 @@ fun EntrenamientoPersonalizadoScreen(
     authViewModel: AuthViewModel,
     onNavigateBack: () -> Unit,
     onEntrenamientoFinalizado: () -> Unit,
+    onNavigateToGps: () -> Unit = {},
     rutinasLibresViewModel: RutinasLibresViewModel = viewModel()
 ) {
     val authState by authViewModel.uiState.collectAsState()
@@ -107,6 +112,13 @@ fun EntrenamientoPersonalizadoScreen(
             n.contains("carrera") || n.contains("trote") || n.contains("rodaje") || n.contains("fartlek") -> "RUN"
             else -> null
         }
+    }
+
+    fun esEjercicioGps(nombre: String, tipo: String?): Boolean {
+        val n = nombre.lowercase()
+        if (n.contains("cinta") || n.contains("tapiz") || n.contains("treadmill")) return false
+        if (tipo == "RUN") return true
+        return Regex("\\b(bici|ciclismo|bicicleta|caminar|marcha|paseo)\\b").containsMatchIn(n)
     }
 
     fun ritmoVelocidadTexto(tipo: String?, distText: String, secs: Int): Pair<String, String> {
@@ -183,6 +195,27 @@ fun EntrenamientoPersonalizadoScreen(
                 showObjetivoDialog = true
             }
         }
+    }
+
+    val gpsLast by GpsLastResult.value.collectAsState()
+    var gpsActividadUuid by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(gpsLast?.id) {
+        val summary = gpsLast ?: return@LaunchedEffect
+        gpsActividadUuid = summary.id
+        val idx = ejerciciosUi.indexOfFirst { !it.checked && esEjercicioGps(it.nombre, it.tipo) }
+        if (idx >= 0) {
+            val km = summary.distanceM / 1000.0
+            val mostrado = if (unitDist == "mi") "%.2f".format(km / 1.609344) else "%.2f".format(km)
+            ejerciciosUi[idx] = ejerciciosUi[idx].copy(
+                distancia = mostrado,
+                valor = km.toString()
+            )
+            if (tiempoSegundos < summary.durationSec) {
+                tiempoSegundos = summary.durationSec
+                cronometroIniciadoAlgunaVez = true
+            }
+        }
+        GpsLastResult.consume()
     }
 
     var guardando by remember { mutableStateOf(false) }
@@ -367,6 +400,16 @@ fun EntrenamientoPersonalizadoScreen(
                                                 Text(velTxt, fontWeight = FontWeight.Bold)
                                             }
                                         }
+                                        if (esEjercicioGps(ej.nombre, ej.tipo)) {
+                                            OutlinedButton(
+                                                onClick = onNavigateToGps,
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Icon(Icons.Filled.Explore, null, Modifier.size(18.dp))
+                                                Spacer(Modifier.size(6.dp))
+                                                Text("Registrar con GPS")
+                                            }
+                                        }
                                     } else {
                                         OutlinedTextField(
                                             value = ej.valor,
@@ -418,7 +461,8 @@ fun EntrenamientoPersonalizadoScreen(
                                             tipoRutina = "PERS",
                                             idRutina = rutinaId,
                                             duracion = tiempoSegundos,
-                                            ejercicios = ejercicios
+                                            ejercicios = ejercicios,
+                                            gpsActividadUuid = gpsActividadUuid
                                         )
                                         val resp = RetrofitClient.progresoApi.registrarEntrenamiento("Bearer $token", body)
                                         if (resp.ok) {

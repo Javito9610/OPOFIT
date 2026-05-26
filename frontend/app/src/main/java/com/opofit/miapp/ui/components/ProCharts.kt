@@ -1,0 +1,381 @@
+package com.opofit.miapp.ui.components
+
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
+
+/**
+ * Charts profesionales basados en Canvas (sin dependencias externas).
+ * Soportan animación, gradientes Material 3, ejes con etiquetas y tooltips simples.
+ */
+
+private data class ChartGeometry(
+    val left: Float,
+    val top: Float,
+    val width: Float,
+    val height: Float,
+    val minY: Double,
+    val maxY: Double
+) {
+    fun xFor(index: Int, count: Int): Float =
+        if (count <= 1) left + width / 2f else left + width * index / (count - 1)
+
+    fun yFor(value: Double): Float {
+        val range = (maxY - minY).coerceAtLeast(0.0001)
+        val norm = ((value - minY) / range).coerceIn(0.0, 1.0)
+        return top + height * (1f - norm.toFloat())
+    }
+}
+
+@Composable
+fun LineAreaChart(
+    values: List<Double>,
+    modifier: Modifier = Modifier,
+    lineColor: Color = MaterialTheme.colorScheme.primary,
+    fillTop: Color = lineColor.copy(alpha = 0.35f),
+    fillBottom: Color = lineColor.copy(alpha = 0.0f),
+    showDots: Boolean = false,
+    yFormatter: (Double) -> String = { "%.1f".format(it) },
+    xLabels: List<String> = emptyList(),
+    invertY: Boolean = false
+) {
+    if (values.size < 2) {
+        EmptyState("Faltan datos para el gráfico", modifier)
+        return
+    }
+    val minRaw = values.min()
+    val maxRaw = values.max()
+    val pad = ((maxRaw - minRaw) * 0.08).coerceAtLeast(0.5)
+    val minY = if (invertY) maxRaw + pad else minRaw - pad
+    val maxY = if (invertY) minRaw - pad else maxRaw + pad
+
+    val progress by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = tween(durationMillis = 900, easing = LinearOutSlowInEasing),
+        label = "lineProgress"
+    )
+
+    val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val textMeasurer = rememberTextMeasurer()
+    val labelStyle = MaterialTheme.typography.labelSmall
+
+    Canvas(
+        modifier = modifier
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.22f),
+                RoundedCornerShape(12.dp)
+            )
+            .padding(12.dp)
+    ) {
+        val labelWidth = 36.dp.toPx()
+        val labelHeight = 18.dp.toPx()
+        val geo = ChartGeometry(
+            left = labelWidth,
+            top = 4.dp.toPx(),
+            width = size.width - labelWidth - 4.dp.toPx(),
+            height = size.height - labelHeight - 4.dp.toPx(),
+            minY = minY,
+            maxY = maxY
+        )
+
+        for (i in 0..3) {
+            val y = geo.top + geo.height * i / 3f
+            drawLine(
+                gridColor,
+                Offset(geo.left, y),
+                Offset(geo.left + geo.width, y),
+                strokeWidth = 1f
+            )
+            val v = if (invertY) {
+                minY - (minY - maxY) * i / 3f
+            } else {
+                maxY - (maxY - minY) * i / 3f
+            }
+            val txt = yFormatter(v)
+            val result = textMeasurer.measure(txt, labelStyle.copy(color = labelColor))
+            drawText(
+                textLayoutResult = result,
+                topLeft = Offset(geo.left - result.size.width - 4.dp.toPx(), y - result.size.height / 2f)
+            )
+        }
+
+        val visibleCount = ((values.size) * progress).coerceAtLeast(2f).toInt().coerceAtMost(values.size)
+        val path = Path()
+        val area = Path()
+        for (i in 0 until visibleCount) {
+            val x = geo.xFor(i, values.size)
+            val y = geo.yFor(values[i])
+            if (i == 0) {
+                path.moveTo(x, y)
+                area.moveTo(x, geo.top + geo.height)
+                area.lineTo(x, y)
+            } else {
+                path.lineTo(x, y)
+                area.lineTo(x, y)
+            }
+        }
+        if (visibleCount >= 2) {
+            val lastX = geo.xFor(visibleCount - 1, values.size)
+            area.lineTo(lastX, geo.top + geo.height)
+            area.close()
+            drawPath(
+                area,
+                brush = Brush.verticalGradient(
+                    colors = listOf(fillTop, fillBottom),
+                    startY = geo.top,
+                    endY = geo.top + geo.height
+                )
+            )
+            drawPath(path, color = lineColor, style = Stroke(width = 6f, cap = StrokeCap.Round))
+        }
+
+        if (showDots) {
+            for (i in 0 until visibleCount) {
+                val cx = geo.xFor(i, values.size)
+                val cy = geo.yFor(values[i])
+                drawCircle(lineColor, radius = 5f, center = Offset(cx, cy))
+                drawCircle(Color.White, radius = 2.5f, center = Offset(cx, cy))
+            }
+        }
+
+        if (xLabels.isNotEmpty()) {
+            val step = (values.size.toFloat() - 1f) / (xLabels.size - 1).coerceAtLeast(1)
+            xLabels.forEachIndexed { i, lab ->
+                val xi = (step * i).roundToInt().coerceIn(0, values.size - 1)
+                val x = geo.xFor(xi, values.size)
+                val res = textMeasurer.measure(lab, labelStyle.copy(color = labelColor))
+                drawText(
+                    textLayoutResult = res,
+                    topLeft = Offset(x - res.size.width / 2f, geo.top + geo.height + 4.dp.toPx())
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ColumnsChart(
+    values: List<Double>,
+    labels: List<String>,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.primary,
+    valueLabel: (Double) -> String = { v -> if (v >= 100) "${v.toInt()}" else "%.1f".format(v) }
+) {
+    if (values.isEmpty()) {
+        EmptyState("Sin datos", modifier)
+        return
+    }
+    val maxV = values.max().coerceAtLeast(0.0001)
+    val progress by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = tween(durationMillis = 700, easing = LinearOutSlowInEasing),
+        label = "colsProgress"
+    )
+
+    val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)
+    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val textMeasurer = rememberTextMeasurer()
+    val labelStyle = MaterialTheme.typography.labelSmall
+
+    Canvas(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.22f), RoundedCornerShape(12.dp))
+            .padding(12.dp)
+    ) {
+        val labelArea = 18.dp.toPx()
+        val valueArea = 14.dp.toPx()
+        val chartTop = valueArea
+        val chartBottom = size.height - labelArea
+        val chartHeight = chartBottom - chartTop
+        val n = values.size
+        val gap = 6.dp.toPx()
+        val colWidth = ((size.width - gap * (n - 1)) / n).coerceAtLeast(4f)
+
+        for (i in 0..3) {
+            val y = chartTop + chartHeight * i / 3f
+            drawLine(gridColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
+        }
+
+        values.forEachIndexed { i, v ->
+            val x = (colWidth + gap) * i
+            val targetH = (v / maxV).toFloat() * chartHeight
+            val h = targetH * progress
+            val topY = chartBottom - h
+            drawRoundRect(
+                color = color,
+                topLeft = Offset(x, topY),
+                size = Size(colWidth, h),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(8f, 8f),
+                style = Fill
+            )
+            val lab = labels.getOrNull(i) ?: ""
+            if (lab.isNotEmpty()) {
+                val res = textMeasurer.measure(lab, labelStyle.copy(color = labelColor))
+                drawText(textLayoutResult = res, topLeft = Offset(x + colWidth / 2f - res.size.width / 2f, chartBottom + 2.dp.toPx()))
+            }
+            if (progress > 0.7f && v > 0) {
+                val res = textMeasurer.measure(
+                    valueLabel(v),
+                    labelStyle.copy(color = labelColor)
+                )
+                drawText(textLayoutResult = res, topLeft = Offset(x + colWidth / 2f - res.size.width / 2f, topY - res.size.height - 2.dp.toPx()))
+            }
+        }
+    }
+}
+
+@Composable
+fun Sparkline(
+    values: List<Double>,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.primary
+) {
+    if (values.size < 2) return
+    val min = values.min()
+    val max = values.max()
+    val range = (max - min).coerceAtLeast(0.0001)
+    Canvas(modifier = modifier) {
+        val path = Path()
+        val stepX = size.width / (values.size - 1)
+        values.forEachIndexed { i, v ->
+            val x = stepX * i
+            val y = (1f - ((v - min) / range).toFloat()) * size.height
+            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+        drawPath(path, color, style = Stroke(width = 4f, cap = StrokeCap.Round))
+    }
+}
+
+@Composable
+fun CalendarHeatmap(
+    countsByDate: Map<String, Int>,
+    weeks: Int = 16,
+    modifier: Modifier = Modifier,
+    activeColor: Color = MaterialTheme.colorScheme.primary,
+    emptyColor: Color = MaterialTheme.colorScheme.surfaceVariant
+) {
+    val today = remember {
+        val cal = java.util.Calendar.getInstance()
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+        cal.set(java.util.Calendar.MINUTE, 0)
+        cal.set(java.util.Calendar.SECOND, 0)
+        cal.set(java.util.Calendar.MILLISECOND, 0)
+        cal.time
+    }
+    val df = remember { java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US) }
+    val maxCount = (countsByDate.values.maxOrNull() ?: 0).coerceAtLeast(1)
+
+    Canvas(modifier = modifier) {
+        val totalDays = weeks * 7
+        val cell = (size.width / weeks).coerceAtMost(size.height / 7f)
+        val gap = cell * 0.18f
+        val cal = java.util.Calendar.getInstance()
+        cal.time = today
+        cal.add(java.util.Calendar.DAY_OF_YEAR, -(totalDays - 1))
+        for (i in 0 until totalDays) {
+            val dow = (cal.get(java.util.Calendar.DAY_OF_WEEK) + 5) % 7
+            val week = i / 7
+            val key = df.format(cal.time)
+            val count = countsByDate[key] ?: 0
+            val intensity = (count.toFloat() / maxCount).coerceIn(0f, 1f)
+            val color = if (count == 0) emptyColor
+            else lerp(emptyColor, activeColor, 0.35f + 0.65f * intensity)
+            val x = week * cell + gap / 2f
+            val y = dow * cell + gap / 2f
+            drawRoundRect(
+                color = color,
+                topLeft = Offset(x, y),
+                size = Size(cell - gap, cell - gap),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(cell * 0.18f, cell * 0.18f)
+            )
+            cal.add(java.util.Calendar.DAY_OF_YEAR, 1)
+        }
+    }
+}
+
+private fun lerp(a: Color, b: Color, t: Float): Color = Color(
+    red = a.red + (b.red - a.red) * t,
+    green = a.green + (b.green - a.green) * t,
+    blue = a.blue + (b.blue - a.blue) * t,
+    alpha = a.alpha + (b.alpha - a.alpha) * t
+)
+
+@Composable
+fun MetricBadge(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+    ) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun EmptyState(text: String, modifier: Modifier) {
+    Box(
+        modifier
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** Permite a otros componibles dibujar segmentos pintados según índices de buckets. */
+fun DrawScope.drawColoredPath(
+    points: List<Offset>,
+    bucketByPoint: List<Int>,
+    palette: List<Color>,
+    strokeWidth: Float
+) {
+    if (points.size < 2) return
+    for (i in 1 until points.size) {
+        val bucket = bucketByPoint.getOrNull(i)?.coerceIn(0, palette.size - 1) ?: 0
+        drawLine(
+            color = palette[bucket],
+            start = points[i - 1],
+            end = points[i],
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round
+        )
+    }
+}

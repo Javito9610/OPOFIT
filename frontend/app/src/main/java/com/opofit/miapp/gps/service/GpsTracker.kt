@@ -5,6 +5,7 @@ import com.opofit.miapp.gps.model.ActivitySummary
 import com.opofit.miapp.gps.model.ActivityType
 import com.opofit.miapp.gps.model.GpsPoint
 import com.opofit.miapp.gps.model.GpsTrackingState
+import com.opofit.miapp.gps.model.SplitKm
 import com.opofit.miapp.gps.util.GpsMetrics
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +22,7 @@ import java.util.UUID
 object GpsTracker {
     private const val MIN_ACCURACY_M = 35f
     private const val MIN_SEG_M = 1.5
+    private const val CADENCE_WINDOW_MS = 10_000L
 
     private val _state = MutableStateFlow(GpsTrackingState())
     val state: StateFlow<GpsTrackingState> = _state.asStateFlow()
@@ -29,12 +31,22 @@ object GpsTracker {
     private var lastLocation: Location? = null
     private var lastMovingTickMs: Long = 0L
     private var nextSplitKm: Int = 1
+    private var stepEvents: ArrayDeque<Long> = ArrayDeque()
+    private var totalSteps: Long = 0L
+    private var hrSum: Long = 0L
+    private var hrCount: Long = 0L
+    private var userWeightKg: Double? = null
 
-    fun begin(type: ActivityType) {
+    fun begin(type: ActivityType, weightKg: Double? = null) {
         sessionId = UUID.randomUUID().toString()
         lastLocation = null
         lastMovingTickMs = 0L
         nextSplitKm = 1
+        stepEvents = ArrayDeque()
+        totalSteps = 0L
+        hrSum = 0L
+        hrCount = 0L
+        userWeightKg = weightKg
         _state.value = GpsTrackingState(
             active = true,
             paused = false,
@@ -61,6 +73,11 @@ object GpsTracker {
         sessionId = ""
         lastLocation = null
         nextSplitKm = 1
+        stepEvents.clear()
+        totalSteps = 0L
+        hrSum = 0L
+        hrCount = 0L
+        userWeightKg = null
         _state.value = GpsTrackingState()
     }
 
@@ -74,12 +91,27 @@ object GpsTracker {
         lastMovingTickMs = now
         val avgSpeed = if (moving > 0) current.distanceM / moving else 0.0
         val avgPace = GpsMetrics.paceSecPerKm(current.distanceM, moving) ?: 0.0
+        val kcal = GpsMetrics.estimateKcal(current.type, moving, current.distanceM, userWeightKg)
+
+        while (stepEvents.isNotEmpty() && now - stepEvents.first() > CADENCE_WINDOW_MS) {
+            stepEvents.removeFirst()
+        }
+        val currentCadence = if (stepEvents.size >= 4) {
+            (stepEvents.size * 60_000.0 / CADENCE_WINDOW_MS).toInt()
+        } else null
+        val avgCadence = if (moving > 0 && totalSteps > 0) {
+            (totalSteps * 60.0 / moving).toInt()
+        } else null
+
         _state.update {
             it.copy(
                 durationSec = duration,
                 movingSec = moving,
                 avgSpeedMps = avgSpeed,
-                avgPaceSecPerKm = avgPace
+                avgPaceSecPerKm = avgPace,
+                kcal = kcal,
+                currentCadenceSpm = currentCadence,
+                avgCadenceSpm = avgCadence
             )
         }
     }
@@ -96,12 +128,15 @@ object GpsTracker {
             altitude = if (loc.hasAltitude()) loc.altitude else null,
             speedMps = if (loc.hasSpeed()) loc.speed else null,
             accuracyM = acc,
+            cadenceSpm = current.currentCadenceSpm,
+            hrBpm = current.currentHrBpm,
             timestampMs = if (loc.time > 0) loc.time else System.currentTimeMillis()
         )
 
         var distance = current.distanceM
         val newPoints = current.points + point
         val last = lastLocation
+        var segDist = 0.0
         if (last != null) {
             val seg = floatArrayOf(0f)
             Location.distanceBetween(
@@ -111,6 +146,7 @@ object GpsTracker {
             )
             val d = seg[0].toDouble()
             if (d in MIN_SEG_M..200.0) {
+                segDist = d
                 distance += d
             }
         }
@@ -119,11 +155,23 @@ object GpsTracker {
         val maxSpeed = maxOf(current.maxSpeedMps, point.speedMps ?: 0f)
         val newMinAlt = listOfNotNull(current.elevationMinM, point.altitude).minOrNull()
         val newMaxAlt = listOfNotNull(current.elevationMaxM, point.altitude).maxOrNull()
+        val prevAlt = current.points.lastOrNull()?.altitude
+        var elevationGain = current.elevationGainM
+        var elevationLoss = current.elevationLossM
+        if (prevAlt != null && point.altitude != null) {
+            val diff = point.altitude - prevAlt
+            if (diff > 0.5) elevationGain += diff
+            if (diff < -0.5) elevationLoss += -diff
+        }
+        val instantPace = if (point.speedMps != null && point.speedMps > 0.1f) {
+            1000.0 / point.speedMps
+        } else current.avgPaceSecPerKm
+
         val splits = current.splits.toMutableList()
         while (distance >= nextSplitKm * 1000.0 && newPoints.size > 1) {
             val durSec = ((point.timestampMs - current.startedAtMs) / 1000).toInt() -
                 splits.sumOf { it.durationSec }
-            splits += com.opofit.miapp.gps.model.SplitKm(
+            splits += SplitKm(
                 km = nextSplitKm,
                 durationSec = durSec.coerceAtLeast(1),
                 paceSecPerKm = GpsMetrics.paceSecPerKm(1000.0, durSec.coerceAtLeast(1)) ?: 0.0
@@ -131,6 +179,7 @@ object GpsTracker {
             nextSplitKm += 1
         }
 
+        @Suppress("UNUSED_VARIABLE") val s = segDist
         _state.update {
             it.copy(
                 distanceM = distance,
@@ -139,10 +188,41 @@ object GpsTracker {
                 currentAltitudeM = point.altitude,
                 elevationMinM = newMinAlt,
                 elevationMaxM = newMaxAlt,
+                elevationGainM = elevationGain,
+                elevationLossM = elevationLoss,
+                instantPaceSecPerKm = instantPace,
                 points = newPoints,
                 splits = splits
             )
         }
+    }
+
+    fun onStepDetected() {
+        val now = System.currentTimeMillis()
+        val current = _state.value
+        if (!current.active || current.paused) return
+        stepEvents.addLast(now)
+        totalSteps += 1
+    }
+
+    fun onHrSample(bpm: Int) {
+        val current = _state.value
+        if (!current.active || current.paused) return
+        hrSum += bpm
+        hrCount += 1
+        val avg = (hrSum / hrCount).toInt()
+        val max = maxOf(current.maxHrBpm ?: 0, bpm)
+        _state.update {
+            it.copy(
+                currentHrBpm = bpm,
+                avgHrBpm = avg,
+                maxHrBpm = max
+            )
+        }
+    }
+
+    fun onHrDeviceChanged(name: String?, connected: Boolean) {
+        _state.update { it.copy(hrDeviceName = name, hrDeviceConnected = connected) }
     }
 
     /** Finishes the current session and returns its summary (or null if it never started). */
@@ -160,7 +240,19 @@ object GpsTracker {
         val paces = s.splits.map { it.paceSecPerKm }.filter { it > 0 }
         val maxPace = paces.maxOrNull() ?: avgPace
         val minPace = paces.minOrNull() ?: avgPace
-        val elevationGain = GpsMetrics.elevationGain(s.points)
+        val (elevationGain, elevationLoss) = GpsMetrics.elevationStats(s.points)
+        val kcal = GpsMetrics.estimateKcal(s.type, moving, s.distanceM, userWeightKg)
+        val splitsKm = s.splits.ifEmpty { GpsMetrics.computeSplits(s.points) }
+        val splitsMile = GpsMetrics.computeSplitsMile(s.points)
+        val splitsTime = GpsMetrics.computeSplitsTime(s.points)
+        val bestSegments = GpsMetrics.computeBestSegments(s.points, s.distanceM)
+        val cadenceSamples = s.points.mapNotNull { it.cadenceSpm }
+        val avgCadenceDouble = if (cadenceSamples.isNotEmpty()) cadenceSamples.average() else null
+        val maxCadence = cadenceSamples.maxOrNull()
+        val hrSamples = s.points.mapNotNull { it.hrBpm }
+        val avgHr = if (hrSamples.isNotEmpty()) hrSamples.average().toInt() else null
+        val maxHr = hrSamples.maxOrNull()
+        val minHr = hrSamples.minOrNull()
         val summary = ActivitySummary(
             id = sessionId.ifBlank { UUID.randomUUID().toString() },
             type = s.type,
@@ -175,9 +267,19 @@ object GpsTracker {
             maxPaceSecPerKm = maxPace,
             minPaceSecPerKm = minPace,
             elevationGainM = elevationGain,
+            elevationLossM = elevationLoss,
             elevationMinM = s.elevationMinM,
             elevationMaxM = s.elevationMaxM,
-            splits = s.splits.ifEmpty { GpsMetrics.computeSplits(s.points) },
+            avgCadenceSpm = avgCadenceDouble,
+            maxCadenceSpm = maxCadence,
+            avgHrBpm = avgHr,
+            maxHrBpm = maxHr,
+            minHrBpm = minHr,
+            kcal = kcal,
+            splits = splitsKm,
+            splitsMile = splitsMile,
+            splitsTime = splitsTime,
+            bestSegments = bestSegments,
             points = s.points
         )
         reset()

@@ -71,6 +71,7 @@ fun RutinasScreen(
     onNavigateToEntrenamientos: (enfoque: String?, idPlanDia: Int?, idRutinaOpo: Int?) -> Unit,
     onNavigateToRutinasLibres: () -> Unit,
     onNavigateToEditarPerfil: () -> Unit,
+    onNavigateToPlanHistorial: (Int) -> Unit = {},
     rutinasViewModel: RutinasViewModel = viewModel()
 ) {
     val authState by authViewModel.uiState.collectAsState()
@@ -337,6 +338,14 @@ fun RutinasScreen(
                                     .fillMaxWidth()
                                     .weight(1f)
                             ) {
+                                Row(
+                                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
+                                    horizontalArrangement = Arrangement.End
+                                ) {
+                                    TextButton(onClick = { onNavigateToPlanHistorial(plan.id_plan) }) {
+                                        Text("Historial del plan")
+                                    }
+                                }
                                 TabRow(selectedTabIndex = vistaPlan) {
                                     Tab(selected = vistaPlan == 0, onClick = { vistaPlan = 0 }, text = { Text("Semana") })
                                     Tab(selected = vistaPlan == 1, onClick = { vistaPlan = 1 }, text = { Text("Mes") })

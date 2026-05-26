@@ -59,13 +59,21 @@ class HistorialViewModel(application: Application) : AndroidViewModel(applicatio
         tipoRutina: String,
         idRutina: Int,
         duracion: Int,
-        ejercicios: List<EjercicioRealizado>
+        ejercicios: List<EjercicioRealizado>,
+        gpsActividadUuid: String? = null
     ) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = "", registradoExitoso = false, recordsRotos = emptyList()) }
             try {
                 val token = tokenManager.getToken().first() ?: ""
-                val body = RegistrarHistorialRequest(userId, tipoRutina, idRutina, duracion, ejercicios)
+                val body = RegistrarHistorialRequest(
+                    userId,
+                    tipoRutina,
+                    idRutina,
+                    duracion,
+                    ejercicios,
+                    gpsActividadUuid = gpsActividadUuid
+                )
                 val response = RetrofitClient.progresoApi.registrarEntrenamiento("Bearer $token", body)
                 if (response.ok) {
                     _uiState.update {

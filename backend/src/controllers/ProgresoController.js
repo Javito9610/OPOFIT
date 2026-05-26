@@ -5,7 +5,8 @@ const guardarEntrenamiento = async (req, res) => {
       tipoRutina,
       idRutina,
       duracion,
-      ejercicios
+      ejercicios,
+      gpsActividadUuid
     } = req.body ?? {};
     const userId = req.usuario?.id;
     if (userId == null) return res.status(401).json({
@@ -41,7 +42,10 @@ const guardarEntrenamiento = async (req, res) => {
       tipoRutina,
       idRutina: Number(idRutina),
       duracion: Number(duracion),
-      ejercicios
+      ejercicios,
+      gpsActividadUuid: typeof gpsActividadUuid === 'string' && gpsActividadUuid.length <= 64
+        ? gpsActividadUuid
+        : null
     });
     res.status(200).json({
       ok: true,

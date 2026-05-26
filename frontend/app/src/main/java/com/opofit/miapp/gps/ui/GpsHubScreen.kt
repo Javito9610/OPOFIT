@@ -2,6 +2,7 @@ package com.opofit.miapp.gps.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -19,14 +20,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.DirectionsBike
-import androidx.compose.material.icons.filled.DirectionsRun
-import androidx.compose.material.icons.filled.DirectionsWalk
+import androidx.compose.material.icons.automirrored.filled.DirectionsBike
+import androidx.compose.material.icons.automirrored.filled.DirectionsRun
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.Bluetooth
+import androidx.compose.material.icons.filled.BluetoothConnected
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -35,6 +42,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -53,6 +61,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.gps.model.ActivitySummary
 import com.opofit.miapp.gps.model.ActivityType
+import com.opofit.miapp.gps.service.HrBleManager
 import com.opofit.miapp.gps.util.GpsMetrics
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -69,9 +78,11 @@ fun GpsHubScreen(
     val selectedType by viewModel.selectedType.collectAsState()
     val history by viewModel.history.collectAsState()
     val tracking by viewModel.tracking.collectAsState()
+    val hrState by viewModel.hrState.collectAsState()
     val context = LocalContext.current
 
     var showPermDialog by remember { mutableStateOf(false) }
+    var showHrDialog by remember { mutableStateOf(false) }
 
     val permLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -81,18 +92,48 @@ fun GpsHubScreen(
         if (ok) onStartRecording() else showPermDialog = true
     }
 
+    val blePermLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { _ ->
+        // Después de la solicitud relanzamos el escaneo.
+        if (viewModel.hrManager().hasPermissions()) {
+            showHrDialog = true
+            viewModel.startHrScan()
+        } else {
+            showPermDialog = true
+        }
+    }
+
     fun startWithPermission() {
         val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
         if (fine == PackageManager.PERMISSION_GRANTED) {
             onStartRecording()
         } else {
-            permLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.POST_NOTIFICATIONS
-                )
+            val perms = mutableListOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
             )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                perms += Manifest.permission.POST_NOTIFICATIONS
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                perms += Manifest.permission.ACTIVITY_RECOGNITION
+            }
+            permLauncher.launch(perms.toTypedArray())
+        }
+    }
+
+    fun openHrDialog() {
+        if (viewModel.hrManager().hasPermissions()) {
+            showHrDialog = true
+            viewModel.startHrScan()
+        } else {
+            val perms = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
+            } else {
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+            }
+            blePermLauncher.launch(perms)
         }
     }
 
@@ -104,12 +145,24 @@ fun GpsHubScreen(
             confirmButton = {
                 Button(onClick = { showPermDialog = false }) { Text("Entendido") }
             },
-            title = { Text("Permiso necesario") },
+            title = { Text("Permisos necesarios") },
             text = {
                 Text(
-                    "Para registrar tu ruta necesitamos acceso al GPS. " +
-                        "Concede el permiso de Ubicación desde los Ajustes del sistema."
+                    "Para registrar tu ruta necesitamos acceso al GPS, y para detectar cadencia el sensor de pasos. " +
+                        "Si quieres también pulso, conecta una banda BLE (Polar, Garmin en broadcast, etc.). " +
+                        "Apple Watch no es compatible con Android."
                 )
+            }
+        )
+    }
+
+    if (showHrDialog) {
+        HrConnectDialog(
+            viewModel = viewModel,
+            hrState = hrState,
+            onDismiss = {
+                showHrDialog = false
+                viewModel.stopHrScan()
             }
         )
     }
@@ -159,23 +212,53 @@ fun GpsHubScreen(
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
-                            "Ritmo, velocidad, altitud y trazado en el mapa.",
+                            "Ritmo, velocidad, cadencia, altitud, kcal y trazado en el mapa.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             TypeChip(
-                                ActivityType.RUN, Icons.Filled.DirectionsRun,
+                                ActivityType.RUN, Icons.AutoMirrored.Filled.DirectionsRun,
                                 selected = selectedType == ActivityType.RUN
                             ) { viewModel.selectType(ActivityType.RUN) }
                             TypeChip(
-                                ActivityType.WALK, Icons.Filled.DirectionsWalk,
+                                ActivityType.WALK, Icons.AutoMirrored.Filled.DirectionsWalk,
                                 selected = selectedType == ActivityType.WALK
                             ) { viewModel.selectType(ActivityType.WALK) }
                             TypeChip(
-                                ActivityType.BIKE, Icons.Filled.DirectionsBike,
+                                ActivityType.BIKE, Icons.AutoMirrored.Filled.DirectionsBike,
                                 selected = selectedType == ActivityType.BIKE
                             ) { viewModel.selectType(ActivityType.BIKE) }
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val connected = hrState is HrBleManager.State.Connected
+                            AssistChip(
+                                onClick = { openHrDialog() },
+                                label = {
+                                    val name = (hrState as? HrBleManager.State.Connected)?.device?.name
+                                    Text(
+                                        if (connected) "Reloj: ${name ?: "conectado"}"
+                                        else "Conectar reloj/banda"
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        if (connected) Icons.Filled.BluetoothConnected else Icons.Filled.Bluetooth,
+                                        null
+                                    )
+                                },
+                                colors = AssistChipDefaults.assistChipColors(
+                                    containerColor = if (connected) MaterialTheme.colorScheme.tertiaryContainer
+                                    else MaterialTheme.colorScheme.surface
+                                )
+                            )
+                            if (connected) {
+                                TextButton(onClick = { viewModel.disconnectHr() }) { Text("Desconectar") }
+                            }
                         }
                         if (tracking.active) {
                             OutlinedButton(
@@ -183,7 +266,7 @@ fun GpsHubScreen(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Icon(Icons.Filled.PlayArrow, null, Modifier.size(20.dp))
-                                Spacer(Modifier.padding(start = 8.dp))
+                                Spacer(Modifier.size(8.dp))
                                 Text("Continuar actividad en curso")
                             }
                         } else {
@@ -192,7 +275,7 @@ fun GpsHubScreen(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Icon(Icons.Filled.PlayArrow, null, Modifier.size(20.dp))
-                                Spacer(Modifier.padding(start = 8.dp))
+                                Spacer(Modifier.size(8.dp))
                                 Text("Iniciar ${selectedType.display.lowercase()}")
                             }
                         }
@@ -249,7 +332,8 @@ private fun TypeChip(
 
 @Composable
 private fun ActivityRow(activity: ActivitySummary, onClick: () -> Unit) {
-    val date = SimpleDateFormat("d MMM · HH:mm", Locale("es", "ES")).format(Date(activity.startedAtMs))
+    val date = SimpleDateFormat("d MMM · HH:mm", Locale.forLanguageTag("es-ES"))
+        .format(Date(activity.startedAtMs))
     Card(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
         Row(
             Modifier.padding(14.dp),
@@ -270,14 +354,90 @@ private fun ActivityRow(activity: ActivitySummary, onClick: () -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                if (activity.elevationGainM > 0) {
-                    Text(
-                        "Desnivel +${activity.elevationGainM.toInt()} m",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (activity.elevationGainM > 0) {
+                        Text(
+                            "+${activity.elevationGainM.toInt()} m",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    activity.kcal?.takeIf { it > 0 }?.let {
+                        Text("$it kcal", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    activity.avgHrBpm?.let {
+                        Text("♥ $it", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun HrConnectDialog(
+    viewModel: GpsViewModel,
+    hrState: HrBleManager.State,
+    onDismiss: () -> Unit
+) {
+    val found by viewModel.hrFound.collectAsState()
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Conectar pulsómetro") },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Cerrar") }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "Empareja una banda o reloj que emita el Heart Rate Service estándar.\n" +
+                        "Compatible: Polar H10/H9, Wahoo TICKR, Garmin (modo broadcast HR), " +
+                        "Mi Band / Amazfit con \"compartir pulso\" activado.\n" +
+                        "No compatible: Apple Watch (solo iPhone).",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                when (val st = hrState) {
+                    is HrBleManager.State.Idle -> {
+                        Text(
+                            if (found.isEmpty()) "Pulsa Buscar para escanear."
+                            else "Selecciona uno para conectar."
+                        )
+                    }
+                    is HrBleManager.State.Scanning -> {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                            Spacer(Modifier.size(8.dp))
+                            Text("Buscando dispositivos BLE...")
+                        }
+                    }
+                    is HrBleManager.State.Connecting -> Text("Conectando a ${st.device.name ?: st.device.address}...")
+                    is HrBleManager.State.Connected -> {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.Favorite, null, tint = MaterialTheme.colorScheme.error)
+                            Spacer(Modifier.size(6.dp))
+                            Text("Conectado a ${st.device.name ?: st.device.address}")
+                        }
+                    }
+                    is HrBleManager.State.Error -> Text(
+                        st.message,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+                found.take(8).forEach { device ->
+                    OutlinedButton(
+                        onClick = { viewModel.connectHr(device) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(device.name ?: device.address)
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { viewModel.startHrScan() }) { Text("Buscar") }
+                    if (hrState is HrBleManager.State.Connected) {
+                        OutlinedButton(onClick = { viewModel.disconnectHr() }) { Text("Desconectar") }
+                    }
+                }
+            }
+        }
+    )
 }
