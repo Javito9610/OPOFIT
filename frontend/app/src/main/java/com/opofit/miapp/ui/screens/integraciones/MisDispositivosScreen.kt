@@ -125,11 +125,38 @@ fun MisDispositivosScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                Text(
-                    "Conecta tu reloj o pulsera para que OpoFit reciba automáticamente tus carreras y métricas.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            "Conecta tu reloj o pulsera",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            "OpoFit se conecta con prácticamente cualquier reloj o pulsera del mercado " +
+                                "(Garmin, Polar, Mi Band, Amazfit, Fitbit, Samsung Galaxy Watch, Suunto, Coros, " +
+                                "Wahoo, Whoop, Oura, y más).\n\n" +
+                                "Los tres caminos:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            "1. Health Connect — el camino recomendado en Android. Tu reloj envía datos " +
+                                "a Health Connect y OpoFit los lee.\n" +
+                                "2. Strava — funciona para todos los relojes que ya sincronizan a Strava " +
+                                "(incluso Apple Watch vía iPhone).\n" +
+                                "3. Polar AccessLink — si tienes un Polar y prefieres conexión directa.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
             }
             item {
                 HealthConnectCard(
@@ -267,14 +294,22 @@ private fun HealthConnectCard(
         else -> "Sin permisos"
     }
     ProviderCard(
-        title = "Health Connect",
-        subtitle = "Samsung, Garmin, Fitbit, Mi Band, Whoop... vía Health Connect",
+        title = "Health Connect (recomendado)",
+        subtitle = "Garmin, Samsung, Fitbit, Mi Band, Amazfit, Whoop, Oura...",
         icon = Icons.Filled.Cloud,
         estado = estadoTxt,
         estadoOk = connected
     ) {
         Text(
-            "Imports en segundo plano todas las actividades publicadas en Health Connect por la app oficial de tu reloj.",
+            "Pasos para conectar tu reloj:",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+        Text(
+            "1. Asegúrate de tener Health Connect instalado (botón abajo si no).\n" +
+                "2. Abre la app oficial de tu reloj (Garmin Connect, Mi Fitness, Zepp Life, Samsung Health, etc.) " +
+                "y activa \"Compartir con Health Connect\".\n" +
+                "3. Vuelve aquí y pulsa \"Conceder permisos\". OpoFit leerá automáticamente tus actividades.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

@@ -5,6 +5,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +22,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,14 +33,18 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
 /**
@@ -72,7 +80,10 @@ fun LineAreaChart(
     showDots: Boolean = false,
     yFormatter: (Double) -> String = { "%.1f".format(it) },
     xLabels: List<String> = emptyList(),
-    invertY: Boolean = false
+    pointLabels: List<String>? = null,
+    yAxisLabel: String? = null,
+    invertY: Boolean = false,
+    interactive: Boolean = true
 ) {
     if (values.size < 2) {
         EmptyState("Faltan datos para el gráfico", modifier)
@@ -91,9 +102,35 @@ fun LineAreaChart(
     )
 
     val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+    val axisColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val textMeasurer = rememberTextMeasurer()
     val labelStyle = MaterialTheme.typography.labelSmall
+    val tooltipStyle = MaterialTheme.typography.labelMedium.copy(color = Color.White, fontWeight = FontWeight.SemiBold)
+    val tooltipMetaStyle = MaterialTheme.typography.labelSmall.copy(color = Color.White.copy(alpha = 0.85f))
+
+    var hoverIdx by remember { mutableStateOf<Int?>(null) }
+
+    val interactionModifier = if (interactive) {
+        Modifier
+            .pointerInput(values.size) {
+                detectTapGestures(
+                    onTap = { hoverIdx = if (hoverIdx != null) null else 0 }
+                )
+            }
+            .pointerInput(values.size) {
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        hoverIdx = nearestIndex(offset.x, values.size, size.width.toFloat())
+                    },
+                    onDragEnd = { /* keep tooltip until next tap */ },
+                    onDragCancel = { },
+                    onDrag = { change, _ ->
+                        hoverIdx = nearestIndex(change.position.x, values.size, size.width.toFloat())
+                    }
+                )
+            }
+    } else Modifier
 
     Canvas(
         modifier = modifier
@@ -102,30 +139,39 @@ fun LineAreaChart(
                 RoundedCornerShape(12.dp)
             )
             .padding(12.dp)
+            .then(interactionModifier)
     ) {
-        val labelWidth = 36.dp.toPx()
-        val labelHeight = 18.dp.toPx()
+        val labelWidth = 44.dp.toPx()
+        val labelHeight = 22.dp.toPx()
+        val topPadding = if (yAxisLabel != null) 22.dp.toPx() else 6.dp.toPx()
         val geo = ChartGeometry(
             left = labelWidth,
-            top = 4.dp.toPx(),
+            top = topPadding,
             width = size.width - labelWidth - 4.dp.toPx(),
-            height = size.height - labelHeight - 4.dp.toPx(),
+            height = size.height - labelHeight - topPadding,
             minY = minY,
             maxY = maxY
         )
 
-        for (i in 0..3) {
-            val y = geo.top + geo.height * i / 3f
+        if (yAxisLabel != null) {
+            val res = textMeasurer.measure(yAxisLabel, labelStyle.copy(color = labelColor, fontWeight = FontWeight.SemiBold))
+            drawText(textLayoutResult = res, topLeft = Offset(geo.left, 0f))
+        }
+
+        // Grid + Y axis ticks
+        for (i in 0..4) {
+            val y = geo.top + geo.height * i.toFloat() / 4f
             drawLine(
                 gridColor,
                 Offset(geo.left, y),
                 Offset(geo.left + geo.width, y),
-                strokeWidth = 1f
+                strokeWidth = 1f,
+                pathEffect = if (i > 0 && i < 4) PathEffect.dashPathEffect(floatArrayOf(6f, 6f)) else null
             )
             val v = if (invertY) {
-                minY - (minY - maxY) * i / 3f
+                minY - (minY - maxY) * i.toDouble() / 4.0
             } else {
-                maxY - (maxY - minY) * i / 3f
+                maxY - (maxY - minY) * i.toDouble() / 4.0
             }
             val txt = yFormatter(v)
             val result = textMeasurer.measure(txt, labelStyle.copy(color = labelColor))
@@ -134,6 +180,14 @@ fun LineAreaChart(
                 topLeft = Offset(geo.left - result.size.width - 4.dp.toPx(), y - result.size.height / 2f)
             )
         }
+
+        // X axis baseline
+        drawLine(
+            axisColor,
+            Offset(geo.left, geo.top + geo.height),
+            Offset(geo.left + geo.width, geo.top + geo.height),
+            strokeWidth = 2f
+        )
 
         val visibleCount = ((values.size) * progress).coerceAtLeast(2f).toInt().coerceAtMost(values.size)
         val path = Path()
@@ -186,8 +240,66 @@ fun LineAreaChart(
                 )
             }
         }
+
+        // Tooltip
+        val idx = hoverIdx
+        if (idx != null && idx in values.indices) {
+            val v = values[idx]
+            val cx = geo.xFor(idx, values.size)
+            val cy = geo.yFor(v)
+            // vertical guide
+            drawLine(
+                axisColor.copy(alpha = 0.55f),
+                Offset(cx, geo.top),
+                Offset(cx, geo.top + geo.height),
+                strokeWidth = 2f,
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 6f))
+            )
+            // highlight dot
+            drawCircle(Color.White, radius = 8f, center = Offset(cx, cy))
+            drawCircle(lineColor, radius = 6f, center = Offset(cx, cy))
+
+            val mainText = yFormatter(v)
+            val metaText = pointLabels?.getOrNull(idx).orEmpty()
+            val tooltipMain = textMeasurer.measure(mainText, tooltipStyle)
+            val tooltipMeta = if (metaText.isNotEmpty()) textMeasurer.measure(metaText, tooltipMetaStyle) else null
+            val w = maxOf(tooltipMain.size.width, tooltipMeta?.size?.width ?: 0) + 16.dp.toPx().toInt()
+            val h = tooltipMain.size.height + (tooltipMeta?.size?.height ?: 0) + 12.dp.toPx().toInt()
+            var tx = cx - w / 2f
+            tx = tx.coerceIn(geo.left, geo.left + geo.width - w)
+            var ty = cy - h - 12.dp.toPx()
+            if (ty < geo.top) ty = cy + 14.dp.toPx()
+            drawRoundRect(
+                color = Color(0xFF1E1E1E).copy(alpha = 0.92f),
+                topLeft = Offset(tx, ty),
+                size = Size(w.toFloat(), h.toFloat()),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(10f, 10f)
+            )
+            drawText(
+                textLayoutResult = tooltipMain,
+                topLeft = Offset(tx + 8.dp.toPx(), ty + 6.dp.toPx())
+            )
+            tooltipMeta?.let {
+                drawText(
+                    textLayoutResult = it,
+                    topLeft = Offset(tx + 8.dp.toPx(), ty + 6.dp.toPx() + tooltipMain.size.height)
+                )
+            }
+        }
     }
 }
+
+private fun nearestIndex(x: Float, count: Int, totalWidth: Float): Int {
+    if (count <= 1) return 0
+    val labelWidth = 44f * 2.5f // approx px
+    val left = labelWidth
+    val width = totalWidth - left - 16f
+    val rel = ((x - left) / width).coerceIn(0f, 1f)
+    return (rel * (count - 1)).roundToInt().coerceIn(0, count - 1)
+}
+
+@Suppress("UNUSED") private val _unusedTextStyle: TextStyle = TextStyle.Default
+@Suppress("UNUSED") private val _unusedAbs = 0.0.absoluteValue
 
 @Composable
 fun ColumnsChart(

@@ -14,16 +14,22 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.DirectionsRun
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Pool
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.SyncProblem
+import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -102,65 +109,17 @@ fun EjercicioHistorialScreen(
             item { HeaderHero(h) }
             item { KpisGrid(h) }
             if (h.puntos.size >= 2) {
-                item {
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(14.dp)) {
-                            Text(
-                                if (h.menorEsMejor) "Mejor cuanto más bajo" else "Evolución del valor",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            LineAreaChart(
-                                values = h.puntos.map { it.valor },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(180.dp)
-                                    .padding(top = 8.dp),
-                                showDots = true,
-                                yFormatter = { "%.1f".format(it) },
-                                invertY = h.menorEsMejor,
-                                lineColor = colorPilar(h.pilar)
-                            )
-                        }
-                    }
-                }
+                item { ChartCard(h) }
+            } else {
+                item { InfoChip("Haz al menos 2 sesiones de este ejercicio para ver gráficas de evolución.") }
             }
-            if (h.esCardio && h.puntos.any { it.duracionSeg != null && it.duracionSeg > 0 } && h.puntos.size >= 2) {
-                item {
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(14.dp)) {
-                            Text(
-                                "Ritmo por sesión",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            val ritmos = h.puntos.mapNotNull { p ->
-                                val dist = if (h.unidad == "km") p.valor else p.valor / 1000.0
-                                val secs = p.duracionSeg ?: return@mapNotNull null
-                                if (dist <= 0 || secs <= 0) null else secs / dist
-                            }
-                            if (ritmos.size >= 2) {
-                                LineAreaChart(
-                                    values = ritmos,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(160.dp)
-                                        .padding(top = 8.dp),
-                                    showDots = true,
-                                    invertY = true,
-                                    yFormatter = { GpsMetrics.formatPace(it) },
-                                    lineColor = Color(0xFF6A1B9A)
-                                )
-                            } else {
-                                Text(
-                                    "Necesitas al menos 2 sesiones con duración para ver el ritmo.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-                }
+            if (h.esCardio) {
+                item { ChartRitmoCard(h) }
+            }
+            if (h.esCardio) {
+                item { HrCard(h) }
+                item { CadenciaCard(h) }
+                item { KcalCard(h) }
             }
             item {
                 Text(
@@ -351,6 +310,7 @@ private fun colorPilar(pilar: String?): Color = when (pilar?.uppercase()) {
     else -> Color(0xFF455A64)
 }
 
+@Suppress("DEPRECATION")
 private fun iconPilar(pilar: String?, nombre: String) = when {
     pilar?.uppercase() == "RESISTENCIA" || nombre.contains("carrera", true) || nombre.contains("trote", true) || nombre.contains("rodaje", true) -> Icons.Filled.DirectionsRun
     nombre.contains("nat", true) -> Icons.Filled.Pool
@@ -362,4 +322,252 @@ private fun unidadCorta(u: String): String = when (u) {
     "km" -> "km"
     "m" -> "m"
     else -> "reps"
+}
+
+private fun fechaCorta(iso: String?): String {
+    if (iso == null) return ""
+    return try {
+        // Esperamos "yyyy-MM-dd ..." o ISO; cogemos los 10 primeros
+        val ymd = iso.take(10)
+        val parts = ymd.split("-")
+        if (parts.size == 3) "${parts[2]}/${parts[1]}" else ymd
+    } catch (_: Exception) { iso.take(10) }
+}
+
+@Composable
+private fun ChartCard(h: HistorialEjercicio) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Timeline, null, tint = colorPilar(h.pilar))
+                Text(
+                    "  Evolución del valor",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f)
+                )
+                if (h.menorEsMejor) {
+                    AssistChip(
+                        onClick = {},
+                        label = { Text("Menos = mejor") },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                        )
+                    )
+                }
+            }
+            Text(
+                "Toca o desliza para ver el dato exacto",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            LineAreaChart(
+                values = h.puntos.map { it.valor },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp),
+                showDots = true,
+                yFormatter = { v -> "%.2f %s".format(v, unidadCorta(h.unidad)) },
+                yAxisLabel = "Valor (${unidadCorta(h.unidad)})",
+                xLabels = if (h.puntos.size >= 3) listOf(
+                    fechaCorta(h.puntos.first().fechaEntreno),
+                    fechaCorta(h.puntos[h.puntos.size / 2].fechaEntreno),
+                    fechaCorta(h.puntos.last().fechaEntreno)
+                ) else h.puntos.map { fechaCorta(it.fechaEntreno) },
+                pointLabels = h.puntos.map { fechaCorta(it.fechaEntreno) },
+                invertY = h.menorEsMejor,
+                lineColor = colorPilar(h.pilar)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ChartRitmoCard(h: HistorialEjercicio) {
+    val ritmos = remember(h.puntos) {
+        h.puntos.mapNotNull { p ->
+            val dist = if (h.unidad == "km") p.valor else p.valor / 1000.0
+            val secs = p.duracionSeg ?: return@mapNotNull null
+            if (dist <= 0 || secs <= 0) null else secs / dist
+        }
+    }
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                "Ritmo por sesión (min/km)",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            if (ritmos.size >= 2) {
+                Text(
+                    "Más bajo = más rápido. Toca para ver el ritmo exacto.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                LineAreaChart(
+                    values = ritmos,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp),
+                    showDots = true,
+                    invertY = true,
+                    yFormatter = { v -> "${GpsMetrics.formatPace(v)} /km" },
+                    yAxisLabel = "Ritmo (min/km)",
+                    pointLabels = h.puntos.map { fechaCorta(it.fechaEntreno) },
+                    xLabels = if (h.puntos.size >= 3) listOf(
+                        fechaCorta(h.puntos.first().fechaEntreno),
+                        fechaCorta(h.puntos[h.puntos.size / 2].fechaEntreno),
+                        fechaCorta(h.puntos.last().fechaEntreno)
+                    ) else h.puntos.map { fechaCorta(it.fechaEntreno) },
+                    lineColor = Color(0xFF6A1B9A)
+                )
+            } else {
+                Text(
+                    "Necesitas al menos 2 sesiones con duración para ver el ritmo.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HrCard(h: HistorialEjercicio) {
+    val hayHR = h.puntos.any { it.gpsActividadUuid != null }
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.FavoriteBorder, null, tint = Color(0xFFD32F2F))
+                Text(
+                    "  Frecuencia cardíaca",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            if (!hayHR) {
+                EmptyMetricInfo(
+                    icon = Icons.Filled.SyncProblem,
+                    titulo = "Sin datos de pulso",
+                    detalle = "Conecta una banda BLE o un reloj con Health Connect/Strava para registrar el pulso de tus carreras."
+                )
+            } else {
+                Text(
+                    "Para ver el detalle de pulso por sesión, abre cada actividad GPS asociada en la lista de abajo (icono de mapa).",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CadenciaCard(h: HistorialEjercicio) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                @Suppress("DEPRECATION")
+                Icon(Icons.Filled.DirectionsRun, null, tint = Color(0xFF1565C0))
+                Text(
+                    "  Cadencia",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            val tieneCadencia = h.puntos.any { it.gpsActividadUuid != null }
+            if (!tieneCadencia) {
+                EmptyMetricInfo(
+                    icon = Icons.Filled.SyncProblem,
+                    titulo = "Sin cadencia",
+                    detalle = "La cadencia (pasos/min) se calcula con el sensor de pasos del móvil al grabar GPS, o desde tu reloj. Sale por sesión en el detalle del GPS."
+                )
+            } else {
+                Text(
+                    "Abre cada actividad GPS de la lista para ver la cadencia media y por intervalos.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun KcalCard(h: HistorialEjercicio) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.LocalFireDepartment, null, tint = Color(0xFFEF6C00))
+                Text(
+                    "  Calorías",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            val total = (h.totalDistanciaKm * 70 * 0.9).toInt()
+            if (total > 0) {
+                Text(
+                    "Total estimado lifetime: $total kcal",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    "Estimación basada en MET dinámico y tu peso de perfil. Para kcal reales, conecta una banda BLE o sincroniza con Strava.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                EmptyMetricInfo(
+                    icon = Icons.Filled.SyncProblem,
+                    titulo = "Sin datos de kcal",
+                    detalle = "Aún no hay distancia registrada para calcular calorías."
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyMetricInfo(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    titulo: String,
+    detalle: String
+) {
+    Row(
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                RoundedCornerShape(12.dp)
+            )
+            .padding(12.dp)
+    ) {
+        Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column {
+            Text(titulo, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+            Text(
+                detalle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun InfoChip(text: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                RoundedCornerShape(12.dp)
+            )
+            .padding(12.dp)
+    ) {
+        Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
 }

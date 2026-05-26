@@ -76,6 +76,24 @@ private fun colorTipo(tipo: String): Color = when (tipo.uppercase()) {
     else -> Color(0xFF455A64)
 }
 
+private fun descripcionPeriodo(p: String): String {
+    val cal = java.util.Calendar.getInstance()
+    val hoy = cal.time
+    when (p.lowercase()) {
+        "year" -> cal.add(java.util.Calendar.YEAR, -1)
+        "month" -> cal.add(java.util.Calendar.MONTH, -1)
+        else -> cal.add(java.util.Calendar.DAY_OF_YEAR, -7)
+    }
+    val desde = cal.time
+    val fmt = java.text.SimpleDateFormat("d MMM", java.util.Locale.forLanguageTag("es-ES"))
+    val titulo = when (p.lowercase()) {
+        "year" -> "Últimos 12 meses"
+        "month" -> "Últimos 30 días"
+        else -> "Últimos 7 días"
+    }
+    return "$titulo · del ${fmt.format(desde)} al ${fmt.format(hoy)}"
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistorialScreen(
@@ -157,14 +175,21 @@ private fun ResumenTab(resumen: ResumenHistorial?, periodo: String, onPeriodoCha
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                listOf("week" to "Semana", "month" to "Mes", "year" to "Año").forEach { (k, label) ->
-                    FilterChip(
-                        selected = periodo == k,
-                        onClick = { onPeriodoChange(k) },
-                        label = { Text(label) }
-                    )
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf("week" to "Semana", "month" to "Mes", "year" to "Año").forEach { (k, label) ->
+                        FilterChip(
+                            selected = periodo == k,
+                            onClick = { onPeriodoChange(k) },
+                            label = { Text(label) }
+                        )
+                    }
                 }
+                Text(
+                    descripcionPeriodo(periodo),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
         if (resumen == null) {
