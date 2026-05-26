@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -26,6 +28,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -50,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.EjercicioRealizado
+import com.opofit.miapp.gps.service.GpsLastResult
 import com.opofit.miapp.ui.components.RecordCelebrationDialog
 import com.opofit.miapp.ui.components.RestTimerSheet
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
@@ -77,6 +81,7 @@ fun EntrenamientosScreen(
     authViewModel: AuthViewModel,
     onNavigateBack: () -> Unit,
     onEntrenamientoFinalizado: () -> Unit,
+    onNavigateToGps: () -> Unit = {},
     initialEnfoque: String = "",
     initialPlanDiaId: Int? = null,
     initialRutinaOpoId: Int? = null,
@@ -126,6 +131,13 @@ fun EntrenamientosScreen(
             n.contains("carrera") || n.contains("trote") || n.contains("rodaje") || n.contains("fartlek") -> "RUN"
             else -> null
         }
+    }
+
+    fun esEjercicioGps(nombre: String, tipo: String?): Boolean {
+        val n = nombre.lowercase()
+        if (n.contains("cinta") || n.contains("tapiz") || n.contains("treadmill")) return false
+        if (tipo == "RUN") return true
+        return Regex("\\b(bici|ciclismo|bicicleta|caminar|marcha|paseo)\\b").containsMatchIn(n)
     }
 
     LaunchedEffect(userId, oposicionId) {
@@ -241,6 +253,25 @@ fun EntrenamientosScreen(
                 showObjetivoDialog = true
             }
         }
+    }
+
+    val gpsLast by GpsLastResult.value.collectAsState()
+    LaunchedEffect(gpsLast?.id) {
+        val summary = gpsLast ?: return@LaunchedEffect
+        val idx = ejerciciosEstado.indexOfFirst { !it.completado && esEjercicioGps(it.nombre, it.tipo) }
+        if (idx >= 0) {
+            val km = summary.distanceM / 1000.0
+            val mostrado = if (unitDist == "mi") "%.2f".format(km / 1.609344) else "%.2f".format(km)
+            ejerciciosEstado[idx] = ejerciciosEstado[idx].copy(
+                distancia = mostrado,
+                valorConseguido = km.toString()
+            )
+            if (segundos < summary.durationSec) {
+                segundos = summary.durationSec
+                cronometroIniciadoAlgunaVez = true
+            }
+        }
+        GpsLastResult.consume()
     }
 
     LaunchedEffect(historialState.registradoExitoso, historialState.recordsRotos) {
@@ -542,6 +573,16 @@ fun EntrenamientosScreen(
                                 Column(horizontalAlignment = Alignment.End) {
                                     Text("Velocidad media", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     Text(velTxt, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                            if (esEjercicioGps(estado.nombre, estado.tipo)) {
+                                OutlinedButton(
+                                    onClick = onNavigateToGps,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(Icons.Filled.Explore, null, Modifier.size(18.dp))
+                                    Spacer(Modifier.size(6.dp))
+                                    Text("Registrar con GPS")
                                 }
                             }
                         } else {

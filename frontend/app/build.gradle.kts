@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -19,6 +22,17 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "BASE_URL", "\"https://opofit-production.up.railway.app/\"")
+
+        val localProps = Properties()
+        val localPropsFile = rootProject.file("local.properties")
+        if (localPropsFile.exists()) {
+            FileInputStream(localPropsFile).use { localProps.load(it) }
+        }
+        val mapsKey: String = (project.findProperty("MAPS_API_KEY") as? String)
+            ?: localProps.getProperty("MAPS_API_KEY")
+            ?: System.getenv("MAPS_API_KEY")
+            ?: ""
+        manifestPlaceholders["mapsApiKey"] = mapsKey
     }
 
     buildTypes {
@@ -77,4 +91,8 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
 
     implementation("androidx.browser:browser:1.8.0")
+
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation("com.google.android.gms:play-services-maps:19.0.0")
+    implementation("com.google.maps.android:maps-compose:6.1.2")
 }

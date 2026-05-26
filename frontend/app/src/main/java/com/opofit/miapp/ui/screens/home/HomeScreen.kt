@@ -85,6 +85,7 @@ fun HomeScreen(
     onNavigateToRanking: () -> Unit = {},
     onNavigateToComunidad: () -> Unit = {},
     onNavigateToPremium: () -> Unit = {},
+    onNavigateToGps: () -> Unit = {},
     onLogout: () -> Unit,
     userName: String? = null,
     oposicionId: Int = 1,
@@ -107,7 +108,7 @@ fun HomeScreen(
         QuickLink("Ranking", "Clasificación", Icons.Filled.Leaderboard, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, onNavigateToRanking),
         QuickLink("Comunidad", "Amigos", Icons.Filled.Groups, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToComunidad),
         QuickLink("Premium", "Más ventajas", Icons.Filled.Star, MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer, onNavigateToPremium),
-        QuickLink("Rutas GPS", "Próximamente", Icons.Filled.Explore, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), MaterialTheme.colorScheme.onSurfaceVariant, {})
+        QuickLink("Rutas GPS", "Carrera · Bici · Paseo", Icons.Filled.Explore, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary, onNavigateToGps)
     )
 
     Scaffold(

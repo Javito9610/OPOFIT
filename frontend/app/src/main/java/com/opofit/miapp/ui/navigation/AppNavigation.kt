@@ -6,6 +6,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.opofit.miapp.gps.ui.GpsActivityDetailScreen
+import com.opofit.miapp.gps.ui.GpsHubScreen
+import com.opofit.miapp.gps.ui.GpsRecordingScreen
 import com.opofit.miapp.ui.screens.ajustes.AjustesScreen
 import com.opofit.miapp.ui.screens.auth.LoginScreen
 import com.opofit.miapp.ui.screens.auth.RegisterScreen
@@ -104,6 +107,9 @@ fun AppNavigation(
                 onNavigateToPremium = {
                     navController.navigate(NavDestinations.PREMIUM)
                 },
+                onNavigateToGps = {
+                    navController.navigate(NavDestinations.GPS_HUB)
+                },
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate(NavDestinations.LOGIN) {
@@ -183,6 +189,7 @@ fun AppNavigation(
                 onEntrenamientoFinalizado = {
                     navController.popBackStack()
                 },
+                onNavigateToGps = { navController.navigate(NavDestinations.GPS_HUB) },
                 initialEnfoque = enfoque,
                 initialPlanDiaId = idPlanDia.takeIf { it > 0 },
                 initialRutinaOpoId = idRutinaOpo.takeIf { it > 0 }
@@ -261,6 +268,36 @@ fun AppNavigation(
 
         composable(NavDestinations.PREMIUM) {
             PremiumScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
+        composable(NavDestinations.GPS_HUB) {
+            GpsHubScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onStartRecording = { navController.navigate(NavDestinations.GPS_RECORDING) },
+                onOpenActivity = { id -> navController.navigate("gps_activity/$id") }
+            )
+        }
+
+        composable(NavDestinations.GPS_RECORDING) {
+            GpsRecordingScreen(
+                onFinishSaved = { id ->
+                    navController.navigate("gps_activity/$id") {
+                        popUpTo(NavDestinations.GPS_HUB) { inclusive = false }
+                    }
+                },
+                onDiscarded = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = NavDestinations.GPS_ACTIVITY_DETAIL,
+            arguments = listOf(navArgument("activity_id") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("activity_id") ?: ""
+            GpsActivityDetailScreen(
+                activityId = id,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }

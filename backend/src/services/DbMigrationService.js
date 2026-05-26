@@ -287,6 +287,39 @@ class DbMigrationService {
         'TINYINT(1) NOT NULL DEFAULT 1'
       );
 
+      if (!(await DbMigrationService.tableExists('gps_actividades'))) {
+        await db.query(`
+          CREATE TABLE gps_actividades (
+            id_actividad INT NOT NULL AUTO_INCREMENT,
+            uuid_local VARCHAR(64) NOT NULL,
+            usuarios_id_usuario INT NOT NULL,
+            tipo ENUM('RUN','WALK','BIKE') NOT NULL,
+            iniciada_en BIGINT NOT NULL,
+            finalizada_en BIGINT NOT NULL,
+            duracion_seg INT NOT NULL,
+            movimiento_seg INT NOT NULL,
+            distancia_m DOUBLE NOT NULL,
+            velocidad_media_mps DOUBLE NOT NULL,
+            velocidad_max_mps DOUBLE NOT NULL,
+            ritmo_medio_spkm DOUBLE NOT NULL,
+            ritmo_min_spkm DOUBLE NOT NULL,
+            ritmo_max_spkm DOUBLE NOT NULL,
+            desnivel_pos_m DOUBLE NOT NULL DEFAULT 0,
+            altitud_min_m DOUBLE NULL,
+            altitud_max_m DOUBLE NULL,
+            cadencia_media_ppm DOUBLE NULL,
+            polyline_json LONGTEXT NULL,
+            splits_json TEXT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_actividad),
+            UNIQUE KEY uniq_gps_user_uuid (usuarios_id_usuario, uuid_local),
+            INDEX idx_gps_usuario (usuarios_id_usuario),
+            CONSTRAINT fk_gps_usuario FOREIGN KEY (usuarios_id_usuario) REFERENCES usuarios (id_usuario) ON DELETE CASCADE
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla gps_actividades creada');
+      }
+
       const EjerciciosCatalogoService = require('./EjerciciosCatalogoService');
       await EjerciciosCatalogoService.seedCatalogoAmpliado();
 

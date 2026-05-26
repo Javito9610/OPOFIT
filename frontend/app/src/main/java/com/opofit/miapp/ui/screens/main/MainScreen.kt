@@ -48,6 +48,7 @@ fun MainScreen(
     onNavigateToRanking: () -> Unit,
     onNavigateToComunidad: () -> Unit,
     onNavigateToPremium: () -> Unit,
+    onNavigateToGps: () -> Unit,
     onLogout: () -> Unit
 ) {
     val innerNavController = rememberNavController()
@@ -125,6 +126,7 @@ fun MainScreen(
                     onNavigateToRanking = onNavigateToRanking,
                     onNavigateToComunidad = onNavigateToComunidad,
                     onNavigateToPremium = onNavigateToPremium,
+                    onNavigateToGps = onNavigateToGps,
                     onLogout = onLogout,
                     userName = authState.userName,
                     oposicionId = authState.oposicionId ?: 1
