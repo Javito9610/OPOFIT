@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Watch
@@ -75,6 +76,7 @@ private data class QuickLink(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    onOpenDrawer: () -> Unit = {},
     onNavigateToRutinas: () -> Unit,
     onNavigateToEntrenamientos: (enfoque: String?, idPlanDia: Int?, idRutinaOpo: Int?) -> Unit = { _, _, _ -> },
     onNavigateToPerfil: () -> Unit,
@@ -103,15 +105,9 @@ fun HomeScreen(
 
     val quickLinks = listOf(
         QuickLink("Plan", "Entreno semanal", Icons.Filled.FitnessCenter, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary, onNavigateToRutinas),
-        QuickLink("Historial", "Progreso", Icons.Filled.BarChart, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToHistorial),
-        QuickLink("Perfil", "Marcas", Icons.Filled.Person, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary, onNavigateToPerfil),
-        QuickLink("Info", "Baremos", Icons.Filled.Info, MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer, onNavigateToInfoOposicion),
-        QuickLink("Libres", "Banco ejercicios", Icons.Filled.Star, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, onNavigateToRutinasLibres),
-        QuickLink("Ranking", "Clasificación", Icons.Filled.Leaderboard, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, onNavigateToRanking),
-        QuickLink("Comunidad", "Amigos", Icons.Filled.Groups, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToComunidad),
-        QuickLink("Premium", "Más ventajas", Icons.Filled.Star, MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer, onNavigateToPremium),
-        QuickLink("Rutas GPS", "Carrera · Bici · Paseo", Icons.Filled.Explore, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary, onNavigateToGps),
-        QuickLink("Dispositivos", "Reloj y banda", Icons.Filled.Watch, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, onNavigateToMisDispositivos)
+        QuickLink("Rutas GPS", "Carrera · Bici", Icons.Filled.Explore, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary, onNavigateToGps),
+        QuickLink("Simulacro", "Pruebas", Icons.Filled.Timer, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToSimulacro),
+        QuickLink("Dispositivos", "Reloj · banda", Icons.Filled.Watch, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, onNavigateToMisDispositivos)
     )
 
     Scaffold(
@@ -129,12 +125,14 @@ fun HomeScreen(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
+                navigationIcon = {
+                    IconButton(onClick = onOpenDrawer) {
+                        Icon(Icons.Filled.Menu, "Menú", tint = MaterialTheme.colorScheme.onPrimary)
+                    }
+                },
                 actions = {
                     IconButton(onClick = onNavigateToAjustes) {
                         Icon(Icons.Filled.Settings, "Ajustes", tint = MaterialTheme.colorScheme.onPrimary)
-                    }
-                    IconButton(onClick = onLogout) {
-                        Icon(Icons.Filled.ExitToApp, "Salir", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
             )

@@ -27,3 +27,5 @@ config/secrets.json
 ../keys/
 keys/
 *firebase*adminsdk*.json
+@
+.commit_msg.tmp

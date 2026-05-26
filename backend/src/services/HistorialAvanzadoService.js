@@ -322,14 +322,24 @@ class HistorialAvanzadoService {
     const head = puntos[0];
     const nombre = head.nombre_ejercicio;
     const nombreLower = String(nombre).toLowerCase();
-    const isCarrera = /(carrera|trote|rodaje|fartlek|sprint)/.test(nombreLower);
+    const isCarrera = /(carrera|trote|rodaje|fartlek)/.test(nombreLower);
+    const isSprint = /(sprint|100 ?m|60 ?m|30 ?m|400 ?m|800 ?m|1000 ?m)/.test(nombreLower);
     const isNado = /(natacion|natación|nadar|nado)/.test(nombreLower);
     const isBici = /(bici|ciclismo)/.test(nombreLower);
-    const isCardio = head.pilar === 'RESISTENCIA' || head.pilar === 'VELOCIDAD' || isCarrera || isNado || isBici;
-    const menorEsMejor = isCarrera || isNado;
-    const distanceUnit = if_(isCarrera || isBici, 'km', isNado ? 'm' : 'reps');
+    const isCardio = head.pilar === 'RESISTENCIA' || head.pilar === 'VELOCIDAD' || isCarrera || isNado || isBici || isSprint;
 
+    // Heurística: si el valor parece tiempo (sprint o ejercicios cortos con valor < 60 y nombre con tiempo),
+    // menor=mejor. Si el valor parece distancia (km, m grandes, reps), mayor=mejor.
     const vals = puntos.map((p) => Number(p.valor_conseguido));
+    const avgValRaw = vals.reduce((a, b) => a + b, 0) / vals.length;
+    // En sprints típicos los tiempos son < 600s. Si es sprint o velocidad y los valores son pequeños (< 600), asumimos tiempo.
+    const valoresParecenTiempo = (isSprint || head.pilar === 'VELOCIDAD') && avgValRaw < 600;
+    const menorEsMejor = valoresParecenTiempo;
+    const distanceUnit = if_(
+      isCarrera || isBici, 'km',
+      if_(isNado, 'm', if_(valoresParecenTiempo, 's', 'reps'))
+    );
+
     const best = menorEsMejor ? Math.min(...vals) : Math.max(...vals);
     const worst = menorEsMejor ? Math.max(...vals) : Math.min(...vals);
     const avg = vals.reduce((a, b) => a + b, 0) / vals.length;

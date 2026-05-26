@@ -336,20 +336,27 @@ private fun fechaCorta(iso: String?): String {
 
 @Composable
 private fun ChartCard(h: HistorialEjercicio) {
+    val (titulo, subtitulo) = tituloGrafica(h)
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.Timeline, null, tint = colorPilar(h.pilar))
-                Text(
-                    "  Evolución del valor",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f)
-                )
+                Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
+                    Text(
+                        titulo,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        subtitulo,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 if (h.menorEsMejor) {
                     AssistChip(
                         onClick = {},
-                        label = { Text("Menos = mejor") },
+                        label = { Text("Menos tiempo = mejor") },
                         colors = AssistChipDefaults.assistChipColors(
                             containerColor = MaterialTheme.colorScheme.tertiaryContainer
                         )
@@ -357,7 +364,7 @@ private fun ChartCard(h: HistorialEjercicio) {
                 }
             }
             Text(
-                "Toca o desliza para ver el dato exacto",
+                "Toca o desliza la gráfica para ver el dato exacto y la fecha de cada sesión",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -368,7 +375,7 @@ private fun ChartCard(h: HistorialEjercicio) {
                     .height(200.dp),
                 showDots = true,
                 yFormatter = { v -> "%.2f %s".format(v, unidadCorta(h.unidad)) },
-                yAxisLabel = "Valor (${unidadCorta(h.unidad)})",
+                yAxisLabel = "${tituloEjeY(h)} (${unidadCorta(h.unidad)})",
                 xLabels = if (h.puntos.size >= 3) listOf(
                     fechaCorta(h.puntos.first().fechaEntreno),
                     fechaCorta(h.puntos[h.puntos.size / 2].fechaEntreno),
@@ -380,6 +387,22 @@ private fun ChartCard(h: HistorialEjercicio) {
             )
         }
     }
+}
+
+private fun tituloGrafica(h: HistorialEjercicio): Pair<String, String> {
+    return when (h.unidad) {
+        "km" -> "Distancia recorrida por sesión" to "Cada punto = un día de entreno"
+        "m" -> "Distancia nadada por sesión" to "Cada punto = un día en piscina"
+        "s" -> "Tiempo por sesión" to "Menos tiempo significa mejor marca"
+        else -> "Repeticiones / valor por sesión" to "Cada punto = un día de entreno"
+    }
+}
+
+private fun tituloEjeY(h: HistorialEjercicio): String = when (h.unidad) {
+    "km" -> "Distancia"
+    "m" -> "Distancia"
+    "s" -> "Tiempo"
+    else -> "Valor"
 }
 
 @Composable

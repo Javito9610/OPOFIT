@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -35,9 +37,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -109,7 +111,8 @@ fun HistorialScreen(
     val authState by authViewModel.uiState.collectAsState()
     val ui by historialAvanzadoViewModel.uiState.collectAsState()
     val gpsHistory by gpsViewModel.history.collectAsState()
-    var tabIndex by remember { mutableIntStateOf(0) }
+    val pagerState = rememberPagerState(initialPage = 0) { HistTab.entries.size }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(authState.userId) {
         if (authState.userId != null) {
@@ -137,31 +140,36 @@ fun HistorialScreen(
         }
     ) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            PrimaryTabRow(selectedTabIndex = tabIndex) {
+            PrimaryTabRow(selectedTabIndex = pagerState.currentPage) {
                 HistTab.entries.forEachIndexed { idx, tab ->
                     Tab(
-                        selected = tabIndex == idx,
-                        onClick = { tabIndex = idx },
+                        selected = pagerState.currentPage == idx,
+                        onClick = { scope.launch { pagerState.animateScrollToPage(idx) } },
                         text = { Text(tab.label, fontWeight = FontWeight.Medium) }
                     )
                 }
             }
-            when (HistTab.entries[tabIndex]) {
-                HistTab.RESUMEN -> ResumenTab(ui.resumen, ui.periodo) {
-                    historialAvanzadoViewModel.setPeriodo(it)
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                when (HistTab.entries[page]) {
+                    HistTab.RESUMEN -> ResumenTab(ui.resumen, ui.periodo) {
+                        historialAvanzadoViewModel.setPeriodo(it)
+                    }
+                    HistTab.SESIONES -> SesionesTab(
+                        sesiones = ui.sesiones,
+                        filtroTipo = ui.filtroTipo,
+                        onFiltroChange = { historialAvanzadoViewModel.setFiltroTipo(it) },
+                        onOpenSesion = onOpenSesion,
+                        onOpenPlan = onOpenPlan
+                    )
+                    HistTab.GPS -> GpsTab(
+                        actividades = gpsHistory.items,
+                        resumen = ui.resumen,
+                        onOpen = { onOpenGpsActividad(it) }
+                    )
                 }
-                HistTab.SESIONES -> SesionesTab(
-                    sesiones = ui.sesiones,
-                    filtroTipo = ui.filtroTipo,
-                    onFiltroChange = { historialAvanzadoViewModel.setFiltroTipo(it) },
-                    onOpenSesion = onOpenSesion,
-                    onOpenPlan = onOpenPlan
-                )
-                HistTab.GPS -> GpsTab(
-                    actividades = gpsHistory.items,
-                    resumen = ui.resumen,
-                    onOpen = { onOpenGpsActividad(it) }
-                )
             }
         }
     }
