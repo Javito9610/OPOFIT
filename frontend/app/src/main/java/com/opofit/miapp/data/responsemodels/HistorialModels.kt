@@ -4,6 +4,8 @@ data class ResumenHistorial(
     val periodo: String,
     val sesiones: Int,
     val minutos: Int,
+    val distanciaTotalKm: Double = 0.0,
+    val kcalTotal: Int = 0,
     val gps: ResumenGps?,
     val heatmap: List<HeatmapDia>,
     val porTipo: List<DistribucionTipo>,
@@ -30,7 +32,8 @@ data class DistribucionTipo(
 
 data class TopPr(
     val ejercicio: String,
-    val valor: Double
+    val valor: Double,
+    val pilar: String? = null
 )
 
 data class ResumenHistorialResponse(
@@ -113,15 +116,26 @@ data class PuntoEjercicio(
     val idSesion: Int,
     val fechaEntreno: String? = null,
     val duracionSeg: Int? = null,
-    val valor: Double
+    val valor: Double,
+    val gpsActividadUuid: String? = null
 )
 
 data class HistorialEjercicio(
     val ejercicio: String,
+    val pilar: String? = null,
+    val categoria: String? = null,
+    val esCardio: Boolean = false,
+    val menorEsMejor: Boolean = false,
+    val unidad: String = "reps",
     val sesiones: Int,
     val mejor: Double,
     val peor: Double,
     val media: Double,
+    val totalDistanciaKm: Double = 0.0,
+    val mejorRitmoSpKm: Double? = null,
+    val mejorVelMps: Double? = null,
+    val totalDesnivelM: Int = 0,
+    val distGpsKm: Double = 0.0,
     val puntos: List<PuntoEjercicio>
 )
 

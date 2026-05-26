@@ -241,6 +241,9 @@ fun AppNavigation(
 
         composable(NavDestinations.AJUSTES) {
             AjustesScreen(
+                onNavigateToMisDispositivos = {
+                    navController.navigate(NavDestinations.MIS_DISPOSITIVOS)
+                },
                 authViewModel = authViewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onLogout = {
@@ -338,7 +341,8 @@ fun AppNavigation(
             val id = backStackEntry.arguments?.getInt("ejercicio_id") ?: 0
             EjercicioHistorialScreen(
                 idEjercicio = id,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onOpenGpsActividad = { uuid -> navController.navigate("gps_activity/$uuid") }
             )
         }
 

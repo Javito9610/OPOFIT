@@ -46,8 +46,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.data.responsemodels.ResumenHistorial
 import com.opofit.miapp.data.responsemodels.SesionItem
 import com.opofit.miapp.gps.util.GpsMetrics
+import androidx.compose.ui.graphics.Color
 import com.opofit.miapp.ui.components.CalendarHeatmap
-import com.opofit.miapp.ui.components.ColumnsChart
+import com.opofit.miapp.ui.components.DonutChart
+import com.opofit.miapp.ui.components.DonutSlice
 import com.opofit.miapp.ui.components.MetricBadge
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.HistorialAvanzadoViewModel
@@ -56,6 +58,22 @@ import com.opofit.miapp.gps.ui.GpsViewModel
 
 private enum class HistTab(val label: String) {
     RESUMEN("Resumen"), SESIONES("Sesiones"), GPS("GPS")
+}
+
+private fun labelTipo(tipo: String): String = when (tipo.uppercase()) {
+    "FUERZA" -> "Fuerza"
+    "RESISTENCIA" -> "Resistencia"
+    "VELOCIDAD" -> "Velocidad"
+    "PERSONAL" -> "Personal"
+    else -> tipo.lowercase().replaceFirstChar { it.uppercase() }
+}
+
+private fun colorTipo(tipo: String): Color = when (tipo.uppercase()) {
+    "FUERZA" -> Color(0xFF1565C0)
+    "RESISTENCIA" -> Color(0xFF2E7D32)
+    "VELOCIDAD" -> Color(0xFFEF6C00)
+    "PERSONAL" -> Color(0xFF6A1B9A)
+    else -> Color(0xFF455A64)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -123,6 +141,7 @@ fun HistorialScreen(
                 )
                 HistTab.GPS -> GpsTab(
                     actividades = gpsHistory.items,
+                    resumen = ui.resumen,
                     onOpen = { onOpenGpsActividad(it) }
                 )
             }
@@ -157,16 +176,21 @@ private fun ResumenTab(resumen: ResumenHistorial?, periodo: String, onPeriodoCha
             return@LazyColumn
         }
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 MetricBadge("Sesiones", "${resumen.sesiones}", Modifier.weight(1f))
                 MetricBadge("Minutos", "${resumen.minutos}", Modifier.weight(1f))
-                resumen.gps?.let {
-                    MetricBadge(
-                        "Km GPS",
-                        "%.1f".format(it.distanciaM / 1000.0),
-                        Modifier.weight(1f)
-                    )
-                }
+            }
+        }
+        item {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                MetricBadge("Km recorridos", "%.1f".format(resumen.distanciaTotalKm), Modifier.weight(1f))
+                MetricBadge("kcal", "${resumen.kcalTotal}", Modifier.weight(1f))
             }
         }
         item {
@@ -196,19 +220,23 @@ private fun ResumenTab(resumen: ResumenHistorial?, periodo: String, onPeriodoCha
         if (resumen.porTipo.isNotEmpty()) {
             item {
                 Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(14.dp)) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            "Distribución por tipo",
+                            "Distribución por tipo de entreno",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold
                         )
-                        ColumnsChart(
-                            values = resumen.porTipo.map { it.sesiones.toDouble() },
-                            labels = resumen.porTipo.map { it.tipo.take(3) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(160.dp)
-                                .padding(top = 8.dp)
+                        DonutChart(
+                            slices = resumen.porTipo.map { item ->
+                                DonutSlice(
+                                    label = labelTipo(item.tipo),
+                                    value = item.sesiones.toDouble(),
+                                    color = colorTipo(item.tipo)
+                                )
+                            },
+                            centerTitle = "${resumen.porTipo.sumOf { it.sesiones }}",
+                            centerSubtitle = "sesiones",
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
@@ -351,19 +379,28 @@ private fun SesionCard(
 @Composable
 private fun GpsTab(
     actividades: List<com.opofit.miapp.gps.model.ActivitySummary>,
+    resumen: com.opofit.miapp.data.responsemodels.ResumenHistorial?,
     onOpen: (String) -> Unit
 ) {
-    val totalKm = actividades.sumOf { it.distanceM } / 1000.0
-    val totalKcal = actividades.mapNotNull { it.kcal }.sum()
+    val totalKmLocal = actividades.sumOf { it.distanceM } / 1000.0
+    val totalKcalLocal = actividades.mapNotNull { it.kcal }.sum()
+    val totalKm = if (resumen != null && resumen.distanciaTotalKm > totalKmLocal) resumen.distanciaTotalKm else totalKmLocal
+    val totalKcal = if (resumen != null && resumen.kcalTotal > totalKcalLocal) resumen.kcalTotal else totalKcalLocal
+    val totalActividades = if (resumen != null) {
+        actividades.size + (resumen.gps?.actividades ?: 0)
+    } else actividades.size
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 MetricBadge("Total km", "%.1f".format(totalKm), Modifier.weight(1f))
-                MetricBadge("Actividades", "${actividades.size}", Modifier.weight(1f))
+                MetricBadge("Actividades", "$totalActividades", Modifier.weight(1f))
                 MetricBadge("kcal", "$totalKcal", Modifier.weight(1f))
             }
         }

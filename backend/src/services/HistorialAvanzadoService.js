@@ -6,6 +6,8 @@ const db = require('../config/db');
  * Calcula agregados, deltas vs sesión anterior, récords y enlaza con
  * actividades GPS cuando existen.
  */
+function if_(cond, a, b) { return cond ? a : b; }
+
 class HistorialAvanzadoService {
   static rangoPorPeriodo(periodo) {
     const ahora = new Date();
@@ -22,10 +24,12 @@ class HistorialAvanzadoService {
   static async resumen(userId, periodo) {
     const { desde } = HistorialAvanzadoService.rangoPorPeriodo(periodo);
     const desdeYmd = desde.toISOString().slice(0, 10);
+    const distancePattern = '(carrera|trote|rodaje|fartlek|marcha|caminar|bici|ciclismo|sprint)';
+    const swimPattern = '(natacion|natación|nadar|nado)';
 
     const [agregados] = await db.query(
       `SELECT COUNT(*) AS sesiones,
-              COALESCE(SUM(duracion_oficial), 0) AS minutos
+              COALESCE(SUM(duracion_oficial), 0) AS segundos_total
        FROM historial_sesiones
        WHERE usuarios_id_usuario = ? AND fecha_entreno >= ?`,
       [userId, desdeYmd]
@@ -42,8 +46,19 @@ class HistorialAvanzadoService {
       [userId, desde.getTime()]
     );
 
+    const [ejKm] = await db.query(
+      `SELECT
+         COALESCE(SUM(CASE WHEN LOWER(e.nombre) REGEXP ? THEN r.valor_conseguido ELSE 0 END), 0) AS km_carrera,
+         COALESCE(SUM(CASE WHEN LOWER(e.nombre) REGEXP ? THEN r.valor_conseguido / 1000 ELSE 0 END), 0) AS km_nado
+       FROM registro_resultados r
+       JOIN historial_sesiones h ON h.id_historial_sesion = r.historial_sesiones_id_historial_sesiones
+       JOIN ejercicios e ON e.id_ejercicio = r.ejercicios_id_ejercicio
+       WHERE h.usuarios_id_usuario = ? AND h.fecha_entreno >= ?`,
+      [distancePattern, swimPattern, userId, desdeYmd]
+    );
+
     const [porDia] = await db.query(
-      `SELECT DATE(fecha_entreno) AS dia, COUNT(*) AS n, COALESCE(SUM(duracion_oficial), 0) AS mins
+      `SELECT DATE(fecha_entreno) AS dia, COUNT(*) AS n, COALESCE(SUM(duracion_oficial), 0) AS segs
        FROM historial_sesiones
        WHERE usuarios_id_usuario = ?
          AND fecha_entreno >= DATE_SUB(CURDATE(), INTERVAL 120 DAY)
@@ -68,21 +83,46 @@ class HistorialAvanzadoService {
     );
 
     const [topPrs] = await db.query(
-      `SELECT e.nombre AS ejercicio, MAX(r.valor_conseguido) AS valor
+      `SELECT e.nombre AS ejercicio, MAX(r.valor_conseguido) AS valor, e.pilar
        FROM registro_resultados r
        JOIN historial_sesiones h ON r.historial_sesiones_id_historial_sesiones = h.id_historial_sesion
        JOIN ejercicios e ON r.ejercicios_id_ejercicio = e.id_ejercicio
        WHERE h.usuarios_id_usuario = ?
-       GROUP BY e.id_ejercicio, e.nombre
+       GROUP BY e.id_ejercicio, e.nombre, e.pilar
        ORDER BY valor DESC
        LIMIT 5`,
       [userId]
     );
 
+    const segundosTotal = Number(agregados?.[0]?.segundos_total || 0);
+    const minutos = Math.round(segundosTotal / 60);
+    const gpsDistanciaKm = Number(gpsAgg?.[0]?.distancia || 0) / 1000;
+    const kmCarrera = Number(ejKm?.[0]?.km_carrera || 0);
+    const kmNado = Number(ejKm?.[0]?.km_nado || 0);
+    const distanciaTotalKm = Number((gpsDistanciaKm + kmCarrera + kmNado).toFixed(2));
+
+    // kcal estimadas simplificadas: GPS reales si los hay + estimación para ejercicios de carrera
+    // (~60 kcal/km como aproximación para 70 kg)
+    const [usuario] = await db.query(
+      'SELECT peso FROM usuarios WHERE id_usuario = ?',
+      [userId]
+    );
+    const peso = Number(usuario?.[0]?.peso) || 70;
+    const kcalGps = await db.query(
+      `SELECT COALESCE(SUM(distancia_m * ?  / 1000), 0) AS kcal_estim
+       FROM gps_actividades
+       WHERE usuarios_id_usuario = ? AND iniciada_en >= ?`,
+      [Number((peso * 0.9).toFixed(2)), userId, desde.getTime()]
+    );
+    const kcalCarrera = Math.round(kmCarrera * peso * 0.9);
+    const kcalTotal = Math.round(Number(kcalGps[0]?.[0]?.kcal_estim || 0)) + kcalCarrera;
+
     return {
       periodo: periodo || 'week',
       sesiones: Number(agregados?.[0]?.sesiones || 0),
-      minutos: Number(agregados?.[0]?.minutos || 0),
+      minutos,
+      distanciaTotalKm,
+      kcalTotal,
       gps: {
         actividades: Number(gpsAgg?.[0]?.actividades || 0),
         distanciaM: Number(gpsAgg?.[0]?.distancia || 0),
@@ -92,10 +132,10 @@ class HistorialAvanzadoService {
       heatmap: porDia.map((d) => ({
         dia: typeof d.dia === 'string' ? d.dia.slice(0, 10) : new Date(d.dia).toISOString().slice(0, 10),
         sesiones: Number(d.n),
-        minutos: Number(d.mins)
+        minutos: Math.round(Number(d.segs) / 60)
       })),
       porTipo: porTipo.map((t) => ({ tipo: t.tipo, sesiones: Number(t.n) })),
-      topPrs: topPrs.map((p) => ({ ejercicio: p.ejercicio, valor: Number(p.valor) }))
+      topPrs: topPrs.map((p) => ({ ejercicio: p.ejercicio, valor: Number(p.valor), pilar: p.pilar }))
     };
   }
 
@@ -268,7 +308,9 @@ class HistorialAvanzadoService {
   static async historialEjercicio(userId, idEjercicio) {
     const [puntos] = await db.query(
       `SELECT h.id_historial_sesion AS id_sesion, h.fecha_entreno, h.duracion_oficial,
-              r.valor_conseguido, e.nombre AS nombre_ejercicio
+              h.gps_actividad_uuid,
+              r.valor_conseguido,
+              e.nombre AS nombre_ejercicio, e.categoria, e.pilar, e.video_url
        FROM registro_resultados r
        JOIN historial_sesiones h ON h.id_historial_sesion = r.historial_sesiones_id_historial_sesiones
        JOIN ejercicios e ON e.id_ejercicio = r.ejercicios_id_ejercicio
@@ -277,22 +319,70 @@ class HistorialAvanzadoService {
       [userId, idEjercicio]
     );
     if (!puntos.length) return null;
+    const head = puntos[0];
+    const nombre = head.nombre_ejercicio;
+    const nombreLower = String(nombre).toLowerCase();
+    const isCarrera = /(carrera|trote|rodaje|fartlek|sprint)/.test(nombreLower);
+    const isNado = /(natacion|natación|nadar|nado)/.test(nombreLower);
+    const isBici = /(bici|ciclismo)/.test(nombreLower);
+    const isCardio = head.pilar === 'RESISTENCIA' || head.pilar === 'VELOCIDAD' || isCarrera || isNado || isBici;
+    const menorEsMejor = isCarrera || isNado;
+    const distanceUnit = if_(isCarrera || isBici, 'km', isNado ? 'm' : 'reps');
+
     const vals = puntos.map((p) => Number(p.valor_conseguido));
-    const best = Math.max(...vals);
-    const worst = Math.min(...vals);
+    const best = menorEsMejor ? Math.min(...vals) : Math.max(...vals);
+    const worst = menorEsMejor ? Math.max(...vals) : Math.min(...vals);
     const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-    const lifetime = puntos.length;
+    const totalDistanceKm = isCarrera || isBici
+      ? vals.reduce((s, v) => s + v, 0)
+      : isNado
+        ? vals.reduce((s, v) => s + v, 0) / 1000
+        : 0;
+
+    // Métricas extra cuando hay GPS asociado: ritmo medio / max, vel max, HR media/max
+    let mejorRitmoSpKm = null, mejorVelMps = 0, hrMaxLifetime = 0, totalDesnivelM = 0, kcalLifetime = 0, distGpsKm = 0;
+    const uuids = puntos.map((p) => p.gps_actividad_uuid).filter(Boolean);
+    if (uuids.length > 0) {
+      const ph = uuids.map(() => '?').join(',');
+      const [gpsRows] = await db.query(
+        `SELECT uuid_local, ritmo_medio_spkm, ritmo_min_spkm, velocidad_max_mps,
+                cadencia_media_ppm, desnivel_pos_m, distancia_m
+         FROM gps_actividades
+         WHERE usuarios_id_usuario = ? AND uuid_local IN (${ph})`,
+        [userId, ...uuids]
+      );
+      for (const g of gpsRows) {
+        const r = Number(g.ritmo_min_spkm || g.ritmo_medio_spkm);
+        if (r > 0 && (mejorRitmoSpKm === null || r < mejorRitmoSpKm)) mejorRitmoSpKm = r;
+        if (Number(g.velocidad_max_mps) > mejorVelMps) mejorVelMps = Number(g.velocidad_max_mps);
+        if (Number(g.desnivel_pos_m) > 0) totalDesnivelM += Number(g.desnivel_pos_m);
+        distGpsKm += Number(g.distancia_m) / 1000;
+      }
+    }
+
     return {
-      ejercicio: puntos[0].nombre_ejercicio,
-      sesiones: lifetime,
-      mejor: best,
-      peor: worst,
+      ejercicio: nombre,
+      pilar: head.pilar || null,
+      categoria: head.categoria || null,
+      esCardio: isCardio,
+      menorEsMejor,
+      unidad: distanceUnit,
+      sesiones: puntos.length,
+      mejor: Number(best.toFixed(2)),
+      peor: Number(worst.toFixed(2)),
       media: Number(avg.toFixed(2)),
+      totalDistanciaKm: Number(totalDistanceKm.toFixed(2)),
+      mejorRitmoSpKm,
+      mejorVelMps: mejorVelMps > 0 ? mejorVelMps : null,
+      totalDesnivelM: Math.round(totalDesnivelM),
+      kcalLifetime,
+      distGpsKm: Number(distGpsKm.toFixed(2)),
       puntos: puntos.map((p) => ({
         idSesion: p.id_sesion,
         fechaEntreno: p.fecha_entreno,
         duracionSeg: p.duracion_oficial,
-        valor: Number(p.valor_conseguido)
+        valor: Number(p.valor_conseguido),
+        gpsActividadUuid: p.gps_actividad_uuid
       }))
     };
   }

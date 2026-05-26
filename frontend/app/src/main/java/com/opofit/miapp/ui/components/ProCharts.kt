@@ -5,11 +5,16 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Alignment as ComposeAlignment
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -358,6 +363,103 @@ private fun EmptyState(text: String, modifier: Modifier) {
     ) {
         Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
+}
+
+data class DonutSlice(val label: String, val value: Double, val color: Color)
+
+@Composable
+fun DonutChart(
+    slices: List<DonutSlice>,
+    modifier: Modifier = Modifier,
+    centerTitle: String = "",
+    centerSubtitle: String = ""
+) {
+    if (slices.isEmpty()) {
+        EmptyState("Sin datos", modifier)
+        return
+    }
+    val total = slices.sumOf { it.value }.coerceAtLeast(0.0001)
+    val progress by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = tween(durationMillis = 800, easing = LinearOutSlowInEasing),
+        label = "donutProgress"
+    )
+    val textMeasurer = rememberTextMeasurer()
+    val labelStyle = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurface)
+    val titleStyle = MaterialTheme.typography.titleLarge.copy(
+        color = MaterialTheme.colorScheme.onSurface,
+        fontWeight = FontWeight.Bold
+    )
+    val subtitleStyle = MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+    Row(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.22f), RoundedCornerShape(12.dp))
+            .padding(12.dp),
+        verticalAlignment = ComposeAlignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier.size(140.dp),
+            contentAlignment = ComposeAlignment.Center
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val stroke = 26.dp.toPx()
+                val arcSize = androidx.compose.ui.geometry.Size(
+                    size.minDimension - stroke,
+                    size.minDimension - stroke
+                )
+                val topLeft = androidx.compose.ui.geometry.Offset(
+                    (size.width - arcSize.width) / 2f,
+                    (size.height - arcSize.height) / 2f
+                )
+                var start = -90f
+                slices.forEach { slice ->
+                    val sweep = ((slice.value / total) * 360.0 * progress).toFloat()
+                    drawArc(
+                        color = slice.color,
+                        startAngle = start,
+                        sweepAngle = sweep,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = arcSize,
+                        style = Stroke(width = stroke, cap = StrokeCap.Round)
+                    )
+                    start += sweep
+                }
+            }
+            if (centerTitle.isNotEmpty()) {
+                Column(horizontalAlignment = ComposeAlignment.CenterHorizontally) {
+                    Text(centerTitle, style = titleStyle)
+                    if (centerSubtitle.isNotEmpty()) {
+                        Text(centerSubtitle, style = subtitleStyle)
+                    }
+                }
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            slices.forEach { s ->
+                Row(verticalAlignment = ComposeAlignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .background(s.color, RoundedCornerShape(3.dp))
+                    )
+                    val pct = (s.value / total * 100).toInt()
+                    Text(
+                        "  ${s.label}  ·  ${formatValue(s.value)}  ·  $pct%",
+                        style = labelStyle
+                    )
+                }
+            }
+        }
+    }
+    // unused for now but keeps import alive when textMeasurer is needed in future
+    @Suppress("UNUSED") val _t = textMeasurer
+}
+
+private fun formatValue(v: Double): String {
+    return if (v == v.toInt().toDouble()) v.toInt().toString() else "%.1f".format(v)
 }
 
 /** Permite a otros componibles dibujar segmentos pintados según índices de buckets. */
