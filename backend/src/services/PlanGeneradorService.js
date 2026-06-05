@@ -6,6 +6,8 @@ const db = require('../config/db');
 const EntornoEntreno = require('../utils/EntornoEntreno');
 const EjercicioMetadataService = require('./EjercicioMetadataService');
 const PlanIaService = require('./PlanIaService');
+const PlanPersonalizadorService = require('./PlanPersonalizadorService');
+const EjercicioInteligenteService = require('./EjercicioInteligenteService');
 const RutinaService = require('./RutinasService');
 
 function yearWeek() {
@@ -43,7 +45,12 @@ class PlanGeneradorService {
     const semana = planActual.semana.map((dia) => {
       const cached = planCache.semana.find((c) => c.id_plan_dia === dia.id_plan_dia);
       if (!cached?.ejercicios?.length) return dia;
-      return { ...dia, ejercicios: cached.ejercicios };
+      return {
+        ...dia,
+        ejercicios: cached.ejercicios,
+        titulo: cached.titulo || dia.titulo,
+        descripcion: cached.descripcion ?? dia.descripcion
+      };
     });
     const sesion_hoy = semana.find((s) => s.es_hoy) || null;
     const proxima =
@@ -91,7 +98,7 @@ class PlanGeneradorService {
     return { porClave, porPilar };
   }
 
-  static buscarSustituto(ejBase, indice, { porClave }, entorno, seed) {
+  static buscarSustituto(ejBase, idx, { porClave, porPilar }, entorno, seed) {
     const pilar = EntornoEntreno.normalizarPilar(ejBase.pilar || ejBase.categoria || 'FUERZA');
     const nombreLimpio = EjercicioMetadataService.normalizarNombreEjercicio(ejBase.nombre);
     const grupo = EjercicioMetadataService.inferirGrupoMuscular(
@@ -100,24 +107,37 @@ class PlanGeneradorService {
       pilar
     );
     const clave = EntornoEntreno.grupoClave(pilar, grupo, nombreLimpio);
-    let candidatos = [...(porClave.get(clave) || [])];
-    candidatos = candidatos.filter(
-      (c) =>
-        EjercicioMetadataService.normalizarNombreEjercicio(c.nombre).toLowerCase() !==
-        nombreLimpio.toLowerCase()
-    );
+    const distinto = (c) =>
+      EjercicioMetadataService.normalizarNombreEjercicio(c.nombre).toLowerCase() !==
+      nombreLimpio.toLowerCase();
+
+    let candidatos = [...(porClave.get(clave) || [])].filter(distinto);
+    if (!candidatos.length) {
+      candidatos = [...(porPilar.get(pilar) || [])].filter(distinto);
+    }
     if (!candidatos.length) return null;
-    const key = `${entorno}|${indice}|${nombreLimpio}|${clave}`;
+
+    const key = `${entorno}|${idx}|${nombreLimpio}|${clave}|v${seed}`;
     return EntornoEntreno.seededPick(candidatos, seed, key);
+  }
+
+  static resumenDiaDesdeEjercicios(dia, ejercicios) {
+    const nombres = (ejercicios || []).map((e) => e.nombre).filter(Boolean);
+    if (!nombres.length) {
+      return { titulo: dia.titulo, descripcion: dia.descripcion };
+    }
+    const titulo = nombres[0];
+    const descripcion = nombres.slice(0, 4).join(' · ');
+    return { titulo, descripcion };
   }
 
   static mapearEjercicio(ej, sustituto, entorno) {
     const base = EjercicioMetadataService.enriquecerEjercicio(ej);
     if (!sustituto) {
+      const out = { ...base, entorno_aplicado: entorno, sustituido: false };
       return {
-        ...base,
-        entorno_aplicado: entorno,
-        sustituido: false
+        ...out,
+        instrucciones_tecnicas: EjercicioInteligenteService.generarInstrucciones(out)
       };
     }
     const grupo = EjercicioMetadataService.inferirGrupoMuscular(
@@ -140,9 +160,14 @@ class PlanGeneradorService {
       entorno_aplicado: entorno,
       sustituido: true,
       nombre_original: base.nombre,
-      motivo_sustitucion: EjercicioMetadataService.motivoSustitucion(entorno, grupo)
+      motivo_sustitucion: EjercicioMetadataService.motivoSustitucion(
+        entorno,
+        grupo,
+        base.nombre,
+        sustituto.nombre
+      )
     });
-    return mapped;
+    return EjercicioInteligenteService.aplicarInteligencia(mapped, { seed: ej.orden || 0 });
   }
 
   static async generarSemana(planBase, userId, entorno, seed, opts = {}) {
@@ -170,7 +195,8 @@ class PlanGeneradorService {
         if (sust) sustituciones += 1;
         return PlanGeneradorService.mapearEjercicio(ej, sust, entorno);
       });
-      return { ...dia, ejercicios };
+      const resumen = PlanGeneradorService.resumenDiaDesdeEjercicios(dia, ejercicios);
+      return { ...dia, ejercicios, titulo: resumen.titulo, descripcion: resumen.descripcion };
     });
 
     const hoy = planBase.dia_hoy;
@@ -341,7 +367,15 @@ class PlanGeneradorService {
     if (!nuevoDia) throw new Error('No se pudo regenerar el día');
 
     const semana = planActual.semana.map((d) =>
-      d.id_plan_dia === idDia ? { ...d, ejercicios: nuevoDia.ejercicios } : d
+      d.id_plan_dia === idDia
+        ? {
+            ...d,
+            ...nuevoDia,
+            ejercicios: nuevoDia.ejercicios,
+            titulo: nuevoDia.titulo || d.titulo,
+            descripcion: nuevoDia.descripcion || d.descripcion
+          }
+        : d
     );
     const hoy = planActual.dia_hoy;
     const sesion_hoy = semana.find((s) => s.es_hoy) || null;
@@ -373,9 +407,10 @@ class PlanGeneradorService {
     const yw = yearWeek();
     const cache = await PlanGeneradorService.leerCache(userId, idOposicion, yw);
     const explicacion = cache?.explicacion_ia || planActual.personalizacion?.explicacion_ia || null;
-    await PlanGeneradorService.guardarCache(userId, idOposicion, yw, entorno, seed, resultado, explicacion);
+    const sanitizado = PlanesService.sanitizarPlan(resultado);
+    await PlanGeneradorService.guardarCache(userId, idOposicion, yw, entorno, seed, sanitizado, explicacion);
 
-    return resultado;
+    return sanitizado;
   }
 
   static async regenerarPlan(userId, idOposicion, nivel, genero) {

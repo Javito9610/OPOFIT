@@ -2,11 +2,18 @@
  * Normaliza nombres, infiere grupo muscular e instrucciones reales para ejercicios.
  */
 const EntornoEntreno = require('../utils/EntornoEntreno');
+const EjercicioInteligenteService = require('./EjercicioInteligenteService');
 
 const INSTRUCCION_GENERICAS = [
   /^técnica controlada/i,
   /^prescripción del banco opofit/i,
-  /^ejercicio del banco opofit/i
+  /^ejercicio del banco opofit/i,
+  /^extensión completa\.?$/i,
+  /^extensores de muñeca\.?$/i,
+  /^flexores de muñeca\.?$/i,
+  /^agarre oposición\.?$/i,
+  /^cuerpo inclinado, codos fijos\.?$/i,
+  /^antebrazos?\.?$/i
 ];
 
 function normalizarNombreEjercicio(nombre) {
@@ -82,6 +89,12 @@ function instruccionesDesdeNombre(nombre, pilar) {
   if (/press militar|militar/.test(n)) {
     return 'Mancuernas o barra a la altura de hombros. Empuja vertical sin arquear lumbar. Baja hasta barbilla/cuello con codos ligeramente delante del cuerpo.';
   }
+  if (/reverse wrist|wrist curl|curl.*(muñeca|muneca)|muñeca.*curl/.test(n)) {
+    if (/reverse/.test(n)) {
+      return 'Antebrazos apoyados en muslos o banco, palmas abajo. Deja caer el peso flexionando muñecas y extiende hacia arriba sin mover codos. Carga ligera, 8-15 repeticiones controladas.';
+    }
+    return 'Antebrazos en muslos, palmas arriba. Flexiona muñecas subiendo el peso y baja en 2 s. Codos quietos; solo se mueven las muñecas.';
+  }
   if (/curl/.test(n)) {
     return 'Codos pegados al tronco, sube el peso sin balancear. Aprieta bíceps arriba y baja controlando 2 s.';
   }
@@ -120,15 +133,20 @@ function instruccionesDesdeNombre(nombre, pilar) {
 
 function esInstruccionGenerica(instr) {
   const t = String(instr || '').trim();
-  if (!t || t.length < 12) return true;
-  return INSTRUCCION_GENERICAS.some((re) => re.test(t));
+  if (!t || t.length < 28) return true;
+  if (INSTRUCCION_GENERICAS.some((re) => re.test(t))) return true;
+  const palabras = t.split(/\s+/).length;
+  if (palabras < 6 && !/[.;]/.test(t.slice(1))) return true;
+  return false;
 }
 
-function enriquecerInstrucciones(nombre, pilar, instruccionesActuales) {
-  const limpio = normalizarNombreEjercicio(nombre);
-  if (!esInstruccionGenerica(instruccionesActuales)) return instruccionesActuales;
-  const generada = instruccionesDesdeNombre(limpio, pilar);
-  return generada || instruccionesActuales || `Ejecuta ${limpio} con técnica controlada y progresión según tu nivel.`;
+function enriquecerInstrucciones(nombre, pilar, instruccionesActuales, ejExtra = {}) {
+  return EjercicioInteligenteService.generarInstrucciones({
+    nombre,
+    pilar,
+    instrucciones_tecnicas: instruccionesActuales,
+    ...ejExtra
+  });
 }
 
 function motivoAjusteLegible(motivo) {
@@ -156,7 +174,7 @@ function enriquecerEjercicio(ej) {
   const nombreLimpio = normalizarNombreEjercicio(ej.nombre);
   const pilar = ej.pilar || ej.categoria || 'FUERZA';
   const grupo = inferirGrupoMuscular(ej.grupo_muscular, nombreLimpio, pilar);
-  const instrucciones = enriquecerInstrucciones(nombreLimpio, pilar, ej.instrucciones_tecnicas);
+  const instrucciones = enriquecerInstrucciones(nombreLimpio, pilar, ej.instrucciones_tecnicas, ej);
   const tipo =
     ej.tipo_ilustracion ||
     EntornoEntreno.inferirTipoIlustracion(nombreLimpio, pilar, grupo);
@@ -179,10 +197,13 @@ function etiquetaEntorno(entorno) {
   return meta?.etiqueta || entorno;
 }
 
-function motivoSustitucion(entorno, grupo) {
+function motivoSustitucion(entorno, grupo, nombreOriginal, nombreSustituto) {
   const lugar = etiquetaEntorno(entorno);
-  const g = grupo && grupo !== 'General' ? grupo.toLowerCase() : 'el mismo patrón de movimiento';
-  return `Versión adaptada para ${lugar}, manteniendo trabajo de ${g}.`;
+  const orig = normalizarNombreEjercicio(nombreOriginal);
+  const sust = normalizarNombreEjercicio(nombreSustituto);
+  if (!orig || !sust || orig.toLowerCase() === sust.toLowerCase()) return null;
+  const g = grupo && grupo !== 'General' ? grupo.toLowerCase() : 'la misma zona muscular';
+  return `En ${lugar} hacemos ${sust} en lugar de ${orig} (${g}).`;
 }
 
 module.exports = {

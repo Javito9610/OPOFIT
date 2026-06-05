@@ -494,7 +494,10 @@ fun RutinasScreen(
                                         plan.semana.size,
                                         key = { i ->
                                             val d = plan.semana[i]
-                                            "${d.id_plan_dia}_${plan.personalizacion?.variacion_seed ?: 0}_${d.ejercicios.joinToString { it.nombre }}"
+                                            val ejKey = d.ejercicios.joinToString("|") {
+                                                "${it.nombre}:${it.series}:${it.repeticiones}"
+                                            }
+                                            "${d.id_plan_dia}_${plan.personalizacion?.variacion_seed ?: 0}_${d.titulo}_$ejKey"
                                         }
                                     ) { i ->
                                         val dia = plan.semana[i]
@@ -510,8 +513,8 @@ fun RutinasScreen(
                                                     regenerando = uiState.regenerandoDiaId == dia.id_plan_dia
                                                 )
                                                 dia.ejercicios.take(4).forEach { ej ->
-                                                    val adj = if (ej.personalizado && ej.series_base != null) {
-                                                        " (${ej.series_base}→${ej.series})"
+                                                    val adj = if (ej.personalizado && ej.series_base != null && ej.series_base != ej.series) {
+                                                        " (de ${ej.series_base} a ${ej.series} series)"
                                                     } else ""
                                                     val prescripcion = "${ej.series}×${PrescripcionFormat.formatRepeticiones(ej.repeticiones, ej.unidad, ej.nombre)}"
                                                     Row(

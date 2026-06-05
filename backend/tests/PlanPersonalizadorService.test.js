@@ -4,6 +4,7 @@ const {
   factorEjercicio,
   ajustarEjercicio,
   construirResumen,
+  normalizarPrescripcionRealista,
   UMBRAL_DEBIL
 } = require('../src/services/PlanPersonalizadorService');
 
@@ -107,6 +108,20 @@ describe('PlanPersonalizadorService.construirResumen', () => {
     expect(txt).toContain('debil');
     expect(txt).toContain('8 ejercicios');
     expect(txt).toContain('racha');
+  });
+});
+
+describe('PlanPersonalizadorService.normalizarPrescripcionRealista', () => {
+  test('limita reps absurdas en wrist curl', () => {
+    const ej = normalizarPrescripcionRealista({
+      nombre: 'Reverse wrist curl',
+      pilar: 'FUERZA',
+      series: 3,
+      repeticiones: 77,
+      unidad: 'reps'
+    });
+    expect(ej.repeticiones).toBeLessThanOrEqual(20);
+    expect(ej.series).toBeLessThanOrEqual(4);
   });
 });
 

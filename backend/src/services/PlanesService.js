@@ -4,6 +4,7 @@ const BancoPlanesImportService = require('./BancoPlanesImportService');
 const PlanPersonalizadorService = require('./PlanPersonalizadorService');
 const EjercicioMetadataService = require('./EjercicioMetadataService');
 const PlanGeneradorService = require('./PlanGeneradorService');
+const EjercicioInteligenteService = require('./EjercicioInteligenteService');
 
 const NOMBRES_DIA = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -37,23 +38,27 @@ class PlanesService {
       [idPlanDia]
     );
     if (desdePlan.length) {
-      return desdePlan.map((e) =>
-        EjercicioMetadataService.enriquecerEjercicio({
-          id_ejercicio: e.id_ejercicio,
-          nombre: e.nombre,
-          video_url: e.video_url,
-          animacion_url: e.animacion_url,
-          instrucciones_tecnicas: e.instrucciones_tecnicas,
-          tipo_ilustracion: e.tipo_ilustracion,
-          grupo_muscular: e.grupo_muscular,
-          equipamiento: e.equipamiento,
-          categoria: e.categoria,
-          pilar: e.pilar,
-          series: e.series,
-          repeticiones: e.repeticiones,
-          descanso: e.descanso,
-          unidad: e.unidad || RutinaService.inferUnidad(e.nombre)
-        })
+      return desdePlan.map((e, idx) =>
+        EjercicioInteligenteService.aplicarInteligencia(
+          EjercicioMetadataService.enriquecerEjercicio({
+            id_ejercicio: e.id_ejercicio,
+            nombre: e.nombre,
+            video_url: e.video_url,
+            animacion_url: e.animacion_url,
+            instrucciones_tecnicas: e.instrucciones_tecnicas,
+            tipo_ilustracion: e.tipo_ilustracion,
+            grupo_muscular: e.grupo_muscular,
+            equipamiento: e.equipamiento,
+            categoria: e.categoria,
+            pilar: e.pilar,
+            series: e.series,
+            repeticiones: e.repeticiones,
+            descanso: e.descanso,
+            unidad: e.unidad || RutinaService.inferUnidad(e.nombre),
+            orden: e.orden || idx + 1
+          }),
+          { seed: e.orden || idx + 1 }
+        )
       );
     }
     const [ejercicios] = await db.query(
@@ -197,7 +202,43 @@ class PlanesService {
       console.error('Plan generador:', err.message);
     }
 
-    return plan;
+    return PlanesService.sanitizarPlan(plan);
+  }
+
+  /** Repara prescripciones e instrucciones al servir (también planes en caché antiguos). */
+  static sanitizarPlan(plan) {
+    if (!plan?.semana?.length) return plan;
+    const semana = plan.semana.map((dia) => {
+      let motivoSesionMostrado = false;
+      const ejercicios = (dia.ejercicios || []).map((ej, idx) => {
+        let limpio = PlanPersonalizadorService.normalizarPrescripcionRealista(ej, {
+          seed: ej.orden || idx + 1
+        });
+        limpio = {
+          ...limpio,
+          instrucciones_tecnicas: EjercicioInteligenteService.generarInstrucciones(limpio),
+          grupo_muscular: EjercicioMetadataService.inferirGrupoMuscular(
+            limpio.grupo_muscular,
+            limpio.nombre,
+            limpio.pilar || limpio.categoria
+          )
+        };
+        if (limpio.motivo_ajuste && motivoSesionMostrado) {
+          limpio = { ...limpio, motivo_ajuste: null };
+        } else if (limpio.motivo_ajuste) {
+          motivoSesionMostrado = true;
+        }
+        return limpio;
+      });
+      return { ...dia, ejercicios };
+    });
+    const hoy = PlanesService.diaSemanaHoy();
+    const sesion_hoy = semana.find((s) => s.es_hoy) || null;
+    const proxima =
+      semana.find((s) => !s.completada && s.dia_semana >= hoy) ||
+      semana.find((s) => !s.completada) ||
+      null;
+    return { ...plan, semana, sesion_hoy, proxima_sesion: proxima };
   }
 
   static async obtenerCalendarioMes(userId, idOposicion, nivel, genero, year, month) {

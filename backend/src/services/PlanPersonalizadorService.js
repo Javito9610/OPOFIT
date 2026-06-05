@@ -10,6 +10,7 @@
 const db = require('../config/db');
 const BaremoService = require('./BaremoService');
 const EjercicioMetadataService = require('./EjercicioMetadataService');
+const EjercicioInteligenteService = require('./EjercicioInteligenteService');
 const MarcasPerfilService = require('./MarcasPerfilService');
 const EntornoEntreno = require('../utils/EntornoEntreno');
 
@@ -81,7 +82,70 @@ function clampReps(reps, unidad, nombre) {
   if (u === 's' || nom.includes('seg')) return Math.min(7200, Math.max(10, Math.round(reps)));
   if (u === 'km' || nom.includes('km')) return Math.min(50, Math.max(1, Math.round(reps * 10) / 10));
   if (u === 'm' || /\d+\s*m\b/.test(nom)) return Math.min(10000, Math.max(50, Math.round(reps)));
-  return Math.min(40, Math.max(1, Math.round(reps)));
+  return Math.min(25, Math.max(1, Math.round(reps)));
+}
+
+/** Límites de series/reps según el tipo de ejercicio (fuerza realista). */
+function rangoRepsRealista(nombre, unidad, pilar) {
+  const u = String(unidad || '').toLowerCase();
+  const nom = String(nombre || '').toLowerCase();
+  const pil = String(pilar || '').toUpperCase();
+  if (['min', 'km', 's', 'm', 'max', 'amrap'].includes(u)) return null;
+  if (esUnidadMinutos(unidad, nombre)) return null;
+  if (u === 's' || nom.includes('seg')) return null;
+  if (u === 'km' || nom.includes('km')) return null;
+  if (u === 'm' || /\d+\s*m\b/.test(nom)) return null;
+  if (pil === 'RESISTENCIA' || pil === 'VELOCIDAD') {
+    if (/carrera|rodaje|trote|natac|bicicleta|sprint|fartlek/.test(nom)) return null;
+  }
+  if (/wrist curl|reverse wrist|antebrazo|muñeca|muneca/.test(nom)) {
+    return { maxReps: 20, maxSeries: 4 };
+  }
+  if (/curl|tríceps|triceps|lateral|elevaci|face pull|apertura|martillo/.test(nom)) {
+    return { maxReps: 15, maxSeries: 5 };
+  }
+  if (/dominada|flexion|flexión|fondos|press|sentadilla|peso muerto|remo|zancada|hip thrust/.test(nom)) {
+    return { maxReps: 20, maxSeries: 6 };
+  }
+  if (/burpee|mountain climber|jumping jack/.test(nom)) {
+    return { maxReps: 25, maxSeries: 5 };
+  }
+  return { maxReps: 25, maxSeries: 6 };
+}
+
+function prescripcionAbsurda(ej) {
+  const rango = rangoRepsRealista(ej.nombre, ej.unidad, ej.pilar || ej.categoria);
+  if (!rango) return false;
+  return Number(ej.repeticiones) > rango.maxReps || Number(ej.series) > (rango.maxSeries || 8);
+}
+
+function debeRegenerarPrescripcion(ej) {
+  if (ej.sustituido || prescripcionAbsurda(ej)) return true;
+  if (ej.prescripcion_inteligente) return false;
+  const u = String(ej.unidad || '').toLowerCase();
+  if (['min', 'km', 's', 'm', 'amrap', 'max'].includes(u)) return false;
+  if (esUnidadMinutos(ej.unidad, ej.nombre)) return false;
+  return true;
+}
+
+/** Genera o corrige prescripción realista por tipo de ejercicio. */
+function normalizarPrescripcionRealista(ej, ctx = {}) {
+  if (debeRegenerarPrescripcion(ej)) {
+    return EjercicioInteligenteService.aplicarInteligencia(ej, ctx);
+  }
+  const nombre = ej.nombre || '';
+  const unidad = ej.unidad;
+  const pilar = ej.pilar || ej.categoria;
+  if (esPrescripcionMaxima(ej.repeticiones, unidad, nombre)) {
+    return { ...ej, repeticiones: 99 };
+  }
+  const rango = rangoRepsRealista(nombre, unidad, pilar);
+  if (!rango) return ej;
+  let repeticiones = clampReps(Number(ej.repeticiones) || 1, unidad, nombre);
+  repeticiones = Math.min(rango.maxReps, repeticiones);
+  let series = clampSeries(Number(ej.series) || 1);
+  if (rango.maxSeries) series = Math.min(rango.maxSeries, series);
+  return { ...ej, series, repeticiones };
 }
 
 /**
@@ -154,7 +218,7 @@ function ajustarEjercicio(ej, ctx) {
     : clampReps(baseReps * factor, ej.unidad, ej.nombre);
   const personalizado =
     !esMax && (series !== baseSeries || repeticiones !== baseReps);
-  return {
+  return normalizarPrescripcionRealista({
     ...ej,
     series,
     repeticiones,
@@ -162,7 +226,7 @@ function ajustarEjercicio(ej, ctx) {
     repeticiones_base: baseReps,
     personalizado,
     motivo_ajuste: personalizado ? EjercicioMetadataService.motivoAjusteLegible(motivo) : null
-  };
+  });
 }
 
 function construirResumen({ analisis, nivel, ajustes, rachaDias, peorPrueba }) {
@@ -268,9 +332,14 @@ async function personalizarPlan(userId, idOposicion, plan, nivel) {
   };
 
   const semana = plan.semana.map((dia) => {
+    let motivoSesionMostrado = false;
     const ejercicios = (dia.ejercicios || []).map((ej) => {
       const adj = ajustarEjercicio(ej, { ...ctxBase, enfoqueSesion: dia.enfoque });
       if (adj.personalizado) ajustes += 1;
+      if (adj.motivo_ajuste && motivoSesionMostrado) {
+        return { ...adj, motivo_ajuste: null };
+      }
+      if (adj.motivo_ajuste) motivoSesionMostrado = true;
       return adj;
     });
     return { ...dia, ejercicios };
@@ -327,6 +396,8 @@ module.exports = {
   personalizarPlan,
   clampReps,
   clampSeries,
+  rangoRepsRealista,
+  normalizarPrescripcionRealista,
   FACTOR_NIVEL,
   UMBRAL_DEBIL,
   UMBRAL_FUERTE

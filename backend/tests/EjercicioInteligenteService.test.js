@@ -1,0 +1,121 @@
+const {
+  clasificarPerfil,
+  generarPrescripcion,
+  generarInstrucciones,
+  aplicarInteligencia,
+  parsearPrescripcionNombre
+} = require('../src/services/EjercicioInteligenteService');
+
+describe('EjercicioInteligenteService.parsearPrescripcionNombre', () => {
+  test('lee series en metros del nombre', () => {
+    const p = parsearPrescripcionNombre('Series 400 m x 6');
+    expect(p).toEqual({ series: 6, repeticiones: 400, unidad: 'm', descanso: 150 });
+  });
+
+  test('lee minutos de carrera continua', () => {
+    const p = parsearPrescripcionNombre('Carrera continua Z2 30 min');
+    expect(p).toMatchObject({ series: 1, repeticiones: 30, unidad: 'min' });
+  });
+});
+
+describe('EjercicioInteligenteService.generarPrescripcion', () => {
+  test('wrist curl tiene reps realistas y distintas por nombre', () => {
+    const a = generarPrescripcion(
+      { nombre: 'Reverse wrist curl', pilar: 'FUERZA', grupo_muscular: 'Brazos' },
+      { seed: 1 }
+    );
+    const b = generarPrescripcion(
+      { nombre: 'Wrist curl con barra', pilar: 'FUERZA', grupo_muscular: 'Brazos' },
+      { seed: 2 }
+    );
+    expect(a.repeticiones).toBeLessThanOrEqual(18);
+    expect(a.repeticiones).toBeGreaterThanOrEqual(12);
+    expect(b.repeticiones).toBeLessThanOrEqual(18);
+    expect(a.repeticiones).not.toBe(b.repeticiones);
+  });
+
+  test('dominadas tienen pocas reps', () => {
+    const p = generarPrescripcion(
+      { nombre: 'Dominadas pronas', pilar: 'FUERZA', grupo_muscular: 'Espalda' },
+      { seed: 5 }
+    );
+    expect(p.repeticiones).toBeLessThanOrEqual(8);
+    expect(p.series).toBeGreaterThanOrEqual(3);
+  });
+
+  test('press banca tiene reps de fuerza', () => {
+    const p = generarPrescripcion(
+      { nombre: 'Press banca con mancuernas', pilar: 'FUERZA', grupo_muscular: 'Pecho' },
+      { seed: 3 }
+    );
+    expect(p.repeticiones).toBeGreaterThanOrEqual(6);
+    expect(p.repeticiones).toBeLessThanOrEqual(12);
+  });
+});
+
+describe('EjercicioInteligenteService.generarInstrucciones', () => {
+  test('reverse wrist curl tiene texto técnico propio', () => {
+    const txt = generarInstrucciones({
+      nombre: 'Reverse wrist curl',
+      pilar: 'FUERZA',
+      grupo_muscular: 'Brazos',
+      equipamiento: 'Barra',
+      instrucciones_tecnicas: 'Extensores de muñeca.'
+    });
+    expect(txt.length).toBeGreaterThan(60);
+    expect(txt.toLowerCase()).toMatch(/muñeca|muneca/);
+    expect(txt).not.toBe('Extensores de muñeca.');
+  });
+
+  test('press banca y flexiones no comparten el mismo texto', () => {
+    const press = generarInstrucciones({
+      nombre: 'Press banca con mancuernas',
+      pilar: 'FUERZA',
+      grupo_muscular: 'Pecho',
+      equipamiento: 'Mancuernas/banco'
+    });
+    const flex = generarInstrucciones({
+      nombre: 'Flexiones estándar',
+      pilar: 'FUERZA',
+      grupo_muscular: 'Pecho',
+      equipamiento: 'Suelo'
+    });
+    expect(press).not.toBe(flex);
+    expect(press.toLowerCase()).toContain('banco');
+    expect(flex.toLowerCase()).toContain('suelo');
+  });
+
+  test('carrera continua tiene instrucciones de ritmo', () => {
+    const txt = generarInstrucciones({
+      nombre: 'Trote suave 25 min',
+      pilar: 'RESISTENCIA',
+      grupo_muscular: 'Cardio',
+      equipamiento: 'Pista'
+    });
+    expect(txt.toLowerCase()).toMatch(/ritmo|aeróbic|rpe|hablar/);
+  });
+});
+
+describe('EjercicioInteligenteService.aplicarInteligencia', () => {
+  test('marca prescripcion inteligente y corrige reps absurdas', () => {
+    const ej = aplicarInteligencia(
+      {
+        nombre: 'Reverse wrist curl',
+        pilar: 'FUERZA',
+        series: 3,
+        repeticiones: 77,
+        unidad: 'reps'
+      },
+      { seed: 10 }
+    );
+    expect(ej.prescripcion_inteligente).toBe(true);
+    expect(ej.repeticiones).toBeLessThanOrEqual(18);
+    expect(ej.instrucciones_tecnicas.length).toBeGreaterThan(50);
+  });
+
+  test('clasifica sprint como velocidad', () => {
+    const c = clasificarPerfil({ nombre: 'Sprint 60 m x 6', pilar: 'VELOCIDAD' });
+    expect(c.perfil).toBe('PARSED');
+    expect(c.unidad).toBe('m');
+  });
+});

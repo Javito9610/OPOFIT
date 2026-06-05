@@ -216,6 +216,14 @@ describe('PlanGeneradorService', () => {
     expect(n1).not.toBe(n2);
   });
 
+  test('resumenDiaDesdeEjercicios actualiza título y descripción', () => {
+    const dia = { titulo: 'Viejo', descripcion: 'Vieja desc' };
+    const ej = [{ nombre: 'Carrera Z2 30 min' }, { nombre: 'Movilidad cadera' }];
+    const r = PlanGeneradorService.resumenDiaDesdeEjercicios(dia, ej);
+    expect(r.titulo).toBe('Carrera Z2 30 min');
+    expect(r.descripcion).toContain('Movilidad');
+  });
+
   test('generarSemana con soloDiaId solo cambia un día', async () => {
     db.query.mockResolvedValue([catalogoCasa]);
     const { plan, sustituciones } = await PlanGeneradorService.generarSemana(

@@ -50,8 +50,26 @@ describe('EjercicioMetadataService', () => {
     expect(ej.grupo_muscular).toBe('Pierna');
   });
 
-  test('motivo sustitución explica entorno y grupo', () => {
-    expect(motivoSustitucion('CASA', 'Pierna')).toContain('casa');
-    expect(motivoSustitucion('CASA', 'Pierna')).toContain('pierna');
+  test('motivo sustitución es específico por ejercicio', () => {
+    const m = motivoSustitucion(
+      'CASA',
+      'Brazos',
+      'Dominadas asistidas',
+      'Reverse wrist curl'
+    );
+    expect(m).toContain('casa');
+    expect(m).toContain('Dominadas asistidas');
+    expect(m).toContain('Reverse wrist curl');
+    expect(m).not.toContain('Versión adaptada');
+  });
+
+  test('instrucciones wrist curl no son genéricas del banco', () => {
+    const txt = enriquecerInstrucciones(
+      'Reverse wrist curl',
+      'FUERZA',
+      'Extensores de muñeca.'
+    );
+    expect(txt).toContain('muñeca');
+    expect(txt).not.toBe('Extensores de muñeca.');
   });
 });

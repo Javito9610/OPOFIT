@@ -161,11 +161,16 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
                 val res = RetrofitClient.planesApi.regenerarDia("Bearer $token", oposicionId, idPlanDia)
                 if (res.ok && res.data != null) {
                     val dia = res.data.semana.find { it.id_plan_dia == idPlanDia }
-                    val cambios = dia?.ejercicios?.count { it.sustituido || it.personalizado } ?: 0
-                    val msg = if (cambios > 0) {
-                        "Día actualizado: $cambios ejercicio(s) nuevo(s)"
-                    } else {
-                        "Día actualizado con otra combinación"
+                    val anterior = planAnterior?.semana?.find { it.id_plan_dia == idPlanDia }
+                    val nombresAnt = anterior?.ejercicios?.map { it.nombre } ?: emptyList()
+                    val nombresNue = dia?.ejercicios?.map { it.nombre } ?: emptyList()
+                    val cambiosNombres = nombresNue.zip(nombresAnt).count { (n, a) -> n != a } +
+                        (nombresNue.size - nombresAnt.size).coerceAtLeast(0)
+                    val tituloCambio = dia?.titulo != anterior?.titulo
+                    val msg = when {
+                        cambiosNombres > 0 -> "Día actualizado: $cambiosNombres ejercicio(s) nuevo(s)"
+                        tituloCambio -> "Día actualizado con otra sesión"
+                        else -> "Sin otra variante distinta — pulsa de nuevo o prueba «Generar otra semana»"
                     }
                     _uiState.update {
                         it.copy(regenerandoDiaId = null, planSemanal = res.data, msgExito = msg)

@@ -120,9 +120,12 @@ fun PlanDiaCard(
                     )
                 }
             }
-            if (!dia.descripcion.isNullOrBlank()) {
+            val descripcionDistinta = dia.descripcion
+                ?.trim()
+                ?.takeIf { it.isNotBlank() && !it.equals(dia.titulo.trim(), ignoreCase = true) }
+            if (descripcionDistinta != null) {
                 Text(
-                    dia.descripcion,
+                    descripcionDistinta,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
