@@ -37,6 +37,18 @@ const guardarEntrenamiento = async (req, res) => {
         msg: "Datos de entrenamiento incompletos o vacíos"
       });
     }
+    // Coherencia: si un ejercicio trae valor, debe ser un numero posible.
+    for (const ej of ejercicios) {
+      if (ej && ej.valor != null) {
+        const v = Number(ej.valor);
+        if (!Number.isFinite(v) || v < 0 || v > 1000000) {
+          return res.status(400).json({
+            ok: false,
+            msg: "Hay un resultado de ejercicio con un valor imposible. Revisa los datos."
+          });
+        }
+      }
+    }
     const resultado = await progresoService.registrarEntreno({
       userId: Number(userId),
       tipoRutina,

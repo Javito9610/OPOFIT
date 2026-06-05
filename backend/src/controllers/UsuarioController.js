@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const RutinaService = require('../services/RutinasService');
+const MarcaValidator = require('../utils/MarcaValidator');
 const actualizarPerfil = async (req, res) => {
   try {
     const {
@@ -60,6 +61,27 @@ const actualizarPerfil = async (req, res) => {
       }
     }
     if (hasMarcas) {
+      // Coherencia: validamos TODAS las marcas antes de escribir ninguna,
+      // para no dejar el perfil a medias y rechazar valores imposibles.
+      const [{ genero } = {}] = (await db.query('SELECT genero FROM usuarios WHERE id_usuario = ?', [userId]))[0] || [];
+      const erroresMarca = [];
+      for (const marca of nuevasMarcas) {
+        if (!marca || marca.id_prueba == null || marca.valor == null) continue;
+        const [pRows] = await db.query(
+          'SELECT nombre_prueba, mejor_si_es_menor, unidad_entrada FROM pruebas_oficiales WHERE id_pruebas_oficiales = ?',
+          [marca.id_prueba]
+        );
+        const prueba = pRows && pRows.length ? pRows[0] : { unidad_entrada: null };
+        const v = MarcaValidator.validarMarcaPrueba(prueba, marca.valor, genero || null);
+        if (!v.ok) erroresMarca.push({ id_prueba: marca.id_prueba, msg: v.msg });
+      }
+      if (erroresMarca.length > 0) {
+        return res.status(400).json({
+          ok: false,
+          msg: erroresMarca.map((e) => e.msg).join('; '),
+          errores: erroresMarca
+        });
+      }
       for (const marca of nuevasMarcas) {
         if (!marca || marca.id_prueba == null || marca.valor == null) continue;
         const [upd] = await db.query(`UPDATE marcas_perfil

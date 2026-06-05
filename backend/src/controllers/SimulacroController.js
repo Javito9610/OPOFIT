@@ -2,6 +2,11 @@ const SimulacroService = require('../services/SimulacroService');
 const PremiumService = require('../services/PremiumService');
 const MarcasPerfilService = require('../services/MarcasPerfilService');
 
+/** Marcas imposibles -> 400 con mensaje claro; otros errores -> handler propio. */
+function esMarcaInvalida(e) {
+  return e && (e.codigo === 'MARCA_INVALIDA' || String(e.message || '').startsWith('MARCA_INVALIDA'));
+}
+
 const listarPruebas = async (req, res) => {
   try {
     const { idOposicion } = req.params;
@@ -35,6 +40,9 @@ const guardar = async (req, res) => {
   } catch (e) {
     if (e.message === 'OPOSICION_NOT_FOUND') {
       return res.status(404).json({ ok: false, msg: 'Oposición no encontrada' });
+    }
+    if (esMarcaInvalida(e)) {
+      return res.status(400).json({ ok: false, msg: e.message.replace(/^MARCA_INVALIDA:\s*/, ''), errores: e.errores });
     }
     res.status(500).json({ ok: false, msg: e.message });
   }
@@ -94,6 +102,9 @@ const aplicarMarcasPerfil = async (req, res) => {
       }
     });
   } catch (e) {
+    if (esMarcaInvalida(e)) {
+      return res.status(400).json({ ok: false, msg: e.message.replace(/^MARCA_INVALIDA:\s*/, ''), errores: e.errores });
+    }
     res.status(500).json({ ok: false, msg: e.message });
   }
 };

@@ -2,6 +2,7 @@ const db = require('../config/db');
 const BaremoService = require('./BaremoService');
 const RutinaService = require('./RutinasService');
 const UnidadPruebaHelper = require('../utils/UnidadPruebaHelper');
+const MarcaValidator = require('../utils/MarcaValidator');
 
 class MarcasPerfilService {
   static esMejorMarca(mejorSiEsMenor, valorNuevo, valorAnterior) {
@@ -117,6 +118,28 @@ class MarcasPerfilService {
   }
 
   static async aplicarMarcasDesdeSimulacro(userId, idOposicion, resultados) {
+    // Coherencia: no permitimos guardar marcas imposibles en el perfil/ranking.
+    const [pruebas] = await db.query(
+      `SELECT id_pruebas_oficiales, nombre_prueba, descripcion, mejor_si_es_menor,
+              unidad_entrada, tipo_baremo, convocatoria_ref
+       FROM pruebas_oficiales
+       WHERE oposiciones_id_oposicion = ?
+       ORDER BY id_pruebas_oficiales ASC`,
+      [idOposicion]
+    );
+    if (pruebas && pruebas.length > 0) {
+      const [u] = await db.query('SELECT genero FROM usuarios WHERE id_usuario = ?', [userId]);
+      const genero = u?.[0]?.genero || 'HOMBRE';
+      const mapa = new Map(pruebas.map((p) => [Number(p.id_pruebas_oficiales), p]));
+      const { ok, errores } = MarcaValidator.validarResultados(resultados, mapa, genero);
+      if (!ok) {
+        const err = new Error('MARCA_INVALIDA: ' + errores.map((e) => e.msg).join('; '));
+        err.codigo = 'MARCA_INVALIDA';
+        err.errores = errores;
+        throw err;
+      }
+    }
+
     const analisis = await MarcasPerfilService.analizarMejorasTrasSimulacro(
       userId,
       idOposicion,
