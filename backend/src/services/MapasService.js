@@ -177,19 +177,32 @@ class MapasService {
     }));
   }
 
+  static limitesRuta(actividad = 'CARRERA', terreno = 'CIUDAD') {
+    const act = String(actividad || 'CARRERA').toUpperCase();
+    const ter = String(terreno || 'CIUDAD').toUpperCase();
+    if (act === 'BICI' || act === 'BIKE' || act === 'BICICLETA') {
+      return ter === 'MONTANA' || ter === 'MONTAÑA'
+        ? { min: 1, max: 100, label: 'Bici montaña' }
+        : { min: 1, max: 180, label: 'Bici carretera' };
+    }
+    return { min: 1, max: 42, label: ter === 'MONTANA' || ter === 'MONTAÑA' ? 'Carrera montaña' : 'Carrera ciudad' };
+  }
+
   /** Genera ruta circular sugerida siguiendo calles (Directions / OSRM). */
-  static async generarRutaSugerida(lat, lng, distKm = 5, variacion = 0) {
+  static async generarRutaSugerida(lat, lng, distKm = 5, variacion = 0, actividad = 'CARRERA', terreno = 'CIUDAD') {
     const latN = Number(lat);
     const lngN = Number(lng);
-    const km = MapasService.redondearKm(distKm);
+    const km = MapasService.redondearKm(distKm, actividad, terreno);
     const seed = Math.max(0, Number(variacion) || 0);
+    const limites = MapasService.limitesRuta(actividad, terreno);
     const etiqueta = seed > 0 ? ` (opción ${(seed % 8) + 1})` : '';
+    const sufijoTerreno = (terreno === 'MONTANA' || terreno === 'MONTAÑA') ? ' · montaña' : ' · ciudad';
 
     let puntos = null;
     let origen = 'sugerida_geometrica';
 
     try {
-      const porCalles = await MapasService.rutaCircularPorCalles(latN, lngN, km, seed);
+      const porCalles = await MapasService.rutaCircularPorCalles(latN, lngN, km, seed, actividad, terreno);
       if (porCalles?.puntos?.length >= 2) {
         puntos = porCalles.puntos;
         origen = porCalles.origen;
@@ -203,30 +216,47 @@ class MapasService {
     }
 
     const distanciaTotalM = MapasService.longitudPolyline(puntos);
+    const prefijo = limites.label.includes('Bici') ? 'Ruta bici' : 'Rodaje';
     return {
       id: crypto.randomBytes(8).toString('hex'),
-      nombre: `Rodaje ${km} km${etiqueta}`,
+      nombre: `${prefijo} ${km} km${sufijoTerreno}${etiqueta}`,
       distanciaKm: Number((distanciaTotalM / 1000).toFixed(2)),
       distanciaObjetivoKm: km,
       variacion: seed,
+      actividad: String(actividad || 'CARRERA').toUpperCase(),
+      terreno: String(terreno || 'CIUDAD').toUpperCase(),
       puntos: MapasService.simplificarPolyline(puntos),
       origen
     };
   }
 
-  static redondearKm(distKm) {
-    const km = Math.min(21, Math.max(1, Number(distKm) || 5));
+  static redondearKm(distKm, actividad = 'CARRERA', terreno = 'CIUDAD') {
+    const { min, max } = MapasService.limitesRuta(actividad, terreno);
+    const km = Math.min(max, Math.max(min, Number(distKm) || 5));
     return Math.round(km * 10) / 10;
   }
 
+  static modoRuta(actividad) {
+    const act = String(actividad || 'CARRERA').toUpperCase();
+    return act === 'BICI' || act === 'BIKE' || act === 'BICICLETA' ? 'bicycling' : 'walking';
+  }
+
+  static perfilOsrm(actividad) {
+    const act = String(actividad || 'CARRERA').toUpperCase();
+    return act === 'BICI' || act === 'BIKE' || act === 'BICICLETA' ? 'bike' : 'foot';
+  }
+
   /** Busca un bucle por calles cercano a la distancia objetivo. */
-  static async rutaCircularPorCalles(lat, lng, distKm, seed) {
+  static async rutaCircularPorCalles(lat, lng, distKm, seed, actividad = 'CARRERA', terreno = 'CIUDAD') {
     const key = apiKey();
     const numWp = 4 + (seed % 3);
     const anguloBase = (seed % 16) * (Math.PI / 8);
     const centroLat = lat + Math.sin(seed * 0.61) * 0.003;
     const centroLng = lng + Math.cos(seed * 0.43) * 0.003;
-    const scales = [0.9, 1.05, 1.2, 1.35, 1.5, 1.7];
+    const esMontana = terreno === 'MONTANA' || terreno === 'MONTAÑA';
+    const scales = esMontana ? [1.05, 1.2, 1.4, 1.65, 1.9] : [0.9, 1.05, 1.2, 1.35, 1.5, 1.7];
+    const mode = MapasService.modoRuta(actividad);
+    const osrmProfile = MapasService.perfilOsrm(actividad);
     let mejor = null;
     let mejorDiff = Infinity;
 
@@ -239,7 +269,7 @@ class MapasService {
       let origen = null;
       try {
         if (key) {
-          puntos = await MapasService.directionsRoute(wps, key, 'walking');
+          puntos = await MapasService.directionsRoute(wps, key, mode);
           origen = 'sugerida_calles';
         }
       } catch (_e) {
@@ -247,7 +277,7 @@ class MapasService {
       }
       if (!puntos) {
         try {
-          puntos = await MapasService.osrmRoute(wps);
+          puntos = await MapasService.osrmRoute(wps, osrmProfile);
           origen = 'sugerida_osrm';
         } catch (_e) {
           continue;
@@ -306,15 +336,16 @@ class MapasService {
     return decodePolyline(encoded);
   }
 
-  static async osrmRoute(waypoints) {
+  static async osrmRoute(waypoints, profile = 'foot') {
     const wps = (waypoints || []).filter(
       (p) => Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng))
     );
     if (wps.length < 2) throw new Error('Waypoints insuficientes');
 
+    const prof = profile === 'bike' ? 'bike' : 'foot';
     const coords = wps.map((p) => `${p.lng},${p.lat}`).join(';');
     const url =
-      `https://router.project-osrm.org/route/v1/foot/${coords}` +
+      `https://router.project-osrm.org/route/v1/${prof}/${coords}` +
       '?overview=full&geometries=geojson&steps=false';
     const res = await fetch(url, { headers: { 'User-Agent': 'OpoFit/1.0' } });
     if (!res.ok) throw new Error(`OSRM ${res.status}`);

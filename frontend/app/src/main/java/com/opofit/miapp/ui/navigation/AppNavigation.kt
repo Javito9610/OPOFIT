@@ -320,10 +320,14 @@ fun AppNavigation(
             GpsHubScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onStartRecording = { navController.navigate(NavDestinations.GPS_RECORDING) },
-                onOpenMapa = {
+                onOpenMapa = { tipo ->
                     val km = EntrenoFlowContext.state.value?.distKmObjetivo
                     navController.navigate(
-                        MapaEntrenoNav.rutaMapa(distKm = km, modo = MapaEntrenoNav.MODO_RUTAS)
+                        MapaEntrenoNav.rutaMapa(
+                            distKm = km,
+                            modo = MapaEntrenoNav.MODO_RUTAS,
+                            actividad = MapaEntrenoNav.actividadDesdeGps(tipo)
+                        )
                     )
                 },
                 onOpenActivity = { id -> navController.navigate("gps_activity/$id") }
@@ -335,18 +339,24 @@ fun AppNavigation(
             arguments = listOf(
                 navArgument("distKm") { type = NavType.FloatType; defaultValue = 0f },
                 navArgument("modo") { type = NavType.StringType; defaultValue = MapaEntrenoNav.MODO_RUTAS },
-                navArgument("tipo") { type = NavType.StringType; defaultValue = "GYM" }
+                navArgument("tipo") { type = NavType.StringType; defaultValue = "GYM" },
+                navArgument("actividad") { type = NavType.StringType; defaultValue = "CARRERA" },
+                navArgument("terreno") { type = NavType.StringType; defaultValue = "CIUDAD" }
             )
         ) { backStackEntry ->
             val distKm = backStackEntry.arguments?.getFloat("distKm")?.toDouble()?.takeIf { it > 0 }
             val modo = backStackEntry.arguments?.getString("modo") ?: MapaEntrenoNav.MODO_RUTAS
             val tipo = backStackEntry.arguments?.getString("tipo") ?: "GYM"
+            val actividad = backStackEntry.arguments?.getString("actividad") ?: "CARRERA"
+            val terreno = backStackEntry.arguments?.getString("terreno") ?: "CIUDAD"
             MapaEntrenoScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onUsarRutaEnGps = { navController.navigate(NavDestinations.GPS_RECORDING) },
                 distanciaObjetivoKm = distKm,
                 modoInicial = modo,
-                tipoLugarInicial = tipo
+                tipoLugarInicial = tipo,
+                actividadInicial = actividad,
+                terrenoInicial = terreno
             )
         }
 

@@ -25,8 +25,9 @@ const authLimiter = rateLimit({
   }
 });
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '3mb' }));
 app.use(express.static('public'));
+app.use('/uploads', express.static(require('path').join(__dirname, 'uploads')));
 app.use(globalLimiter);
 app.use('/api/auth', authLimiter, require('./src/routes/AuthRoute'));
 app.use('/api/user', require('./src/routes/UsuarioRoute'));

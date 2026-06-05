@@ -77,7 +77,7 @@ import java.util.Locale
 fun GpsHubScreen(
     onNavigateBack: () -> Unit,
     onStartRecording: () -> Unit,
-    onOpenMapa: () -> Unit = {},
+    onOpenMapa: (ActivityType) -> Unit = {},
     onOpenActivity: (String) -> Unit,
     viewModel: GpsViewModel = viewModel()
 ) {
@@ -243,7 +243,7 @@ fun GpsHubScreen(
                                 color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f)
                             )
                             OutlinedButton(
-                                onClick = onOpenMapa,
+                                onClick = { onOpenMapa(selectedType) },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Icon(Icons.Filled.Explore, null, Modifier.size(18.dp))
@@ -338,12 +338,18 @@ fun GpsHubScreen(
                             }
                         }
                         OutlinedButton(
-                            onClick = onOpenMapa,
+                            onClick = { onOpenMapa(selectedType) },
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(Icons.Filled.Explore, null, Modifier.size(18.dp))
                             Spacer(Modifier.size(6.dp))
-                            Text("Preparar ruta de carrera")
+                            Text(
+                                when (selectedType) {
+                                    ActivityType.BIKE -> "Preparar ruta de bici"
+                                    ActivityType.WALK -> "Preparar ruta de paseo"
+                                    ActivityType.RUN -> "Preparar ruta de carrera"
+                                }
+                            )
                         }
                     }
                 }

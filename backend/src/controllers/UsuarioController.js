@@ -1,6 +1,7 @@
 const db = require('../config/db');
 const RutinaService = require('../services/RutinasService');
 const MarcaValidator = require('../utils/MarcaValidator');
+const { guardarAvatar } = require('../services/AvatarService');
 
 const obtenerPerfil = async (req, res) => {
   try {
@@ -289,9 +290,26 @@ const actualizarSettings = async (req, res) => {
     });
   }
 };
+const subirAvatar = async (req, res) => {
+  try {
+    const userId = req.usuario?.id;
+    const { imagenBase64 } = req.body || {};
+    if (!userId) {
+      return res.status(401).json({ ok: false, msg: 'Sesión no válida' });
+    }
+    const avatarPath = guardarAvatar(userId, imagenBase64);
+    await db.query('UPDATE usuarios SET avatar_url = ? WHERE id_usuario = ?', [avatarPath, userId]);
+    return res.status(200).json({ ok: true, avatarUrl: avatarPath });
+  } catch (e) {
+    console.error('subirAvatar:', e.message);
+    return res.status(400).json({ ok: false, msg: e.message || 'No se pudo guardar la foto' });
+  }
+};
+
 module.exports = {
   obtenerPerfil,
   actualizarPerfil,
   actualizarSettings,
-  eliminarCuenta
+  eliminarCuenta,
+  subirAvatar
 };

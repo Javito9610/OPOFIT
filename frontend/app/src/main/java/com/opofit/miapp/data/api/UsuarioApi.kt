@@ -5,10 +5,13 @@ import com.opofit.miapp.data.responsemodels.ActualizarAjustesResponse
 import com.opofit.miapp.data.responsemodels.ActualizarPerfilRequest
 import com.opofit.miapp.data.responsemodels.ActualizarPerfilResponse
 import com.opofit.miapp.data.responsemodels.PerfilUsuarioResponse
+import com.opofit.miapp.data.responsemodels.SubirAvatarRequest
+import com.opofit.miapp.data.responsemodels.SubirAvatarResponse
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.POST
 import retrofit2.http.PUT
 
 interface UsuarioApi {
@@ -22,6 +25,12 @@ interface UsuarioApi {
         @Header("Authorization") token: String,
         @Body body: ActualizarPerfilRequest
     ): ActualizarPerfilResponse
+
+    @POST("/api/user/avatar")
+    suspend fun subirAvatar(
+        @Header("Authorization") token: String,
+        @Body body: SubirAvatarRequest
+    ): SubirAvatarResponse
 
     @PUT("/api/user/settings")
     suspend fun actualizarAjustes(

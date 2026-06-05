@@ -93,7 +93,9 @@ fun MapaEntrenoScreen(
     onUsarRutaEnGps: () -> Unit,
     distanciaObjetivoKm: Double? = null,
     modoInicial: String = MapaEntrenoNav.MODO_RUTAS,
-    tipoLugarInicial: String = "GYM"
+    tipoLugarInicial: String = "GYM",
+    actividadInicial: String = "CARRERA",
+    terrenoInicial: String = "CIUDAD"
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -107,7 +109,14 @@ fun MapaEntrenoScreen(
     var tipoLugar by remember { mutableStateOf(tipoLugarInicial) }
     var lugares by remember { mutableStateOf<List<LugarEntreno>>(emptyList()) }
     var ruta by remember { mutableStateOf<RutaEntreno?>(null) }
-    var distKm by remember { mutableDoubleStateOf(distanciaObjetivoKm ?: 5.0) }
+    var actividad by remember { mutableStateOf(actividadInicial.uppercase()) }
+    var terreno by remember { mutableStateOf(terrenoInicial.uppercase()) }
+    val limites = remember(actividad, terreno) { MapaEntrenoNav.limitesRuta(actividad, terreno) }
+    var distKm by remember(actividad, terreno) {
+        mutableDoubleStateOf(
+            (distanciaObjetivoKm ?: 5.0).coerceIn(limites.minKm.toDouble(), limites.maxKm.toDouble())
+        )
+    }
     var variacion by remember { mutableIntStateOf(0) }
     var loading by remember { mutableStateOf(false) }
     val flowCtx by EntrenoFlowContext.state.collectAsState()
@@ -117,7 +126,15 @@ fun MapaEntrenoScreen(
         position = CameraPosition.fromLatLngZoom(LatLng(lat, lng), 14f)
     }
 
-    val titulo = if (esModoLugares) "Dónde entrenar" else "Ruta de carrera"
+    val titulo = if (esModoLugares) {
+        "Dónde entrenar"
+    } else {
+        when {
+            actividad == "BICI" || actividad == "BIKE" -> "Ruta de bici"
+            else -> "Ruta de carrera"
+        }
+    }
+    val esBici = actividad == "BICI" || actividad == "BIKE"
 
     val permLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -208,7 +225,7 @@ fun MapaEntrenoScreen(
             } else {
                 loading = true
                 try {
-                    val resp = RetrofitClient.mapasApi.rutaSugerida(auth(), lat, lng, distKm, variacion)
+                    val resp = RetrofitClient.mapasApi.rutaSugerida(auth(), lat, lng, distKm, variacion, actividad, terreno)
                     val generada = resp.data
                     if (generada != null && generada.puntos.size >= 2) {
                         ruta = generada
@@ -252,11 +269,15 @@ fun MapaEntrenoScreen(
     }
 
     /** Al cambiar km, regenera la ruta sugerida y la dibuja en el mapa. */
-    LaunchedEffect(ubicacionLista, distKm, tab, modoPersonalizado, esModoLugares) {
+    LaunchedEffect(ubicacionLista, distKm, tab, modoPersonalizado, esModoLugares, actividad, terreno) {
         if (!ubicacionLista || esModoLugares || tab != 1 || modoPersonalizado) return@LaunchedEffect
         variacion = 0
         delay(350)
         generarRuta()
+    }
+
+    LaunchedEffect(actividad, terreno, limites) {
+        distKm = distKm.coerceIn(limites.minKm.toDouble(), limites.maxKm.toDouble())
     }
 
     fun otraPropuesta() {
@@ -403,17 +424,33 @@ fun MapaEntrenoScreen(
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
-                        Text("Distancia: ${"%.1f".format(distKm)} km", fontWeight = FontWeight.Medium)
                         Text(
-                            "Ruta por calles y caminos reales (modo a pie)",
+                            "${limites.etiqueta}: ${"%.1f".format(distKm)} km (máx. ${limites.maxKm.toInt()} km)",
+                            fontWeight = FontWeight.Medium
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilterChip(
+                                selected = terreno == "CIUDAD",
+                                onClick = { terreno = "CIUDAD" },
+                                label = { Text("Ciudad") }
+                            )
+                            FilterChip(
+                                selected = terreno == "MONTANA",
+                                onClick = { terreno = "MONTANA" },
+                                label = { Text("Montaña") }
+                            )
+                        }
+                        Text(
+                            if (esBici) "Ruta por carretera o camino (modo bici)"
+                            else "Ruta por calles y caminos reales (modo a pie)",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Slider(
-                            value = distKm.toFloat(),
+                            value = distKm.toFloat().coerceIn(limites.minKm, limites.maxKm),
                             onValueChange = { distKm = it.toDouble() },
-                            valueRange = 1f..15f,
-                            steps = 13,
+                            valueRange = limites.minKm..limites.maxKm,
+                            steps = limites.steps,
                             enabled = !modoPersonalizado && !loading
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -471,8 +508,12 @@ fun MapaEntrenoScreen(
                             Icon(Icons.Filled.PlayArrow, null, Modifier.size(20.dp))
                             Spacer(Modifier.size(8.dp))
                             Text(
-                                if (ruta != null) "Iniciar carrera con esta ruta"
-                                else "Generar ruta e iniciar carrera"
+                                when {
+                                    ruta != null && esBici -> "Iniciar bici con esta ruta"
+                                    ruta != null -> "Iniciar carrera con esta ruta"
+                                    esBici -> "Generar ruta e iniciar bici"
+                                    else -> "Generar ruta e iniciar carrera"
+                                }
                             )
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -1,17 +1,45 @@
 package com.opofit.miapp.utils
 
+import com.opofit.miapp.gps.model.ActivityType
+
 object MapaEntrenoNav {
     const val MODO_RUTAS = "rutas"
     const val MODO_LUGARES = "lugares"
+
+    data class LimitesRuta(val minKm: Float, val maxKm: Float, val steps: Int, val etiqueta: String)
+
+    fun actividadDesdeGps(type: ActivityType): String = when (type) {
+        ActivityType.BIKE -> "BICI"
+        else -> "CARRERA"
+    }
+
+    fun limitesRuta(actividad: String, terreno: String): LimitesRuta {
+        val act = actividad.uppercase()
+        val ter = terreno.uppercase()
+        return if (act == "BICI" || act == "BIKE") {
+            if (ter == "MONTANA") {
+                LimitesRuta(1f, 100f, 33, "Bici montaña")
+            } else {
+                LimitesRuta(1f, 180f, 35, "Bici carretera")
+            }
+        } else if (ter == "MONTANA") {
+            LimitesRuta(1f, 42f, 20, "Carrera montaña")
+        } else {
+            LimitesRuta(1f, 42f, 20, "Carrera ciudad")
+        }
+    }
 
     fun rutaMapa(
         distKm: Double? = null,
         modo: String = MODO_RUTAS,
         tipoLugar: String = "GYM",
-        variacion: Int = 0
+        variacion: Int = 0,
+        actividad: String = "CARRERA",
+        terreno: String = "CIUDAD"
     ): String {
         val km = distKm?.takeIf { it > 0 } ?: 0.0
-        return "mapa_entreno?distKm=$km&modo=$modo&tipo=$tipoLugar&variacion=$variacion"
+        return "mapa_entreno?distKm=$km&modo=$modo&tipo=$tipoLugar&variacion=$variacion" +
+            "&actividad=$actividad&terreno=$terreno"
     }
 
     fun rutaEntrenamiento(enfoque: String, idPlanDia: Int?, idRutinaOpo: Int?): String {

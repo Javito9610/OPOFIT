@@ -3,6 +3,7 @@ package com.opofit.miapp.ui.screens.rutinas
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -191,50 +192,7 @@ fun RutinasScreen(
                     }
                 }
                 else -> {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        
-                        if (uiState.notaActual.isNotEmpty()) {
-                            Card(
-                                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                                )
-                            ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(
-                                        text = "Nota actual: ${uiState.notaActual}",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                    Text(
-                                        text = "Nivel asignado: ${uiState.nivelAsignado}",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                }
-                            }
-                        }
-
-                        if (!uiState.msgPremium.isNullOrBlank()) {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                                )
-                            ) {
-                                Text(
-                                    text = uiState.msgPremium!!,
-                                    modifier = Modifier.padding(12.dp),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer
-                                )
-                            }
-                        }
-
-                        if (
+                    if (
                             uiState.rutinaCompleta.isEmpty() &&
                             uiState.planSemanal?.semana.isNullOrEmpty() &&
                             !uiState.isLoading
@@ -242,8 +200,7 @@ fun RutinasScreen(
                             val faltan = uiState.pruebasFaltantes ?: 0
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f)
+                                    .fillMaxSize()
                                     .padding(vertical = 24.dp, horizontal = 16.dp),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -349,191 +306,221 @@ fun RutinasScreen(
                             }
                         } else if (uiState.planSemanal?.semana?.isNotEmpty() == true) {
                             val plan = uiState.planSemanal!!
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f)
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                Row(
-                                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
-                                    horizontalArrangement = Arrangement.End
-                                ) {
-                                    TextButton(onClick = { onNavigateToPlanHistorial(plan.id_plan) }) {
-                                        Text("Historial del plan")
+                                if (!esFitness && uiState.notaActual.isNotEmpty()) {
+                                    item {
+                                        Card(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                                            )
+                                        ) {
+                                            Text(
+                                                text = "Nota ${uiState.notaActual} · ${uiState.nivelAsignado}",
+                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                                style = MaterialTheme.typography.labelLarge,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                        }
                                     }
                                 }
-                                TabRow(selectedTabIndex = vistaPlan) {
-                                    Tab(selected = vistaPlan == 0, onClick = { vistaPlan = 0 }, text = { Text("Semana") })
-                                    Tab(selected = vistaPlan == 1, onClick = { vistaPlan = 1 }, text = { Text("Mes") })
+                                if (!uiState.msgPremium.isNullOrBlank()) {
+                                    item {
+                                        Card(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                                            )
+                                        ) {
+                                            Text(
+                                                text = uiState.msgPremium!!,
+                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                            )
+                                        }
+                                    }
+                                }
+                                item {
+                                    Row(
+                                        Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.End
+                                    ) {
+                                        TextButton(onClick = { onNavigateToPlanHistorial(plan.id_plan) }) {
+                                            Text("Historial del plan")
+                                        }
+                                    }
+                                }
+                                item {
+                                    TabRow(selectedTabIndex = vistaPlan) {
+                                        Tab(selected = vistaPlan == 0, onClick = { vistaPlan = 0 }, text = { Text("Semana") })
+                                        Tab(selected = vistaPlan == 1, onClick = { vistaPlan = 1 }, text = { Text("Mes") })
+                                    }
                                 }
                                 if (vistaPlan == 1) {
-                                    val cal = uiState.calendario
-                                    Row(
-                                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        OutlinedButton(onClick = { mesCalendario = mesCalendario.minusMonths(1) }) {
-                                            Text("‹")
-                                        }
-                                        Text(
-                                            "${mesCalendario.monthValue}/${mesCalendario.year}",
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        OutlinedButton(onClick = { mesCalendario = mesCalendario.plusMonths(1) }) {
-                                            Text("›")
-                                        }
-                                    }
-                                    if (cal != null) {
-                                        PlanCalendarioMes(
-                                            year = cal.year,
-                                            month = cal.month,
-                                            dias = cal.dias,
-                                            onDiaClick = { d ->
-                                                val dia = plan.semana.find { it.id_plan_dia == d.id_plan_dia }
-                                                if (dia != null) {
-                                                    onNavigateToEntrenamientos(
-                                                        dia.enfoque,
-                                                        dia.id_plan_dia,
-                                                        dia.id_rutina_opo
-                                                    )
-                                                }
-                                            },
-                                            modifier = Modifier.padding(horizontal = 12.dp)
-                                        )
-                                    }
-                                }
-                                LazyColumn(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .weight(1f)
-                                        .padding(horizontal = 16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    if (vistaPlan == 0) {
-                                        plan.personalizacion?.let { perso ->
-                                            item {
-                                                PlanPersonalizacionCard(personalizacion = perso)
+                                    item {
+                                        val cal = uiState.calendario
+                                        Row(
+                                            Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            OutlinedButton(onClick = { mesCalendario = mesCalendario.minusMonths(1) }) {
+                                                Text("‹")
+                                            }
+                                            Text(
+                                                "${mesCalendario.monthValue}/${mesCalendario.year}",
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            OutlinedButton(onClick = { mesCalendario = mesCalendario.plusMonths(1) }) {
+                                                Text("›")
                                             }
                                         }
-                                        item {
-                                            SectionHeader(
-                                                title = "Microciclo · ${plan.dias_por_semana} días",
-                                                subtitle = plan.personalizacion?.resumen
-                                                    ?: "Plan adaptado a tus marcas y nivel"
-                                            )
-                                            Row(
-                                                Modifier.fillMaxWidth().padding(top = 4.dp),
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                            ) {
-                                                OutlinedButton(onClick = { rutinasViewModel.abrirSheetEntorno() }) {
-                                                    Text(
-                                                        if (uiState.entornoEntreno.isNullOrBlank()) "¿Dónde entrenas?"
-                                                        else "Cambiar entorno"
-                                                    )
-                                                }
-                                                FilledTonalButton(
-                                                    onClick = { rutinasViewModel.regenerarPlan(userId, oposicionId) },
-                                                    enabled = !uiState.regenerandoPlan && !uiState.entornoEntreno.isNullOrBlank()
-                                                ) {
-                                                    if (uiState.regenerandoPlan) {
-                                                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                                                    } else {
-                                                        Text("Generar otra semana")
+                                        if (cal != null) {
+                                            PlanCalendarioMes(
+                                                year = cal.year,
+                                                month = cal.month,
+                                                dias = cal.dias,
+                                                onDiaClick = { d ->
+                                                    val dia = plan.semana.find { it.id_plan_dia == d.id_plan_dia }
+                                                    if (dia != null) {
+                                                        onNavigateToEntrenamientos(
+                                                            dia.enfoque,
+                                                            dia.id_plan_dia,
+                                                            dia.id_rutina_opo
+                                                        )
                                                     }
                                                 }
+                                            )
+                                        }
+                                    }
+                                }
+                                if (vistaPlan == 0) {
+                                    plan.personalizacion?.let { perso ->
+                                        item { PlanPersonalizacionCard(personalizacion = perso) }
+                                    }
+                                    item {
+                                        SectionHeader(
+                                            title = "Microciclo · ${plan.dias_por_semana} días",
+                                            subtitle = plan.personalizacion?.resumen
+                                                ?: "Plan adaptado a tus marcas y nivel"
+                                        )
+                                        Row(
+                                            Modifier.fillMaxWidth().padding(top = 4.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            OutlinedButton(onClick = { rutinasViewModel.abrirSheetEntorno() }) {
+                                                Text(
+                                                    if (uiState.entornoEntreno.isNullOrBlank()) "¿Dónde entrenas?"
+                                                    else "Cambiar entorno"
+                                                )
                                             }
-                                            if (!uiState.entornoEntreno.isNullOrBlank()) {
-                                                OutlinedButton(
-                                                    onClick = {
-                                                        onNavigateToLugaresEntreno(
-                                                            MapaEntrenoNav.entornoATipoLugar(uiState.entornoEntreno)
-                                                        )
-                                                    },
-                                                    modifier = Modifier.fillMaxWidth()
-                                                ) {
-                                                    Text("Ver lugares cerca (${uiState.entornoEntreno})")
+                                            FilledTonalButton(
+                                                onClick = { rutinasViewModel.regenerarPlan(userId, oposicionId) },
+                                                enabled = !uiState.regenerandoPlan && !uiState.entornoEntreno.isNullOrBlank()
+                                            ) {
+                                                if (uiState.regenerandoPlan) {
+                                                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                                                } else {
+                                                    Text("Generar otra semana")
                                                 }
                                             }
                                         }
-                                        items(plan.semana.size) { i ->
-                                            val dia = plan.semana[i]
-                                            Card(Modifier.fillMaxWidth()) {
-                                                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                    PlanDiaCard(
-                                                        dia = dia,
-                                                        onEntrenar = onNavigateToEntrenamientos,
-                                                        expanded = !dia.es_hoy
+                                        if (!uiState.entornoEntreno.isNullOrBlank()) {
+                                            OutlinedButton(
+                                                onClick = {
+                                                    onNavigateToLugaresEntreno(
+                                                        MapaEntrenoNav.entornoATipoLugar(uiState.entornoEntreno)
                                                     )
-                                                    dia.ejercicios.take(4).forEach { ej ->
-                                                        val adj = if (ej.personalizado && ej.series_base != null) {
-                                                            " (${ej.series_base}→${ej.series})"
-                                                        } else ""
-                                                        Row(
-                                                            Modifier.fillMaxWidth(),
-                                                            verticalAlignment = Alignment.CenterVertically,
-                                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                                        ) {
-                                                            ExerciseStickFigure(
-                                                                tipoIlustracion = ej.tipo_ilustracion,
-                                                                size = 44.dp
+                                                },
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Text("Ver lugares cerca (${uiState.entornoEntreno})")
+                                            }
+                                        }
+                                    }
+                                    items(plan.semana.size) { i ->
+                                        val dia = plan.semana[i]
+                                        Card(Modifier.fillMaxWidth()) {
+                                            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                PlanDiaCard(
+                                                    dia = dia,
+                                                    onEntrenar = onNavigateToEntrenamientos,
+                                                    expanded = !dia.es_hoy
+                                                )
+                                                dia.ejercicios.take(4).forEach { ej ->
+                                                    val adj = if (ej.personalizado && ej.series_base != null) {
+                                                        " (${ej.series_base}→${ej.series})"
+                                                    } else ""
+                                                    Row(
+                                                        Modifier.fillMaxWidth(),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                    ) {
+                                                        ExerciseStickFigure(
+                                                            tipoIlustracion = ej.tipo_ilustracion,
+                                                            size = 44.dp
+                                                        )
+                                                        Column(Modifier.weight(1f)) {
+                                                            Text(
+                                                                "${ej.series}×${PrescripcionFormat.formatRepeticiones(ej.repeticiones, ej.unidad, ej.nombre)} ${ej.nombre}$adj",
+                                                                style = MaterialTheme.typography.bodySmall,
+                                                                color = if (ej.personalizado || ej.sustituido)
+                                                                    MaterialTheme.colorScheme.primary
+                                                                else MaterialTheme.colorScheme.onSurfaceVariant
                                                             )
-                                                            Column(Modifier.weight(1f)) {
+                                                            ej.instrucciones_tecnicas?.takeIf { it.isNotBlank() }?.let { tip ->
                                                                 Text(
-                                                                    "${ej.series}×${PrescripcionFormat.formatRepeticiones(ej.repeticiones, ej.unidad, ej.nombre)} ${ej.nombre}$adj",
-                                                                    style = MaterialTheme.typography.bodySmall,
-                                                                    color = if (ej.personalizado || ej.sustituido)
-                                                                        MaterialTheme.colorScheme.primary
-                                                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                                                                    tip,
+                                                                    style = MaterialTheme.typography.labelSmall,
+                                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                                                 )
-                                                                ej.instrucciones_tecnicas?.takeIf { it.isNotBlank() }?.let { tip ->
-                                                                    Text(
-                                                                        tip,
-                                                                        style = MaterialTheme.typography.labelSmall,
-                                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                                    )
-                                                                }
                                                             }
                                                         }
                                                     }
-                                                    if (dia.ejercicios.size > 4) {
-                                                        Text(
-                                                            "+${dia.ejercicios.size - 4} ejercicios más",
-                                                            style = MaterialTheme.typography.labelSmall,
-                                                            color = MaterialTheme.colorScheme.primary
-                                                        )
-                                                    }
+                                                }
+                                                if (dia.ejercicios.size > 4) {
+                                                    Text(
+                                                        "+${dia.ejercicios.size - 4} ejercicios más",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.primary
+                                                    )
                                                 }
                                             }
                                         }
                                     }
                                 }
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    val hoy = plan.sesion_hoy
-                                    if (hoy != null && !hoy.completada) {
-                                        Button(
-                                            onClick = {
-                                                onNavigateToEntrenamientos(
-                                                    hoy.enfoque,
-                                                    hoy.id_plan_dia,
-                                                    hoy.id_rutina_opo
-                                                )
-                                            },
+                                item {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        val hoy = plan.sesion_hoy
+                                        if (hoy != null && !hoy.completada) {
+                                            Button(
+                                                onClick = {
+                                                    onNavigateToEntrenamientos(
+                                                        hoy.enfoque,
+                                                        hoy.id_plan_dia,
+                                                        hoy.id_rutina_opo
+                                                    )
+                                                },
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Text("Empezar ${hoy.nombre_dia.lowercase()}")
+                                            }
+                                        }
+                                        OutlinedButton(
+                                            onClick = onNavigateToRutinasLibres,
                                             modifier = Modifier.fillMaxWidth()
                                         ) {
-                                            Text("Empezar ${hoy.nombre_dia.lowercase()}")
+                                            Text("Banco de ejercicios · rutinas libres")
                                         }
-                                    }
-                                    OutlinedButton(
-                                        onClick = onNavigateToRutinasLibres,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text("Banco de ejercicios · rutinas libres")
                                     }
                                 }
                             }
@@ -542,30 +529,60 @@ fun RutinasScreen(
                             val filteredBlocks = uiState.rutinaCompleta.filter {
                                 it.bloque.equals(selectedEnfoque, ignoreCase = true)
                             }
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f)
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                ScrollableTabRow(
-                                    selectedTabIndex = selectedTab,
-                                    edgePadding = 8.dp
-                                ) {
-                                    enfoqueTabs.forEachIndexed { index, (label, _) ->
-                                        Tab(
-                                            selected = selectedTab == index,
-                                            onClick = { selectedTab = index },
-                                            text = { Text(label) }
-                                        )
+                                if (!esFitness && uiState.notaActual.isNotEmpty()) {
+                                    item {
+                                        Card(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                                            )
+                                        ) {
+                                            Text(
+                                                text = "Nota ${uiState.notaActual} · ${uiState.nivelAsignado}",
+                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                                style = MaterialTheme.typography.labelLarge,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                        }
                                     }
                                 }
-                                LazyColumn(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .weight(1f)
-                                        .padding(horizontal = 16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
+                                if (!uiState.msgPremium.isNullOrBlank()) {
+                                    item {
+                                        Card(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                                            )
+                                        ) {
+                                            Text(
+                                                text = uiState.msgPremium!!,
+                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                            )
+                                        }
+                                    }
+                                }
+                                item {
+                                    ScrollableTabRow(
+                                        selectedTabIndex = selectedTab,
+                                        edgePadding = 0.dp
+                                    ) {
+                                        enfoqueTabs.forEachIndexed { index, (label, _) ->
+                                            Tab(
+                                                selected = selectedTab == index,
+                                                onClick = { selectedTab = index },
+                                                text = { Text(label) }
+                                            )
+                                        }
+                                    }
+                                }
                                     if (filteredBlocks.isEmpty()) {
                                         item {
                                             Card(
@@ -639,38 +656,36 @@ fun RutinasScreen(
                                             }
                                         }
                                     }
-                                }
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Button(
-                                        onClick = {
-                                            val sesion = uiState.planSemanal?.semana?.find {
-                                                it.enfoque == selectedEnfoque
-                                            }
-                                            onNavigateToEntrenamientos(
-                                                selectedEnfoque,
-                                                sesion?.id_plan_dia,
-                                                sesion?.id_rutina_opo
-                                            )
-                                        },
-                                        modifier = Modifier.fillMaxWidth()
+                                item {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        Text("💪 Comenzar Entrenamiento")
-                                    }
-                                    OutlinedButton(
-                                        onClick = onNavigateToRutinasLibres,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text("Ver rutinas libres")
+                                        Button(
+                                            onClick = {
+                                                val sesion = uiState.planSemanal?.semana?.find {
+                                                    it.enfoque == selectedEnfoque
+                                                }
+                                                onNavigateToEntrenamientos(
+                                                    selectedEnfoque,
+                                                    sesion?.id_plan_dia,
+                                                    sesion?.id_rutina_opo
+                                                )
+                                            },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text("💪 Comenzar Entrenamiento")
+                                        }
+                                        OutlinedButton(
+                                            onClick = onNavigateToRutinasLibres,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text("Ver rutinas libres")
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
                 }
             }
         }

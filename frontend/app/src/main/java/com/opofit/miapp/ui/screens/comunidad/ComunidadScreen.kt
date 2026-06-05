@@ -34,6 +34,7 @@ import com.opofit.miapp.utils.ApiErrorParser
 import com.opofit.miapp.utils.DateFormatUtil
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,7 +75,12 @@ fun ComunidadScreen(
                 val r = RetrofitClient.amigosApi.feed("Bearer $token")
                 feed = if (r.ok) r.data.orEmpty() else emptyList()
             } catch (e: Exception) {
-                msg = ApiErrorParser.message(e)
+                feed = emptyList()
+                if (e is HttpException && e.code() == 404) {
+                    // Servidor sin endpoint desplegado aún: vacío sin alarmar al usuario.
+                } else {
+                    msg = ApiErrorParser.message(e)
+                }
             } finally {
                 loadingFeed = false
             }

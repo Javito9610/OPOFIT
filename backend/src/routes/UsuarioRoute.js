@@ -5,6 +5,7 @@ const {
   validarToken
 } = require('../middleware/authMiddleware');
 router.get('/perfil', validarToken, usuarioController.obtenerPerfil);
+router.post('/avatar', validarToken, usuarioController.subirAvatar);
 router.put('/perfil', validarToken, usuarioController.actualizarPerfil);
 router.put('/settings', validarToken, usuarioController.actualizarSettings);
 router.delete('/cuenta', validarToken, usuarioController.eliminarCuenta);

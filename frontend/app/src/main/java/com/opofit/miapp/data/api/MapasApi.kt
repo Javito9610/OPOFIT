@@ -31,7 +31,9 @@ interface MapasApi {
         @Query("lat") lat: Double,
         @Query("lng") lng: Double,
         @Query("distKm") distKm: Double,
-        @Query("variacion") variacion: Int = 0
+        @Query("variacion") variacion: Int = 0,
+        @Query("actividad") actividad: String = "CARRERA",
+        @Query("terreno") terreno: String = "CIUDAD"
     ): RutaEntrenoResponse
 
     @POST("api/mapas/rutas/personalizada")

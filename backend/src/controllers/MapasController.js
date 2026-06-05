@@ -17,8 +17,8 @@ const lugares = async (req, res) => {
 
 const rutaSugerida = async (req, res) => {
   try {
-    const { lat, lng, distKm, variacion } = req.query;
-    const data = await MapasService.generarRutaSugerida(lat, lng, distKm, variacion);
+    const { lat, lng, distKm, variacion, actividad, terreno } = req.query;
+    const data = await MapasService.generarRutaSugerida(lat, lng, distKm, variacion, actividad, terreno);
     res.json({ ok: true, data });
   } catch (e) {
     console.error('Mapas ruta sugerida:', e.message);

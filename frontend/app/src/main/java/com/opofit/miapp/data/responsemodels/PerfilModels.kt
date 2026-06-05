@@ -41,6 +41,10 @@ data class CambiarPasswordRequest(
     val passwordNueva: String
 )
 
+data class SubirAvatarRequest(val imagenBase64: String)
+
+data class SubirAvatarResponse(val ok: Boolean, val avatarUrl: String? = null, val msg: String? = null)
+
 data class OkAuthResponse(val ok: Boolean, val msg: String? = null)
 
 data class ActualizarPerfilResponse(

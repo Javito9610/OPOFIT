@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.ActualizarPerfilRequest
+import com.opofit.miapp.data.responsemodels.SubirAvatarRequest
 import com.opofit.miapp.data.responsemodels.InfoPrueba
 import com.opofit.miapp.data.responsemodels.MarcaActualizar
 import com.opofit.miapp.data.responsemodels.MarcaUsuario
@@ -140,5 +141,29 @@ class PerfilViewModel(application: Application) : AndroidViewModel(application) 
 
     fun resetGuardado() {
         _uiState.update { it.copy(guardadoExitoso = false, nuevoNivel = null, nuevaNota = null, error = "") }
+    }
+
+    fun subirAvatar(imagenBase64: String, onOk: (String) -> Unit, onFinished: () -> Unit = {}) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(error = "") }
+            try {
+                val token = tokenManager.getToken().first() ?: ""
+                val response = RetrofitClient.usuarioApi.subirAvatar(
+                    "Bearer $token",
+                    SubirAvatarRequest(imagenBase64)
+                )
+                if (response.ok && !response.avatarUrl.isNullOrBlank()) {
+                    onOk(response.avatarUrl)
+                } else {
+                    _uiState.update {
+                        it.copy(error = response.msg ?: "No se pudo subir la foto")
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = e.message ?: "Error de conexión") }
+            } finally {
+                onFinished()
+            }
+        }
     }
 }

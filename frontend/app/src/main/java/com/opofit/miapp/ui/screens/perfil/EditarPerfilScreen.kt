@@ -1,5 +1,8 @@
 package com.opofit.miapp.ui.screens.perfil
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,12 +12,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -47,9 +52,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.MarcaActualizar
+import com.opofit.miapp.ui.components.ProfileAvatar
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.PerfilViewModel
 import com.opofit.miapp.utils.FitnessMode
+import com.opofit.miapp.utils.ImagePickerUtil
 import com.opofit.miapp.utils.Units
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.pow
@@ -70,7 +77,8 @@ fun EditarPerfilScreen(
     val genero = authState.genero ?: "HOMBRE"
 
     var nombre by remember { mutableStateOf(authState.userName.orEmpty()) }
-    var avatarUrl by remember { mutableStateOf("") }
+    var avatarUrl by remember { mutableStateOf(authState.avatarUrl.orEmpty()) }
+    var subiendoAvatar by remember { mutableStateOf(false) }
     var peso by remember { mutableStateOf("") }
     var altura by remember { mutableStateOf("") }
 
@@ -130,6 +138,29 @@ fun EditarPerfilScreen(
         }
     }
 
+    LaunchedEffect(authState.avatarUrl) {
+        authState.avatarUrl?.let { if (avatarUrl.isBlank()) avatarUrl = it }
+    }
+
+    val pickFoto = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        val b64 = ImagePickerUtil.uriToJpegBase64(context, uri) ?: run {
+            perfilViewModel.resetGuardado()
+            return@rememberLauncherForActivityResult
+        }
+        subiendoAvatar = true
+        perfilViewModel.subirAvatar(
+            b64,
+            onOk = { url ->
+                avatarUrl = url
+                authViewModel.refreshSessionFromBackend()
+            },
+            onFinished = { subiendoAvatar = false }
+        )
+    }
+
     LaunchedEffect(perfilState.guardadoExitoso) {
         if (perfilState.guardadoExitoso) {
             authViewModel.refreshSessionFromBackend()
@@ -175,14 +206,36 @@ fun EditarPerfilScreen(
                 )
             }
             item {
-                OutlinedTextField(
-                    value = avatarUrl,
-                    onValueChange = { avatarUrl = it },
-                    label = { Text("URL foto de perfil") },
-                    placeholder = { Text("https://…") },
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    ProfileAvatar(
+                        name = nombre.ifBlank { "Usuario" },
+                        sizeDp = 72,
+                        avatarUrl = avatarUrl.ifBlank { null }
+                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = {
+                                pickFoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            },
+                            enabled = !subiendoAvatar && !perfilState.isLoading
+                        ) {
+                            Text("Elegir de galería")
+                        }
+                        if (subiendoAvatar) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        } else {
+                            Text(
+                                "Toca para cambiar tu foto de perfil",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
             }
             item {
                 Text(
@@ -354,8 +407,7 @@ fun EditarPerfilScreen(
                             }
                             perfilViewModel.actualizarPerfil(
                                 userId, p, a, oposicionId, nuevasMarcas,
-                                nombre = nombre.trim().ifBlank { null },
-                                avatarUrl = avatarUrl.trim().ifBlank { null }
+                                nombre = nombre.trim().ifBlank { null }
                             )
                         },
                         modifier = Modifier.fillMaxWidth()

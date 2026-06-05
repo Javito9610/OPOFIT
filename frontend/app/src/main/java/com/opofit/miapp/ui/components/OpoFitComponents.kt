@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.opofit.miapp.utils.MediaUrlUtil
 
 @Composable
 fun SectionHeader(
@@ -118,7 +119,7 @@ fun ProfileAvatar(
         .take(2)
         .joinToString("") { it.first().uppercaseChar().toString() }
         .ifBlank { "?" }
-    val url = avatarUrl?.trim()?.takeIf { it.startsWith("http") }
+    val url = MediaUrlUtil.resolveAvatar(avatarUrl)
     Surface(
         modifier = modifier
             .size(sizeDp.dp)
