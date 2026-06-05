@@ -21,6 +21,7 @@ class IntegracionesViewModel(application: Application) : AndroidViewModel(applic
     private val tokenManager = TokenManager(getApplication())
     private val api = RetrofitClient.integracionesApi
     private val hc = HealthConnectManager.get(application)
+    private val gf = GoogleFitManager.get(application)
 
     data class UiState(
         val loading: Boolean = false,
@@ -28,6 +29,7 @@ class IntegracionesViewModel(application: Application) : AndroidViewModel(applic
         val estado: EstadoIntegraciones = EstadoIntegraciones(),
         val hcAvailability: HealthConnectManager.Availability = HealthConnectManager.Availability.NOT_SUPPORTED,
         val hcConnected: Boolean = false,
+        val gfConnected: Boolean = false,
         val lastSyncImported: Int = 0
     )
 
@@ -44,12 +46,14 @@ class IntegracionesViewModel(application: Application) : AndroidViewModel(applic
                 val hcConnected = if (hcAvail == HealthConnectManager.Availability.AVAILABLE) {
                     hc.hasAllPermissions()
                 } else false
+                val gfConnected = gf.hasPermissions()
                 _uiState.update {
                     it.copy(
                         loading = false,
                         estado = resp.data ?: EstadoIntegraciones(),
                         hcAvailability = hcAvail,
-                        hcConnected = hcConnected
+                        hcConnected = hcConnected,
+                        gfConnected = gfConnected
                     )
                 }
             } catch (e: Exception) {
@@ -124,6 +128,48 @@ class IntegracionesViewModel(application: Application) : AndroidViewModel(applic
                 }
             }
             "Health Connect: ${res.importadas} importadas, ${res.saltadas} ya estaban"
+        }
+    }
+
+    fun syncGoogleFit() = withSpinner {
+        val res = gf.syncLastDays(30)
+        if (res.error != null) {
+            res.error
+        } else {
+            val token = tokenManager.getToken().first().orEmpty()
+            val repo = com.opofit.miapp.gps.data.GpsRepository.get(getApplication())
+            val recientes = repo.listAll()
+                .filter { it.id.startsWith("gf_") }
+                .take(60)
+                .map {
+                    HcActivityPayload(
+                        externalId = it.id,
+                        tipo = it.type.name,
+                        startedAtMs = it.startedAtMs,
+                        endedAtMs = it.endedAtMs,
+                        durationSec = it.durationSec,
+                        movingSec = it.movingSec,
+                        distanceM = it.distanceM,
+                        avgSpeedMps = it.avgSpeedMps,
+                        maxSpeedMps = it.maxSpeedMps,
+                        avgPaceSecPerKm = it.avgPaceSecPerKm,
+                        minPaceSecPerKm = it.minPaceSecPerKm,
+                        maxPaceSecPerKm = it.maxPaceSecPerKm,
+                        elevationGainM = it.elevationGainM,
+                        elevationMinM = it.elevationMinM,
+                        elevationMaxM = it.elevationMaxM,
+                        avgCadenceSpm = it.avgCadenceSpm
+                    )
+                }
+            if (recientes.isNotEmpty()) {
+                runCatching {
+                    RetrofitClient.integracionesApi.importarHealthConnect(
+                        "Bearer $token",
+                        HcImportarRequest(recientes)
+                    )
+                }
+            }
+            "Google Fit: ${res.importadas} importadas, ${res.saltadas} ya estaban"
         }
     }
 

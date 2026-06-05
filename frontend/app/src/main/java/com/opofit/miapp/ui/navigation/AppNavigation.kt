@@ -9,6 +9,8 @@ import androidx.navigation.navArgument
 import com.opofit.miapp.gps.ui.GpsActivityDetailScreen
 import com.opofit.miapp.gps.ui.GpsHubScreen
 import com.opofit.miapp.gps.ui.MapaEntrenoScreen
+import com.opofit.miapp.gps.model.ActivityType
+import com.opofit.miapp.gps.service.GpsRecordingContext
 import com.opofit.miapp.gps.ui.GpsRecordingScreen
 import com.opofit.miapp.ui.screens.ajustes.AjustesScreen
 import com.opofit.miapp.ui.screens.historial.EjercicioHistorialScreen
@@ -214,7 +216,8 @@ fun AppNavigation(
                         distKm = distKm,
                         enfoque = null
                     )
-                    navController.navigate(MapaEntrenoNav.rutaMapa(distKm = distKm, modo = MapaEntrenoNav.MODO_RUTAS))
+                    GpsRecordingContext.prepare(ActivityType.RUN, conRuta = false)
+                    navController.navigate(NavDestinations.GPS_RECORDING)
                 }
             )
         }
@@ -247,7 +250,8 @@ fun AppNavigation(
                         distKm = distKm,
                         enfoque = enfoque
                     )
-                    navController.navigate(MapaEntrenoNav.rutaMapa(distKm = distKm, modo = MapaEntrenoNav.MODO_RUTAS))
+                    GpsRecordingContext.prepare(ActivityType.RUN, conRuta = false)
+                    navController.navigate(NavDestinations.GPS_RECORDING)
                 },
                 initialEnfoque = enfoque,
                 initialPlanDiaId = idPlanDia.takeIf { it > 0 },

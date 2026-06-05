@@ -481,7 +481,7 @@ fun AjustesScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        OpoFitLogo(size = 52.dp, cornerRadius = 12.dp)
+                        OpoFitLogo(size = 52.dp)
                         Column {
                             Text(
                                 text = "OpoFit v1.0.0",

@@ -230,6 +230,59 @@ describe('PlanGeneradorService', () => {
     expect(plan.semana[1].ejercicios[0].nombre).toBe('Carrera continua Z2 30 min');
   });
 
+  test('no sustituye espalda por pierna al adaptar entorno', async () => {
+    const catalogo = [
+      ...catalogoCasa,
+      {
+        id_ejercicio: 201,
+        nombre: 'Remo con mochila',
+        pilar: 'FUERZA',
+        grupo_muscular: 'Espalda',
+        equipamiento: 'Mochila',
+        entornos: 'CASA',
+        tipo_ilustracion: 'PULL'
+      },
+      {
+        id_ejercicio: 202,
+        nombre: 'Step-up en escalera',
+        pilar: 'FUERZA',
+        grupo_muscular: 'Pierna',
+        equipamiento: 'Escalera',
+        entornos: 'CASA',
+        tipo_ilustracion: 'SQUAT'
+      }
+    ];
+    const planDominadas = {
+      ...planBase,
+      semana: [
+        {
+          id_plan_dia: 10,
+          dia_semana: 1,
+          enfoque: 'FUERZA',
+          ejercicios: [
+            {
+              id_ejercicio: 1,
+              nombre: 'Fuerza inicial tren superior: Dominadas asistidas con goma',
+              pilar: 'FUERZA',
+              grupo_muscular: 'General',
+              series: 4,
+              repeticiones: 8,
+              descanso: 90
+            }
+          ]
+        }
+      ]
+    };
+    db.query.mockResolvedValue([catalogo]);
+    const { plan } = await PlanGeneradorService.generarSemana(planDominadas, 1, 'CASA', 3);
+    const ej = plan.semana[0].ejercicios[0];
+    expect(ej.nombre.toLowerCase()).not.toContain('step-up');
+    if (ej.sustituido) {
+      expect(['Espalda', 'espalda']).toContain(ej.grupo_muscular);
+      expect(ej.nombre_original).toBe('Dominadas asistidas con goma');
+    }
+  });
+
   test('guardarCache reintenta sin emojis si MySQL rechaza utf8', async () => {
     const planConEmoji = {
       ...planBase,

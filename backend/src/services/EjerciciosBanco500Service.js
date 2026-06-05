@@ -2,8 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const db = require('../config/db');
 const EntornoEntreno = require('../utils/EntornoEntreno');
+const EjercicioMetadataService = require('./EjercicioMetadataService');
 
-const BANCO_VERSION = 1;
+const BANCO_VERSION = 3;
 
 function resolveJsonPath() {
   const candidates = [
@@ -64,9 +65,13 @@ class EjerciciosBanco500Service {
       if (!nombre) continue;
 
       const pilar = String(e.pilar || 'FUERZA').toUpperCase();
-      const grupo = e.grupo_muscular || 'General';
+      const grupo = EjercicioMetadataService.inferirGrupoMuscular(e.grupo_muscular, nombre, pilar);
       const equip = e.equipamiento || '—';
-      const instr = e.instrucciones_tecnicas || `Ejercicio del banco OpoFit: ${nombre}`;
+      const instr = EjercicioMetadataService.enriquecerInstrucciones(
+        nombre,
+        pilar,
+        e.instrucciones_tecnicas
+      );
       const entornos =
         e.entornos ||
         EntornoEntreno.inferirEntornosDesdeEquipamiento(equip, pilar).join(',');
@@ -83,10 +88,10 @@ class EjerciciosBanco500Service {
       if (exists.length) {
         await db.query(
           `UPDATE ejercicios SET
-             instrucciones_tecnicas = COALESCE(instrucciones_tecnicas, ?),
+             instrucciones_tecnicas = ?,
              categoria = COALESCE(categoria, ?),
              pilar = COALESCE(pilar, ?),
-             grupo_muscular = COALESCE(grupo_muscular, ?),
+             grupo_muscular = ?,
              equipamiento = COALESCE(equipamiento, ?),
              entornos = COALESCE(entornos, ?),
              tipo_ilustracion = COALESCE(tipo_ilustracion, ?)

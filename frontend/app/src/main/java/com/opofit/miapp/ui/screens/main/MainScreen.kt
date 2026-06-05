@@ -147,7 +147,7 @@ fun MainScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        OpoFitLogo(size = 44.dp, cornerRadius = 10.dp)
+                        OpoFitLogo(size = 44.dp)
                         Column {
                             Text("OpoFit", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                             Text(

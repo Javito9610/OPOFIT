@@ -23,6 +23,7 @@ data class EjercicioPlan(
     val animacion_url: String? = null,
     val instrucciones_tecnicas: String? = null,
     val tipo_ilustracion: String? = null,
+    val grupo_muscular: String? = null,
     val equipamiento: String? = null,
     val categoria: String? = null,
     val pilar: String? = null,
@@ -35,7 +36,8 @@ data class EjercicioPlan(
     val personalizado: Boolean = false,
     val motivo_ajuste: String? = null,
     val sustituido: Boolean = false,
-    val nombre_original: String? = null
+    val nombre_original: String? = null,
+    val motivo_sustitucion: String? = null
 )
 
 data class PilarResumen(

@@ -2,6 +2,7 @@ package com.opofit.miapp.ui.screens.rutinas
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
@@ -57,8 +58,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.data.local.TokenManager
+import com.opofit.miapp.data.responsemodels.EjercicioPlan
 import com.opofit.miapp.ui.components.EntornoEntrenoSheet
-import com.opofit.miapp.ui.components.ExerciseStickFigure
+import com.opofit.miapp.ui.components.ExerciseDetailSheet
+import com.opofit.miapp.ui.components.ExerciseInfoButton
 import com.opofit.miapp.ui.components.PlanCalendarioMes
 import com.opofit.miapp.ui.components.PlanDiaCard
 import com.opofit.miapp.ui.components.PlanPersonalizacionCard
@@ -130,6 +133,8 @@ fun RutinasScreen(
     var vistaPlan by remember { mutableIntStateOf(0) }
     val mesActual = remember { YearMonth.now() }
     var mesCalendario by remember { mutableStateOf(mesActual) }
+    var ejercicioDetalle by remember { mutableStateOf<EjercicioPlan?>(null) }
+    var prescripcionDetalle by remember { mutableStateOf("") }
 
     LaunchedEffect(userId, oposicionId, mesCalendario) {
         if (userId > 0) {
@@ -143,6 +148,13 @@ fun RutinasScreen(
         seleccionado = uiState.entornoEntreno,
         onDismiss = { rutinasViewModel.cerrarSheetEntorno() },
         onConfirmar = { entorno -> rutinasViewModel.guardarEntreno(userId, oposicionId, entorno) }
+    )
+
+    ExerciseDetailSheet(
+        ejercicio = ejercicioDetalle,
+        prescripcion = prescripcionDetalle,
+        visible = ejercicioDetalle != null,
+        onDismiss = { ejercicioDetalle = null }
     )
 
     Scaffold(
@@ -501,18 +513,28 @@ fun RutinasScreen(
                                                     val adj = if (ej.personalizado && ej.series_base != null) {
                                                         " (${ej.series_base}→${ej.series})"
                                                     } else ""
+                                                    val prescripcion = "${ej.series}×${PrescripcionFormat.formatRepeticiones(ej.repeticiones, ej.unidad, ej.nombre)}"
                                                     Row(
                                                         Modifier.fillMaxWidth(),
                                                         verticalAlignment = Alignment.CenterVertically,
                                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                                     ) {
-                                                        ExerciseStickFigure(
-                                                            tipoIlustracion = ej.tipo_ilustracion,
-                                                            size = 56.dp
+                                                        ExerciseInfoButton(
+                                                            onClick = {
+                                                                ejercicioDetalle = ej
+                                                                prescripcionDetalle = prescripcion
+                                                            }
                                                         )
-                                                        Column(Modifier.weight(1f)) {
+                                                        Column(
+                                                            Modifier
+                                                                .weight(1f)
+                                                                .clickable {
+                                                                    ejercicioDetalle = ej
+                                                                    prescripcionDetalle = prescripcion
+                                                                }
+                                                        ) {
                                                             Text(
-                                                                "${ej.series}×${PrescripcionFormat.formatRepeticiones(ej.repeticiones, ej.unidad, ej.nombre)} ${ej.nombre}$adj",
+                                                                "$prescripcion ${ej.nombre}$adj",
                                                                 style = MaterialTheme.typography.bodySmall,
                                                                 color = if (ej.personalizado || ej.sustituido)
                                                                     MaterialTheme.colorScheme.primary
@@ -522,7 +544,8 @@ fun RutinasScreen(
                                                                 Text(
                                                                     tip,
                                                                     style = MaterialTheme.typography.labelSmall,
-                                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                                    maxLines = 2
                                                                 )
                                                             }
                                                         }

@@ -128,7 +128,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(48.dp))
 
             
-            OpoFitLogo(size = 96.dp, cornerRadius = 22.dp)
+            OpoFitLogo(size = 112.dp, onDarkBackground = false)
 
             Spacer(modifier = Modifier.height(20.dp))
 

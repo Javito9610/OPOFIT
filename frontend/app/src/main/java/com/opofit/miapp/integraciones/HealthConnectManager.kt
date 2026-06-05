@@ -1,6 +1,8 @@
 package com.opofit.miapp.integraciones
 
 import android.content.Context
+import android.content.Intent
+import android.os.Build
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
@@ -151,7 +153,42 @@ class HealthConnectManager(private val context: Context) {
 
     data class SyncResult(val importadas: Int, val saltadas: Int, val error: String?)
 
+    /** Abre la pantalla de permisos de OpoFit dentro de Health Connect. */
+    fun openManagePermissions(context: Context): Boolean {
+        val pkg = context.packageName
+        val candidates = buildList {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                add(
+                    Intent(HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS).apply {
+                        putExtra(Intent.EXTRA_PACKAGE_NAME, pkg)
+                    }
+                )
+            }
+            add(
+                Intent("android.intent.action.VIEW_PERMISSION_USAGE").apply {
+                    putExtra(Intent.EXTRA_PACKAGE_NAME, pkg)
+                    addCategory("android.intent.category.HEALTH_PERMISSIONS")
+                }
+            )
+            add(Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS"))
+            context.packageManager.getLaunchIntentForPackage(HEALTH_CONNECT_PACKAGE)?.let { add(it) }
+        }
+        for (intent in candidates) {
+            try {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+                return true
+            } catch (_: Exception) {
+                /* siguiente intent */
+            }
+        }
+        return false
+    }
+
+    fun openHealthConnect(context: Context): Boolean = openManagePermissions(context)
+
     companion object {
+        const val HEALTH_CONNECT_PACKAGE = "com.google.android.apps.healthdata"
         @Volatile
         private var INSTANCE: HealthConnectManager? = null
         fun get(context: Context): HealthConnectManager {

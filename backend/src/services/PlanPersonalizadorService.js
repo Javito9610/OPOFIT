@@ -9,7 +9,9 @@
  */
 const db = require('../config/db');
 const BaremoService = require('./BaremoService');
+const EjercicioMetadataService = require('./EjercicioMetadataService');
 const MarcasPerfilService = require('./MarcasPerfilService');
+const EntornoEntreno = require('../utils/EntornoEntreno');
 
 const FACTOR_NIVEL = { BASICO: 0.92, INTERMEDIO: 1.0, AVANZADO: 1.08, INCOMPLETO: 0.9 };
 const UMBRAL_DEBIL = 5.5;
@@ -54,10 +56,28 @@ function clampSeries(s) {
   return Math.min(8, Math.max(1, Math.round(s)));
 }
 
-function clampReps(reps, unidad, nombre) {
+function esUnidadMinutos(unidad, nombre) {
   const u = String(unidad || '').toLowerCase();
   const nom = String(nombre || '').toLowerCase();
-  if (u === 'min' || nom.includes('min')) return Math.min(90, Math.max(5, Math.round(reps)));
+  if (u === 'min') return true;
+  return /\d+\s*min\b/.test(nom) || /\bminutos?\b/.test(nom);
+}
+
+function esPrescripcionMaxima(reps, unidad, nombre) {
+  const nom = String(nombre || '').toLowerCase();
+  const u = String(unidad || '').toLowerCase();
+  if (['min', 'km', 's', 'm'].includes(u)) return false;
+  if (esUnidadMinutos(unidad, nombre)) return false;
+  if (u === 'max' || u === 'amrap') return true;
+  if (/amrap|máx|max\b|al fallo|a fallo/.test(nom)) return true;
+  return Number(reps) >= 90;
+}
+
+function clampReps(reps, unidad, nombre) {
+  if (esPrescripcionMaxima(reps, unidad, nombre)) return 99;
+  const u = String(unidad || '').toLowerCase();
+  const nom = String(nombre || '').toLowerCase();
+  if (esUnidadMinutos(unidad, nombre)) return Math.min(90, Math.max(5, Math.round(reps)));
   if (u === 's' || nom.includes('seg')) return Math.min(7200, Math.max(10, Math.round(reps)));
   if (u === 'km' || nom.includes('km')) return Math.min(50, Math.max(1, Math.round(reps * 10) / 10));
   if (u === 'm' || /\d+\s*m\b/.test(nom)) return Math.min(10000, Math.max(50, Math.round(reps)));
@@ -83,7 +103,7 @@ function factorEjercicio({
   const motivos = [];
   const debilSet = new Set(pilaresDebiles.map((p) => p.pilar));
   const fuerteSet = new Set(pilaresFuertes.map((p) => p.pilar));
-  const pil = pilarEjercicio || 'FUERZA';
+  const pil = EntornoEntreno.normalizarPilar(pilarEjercicio || 'FUERZA');
 
   if (debilSet.has(pil)) {
     f *= 1.22;
@@ -127,9 +147,13 @@ function ajustarEjercicio(ej, ctx) {
     diasPlanSemana: ctx.diasPlanSemana,
     rachaDias: ctx.rachaDias
   });
+  const esMax = esPrescripcionMaxima(baseReps, ej.unidad, ej.nombre);
   const series = clampSeries(baseSeries * factor);
-  const repeticiones = clampReps(baseReps * factor, ej.unidad, ej.nombre);
-  const personalizado = series !== baseSeries || repeticiones !== baseReps;
+  const repeticiones = esMax
+    ? 99
+    : clampReps(baseReps * factor, ej.unidad, ej.nombre);
+  const personalizado =
+    !esMax && (series !== baseSeries || repeticiones !== baseReps);
   return {
     ...ej,
     series,
@@ -137,7 +161,7 @@ function ajustarEjercicio(ej, ctx) {
     series_base: baseSeries,
     repeticiones_base: baseReps,
     personalizado,
-    motivo_ajuste: personalizado ? motivo : null
+    motivo_ajuste: personalizado ? EjercicioMetadataService.motivoAjusteLegible(motivo) : null
   };
 }
 

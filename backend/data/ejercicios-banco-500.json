@@ -4343,11 +4343,11 @@
     {
       "nombre": "Step-up en escalera",
       "pilar": "FUERZA",
-      "grupo_muscular": "General",
+      "grupo_muscular": "Pierna",
       "equipamiento": "Casa/banda",
-      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "instrucciones_tecnicas": "De pie frente a escalón estable. Sube con todo el pie, empuja con cuádriceps y glúteo hasta extender cadera. Baja controlado. Alterna piernas o completa series por lado.",
       "entornos": "CASA,MIXTO",
-      "tipo_ilustracion": "GENERAL"
+      "tipo_ilustracion": "SQUAT"
     },
     {
       "nombre": "Calf raise en escalón",

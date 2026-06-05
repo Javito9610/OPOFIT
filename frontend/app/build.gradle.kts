@@ -98,4 +98,5 @@ dependencies {
     implementation("com.google.maps.android:maps-compose:6.1.2")
 
     implementation("androidx.health.connect:connect-client:1.1.0-alpha07")
+    implementation("com.google.android.gms:play-services-fitness:21.2.0")
 }

@@ -47,6 +47,10 @@ for (let i = 0; i <= 120; i += 2) {
 }
 
 describe('clampReps coherencia parametrica', () => {
+  test('AMRAP/máx no se escala a repeticiones absurdas', () => {
+    expect(clampReps(99, 'reps', 'Dominadas asistidas con goma')).toBe(99);
+    expect(clampReps(120, 'reps', 'Flexiones')).toBe(99);
+  });
   test.each(casosMin)('min reps=%i -> %i', (reps, unidad, nombre, esperado) => {
     expect(clampReps(reps, unidad, nombre)).toBe(esperado);
   });

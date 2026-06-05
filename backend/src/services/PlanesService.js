@@ -2,6 +2,7 @@ const db = require('../config/db');
 const RutinaService = require('./RutinasService');
 const BancoPlanesImportService = require('./BancoPlanesImportService');
 const PlanPersonalizadorService = require('./PlanPersonalizadorService');
+const EjercicioMetadataService = require('./EjercicioMetadataService');
 const PlanGeneradorService = require('./PlanGeneradorService');
 
 const NOMBRES_DIA = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -36,22 +37,24 @@ class PlanesService {
       [idPlanDia]
     );
     if (desdePlan.length) {
-      return desdePlan.map((e) => ({
-        id_ejercicio: e.id_ejercicio,
-        nombre: e.nombre,
-        video_url: e.video_url,
-        animacion_url: e.animacion_url,
-        instrucciones_tecnicas: e.instrucciones_tecnicas,
-        tipo_ilustracion: e.tipo_ilustracion,
-        grupo_muscular: e.grupo_muscular,
-        equipamiento: e.equipamiento,
-        categoria: e.categoria,
-        pilar: e.pilar,
-        series: e.series,
-        repeticiones: e.repeticiones,
-        descanso: e.descanso,
-        unidad: e.unidad || RutinaService.inferUnidad(e.nombre)
-      }));
+      return desdePlan.map((e) =>
+        EjercicioMetadataService.enriquecerEjercicio({
+          id_ejercicio: e.id_ejercicio,
+          nombre: e.nombre,
+          video_url: e.video_url,
+          animacion_url: e.animacion_url,
+          instrucciones_tecnicas: e.instrucciones_tecnicas,
+          tipo_ilustracion: e.tipo_ilustracion,
+          grupo_muscular: e.grupo_muscular,
+          equipamiento: e.equipamiento,
+          categoria: e.categoria,
+          pilar: e.pilar,
+          series: e.series,
+          repeticiones: e.repeticiones,
+          descanso: e.descanso,
+          unidad: e.unidad || RutinaService.inferUnidad(e.nombre)
+        })
+      );
     }
     const [ejercicios] = await db.query(
       `SELECT e.id_ejercicio, e.nombre, e.video_url, e.categoria, e.pilar, d.series, d.repeticiones, d.descanso

@@ -1,5 +1,6 @@
 const {
   normalizarEntorno,
+  normalizarPilar,
   inferirEntornosDesdeEquipamiento,
   ejercicioCompatible,
   inferirTipoIlustracion,
@@ -38,6 +39,15 @@ describe('EntornoEntreno', () => {
     const arr = ['a', 'b', 'c', 'd'];
     expect(seededPick(arr, 3, 'key')).toBe(seededPick(arr, 3, 'key'));
     expect(seededPick(arr, 4, 'key')).not.toBe(seededPick(arr, 3, 'key'));
+  });
+
+  test('normaliza pilares legacy', () => {
+    expect(normalizarPilar('TREN_SUPERIOR')).toBe('FUERZA');
+    expect(normalizarPilar('TREN_INFERIOR')).toBe('FUERZA');
+    expect(normalizarPilar('CARDIO')).toBe('RESISTENCIA');
+    expect(grupoClave('TREN_SUPERIOR', 'Pecho', 'Press banca')).toBe(
+      grupoClave('FUERZA', 'Pecho', 'Press banca')
+    );
   });
 
   test('grupoClave agrupa por pilar y patrón', () => {

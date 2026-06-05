@@ -4,6 +4,7 @@
  */
 const db = require('../config/db');
 const EntornoEntreno = require('../utils/EntornoEntreno');
+const EjercicioMetadataService = require('./EjercicioMetadataService');
 const PlanIaService = require('./PlanIaService');
 const RutinaService = require('./RutinasService');
 
@@ -60,11 +61,20 @@ class PlanGeneradorService {
     );
     return rows
       .filter((e) => EntornoEntreno.ejercicioCompatible(e.entornos, entorno))
-      .map((e) => ({
-        ...e,
-        pilar: e.pilar || 'FUERZA',
-        grupo_muscular: e.grupo_muscular || 'General'
-      }));
+      .map((e) => {
+        const nombre = EjercicioMetadataService.normalizarNombreEjercicio(e.nombre);
+        const pilar = EntornoEntreno.normalizarPilar(e.pilar || 'FUERZA');
+        return {
+          ...e,
+          nombre,
+          pilar,
+          grupo_muscular: EjercicioMetadataService.inferirGrupoMuscular(
+            e.grupo_muscular,
+            nombre,
+            pilar
+          )
+        };
+      });
   }
 
   static indexarCatalogo(catalogo) {
@@ -74,52 +84,65 @@ class PlanGeneradorService {
       const clave = EntornoEntreno.grupoClave(e.pilar, e.grupo_muscular, e.nombre);
       if (!porClave.has(clave)) porClave.set(clave, []);
       porClave.get(clave).push(e);
-      const pil = String(e.pilar).toUpperCase();
+      const pil = EntornoEntreno.normalizarPilar(e.pilar);
       if (!porPilar.has(pil)) porPilar.set(pil, []);
       porPilar.get(pil).push(e);
     }
     return { porClave, porPilar };
   }
 
-  static buscarSustituto(ejBase, indice, { porClave, porPilar }, entorno, seed) {
-    const pilar = String(ejBase.pilar || ejBase.categoria || 'FUERZA').toUpperCase();
-    const clave = EntornoEntreno.grupoClave(pilar, ejBase.grupo_muscular, ejBase.nombre);
+  static buscarSustituto(ejBase, indice, { porClave }, entorno, seed) {
+    const pilar = EntornoEntreno.normalizarPilar(ejBase.pilar || ejBase.categoria || 'FUERZA');
+    const nombreLimpio = EjercicioMetadataService.normalizarNombreEjercicio(ejBase.nombre);
+    const grupo = EjercicioMetadataService.inferirGrupoMuscular(
+      ejBase.grupo_muscular,
+      nombreLimpio,
+      pilar
+    );
+    const clave = EntornoEntreno.grupoClave(pilar, grupo, nombreLimpio);
     let candidatos = [...(porClave.get(clave) || [])];
-    if (candidatos.length < 2) {
-      candidatos = [...(porPilar.get(pilar) || [])];
-    }
-    candidatos = candidatos.filter((c) => c.nombre !== ejBase.nombre);
+    candidatos = candidatos.filter(
+      (c) =>
+        EjercicioMetadataService.normalizarNombreEjercicio(c.nombre).toLowerCase() !==
+        nombreLimpio.toLowerCase()
+    );
     if (!candidatos.length) return null;
-    const key = `${entorno}|${indice}|${ejBase.nombre}|${clave}`;
+    const key = `${entorno}|${indice}|${nombreLimpio}|${clave}`;
     return EntornoEntreno.seededPick(candidatos, seed, key);
   }
 
   static mapearEjercicio(ej, sustituto, entorno) {
+    const base = EjercicioMetadataService.enriquecerEjercicio(ej);
     if (!sustituto) {
       return {
-        ...ej,
-        tipo_ilustracion: ej.tipo_ilustracion || EntornoEntreno.inferirTipoIlustracion(ej.nombre, ej.pilar, null),
+        ...base,
         entorno_aplicado: entorno,
         sustituido: false
       };
     }
-    return {
+    const grupo = EjercicioMetadataService.inferirGrupoMuscular(
+      base.grupo_muscular,
+      base.nombre,
+      base.pilar
+    );
+    const mapped = EjercicioMetadataService.enriquecerEjercicio({
       ...ej,
       id_ejercicio: sustituto.id_ejercicio,
       nombre: sustituto.nombre,
       video_url: sustituto.video_url || ej.video_url,
       animacion_url: sustituto.animacion_url || null,
       instrucciones_tecnicas: sustituto.instrucciones_tecnicas || null,
-      tipo_ilustracion:
-        sustituto.tipo_ilustracion ||
-        EntornoEntreno.inferirTipoIlustracion(sustituto.nombre, sustituto.pilar, sustituto.grupo_muscular),
+      tipo_ilustracion: sustituto.tipo_ilustracion,
       categoria: sustituto.categoria || ej.categoria,
       pilar: sustituto.pilar || ej.pilar,
+      grupo_muscular: sustituto.grupo_muscular,
       equipamiento: sustituto.equipamiento,
       entorno_aplicado: entorno,
       sustituido: true,
-      nombre_original: ej.nombre
-    };
+      nombre_original: base.nombre,
+      motivo_sustitucion: EjercicioMetadataService.motivoSustitucion(entorno, grupo)
+    });
+    return mapped;
   }
 
   static async generarSemana(planBase, userId, entorno, seed, opts = {}) {

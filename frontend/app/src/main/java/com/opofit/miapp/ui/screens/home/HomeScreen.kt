@@ -127,7 +127,7 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        OpoFitLogo(size = 36.dp, cornerRadius = 8.dp)
+                        OpoFitLogo(size = 36.dp)
                         Column {
                             Text("OpoFit", fontWeight = FontWeight.ExtraBold)
                             Text(

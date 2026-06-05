@@ -29,6 +29,15 @@ function normalizarEntorno(v) {
   return ENTORNOS_VALIDOS.includes(e) ? e : null;
 }
 
+/** Unifica pilares legacy (TREN_SUPERIOR, CARDIO…) para sustitución y agrupación. */
+function normalizarPilar(pilar) {
+  const p = String(pilar || '').toUpperCase().trim();
+  if (p === 'TREN_SUPERIOR' || p === 'TREN_INFERIOR' || p === 'POTENCIA') return 'FUERZA';
+  if (p === 'CARDIO') return 'RESISTENCIA';
+  if (['FUERZA', 'RESISTENCIA', 'VELOCIDAD', 'MOVILIDAD', 'CORE'].includes(p)) return p;
+  return p || 'FUERZA';
+}
+
 function inferirEntornosDesdeEquipamiento(equipamiento, pilar) {
   const eq = String(equipamiento || '').trim();
   const pil = String(pilar || '').toUpperCase();
@@ -93,7 +102,7 @@ function seededPick(arr, seed, key) {
 }
 
 function grupoClave(pilar, grupo, nombre) {
-  const pil = String(pilar || 'FUERZA').toUpperCase();
+  const pil = normalizarPilar(pilar);
   const g = String(grupo || 'General').toLowerCase();
   const n = String(nombre || '').toLowerCase();
   if (pil === 'RESISTENCIA') {
@@ -120,6 +129,7 @@ module.exports = {
   ENTORNOS_VALIDOS,
   ENTORNO_META,
   normalizarEntorno,
+  normalizarPilar,
   inferirEntornosDesdeEquipamiento,
   parseEntornosCsv,
   ejercicioCompatible,

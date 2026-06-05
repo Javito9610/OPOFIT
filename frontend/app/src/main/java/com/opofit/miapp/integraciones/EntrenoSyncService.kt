@@ -15,6 +15,8 @@ object EntrenoSyncService {
     data class Result(
         val hcImportadas: Int = 0,
         val hcSaltadas: Int = 0,
+        val gfImportadas: Int = 0,
+        val gfSaltadas: Int = 0,
         val stravaImportadas: Int = 0,
         val polarImportadas: Int = 0,
         val error: String? = null
@@ -24,6 +26,9 @@ object EntrenoSyncService {
             val partes = buildList {
                 if (hcImportadas > 0 || hcSaltadas > 0) {
                     add("Reloj/Health Connect: $hcImportadas nuevas")
+                }
+                if (gfImportadas > 0 || gfSaltadas > 0) {
+                    add("Google Fit: $gfImportadas nuevas")
                 }
                 if (stravaImportadas > 0) add("Strava: $stravaImportadas")
                 if (polarImportadas > 0) add("Polar: $polarImportadas")
@@ -40,6 +45,8 @@ object EntrenoSyncService {
 
         var hcImportadas = 0
         var hcSaltadas = 0
+        var gfImportadas = 0
+        var gfSaltadas = 0
         var stravaImportadas = 0
         var polarImportadas = 0
 
@@ -49,7 +56,17 @@ object EntrenoSyncService {
             hcImportadas = res.importadas
             hcSaltadas = res.saltadas
             if (res.error == null) {
-                subirHealthConnectAlBackend(context, token)
+                subirActividadesLocalesAlBackend(context, token)
+            }
+        }
+
+        val gf = GoogleFitManager.get(context)
+        if (gf.hasPermissions()) {
+            val res = gf.syncLastDays(30)
+            gfImportadas = res.importadas
+            gfSaltadas = res.saltadas
+            if (res.error == null) {
+                subirActividadesLocalesAlBackend(context, token)
             }
         }
 
@@ -65,15 +82,20 @@ object EntrenoSyncService {
         return Result(
             hcImportadas = hcImportadas,
             hcSaltadas = hcSaltadas,
+            gfImportadas = gfImportadas,
+            gfSaltadas = gfSaltadas,
             stravaImportadas = stravaImportadas,
             polarImportadas = polarImportadas
         )
     }
 
-    private suspend fun subirHealthConnectAlBackend(context: Context, token: String) {
+    private suspend fun subirActividadesLocalesAlBackend(context: Context, token: String) {
         val repo = GpsRepository.get(context)
         val recientes = repo.listAll()
-            .filter { it.id.startsWith("hc_") || it.id.startsWith("gpx_") || it.id.startsWith("tcx_") }
+            .filter {
+                it.id.startsWith("hc_") || it.id.startsWith("gf_") ||
+                    it.id.startsWith("gpx_") || it.id.startsWith("tcx_")
+            }
             .take(80)
             .map {
                 HcActivityPayload(

@@ -1,5 +1,7 @@
 package com.opofit.miapp.gps.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,6 +57,7 @@ import com.opofit.miapp.gps.service.ShareActivityContext
 import com.opofit.miapp.gps.service.buildPendingShareFromGps
 import com.opofit.miapp.gps.util.GpsMetrics
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 
 private val SpeedPalette = listOf(
     Color(0xFFD32F2F),
@@ -307,9 +310,11 @@ internal fun MapWithRoute(
     cameraPositionState: CameraPositionState,
     plannedRoute: List<LatLng> = emptyList()
 ) {
-    val pts = remember(state.points.size) {
-        state.points.map { LatLng(it.lat, it.lng) }
-    }
+    val context = LocalContext.current
+    val hasLocation = ContextCompat.checkSelfPermission(
+        context, Manifest.permission.ACCESS_FINE_LOCATION
+    ) == PackageManager.PERMISSION_GRANTED
+    val pts = state.points.map { LatLng(it.lat, it.lng) }
     Box(
         Modifier
             .fillMaxSize()
@@ -319,11 +324,11 @@ internal fun MapWithRoute(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
             properties = MapProperties(
-                isMyLocationEnabled = false,
+                isMyLocationEnabled = hasLocation,
                 mapType = MapType.NORMAL
             ),
             uiSettings = MapUiSettings(
-                myLocationButtonEnabled = false,
+                myLocationButtonEnabled = hasLocation,
                 zoomControlsEnabled = false,
                 tiltGesturesEnabled = false,
                 compassEnabled = true
@@ -332,22 +337,22 @@ internal fun MapWithRoute(
             if (plannedRoute.size >= 2) {
                 Polyline(
                     points = plannedRoute,
-                    color = Color(0xFF2E7D32),
-                    width = 8f
+                    color = Color(0xFF66BB6A),
+                    width = 10f
                 )
             }
             if (pts.size >= 2) {
                 Polyline(
                     points = pts,
                     color = Color(0xFF1565C0),
-                    width = 12f
+                    width = 14f
                 )
             }
             pts.firstOrNull()?.let {
                 Marker(state = MarkerState(it), title = "Inicio")
             }
-            pts.lastOrNull()?.takeIf { pts.size > 1 }?.let {
-                Marker(state = MarkerState(it), title = "Posición")
+            pts.lastOrNull()?.let {
+                Marker(state = MarkerState(it), title = if (pts.size > 1) "Ahora" else "Tú")
             }
         }
         if (pts.isEmpty()) {

@@ -1,9 +1,10 @@
 package com.opofit.miapp.ui.screens.integraciones
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -61,8 +62,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.data.api.IntegracionesApi
 import com.opofit.miapp.data.api.ProveedorEstado
 import com.opofit.miapp.data.local.TokenManager
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.opofit.miapp.integraciones.GoogleFitManager
 import com.opofit.miapp.integraciones.HealthConnectManager
 import com.opofit.miapp.integraciones.IntegracionesViewModel
+import com.opofit.miapp.ui.MainActivity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -88,10 +92,94 @@ fun MisDispositivosScreen(
         }
     }
 
+    val hcManager = remember { HealthConnectManager.get(context) }
+    val gfManager = remember { GoogleFitManager.get(context) }
+    val activity = context as? Activity
+
+    val gfSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {
+        scope.launch {
+            if (gfManager.hasPermissions()) {
+                snackbarHostState.showSnackbar("Google Fit conectado. Sincronizando…")
+                viewModel.syncGoogleFit()
+            } else {
+                snackbarHostState.showSnackbar("Activa los permisos de Google Fit para OpoFit")
+                viewModel.refresh()
+            }
+        }
+    }
     val hcPermLauncher = rememberLauncherForActivityResult(
         contract = PermissionController.createRequestPermissionResultContract()
     ) { granted ->
-        if (granted.isNotEmpty()) viewModel.syncHealthConnect()
+        scope.launch {
+            when {
+                granted.containsAll(hcManager.permissions) -> {
+                    snackbarHostState.showSnackbar("Permisos concedidos. Sincronizando actividades…")
+                    viewModel.syncHealthConnect()
+                }
+                granted.isNotEmpty() -> {
+                    snackbarHostState.showSnackbar(
+                        "Permisos parciales. Abre Health Connect y activa todos los datos de OpoFit."
+                    )
+                    viewModel.refresh()
+                }
+                else -> {
+                    snackbarHostState.showSnackbar(
+                        "Permisos no concedidos. Abriendo Health Connect para autorizar OpoFit…"
+                    )
+                    hcManager.openManagePermissions(context)
+                    viewModel.refresh()
+                }
+            }
+        }
+    }
+
+    fun requestHealthConnectPermissions() {
+        if (hcManager.availability() != HealthConnectManager.Availability.AVAILABLE) return
+        runCatching {
+            hcPermLauncher.launch(hcManager.permissions)
+        }.onFailure {
+            scope.launch {
+                snackbarHostState.showSnackbar("Abriendo Health Connect…")
+                if (!hcManager.openHealthConnect(context)) {
+                    snackbarHostState.showSnackbar("Instala Health Connect desde Play Store")
+                }
+            }
+        }
+    }
+
+    fun requestGoogleFitPermissions() {
+        val mainActivity = activity as? MainActivity ?: return
+        scope.launch {
+            gfManager.trySilentSignIn()
+            when {
+                gfManager.hasPermissions() -> viewModel.syncGoogleFit()
+                GoogleSignIn.getLastSignedInAccount(context) == null -> {
+                    gfSignInLauncher.launch(gfManager.getSignInIntent(mainActivity))
+                }
+                else -> {
+                    mainActivity.requestGoogleFitPermissions { granted ->
+                        scope.launch {
+                            when {
+                                granted -> {
+                                    snackbarHostState.showSnackbar(
+                                        "Permisos concedidos. Sincronizando actividades…"
+                                    )
+                                    viewModel.syncGoogleFit()
+                                }
+                                else -> {
+                                    snackbarHostState.showSnackbar(
+                                        "Permisos no concedidos. Pulsa de nuevo o abre Google Fit."
+                                    )
+                                    viewModel.refresh()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     fun openOauthUrl(url: String) {
@@ -147,9 +235,10 @@ fun MisDispositivosScreen(
                         Text(
                             "Funciona con Garmin, Polar, Samsung, Fitbit, Mi Band, Amazfit, Suunto, Coros y más.\n\n" +
                                 "Recomendado:\n" +
-                                "1. Health Connect — sincronización automática desde la app de tu reloj.\n" +
-                                "2. Importar GPX — exporta desde Strava/Garmin/Wikiloc e impórtalo en Rutas GPS.\n" +
-                                "3. Banda BLE — pulso en vivo durante una actividad GPS.",
+                                "1. Health Connect — sincronización automática (Android 9+ con HC).\n" +
+                                "2. Google Fit — alternativa si tu móvil no tiene Health Connect.\n" +
+                                "3. Importar GPX — exporta desde Strava/Garmin/Wikiloc e impórtalo en Rutas GPS.\n" +
+                                "4. Banda BLE — pulso en vivo durante una actividad GPS.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -160,11 +249,21 @@ fun MisDispositivosScreen(
                 ImportGpxCard(onOpenGpsHub = onNavigateToGpsHub)
             }
             item {
+                RelojesGuiaCard()
+            }
+            item {
                 HealthConnectCard(
                     availability = state.hcAvailability,
                     connected = state.hcConnected,
                     loading = state.loading,
-                    onRequest = { hcPermLauncher.launch(HealthConnectManager.get(context).permissions) },
+                    onRequest = { requestHealthConnectPermissions() },
+                    onOpenHealthConnect = {
+                        if (!hcManager.openManagePermissions(context)) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Instala Health Connect desde Play Store")
+                            }
+                        }
+                    },
                     onSync = { viewModel.syncHealthConnect() },
                     onInstall = {
                         runCatching {
@@ -178,6 +277,15 @@ fun MisDispositivosScreen(
                             )
                         }
                     }
+                )
+            }
+            item {
+                GoogleFitCard(
+                    connected = state.gfConnected,
+                    loading = state.loading,
+                    onRequest = { requestGoogleFitPermissions() },
+                    onSync = { viewModel.syncGoogleFit() },
+                    onOpenGoogleFit = { gfManager.openGoogleFit() }
                 )
             }
             item {
@@ -311,11 +419,52 @@ private fun ProviderCard(
 }
 
 @Composable
+private fun RelojesGuiaCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                "¿Cómo se conecta mi reloj?",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                "OpoFit no empareja el reloj por Bluetooth como un auricular. " +
+                    "Tu reloj envía los entrenos a Health Connect o Google Fit y OpoFit los lee desde ahí.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text("Garmin", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+            Text(
+                "Garmin Connect → Configuración → Salud conectada / Health Connect → Activar y marcar actividades.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text("Amazfit / Zepp / Coros", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+            Text(
+                "Zepp / Mi Fitness / COROS → Ajustes → Health Connect o «Apps de terceros» → Permitir compartir entrenos.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text("Samsung / Fitbit / Polar", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+            Text(
+                "Samsung Health o la app del fabricante → Conexiones → Health Connect → Activar sincronización.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
 private fun HealthConnectCard(
     availability: HealthConnectManager.Availability,
     connected: Boolean,
     loading: Boolean,
     onRequest: () -> Unit,
+    onOpenHealthConnect: () -> Unit,
     onSync: () -> Unit,
     onInstall: () -> Unit
 ) {
@@ -338,26 +487,27 @@ private fun HealthConnectCard(
             fontWeight = FontWeight.SemiBold
         )
         Text(
-            "1. Asegúrate de tener Health Connect instalado (botón abajo si no).\n" +
-                "2. Abre la app oficial de tu reloj (Garmin Connect, Mi Fitness, Zepp Life, Samsung Health, etc.) " +
-                "y activa \"Compartir con Health Connect\".\n" +
-                "3. Vuelve aquí y pulsa \"Conceder permisos\". OpoFit leerá automáticamente tus actividades.",
+            "Cuando funcione verás «Conectado» arriba a la derecha.\n\n" +
+                "1. Instala Health Connect si no lo tienes.\n" +
+                "2. En la app de tu reloj activa «Compartir con Health Connect».\n" +
+                "3. Pulsa «Conceder permisos» y marca TODOS los datos que pide OpoFit.\n" +
+                "4. Si no sale el diálogo, pulsa «Abrir Health Connect» → Permisos de aplicaciones → OpoFit → Permitir todo.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            when (availability) {
-                HealthConnectManager.Availability.NOT_INSTALLED -> {
-                    Button(onClick = onInstall) { Text("Instalar Health Connect") }
-                }
-                HealthConnectManager.Availability.NOT_SUPPORTED -> {
-                    Text(
-                        "Tu Android no soporta Health Connect.",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                }
-                HealthConnectManager.Availability.AVAILABLE -> {
+        when (availability) {
+            HealthConnectManager.Availability.NOT_INSTALLED -> {
+                Button(onClick = onInstall, enabled = !loading) { Text("Instalar Health Connect") }
+            }
+            HealthConnectManager.Availability.NOT_SUPPORTED -> {
+                Text(
+                    "Tu Android no soporta Health Connect.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+            HealthConnectManager.Availability.AVAILABLE -> {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (!connected) {
                         Button(onClick = onRequest, enabled = !loading) { Text("Conceder permisos") }
                     } else {
@@ -366,10 +516,13 @@ private fun HealthConnectCard(
                             Text("  Sincronizar")
                         }
                     }
+                    OutlinedButton(onClick = onOpenHealthConnect, enabled = !loading) {
+                        Text("Abrir Health Connect")
+                    }
+                    if (loading) {
+                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                    }
                 }
-            }
-            if (loading) {
-                CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
             }
         }
     }
@@ -480,6 +633,50 @@ private fun ImportGpxCard(onOpenGpsHub: () -> Unit) {
         )
         Button(onClick = onOpenGpsHub) {
             Text("Ir a Rutas GPS e importar")
+        }
+    }
+}
+
+@Composable
+private fun GoogleFitCard(
+    connected: Boolean,
+    loading: Boolean,
+    onRequest: () -> Unit,
+    onSync: () -> Unit,
+    onOpenGoogleFit: () -> Unit
+) {
+    ProviderCard(
+        title = "Google Fit (alternativa)",
+        subtitle = "Para móviles sin Health Connect · Wear OS, Xiaomi, apps con sync a Fit",
+        icon = Icons.Filled.Cloud,
+        estado = if (connected) "Conectado" else "Sin permisos",
+        estadoOk = connected
+    ) {
+        Text(
+            "Pasos para conectar tu reloj:\n\n" +
+                "Cuando funcione verás «Conectado» arriba a la derecha.\n\n" +
+                "1. Instala Google Fit y la app de tu reloj.\n" +
+                "2. En la app del reloj activa «Sincronizar con Google Fit».\n" +
+                "3. Pulsa «Conceder permisos» — saldrá la ventana de Google (como en Health Connect).\n" +
+                "4. Si es la primera vez, elige tu cuenta Google y marca TODOS los datos de actividad.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (!connected) {
+                Button(onClick = onRequest, enabled = !loading) { Text("Conceder permisos") }
+            } else {
+                Button(onClick = onSync, enabled = !loading) {
+                    Icon(Icons.Filled.Sync, null, Modifier.size(16.dp))
+                    Text("  Sincronizar")
+                }
+            }
+            OutlinedButton(onClick = onOpenGoogleFit, enabled = !loading) {
+                Text("Abrir Google Fit")
+            }
+            if (loading) {
+                CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+            }
         }
     }
 }

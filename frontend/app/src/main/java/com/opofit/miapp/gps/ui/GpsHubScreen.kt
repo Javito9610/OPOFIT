@@ -347,6 +347,11 @@ fun GpsHubScreen(
                                 Spacer(Modifier.size(8.dp))
                                 Text("Iniciar ${selectedType.display.lowercase()}")
                             }
+                            Text(
+                                "Verás tu ruta dibujándose en el mapa en tiempo real (estilo Strava). Activa el GPS del móvil para mejor precisión.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                         OutlinedButton(
                             onClick = { onOpenMapa(selectedType) },
