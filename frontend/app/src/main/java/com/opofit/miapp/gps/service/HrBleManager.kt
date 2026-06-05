@@ -88,7 +88,7 @@ class HrBleManager(private val context: Context) {
         return loc
     }
 
-    fun startScan() {
+    fun startScan(broad: Boolean = false) {
         if (!hasBluetooth()) {
             _state.value = State.Error("Activa el Bluetooth en el sistema")
             return
@@ -105,16 +105,15 @@ class HrBleManager(private val context: Context) {
             _state.value = State.Error("BLE scanner no disponible")
             return
         }
-        val filter = ScanFilter.Builder()
-            .setServiceUuid(ParcelUuid(HR_SERVICE))
-            .build()
         val settings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build()
         val callback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
                 val device = result.device ?: return
-                val item = FoundDevice(device.address, device.name, result.rssi)
+                val name = device.name
+                if (!broad && !advertisesHr(result)) return
+                val item = FoundDevice(device.address, name, result.rssi)
                 _found.update {
                     if (it.any { d -> d.address == item.address }) it else it + item
                 }
@@ -125,7 +124,20 @@ class HrBleManager(private val context: Context) {
             }
         }
         scanCallback = callback
-        scanner.startScan(listOf(filter), settings, callback)
+        if (broad) {
+            scanner.startScan(emptyList(), settings, callback)
+        } else {
+            val filter = ScanFilter.Builder()
+                .setServiceUuid(ParcelUuid(HR_SERVICE))
+                .build()
+            scanner.startScan(listOf(filter), settings, callback)
+        }
+    }
+
+    private fun advertisesHr(result: ScanResult): Boolean {
+        val record = result.scanRecord ?: return false
+        val uuids = record.serviceUuids ?: return false
+        return uuids.any { it.uuid == HR_SERVICE }
     }
 
     fun stopScan() {

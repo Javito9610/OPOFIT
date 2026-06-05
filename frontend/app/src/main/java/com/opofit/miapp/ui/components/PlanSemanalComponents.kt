@@ -1,8 +1,11 @@
 package com.opofit.miapp.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import com.opofit.miapp.ui.theme.AccentOrange
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -172,6 +176,7 @@ fun PlanDiaCard(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PlanPersonalizacionCard(
     personalizacion: PersonalizacionPlan,
@@ -259,11 +264,18 @@ fun EntrenoHoyHeroCard(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
     ) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .background(AccentOrange)
+            )
+            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
                 titulo,
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+                color = AccentOrange.copy(alpha = 0.95f)
             )
             Text(
                 subtitulo,
@@ -280,8 +292,8 @@ fun EntrenoHoyHeroCard(
                 onClick = onEmpezar,
                 modifier = Modifier.fillMaxWidth(),
                 colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.onPrimary,
-                    contentColor = MaterialTheme.colorScheme.primary
+                    containerColor = AccentOrange,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
                 Icon(Icons.Filled.PlayArrow, contentDescription = null)
@@ -298,6 +310,7 @@ fun EntrenoHoyHeroCard(
                 ) {
                     Text("Preparar ruta de carrera")
                 }
+            }
             }
         }
     }

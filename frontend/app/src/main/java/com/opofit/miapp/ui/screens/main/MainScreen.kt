@@ -38,6 +38,7 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
@@ -59,6 +60,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.opofit.miapp.ui.components.OpoFitLogo
+import com.opofit.miapp.ui.theme.AccentOrange
 import com.opofit.miapp.ui.components.ProfileAvatar
 import com.opofit.miapp.ui.screens.historial.HistorialScreen
 import com.opofit.miapp.ui.screens.home.HomeScreen
@@ -316,7 +318,12 @@ fun MainScreen(
                             onClick = { navigateToTab(tab.route) },
                             icon = { Icon(imageVector = tab.icon, contentDescription = tab.label) },
                             label = { Text(tab.label) },
-                            alwaysShowLabel = selected
+                            alwaysShowLabel = selected,
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = AccentOrange,
+                                selectedTextColor = AccentOrange,
+                                indicatorColor = AccentOrange.copy(alpha = 0.14f)
+                            )
                         )
                     }
                 }

@@ -1,13 +1,17 @@
 package com.opofit.miapp.ui.components
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import coil.compose.AsyncImage
 import androidx.compose.material.icons.Icons
@@ -24,10 +28,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.opofit.miapp.ui.theme.AccentOrange
 import com.opofit.miapp.utils.MediaUrlUtil
 
 @Composable
@@ -36,18 +42,68 @@ fun SectionHeader(
     subtitle: String? = null,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            Modifier
+                .width(3.dp)
+                .height(22.dp)
+                .background(AccentOrange, MaterialTheme.shapes.extraSmall)
         )
-        if (!subtitle.isNullOrBlank()) {
+        Column {
             Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
             )
+            if (!subtitle.isNullOrBlank()) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun ElevatedCard(
+    modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    onClick: (() -> Unit)? = null,
+    content: @Composable () -> Unit
+) {
+    val colors = CardDefaults.cardColors(containerColor = containerColor)
+    val elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+    val border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
+    val shape = MaterialTheme.shapes.large
+
+    if (onClick != null) {
+        Card(
+            modifier = modifier,
+            onClick = onClick,
+            shape = shape,
+            colors = colors,
+            elevation = elevation,
+            border = border
+        ) {
+            content()
+        }
+    } else {
+        Card(
+            modifier = modifier,
+            shape = shape,
+            colors = colors,
+            elevation = elevation,
+            border = border
+        ) {
+            content()
         }
     }
 }
@@ -58,35 +114,38 @@ fun StatCard(
     value: String,
     modifier: Modifier = Modifier,
     supporting: String? = null,
-    icon: ImageVector? = null
+    icon: ImageVector? = null,
+    accentColor: Color = MaterialTheme.colorScheme.primary
 ) {
-    Card(
-        modifier = modifier,
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
+    ElevatedCard(modifier = modifier) {
         Column(
             modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (icon != null) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    Surface(
+                        shape = CircleShape,
+                        color = accentColor.copy(alpha = 0.12f),
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = accentColor
+                            )
+                        }
+                    }
                 }
                 Text(
                     text = label.uppercase(),
                     style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

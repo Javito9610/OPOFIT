@@ -4,7 +4,6 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- C) Pico ascenso — chevron + OF + diamante naranja -->
     <group
         android:pivotX="54"
         android:pivotY="54"
@@ -17,7 +16,7 @@
             android:strokeColor="#FFFFFF"
             android:strokeLineJoin="round" />
         <path
-            android:fillColor="#FF9100"
+            android:fillColor="#FFFFFF"
             android:pathData="M54,8 L59,14 L54,20 L49,14 Z" />
         <path
             android:fillColor="#00000000"

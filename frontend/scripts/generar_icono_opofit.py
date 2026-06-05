@@ -1,4 +1,4 @@
-"""Genera PNG del icono OpoFit para launcher (adaptive icon foreground)."""
+"""Genera PNG del logo OpoFit (in-app) y foreground del launcher con zona segura."""
 from pathlib import Path
 
 try:
@@ -6,16 +6,17 @@ try:
 except ImportError:
     raise SystemExit("pip install pillow")
 
-BLUE = (13, 71, 161, 255)
+NAVY = (27, 42, 74, 255)
 WHITE = (255, 255, 255, 255)
 ORANGE = (255, 145, 0, 255)
 TRANSPARENT = (0, 0, 0, 0)
 
 SIZE = 512
+SAFE_RATIO = 0.58
 
 
-def shield(draw, inset, fill):
-    w = SIZE
+def shield(draw, inset, fill, size=SIZE):
+    w = size
     cx = w / 2
     top = w * (8 / 108) + inset
     side = w * (20 / 108) + inset
@@ -37,34 +38,70 @@ def shield(draw, inset, fill):
     draw.polygon(pts, fill=fill)
 
 
-def main():
-    img = Image.new("RGBA", (SIZE, SIZE), TRANSPARENT)
-    draw = ImageDraw.Draw(img)
+def draw_logo(draw, size=SIZE, offset_x=0, offset_y=0):
+    s = size / 108.0
 
-    # Fondo azul cuadrado (launcher background layer es aparte; foreground transparente)
-    shield(draw, 0, WHITE)
-    shield(draw, int(SIZE * 6 / 108), BLUE)
+    def pt(x, y):
+        return (offset_x + x * s, offset_y + y * s)
 
-    s = SIZE / 108.0
-    ocx, ocy = 36 * s, 54 * s
-    draw.ellipse((ocx - 11 * s, ocy - 11 * s, ocx + 11 * s, ocy + 11 * s), fill=WHITE)
-    draw.ellipse((ocx - 7 * s, ocy - 7 * s, ocx + 7 * s, ocy + 7 * s), fill=BLUE)
+    shield(
+        draw,
+        0,
+        WHITE,
+        size=size,
+    )
+    shield(draw, int(size * 6 / 108), NAVY, size=size)
 
-    # F
-    draw.rectangle((58 * s, 34 * s, 80 * s, 40 * s), fill=WHITE)
-    draw.rectangle((58 * s, 34 * s, 64 * s, 76 * s), fill=WHITE)
-    draw.rectangle((64 * s, 48 * s, 78 * s, 54 * s), fill=WHITE)
+    ocx, ocy = 36 * s + offset_x, 54 * s + offset_y
+    r_out, r_in = 11 * s, 7 * s
+    draw.ellipse((ocx - r_out, ocy - r_out, ocx + r_out, ocy + r_out), fill=WHITE)
+    draw.ellipse((ocx - r_in, ocy - r_in, ocx + r_in, ocy + r_in), fill=NAVY)
 
-    # Rayo
-    bolt = [(49 * s, 26 * s), (41 * s, 50 * s), (49 * s, 50 * s), (44 * s, 74 * s), (67 * s, 50 * s), (59 * s, 50 * s), (65 * s, 26 * s)]
+    draw.rectangle(
+        (58 * s + offset_x, 34 * s + offset_y, 80 * s + offset_x, 40 * s + offset_y),
+        fill=WHITE,
+    )
+    draw.rectangle((58 * s + offset_x, 34 * s + offset_y, 64 * s + offset_x, 76 * s + offset_y), fill=WHITE)
+    draw.rectangle((64 * s + offset_x, 48 * s + offset_y, 78 * s + offset_x, 54 * s + offset_y), fill=WHITE)
+
+    bolt = [
+        pt(49, 26),
+        pt(41, 50),
+        pt(49, 50),
+        pt(44, 74),
+        pt(67, 50),
+        pt(59, 50),
+        pt(65, 26),
+    ]
     draw.polygon(bolt, fill=ORANGE)
 
+
+def logo_full():
+    img = Image.new("RGBA", (SIZE, SIZE), TRANSPARENT)
+    draw = ImageDraw.Draw(img)
+    draw_logo(draw)
+    return img
+
+
+def logo_launcher_safe():
+    """Foreground 512px con logo centrado al 58% (zona segura adaptive icon)."""
+    img = Image.new("RGBA", (SIZE, SIZE), TRANSPARENT)
+    draw = ImageDraw.Draw(img)
+    inner = int(SIZE * SAFE_RATIO)
+    margin = (SIZE - inner) // 2
+    draw_logo(draw, size=inner, offset_x=margin, offset_y=margin)
+    return img
+
+
+def main():
     root = Path(__file__).resolve().parents[1] / "app" / "src" / "main" / "res"
     nodpi = root / "drawable-nodpi"
     nodpi.mkdir(parents=True, exist_ok=True)
-    out = nodpi / "ic_opofit_logo.png"
-    img.save(out, "PNG")
-    print(f"OK: {out}")
+
+    logo_full().save(nodpi / "ic_opofit_logo.png", "PNG")
+    logo_launcher_safe().save(nodpi / "ic_launcher_foreground_asset.png", "PNG")
+    print(f"OK: {nodpi / 'ic_opofit_logo.png'}")
+    print(f"OK: {nodpi / 'ic_launcher_foreground_asset.png'}")
 
 
 if __name__ == "__main__":

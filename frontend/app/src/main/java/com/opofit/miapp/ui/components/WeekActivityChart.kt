@@ -5,9 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import com.opofit.miapp.ui.theme.AccentOrange
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -20,27 +19,21 @@ fun WeekActivityChart(
     dias: List<DiaActividad>,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
-        )
-    ) {
+    ElevatedCard(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                "Actividad ultimos 7 dias",
+                "Actividad últimos 7 días",
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
-            // El backend rellena siempre 7 dias con 0 si no hubo entreno;
-            // por eso no basta con isEmpty(): hay que ver si TODOS los dias tienen 0.
             val sinActividad = dias.isEmpty() || dias.all { it.sesiones == 0 }
             if (sinActividad) {
                 Text(
-                    "Sin entrenos esta semana - empieza hoy!",
+                    "Sin entrenos esta semana — empieza hoy",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -52,7 +45,7 @@ fun WeekActivityChart(
                         .fillMaxWidth()
                         .height(140.dp)
                         .padding(top = 4.dp),
-                    color = MaterialTheme.colorScheme.primary,
+                    color = AccentOrange,
                     valueLabel = { v -> if (v == 0.0) "" else v.toInt().toString() }
                 )
             }

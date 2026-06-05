@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -144,7 +145,11 @@ fun GpsHubScreen(
             viewModel.startHrScan()
         } else {
             val perms = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
+                arrayOf(
+                    Manifest.permission.BLUETOOTH_SCAN,
+                    Manifest.permission.BLUETOOTH_CONNECT,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                )
             } else {
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
             }
@@ -285,19 +290,25 @@ fun GpsHubScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                         )
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            TypeChip(
-                                ActivityType.RUN, Icons.AutoMirrored.Filled.DirectionsRun,
-                                selected = selectedType == ActivityType.RUN
-                            ) { viewModel.selectType(ActivityType.RUN) }
-                            TypeChip(
-                                ActivityType.WALK, Icons.AutoMirrored.Filled.DirectionsWalk,
-                                selected = selectedType == ActivityType.WALK
-                            ) { viewModel.selectType(ActivityType.WALK) }
-                            TypeChip(
-                                ActivityType.BIKE, Icons.AutoMirrored.Filled.DirectionsBike,
-                                selected = selectedType == ActivityType.BIKE
-                            ) { viewModel.selectType(ActivityType.BIKE) }
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            item {
+                                TypeChip(
+                                    ActivityType.RUN, Icons.AutoMirrored.Filled.DirectionsRun,
+                                    selected = selectedType == ActivityType.RUN
+                                ) { viewModel.selectType(ActivityType.RUN) }
+                            }
+                            item {
+                                TypeChip(
+                                    ActivityType.WALK, Icons.AutoMirrored.Filled.DirectionsWalk,
+                                    selected = selectedType == ActivityType.WALK
+                                ) { viewModel.selectType(ActivityType.WALK) }
+                            }
+                            item {
+                                TypeChip(
+                                    ActivityType.BIKE, Icons.AutoMirrored.Filled.DirectionsBike,
+                                    selected = selectedType == ActivityType.BIKE
+                                ) { viewModel.selectType(ActivityType.BIKE) }
+                            }
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -511,10 +522,11 @@ private fun HrConnectDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    "Empareja una banda o reloj que emita el Heart Rate Service estándar.\n" +
-                        "Compatible: Polar H10/H9, Wahoo TICKR, Garmin (modo broadcast HR), " +
-                        "Mi Band / Amazfit con \"compartir pulso\" activado.\n" +
-                        "No compatible: Apple Watch (solo iPhone).",
+                    "Busca bandas BLE con pulso en vivo (Polar, Wahoo, Garmin broadcast HR).\n\n" +
+                        "Amazfit / Zepp: la mayoría NO emiten pulso por Bluetooth a apps de terceros. " +
+                        "Activa «Compartir pulso» o «Broadcast HR» en Zepp si tu modelo lo tiene; " +
+                        "si no aparece, sincroniza entrenos vía Health Connect en Integraciones.\n\n" +
+                        "Si no encuentra nada, prueba «Buscar todos».",
                     style = MaterialTheme.typography.bodySmall
                 )
                 when (val st = hrState) {
@@ -553,7 +565,8 @@ private fun HrConnectDialog(
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { viewModel.startHrScan() }) { Text("Buscar") }
+                    Button(onClick = { viewModel.startHrScan() }) { Text("Buscar HR") }
+                    OutlinedButton(onClick = { viewModel.startHrScanBroad() }) { Text("Buscar todos") }
                     if (hrState is HrBleManager.State.Connected) {
                         OutlinedButton(onClick = { viewModel.disconnectHr() }) { Text("Desconectar") }
                     }

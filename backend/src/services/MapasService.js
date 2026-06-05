@@ -16,8 +16,28 @@ const TIPOS_LUGAR = {
   CALISTENIA: {
     placeType: 'park',
     keyword: 'calisthenics',
-    keywordsAlt: ['street workout', 'outdoor gym', 'calistenia', 'pull up bar park', 'parque calistenia'],
-    textQueries: ['calisthenics park', 'street workout park', 'outdoor fitness park'],
+    keywordsAlt: [
+      'street workout',
+      'outdoor gym',
+      'calistenia',
+      'calisthenics',
+      'pull up bar park',
+      'parque calistenia',
+      'barra fija',
+      'barras paralelas',
+      'workout park',
+      'parque barras',
+      'gimnasio al aire libre'
+    ],
+    textQueries: [
+      'calisthenics park',
+      'street workout park',
+      'outdoor fitness park',
+      'parque calistenia',
+      'parque de barras',
+      'calisthenics outdoor gym'
+    ],
+    radioDefault: 12000,
     etiqueta: 'Parque / Calistenia'
   },
   PARQUE: { placeType: 'park', keyword: null, etiqueta: 'Parque' }
@@ -60,7 +80,8 @@ class MapasService {
       throw new Error('Coordenadas inválidas');
     }
     const meta = TIPOS_LUGAR[tipo] || TIPOS_LUGAR.GYM;
-    const radio = Math.min(15000, Math.max(500, Number(radioM) || 5000));
+    const radioDefecto = meta.radioDefault || 5000;
+    const radio = Math.min(20000, Math.max(500, Number(radioM) || radioDefecto));
 
     if (!key) {
       return MapasService.lugaresFallback(latN, lngN, tipo);

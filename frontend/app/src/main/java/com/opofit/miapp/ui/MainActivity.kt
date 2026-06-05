@@ -9,8 +9,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.opofit.miapp.integraciones.GoogleFitManager
 import com.opofit.miapp.ui.components.OpoFitSplashScreen
@@ -34,17 +39,25 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
-
         enableEdgeToEdge()
         setContent {
             val darkMode = TokenManager(this).getDarkMode().collectAsState(initial = false).value
             MiAppTheme(darkTheme = darkMode) {
                 val uiState by authViewModel.uiState.collectAsState()
+                var splashMinTimeDone by remember { mutableStateOf(false) }
 
-                if (!uiState.isSessionChecked) {
+                LaunchedEffect(Unit) {
+                    delay(2200)
+                    splashMinTimeDone = true
+                }
+
+                LaunchedEffect(uiState.isLoggedIn) {
+                    if (uiState.isLoggedIn && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
+
+                if (!uiState.isSessionChecked || !splashMinTimeDone) {
                     OpoFitSplashScreen()
                 } else {
                     val navController = rememberNavController()

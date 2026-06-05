@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.screens.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
@@ -49,11 +51,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.opofit.miapp.ui.theme.AccentIndigo
+import com.opofit.miapp.ui.theme.AccentOrange
+import com.opofit.miapp.ui.theme.AccentSlate
+import com.opofit.miapp.ui.theme.AccentTeal
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.opofit.miapp.ui.components.ElevatedCard
 import com.opofit.miapp.ui.components.EntrenoHoyHeroCard
 import com.opofit.miapp.ui.components.OpoFitLogo
 import com.opofit.miapp.ui.components.ErrorState
@@ -115,7 +123,7 @@ fun HomeScreen(
             add(QuickLink("Rutinas libres", "Crea la tuya", Icons.Filled.FitnessCenter, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, onNavigateToRutinasLibres))
         } else {
             add(QuickLink("Simulacro", "Pruebas", Icons.Filled.Timer, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToSimulacro))
-            add(QuickLink("Dispositivos", "Reloj · banda", Icons.Filled.Watch, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, onNavigateToMisDispositivos))
+            add(QuickLink("Dispositivos", "Reloj · banda", Icons.Filled.Watch, AccentSlate, Color.White, onNavigateToMisDispositivos))
         }
     }
 
@@ -127,7 +135,7 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        OpoFitLogo(size = 36.dp)
+                        OpoFitLogo(size = 36.dp, onDarkBackground = true)
                         Column {
                             Text("OpoFit", fontWeight = FontWeight.ExtraBold)
                             Text(
@@ -139,7 +147,8 @@ fun HomeScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    scrolledContainerColor = MaterialTheme.colorScheme.primary
                 ),
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
@@ -160,6 +169,7 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             when {
                 uiState.loading && resumen == null -> {
@@ -172,17 +182,28 @@ fun HomeScreen(
                 }
                 else -> {
                     LazyColumn(
-                        contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 28.dp),
+                        contentPadding = PaddingValues(start = 16.dp, top = 0.dp, end = 16.dp, bottom = 28.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         item {
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = MaterialTheme.shapes.extraLarge,
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                                )
-                            ) {
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(20.dp)
+                                    .background(
+                                        Brush.verticalGradient(
+                                            colors = listOf(
+                                                MaterialTheme.colorScheme.primary,
+                                                AccentOrange.copy(alpha = 0.18f),
+                                                MaterialTheme.colorScheme.background
+                                            )
+                                        )
+                                    )
+                            )
+                        }
+
+                        item {
+                            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                                 Row(
                                     Modifier
                                         .fillMaxWidth()
@@ -190,12 +211,27 @@ fun HomeScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
+                                    Box(
+                                        Modifier
+                                            .width(4.dp)
+                                            .height(64.dp)
+                                            .background(
+                                                Brush.verticalGradient(
+                                                    colors = listOf(
+                                                        AccentOrange,
+                                                        MaterialTheme.colorScheme.primary
+                                                    )
+                                                ),
+                                                MaterialTheme.shapes.small
+                                            )
+                                    )
                                     ProfileAvatar(displayName, sizeDp = 64)
                                     Column(Modifier.weight(1f)) {
                                         Text(
                                             "Hola, $displayName",
                                             style = MaterialTheme.typography.titleLarge,
-                                            fontWeight = FontWeight.Bold
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
                                             if (esFitness) {
@@ -205,7 +241,7 @@ fun HomeScreen(
                                                     ?: "Completa tu perfil para calcular nivel"
                                             },
                                             style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         if (!esFitness) {
                                             resumen?.notaMedia?.let { nota ->
@@ -213,7 +249,7 @@ fun HomeScreen(
                                                     "Nota media oficial: $nota / 10",
                                                     style = MaterialTheme.typography.labelLarge,
                                                     fontWeight = FontWeight.SemiBold,
-                                                    color = MaterialTheme.colorScheme.primary
+                                                    color = MaterialTheme.colorScheme.secondary
                                                 )
                                             }
                                         }
@@ -270,6 +306,7 @@ fun HomeScreen(
                                     value = "${resumen?.sesionesSemana ?: 0}",
                                     supporting = "últimos 7 días",
                                     icon = Icons.Filled.FitnessCenter,
+                                    accentColor = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.weight(1f)
                                 )
                                 StatCard(
@@ -277,6 +314,7 @@ fun HomeScreen(
                                     value = "${resumen?.minutosSemana ?: 0}",
                                     supporting = "entrenando",
                                     icon = Icons.Filled.Timer,
+                                    accentColor = AccentTeal,
                                     modifier = Modifier.weight(1f)
                                 )
                                 StatCard(
@@ -284,6 +322,7 @@ fun HomeScreen(
                                     value = "${resumen?.rachaDias ?: 0}",
                                     supporting = if ((resumen?.rachaDias ?: 0) > 0) "días seguidos" else "sin racha",
                                     icon = Icons.Filled.LocalFireDepartment,
+                                    accentColor = AccentOrange,
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -300,6 +339,7 @@ fun HomeScreen(
                                         value = resumen?.rankingPosicion?.let { "#$it" } ?: "—",
                                         supporting = resumen?.rankingTotal?.let { "de $it opositores" },
                                         icon = Icons.Filled.Leaderboard,
+                                        accentColor = AccentIndigo,
                                         modifier = Modifier.weight(1f)
                                     )
                                     StatCard(
@@ -307,6 +347,7 @@ fun HomeScreen(
                                         value = resumen?.ultimoSimulacro?.notaMedia?.let { "$it" } ?: "—",
                                         supporting = "última nota /10",
                                         icon = Icons.Filled.TrendingUp,
+                                        accentColor = MaterialTheme.colorScheme.secondary,
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
@@ -367,12 +408,9 @@ fun HomeScreen(
                             }
                             items(feed.size) { i ->
                                 val f = feed[i]
-                                Card(
+                                ElevatedCard(
                                     modifier = Modifier.fillMaxWidth(),
-                                    onClick = onNavigateToComunidad,
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
-                                    )
+                                    onClick = onNavigateToComunidad
                                 ) {
                                     Row(
                                         Modifier.padding(12.dp),
@@ -439,11 +477,7 @@ fun HomeScreen(
 
                         resumen?.ultimaSesion?.let { sesion ->
                             item {
-                                Card(
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-                                    )
-                                ) {
+                                ElevatedCard {
                                     Column(Modifier.padding(14.dp)) {
                                         Text(
                                             "Última actividad",
@@ -491,7 +525,7 @@ private fun NavCard(
         onClick = onClick,
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = containerColor, contentColor = contentColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             Modifier

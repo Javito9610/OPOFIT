@@ -211,7 +211,9 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
         GpsTrackingService.stop(getApplication())
     }
 
-    fun startHrScan() = hrBle.startScan()
+    fun startHrScan() = hrBle.startScan(broad = false)
+
+    fun startHrScanBroad() = hrBle.startScan(broad = true)
     fun stopHrScan() = hrBle.stopScan()
     fun connectHr(device: HrBleManager.FoundDevice) = hrBle.connect(device)
     fun disconnectHr() = hrBle.disconnect()

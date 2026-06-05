@@ -109,6 +109,13 @@ fun MapaEntrenoScreen(
     var lat by remember { mutableDoubleStateOf(40.4168) }
     var lng by remember { mutableDoubleStateOf(-3.7038) }
     var ubicacionLista by remember { mutableStateOf(false) }
+    fun tienePermisoUbicacion(): Boolean {
+        val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+        val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
+        return fine == PackageManager.PERMISSION_GRANTED || coarse == PackageManager.PERMISSION_GRANTED
+    }
+    var locationOk by remember { mutableStateOf(tienePermisoUbicacion()) }
+    var permisoDenegado by remember { mutableStateOf(false) }
     var tipoLugar by remember { mutableStateOf(tipoLugarInicial) }
     var lugares by remember { mutableStateOf<List<LugarEntreno>>(emptyList()) }
     var ruta by remember { mutableStateOf<RutaEntreno?>(null) }
@@ -144,12 +151,45 @@ fun MapaEntrenoScreen(
     val permLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { granted ->
-        if (granted.values.any { it }) {
+        locationOk = granted[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+            granted[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (locationOk) {
             scope.launch {
+                try {
+                    cargarUbicacion(context) { la, ln ->
+                        lat = la; lng = ln; ubicacionLista = true
+                        permisoDenegado = false
+                        camera.position = CameraPosition.fromLatLngZoom(LatLng(la, ln), 14f)
+                    }
+                } catch (e: Exception) {
+                    snackbar.showSnackbar("No se pudo obtener tu ubicación: ${e.message}")
+                }
+            }
+        } else {
+            permisoDenegado = true
+            ubicacionLista = false
+            scope.launch {
+                snackbar.showSnackbar("Necesitamos tu ubicación para buscar parques y lugares cerca de ti.")
+            }
+        }
+    }
+
+    fun solicitarUbicacion() {
+        permLauncher.launch(
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+        )
+    }
+
+    fun cargarMiUbicacion() {
+        scope.launch {
+            try {
                 cargarUbicacion(context) { la, ln ->
                     lat = la; lng = ln; ubicacionLista = true
+                    permisoDenegado = false
                     camera.position = CameraPosition.fromLatLngZoom(LatLng(la, ln), 14f)
                 }
+            } catch (e: Exception) {
+                snackbar.showSnackbar("No se pudo obtener tu ubicación: ${e.message}")
             }
         }
     }
@@ -165,7 +205,13 @@ fun MapaEntrenoScreen(
             loading = true
             lugares = emptyList()
             try {
-                val resp = RetrofitClient.mapasApi.lugares(auth(), lat, lng, tipoLugar)
+                val radio = when (tipoLugar) {
+                    "CALISTENIA" -> 15000
+                    "PISTA" -> 12000
+                    "PARQUE" -> 10000
+                    else -> 8000
+                }
+                val resp = RetrofitClient.mapasApi.lugares(auth(), lat, lng, tipoLugar, radio)
                 lugares = resp.data ?: emptyList()
                 if (lugares.isEmpty()) {
                     val msg = when (tipoLugar) {
@@ -257,17 +303,8 @@ fun MapaEntrenoScreen(
     }
 
     LaunchedEffect(Unit) {
-        val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-        if (fine == PackageManager.PERMISSION_GRANTED) {
-            cargarUbicacion(context) { la, ln ->
-                lat = la; lng = ln; ubicacionLista = true
-                camera.position = CameraPosition.fromLatLngZoom(LatLng(la, ln), 14f)
-            }
-        } else {
-            permLauncher.launch(
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
-            )
-        }
+        locationOk = tienePermisoUbicacion()
+        if (locationOk) cargarMiUbicacion()
     }
 
     LaunchedEffect(flowCtx?.distKmObjetivo, distanciaObjetivoKm) {
@@ -312,12 +349,7 @@ fun MapaEntrenoScreen(
                 },
                 actions = {
                     IconButton(onClick = {
-                        scope.launch {
-                            cargarUbicacion(context) { la, ln ->
-                                lat = la; lng = ln; ubicacionLista = true
-                                camera.position = CameraPosition.fromLatLngZoom(LatLng(la, ln), 14f)
-                            }
-                        }
+                        if (!locationOk) solicitarUbicacion() else cargarMiUbicacion()
                     }) {
                         Icon(Icons.Filled.MyLocation, "Mi ubicación")
                     }
@@ -338,11 +370,40 @@ fun MapaEntrenoScreen(
                     Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text("Lugares") })
                 }
             }
+            if (!locationOk) {
+                Card(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            "Ubicación necesaria",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            if (permisoDenegado) {
+                                "Sin permiso de ubicación no podemos mostrar parques de calistenia ni lugares cerca de ti. Actívalo en Ajustes o pulsa el botón."
+                            } else {
+                                "Para buscar parques, pistas y gimnasios cerca necesitamos acceder a tu ubicación."
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Button(onClick = { solicitarUbicacion() }, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Filled.MyLocation, null, Modifier.size(18.dp))
+                            Spacer(Modifier.size(8.dp))
+                            Text("Permitir ubicación")
+                        }
+                    }
+                }
+            }
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 GoogleMap(
                     modifier = Modifier.fillMaxSize(),
                     cameraPositionState = camera,
-                    properties = MapProperties(isMyLocationEnabled = true),
+                    properties = MapProperties(isMyLocationEnabled = locationOk),
                     uiSettings = MapUiSettings(myLocationButtonEnabled = false),
                     onMapClick = { click ->
                         if (tab == 1 && modoPersonalizado) waypoints.add(click)
@@ -439,8 +500,8 @@ fun MapaEntrenoScreen(
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            listOf("CARRERA" to "Correr", "CAMINAR" to "Caminar", "BICI" to "Bici").forEach { (id, label) ->
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(listOf("CARRERA" to "Correr", "CAMINAR" to "Caminar", "BICI" to "Bici")) { (id, label) ->
                                 FilterChip(
                                     selected = actividad == id,
                                     onClick = {
@@ -451,7 +512,7 @@ fun MapaEntrenoScreen(
                                             variacion = 0
                                         }
                                     },
-                                    label = { Text(label) }
+                                    label = { Text(label, maxLines = 1) }
                                 )
                             }
                         }

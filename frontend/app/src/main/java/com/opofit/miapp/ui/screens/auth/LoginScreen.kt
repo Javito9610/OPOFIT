@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import com.opofit.miapp.ui.components.OpoFitLogo
+import com.opofit.miapp.ui.theme.AccentOrange
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -138,6 +139,14 @@ fun LoginScreen(
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.primary
             )
+            Box(
+                Modifier
+                    .padding(top = 6.dp)
+                    .width(48.dp)
+                    .height(3.dp)
+                    .clip(MaterialTheme.shapes.extraSmall)
+                    .background(AccentOrange)
+            )
             Text(
                 text = "Tu entrenador para oposiciones",
                 style = MaterialTheme.typography.bodyMedium,
@@ -223,7 +232,11 @@ fun LoginScreen(
                             .fillMaxWidth()
                             .height(52.dp),
                         enabled = !uiState.isLoading,
-                        shape = MaterialTheme.shapes.medium
+                        shape = MaterialTheme.shapes.medium,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = AccentOrange,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
                     ) {
                         if (uiState.isLoading) {
                             CircularProgressIndicator(
