@@ -98,7 +98,7 @@ class DashboardService {
           nombreDia: sesion.nombre_dia,
           enfoque: sesion.enfoque,
           titulo: sesion.titulo,
-          descripcion: sesion.descripcion,
+          descripcion: plan?.personalizacion?.resumen || sesion.descripcion,
           esHoy: !!plan?.sesion_hoy,
           completada: sesion.completada,
           id_plan_dia: sesion.id_plan_dia,

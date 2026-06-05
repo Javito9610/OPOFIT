@@ -2,6 +2,7 @@ package com.opofit.miapp.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,8 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -25,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.opofit.miapp.data.responsemodels.DiaPlan
+import com.opofit.miapp.data.responsemodels.PersonalizacionPlan
 
 fun enfoqueEmoji(enfoque: String): String = when (enfoque.uppercase()) {
     "FUERZA" -> "💪"
@@ -120,6 +125,67 @@ fun PlanDiaCard(
                     Text("Entrenar ${enfoqueLabel(dia.enfoque).lowercase()}")
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun PlanPersonalizacionCard(
+    personalizacion: PersonalizacionPlan,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Filled.AutoAwesome,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    "  Tu plan inteligente",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+            Text(
+                personalizacion.resumen,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            if (personalizacion.pilares_debiles.isNotEmpty() || personalizacion.pilares_fuertes.isNotEmpty()) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    personalizacion.pilares_debiles.forEach { p ->
+                        AssistChip(
+                            onClick = {},
+                            label = { Text("↑ ${p.etiqueta ?: p.pilar} ${String.format("%.1f", p.notaMedia)}") },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f)
+                            )
+                        )
+                    }
+                    personalizacion.pilares_fuertes.forEach { p ->
+                        AssistChip(
+                            onClick = {},
+                            label = { Text("✓ ${p.etiqueta ?: p.pilar}") },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f)
+                            )
+                        )
+                    }
+                }
+            }
+            Text(
+                "${personalizacion.ajustes_aplicados} ejercicios adaptados · racha ${personalizacion.racha_dias} días",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+            )
         }
     }
 }

@@ -55,6 +55,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.ui.components.PlanCalendarioMes
 import com.opofit.miapp.ui.components.PlanDiaCard
+import com.opofit.miapp.ui.components.PlanPersonalizacionCard
 import com.opofit.miapp.ui.components.SectionHeader
 import java.time.YearMonth
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
@@ -395,10 +396,16 @@ fun RutinasScreen(
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
                                     if (vistaPlan == 0) {
+                                        plan.personalizacion?.let { perso ->
+                                            item {
+                                                PlanPersonalizacionCard(personalizacion = perso)
+                                            }
+                                        }
                                         item {
                                             SectionHeader(
                                                 title = "Microciclo · ${plan.dias_por_semana} días",
-                                                subtitle = "14 oposiciones · prescripción ejercicio a ejercicio (banco OpoFit)"
+                                                subtitle = plan.personalizacion?.resumen
+                                                    ?: "Plan adaptado a tus marcas y nivel"
                                             )
                                         }
                                         items(plan.semana.size) { i ->
@@ -411,10 +418,14 @@ fun RutinasScreen(
                                                         expanded = !dia.es_hoy
                                                     )
                                                     dia.ejercicios.take(4).forEach { ej ->
+                                                        val adj = if (ej.personalizado && ej.series_base != null) {
+                                                            " (${ej.series_base}→${ej.series})"
+                                                        } else ""
                                                         Text(
-                                                            "• ${ej.series}×${ej.repeticiones} ${ej.nombre}",
+                                                            "• ${ej.series}×${ej.repeticiones} ${ej.nombre}$adj",
                                                             style = MaterialTheme.typography.bodySmall,
-                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                            color = if (ej.personalizado) MaterialTheme.colorScheme.primary
+                                                            else MaterialTheme.colorScheme.onSurfaceVariant
                                                         )
                                                     }
                                                     if (dia.ejercicios.size > 4) {

@@ -1,6 +1,7 @@
 const db = require('../config/db');
 const RutinaService = require('./RutinasService');
 const BancoPlanesImportService = require('./BancoPlanesImportService');
+const PlanPersonalizadorService = require('./PlanPersonalizadorService');
 
 const NOMBRES_DIA = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -145,7 +146,7 @@ class PlanesService {
       semana.find((s) => !s.completada) ||
       null;
 
-    return {
+    const planBase = {
       id_plan: idPlan,
       dias_por_semana: dias.length,
       dia_hoy: hoy,
@@ -154,6 +155,18 @@ class PlanesService {
       sesion_hoy: sesionHoy,
       proxima_sesion: proxima
     };
+
+    try {
+      return await PlanPersonalizadorService.personalizarPlan(
+        userId,
+        idOposicion,
+        planBase,
+        nivel
+      );
+    } catch (err) {
+      console.error('Plan personalizador:', err.message);
+      return planBase;
+    }
   }
 
   static async obtenerCalendarioMes(userId, idOposicion, nivel, genero, year, month) {

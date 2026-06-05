@@ -25,7 +25,28 @@ data class EjercicioPlan(
     val series: Int,
     val repeticiones: Int,
     val descanso: Int,
-    val unidad: String? = null
+    val unidad: String? = null,
+    val series_base: Int? = null,
+    val repeticiones_base: Int? = null,
+    val personalizado: Boolean = false,
+    val motivo_ajuste: String? = null
+)
+
+data class PilarResumen(
+    val pilar: String,
+    val etiqueta: String? = null,
+    val notaMedia: Double = 0.0,
+    val pruebas: List<String> = emptyList()
+)
+
+data class PersonalizacionPlan(
+    val resumen: String = "",
+    val pilares_debiles: List<PilarResumen> = emptyList(),
+    val pilares_fuertes: List<PilarResumen> = emptyList(),
+    val ajustes_aplicados: Int = 0,
+    val nivel_usado: String? = null,
+    val racha_dias: Int = 0,
+    val sesiones_semana: Int = 0
 )
 
 data class DiaPlan(
@@ -73,7 +94,8 @@ data class PlanSemanal(
     val nombre_dia_hoy: String,
     val semana: List<DiaPlan> = emptyList(),
     val sesion_hoy: DiaPlan? = null,
-    val proxima_sesion: DiaPlan? = null
+    val proxima_sesion: DiaPlan? = null,
+    val personalizacion: PersonalizacionPlan? = null
 )
 
 data class RutinasData(
