@@ -229,4 +229,19 @@ describe('PlanGeneradorService', () => {
     expect(plan.semana[0].ejercicios[0].nombre).not.toBe('Press banca con barra');
     expect(plan.semana[1].ejercicios[0].nombre).toBe('Carrera continua Z2 30 min');
   });
+
+  test('guardarCache reintenta sin emojis si MySQL rechaza utf8', async () => {
+    const planConEmoji = {
+      ...planBase,
+      personalizacion: { entorno_emoji: '🏠', resumen: 'Casa 🏠' }
+    };
+    db.query
+      .mockRejectedValueOnce(new Error("Incorrect string value: '\\xF0\\x9F\\x8F\\xA0' for column 'plan_json'"))
+      .mockResolvedValueOnce([{ affectedRows: 1 }]);
+    await PlanGeneradorService.guardarCache(1, 1, 202512, 'CASA', 3, planConEmoji, 'Coaching 🏠');
+    expect(db.query).toHaveBeenCalledTimes(2);
+    const retryArgs = db.query.mock.calls[1][1];
+    expect(retryArgs[5]).not.toContain('🏠');
+    expect(retryArgs[6]).not.toContain('🏠');
+  });
 });

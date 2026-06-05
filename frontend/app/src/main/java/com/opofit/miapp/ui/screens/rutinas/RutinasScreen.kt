@@ -31,6 +31,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Tab
@@ -87,7 +89,21 @@ fun RutinasScreen(
     val uiState by rutinasViewModel.uiState.collectAsState()
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
+    val snackbarHostState = remember { SnackbarHostState() }
     var unitDist by remember { mutableStateOf("km") }
+
+    LaunchedEffect(uiState.msgExito) {
+        uiState.msgExito?.let { msg ->
+            snackbarHostState.showSnackbar(msg)
+            rutinasViewModel.consumirMsgExito()
+        }
+    }
+    LaunchedEffect(uiState.msgAviso) {
+        uiState.msgAviso?.let { msg ->
+            snackbarHostState.showSnackbar(msg)
+            rutinasViewModel.consumirMsgAviso()
+        }
+    }
     LaunchedEffect(Unit) {
         tokenManager.getUnitDistancia().collectLatest { u ->
             if (!u.isNullOrBlank()) unitDist = u
@@ -130,6 +146,7 @@ fun RutinasScreen(
     )
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
         topBar = {
             TopAppBar(
@@ -164,7 +181,9 @@ fun RutinasScreen(
                 uiState.isLoading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
-                uiState.error.isNotEmpty() -> {
+                uiState.error.isNotEmpty() &&
+                    uiState.planSemanal?.semana.isNullOrEmpty() &&
+                    uiState.rutinaCompleta.isEmpty() -> {
                     Column(
                         modifier = Modifier
                             .align(Alignment.Center)
@@ -440,6 +459,12 @@ fun RutinasScreen(
                                                 }
                                             }
                                         }
+                                        Text(
+                                            "Sustituye todos los días de la semana por otra combinación de ejercicios (mismo nivel). Para cambiar solo un día usa «Otra opción» en cada tarjeta.",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(top = 2.dp)
+                                        )
                                         if (!uiState.entornoEntreno.isNullOrBlank()) {
                                             OutlinedButton(
                                                 onClick = {
@@ -453,7 +478,13 @@ fun RutinasScreen(
                                             }
                                         }
                                     }
-                                    items(plan.semana.size) { i ->
+                                    items(
+                                        plan.semana.size,
+                                        key = { i ->
+                                            val d = plan.semana[i]
+                                            "${d.id_plan_dia}_${plan.personalizacion?.variacion_seed ?: 0}_${d.ejercicios.joinToString { it.nombre }}"
+                                        }
+                                    ) { i ->
                                         val dia = plan.semana[i]
                                         Card(Modifier.fillMaxWidth()) {
                                             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -477,7 +508,7 @@ fun RutinasScreen(
                                                     ) {
                                                         ExerciseStickFigure(
                                                             tipoIlustracion = ej.tipo_ilustracion,
-                                                            size = 44.dp
+                                                            size = 56.dp
                                                         )
                                                         Column(Modifier.weight(1f)) {
                                                             Text(

@@ -8,7 +8,8 @@ data class PendingShare(
     val idHistorialSesion: Int? = null,
     val tituloSugerido: String = "",
     val stats: PostStats? = null,
-    val segmentSlugs: List<Pair<String, Long>> = emptyList()
+    val segmentSlugs: List<Pair<String, Long>> = emptyList(),
+    val routePoints: List<RoutePoint> = emptyList()
 )
 
 object ShareActivityContext {

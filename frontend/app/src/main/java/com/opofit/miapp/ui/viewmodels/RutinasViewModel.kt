@@ -42,7 +42,9 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
         val entornosOpciones: List<EntornoEntrenoOpcion> = emptyList(),
         val mostrarSheetEntorno: Boolean = false,
         val regenerandoPlan: Boolean = false,
-        val regenerandoDiaId: Int? = null
+        val regenerandoDiaId: Int? = null,
+        val msgExito: String? = null,
+        val msgAviso: String? = null
     )
 
     private val _uiState = MutableStateFlow(RutinasUiState())
@@ -125,9 +127,25 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun consumirMsgExito() = _uiState.update { it.copy(msgExito = null) }
+
+    fun consumirMsgAviso() = _uiState.update { it.copy(msgAviso = null) }
+
+    private fun aviso(msg: String) = _uiState.update { it.copy(msgAviso = msg, error = "") }
+
+    private fun contarCambiosPlan(anterior: PlanSemanal?, nuevo: PlanSemanal?): Int {
+        if (anterior == null || nuevo == null) return 0
+        return anterior.semana.zip(nuevo.semana).sumOf { (a, b) ->
+            val prev = a.ejercicios.map { it.nombre }.toSet()
+            val next = b.ejercicios.map { it.nombre }.toSet()
+            (next - prev).size
+        }
+    }
+
     fun regenerarDia(userId: Int, oposicionId: Int, idPlanDia: Int) {
         viewModelScope.launch {
-            _uiState.update { it.copy(regenerandoDiaId = idPlanDia, error = "") }
+            val planAnterior = _uiState.value.planSemanal
+            _uiState.update { it.copy(regenerandoDiaId = idPlanDia, error = "", msgExito = null) }
             try {
                 val token = tokenManager.getToken().first() ?: ""
                 if (_uiState.value.entornoEntreno.isNullOrBlank()) {
@@ -135,25 +153,34 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
                         it.copy(
                             regenerandoDiaId = null,
                             mostrarSheetEntorno = true,
-                            error = "Elige primero dónde entrenas"
+                            msgAviso = "Elige primero dónde entrenas"
                         )
                     }
                     return@launch
                 }
                 val res = RetrofitClient.planesApi.regenerarDia("Bearer $token", oposicionId, idPlanDia)
                 if (res.ok && res.data != null) {
-                    _uiState.update { it.copy(regenerandoDiaId = null, planSemanal = res.data) }
+                    val dia = res.data.semana.find { it.id_plan_dia == idPlanDia }
+                    val cambios = dia?.ejercicios?.count { it.sustituido || it.personalizado } ?: 0
+                    val msg = if (cambios > 0) {
+                        "Día actualizado: $cambios ejercicio(s) nuevo(s)"
+                    } else {
+                        "Día actualizado con otra combinación"
+                    }
+                    _uiState.update {
+                        it.copy(regenerandoDiaId = null, planSemanal = res.data, msgExito = msg)
+                    }
                 } else {
                     _uiState.update {
                         it.copy(
                             regenerandoDiaId = null,
-                            error = res.msg ?: "No se pudo cambiar este día"
+                            msgAviso = res.msg ?: "No se pudo cambiar este día"
                         )
                     }
                 }
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(regenerandoDiaId = null, error = ApiErrorParser.message(e))
+                    it.copy(regenerandoDiaId = null, msgAviso = ApiErrorParser.message(e))
                 }
             }
         }
@@ -161,26 +188,42 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
 
     fun regenerarPlan(userId: Int, oposicionId: Int) {
         viewModelScope.launch {
-            _uiState.update { it.copy(regenerandoPlan = true, error = "") }
+            val planAnterior = _uiState.value.planSemanal
+            _uiState.update { it.copy(regenerandoPlan = true, error = "", msgExito = null) }
             try {
                 val token = tokenManager.getToken().first() ?: ""
                 if (_uiState.value.entornoEntreno.isNullOrBlank()) {
                     _uiState.update {
-                        it.copy(regenerandoPlan = false, mostrarSheetEntorno = true, error = "Elige primero dónde entrenas")
+                        it.copy(
+                            regenerandoPlan = false,
+                            mostrarSheetEntorno = true,
+                            msgAviso = "Elige primero dónde entrenas"
+                        )
                     }
                     return@launch
                 }
                 val res = RetrofitClient.planesApi.regenerarPlan("Bearer $token", oposicionId)
                 if (res.ok && res.data != null) {
-                    _uiState.update { it.copy(regenerandoPlan = false, planSemanal = res.data) }
+                    val cambios = contarCambiosPlan(planAnterior, res.data)
+                    val msg = if (cambios > 0) {
+                        "Nueva semana generada: $cambios ejercicio(s) distintos"
+                    } else {
+                        "Semana regenerada — revisa cada día, puede haber variaciones en series o prescripción"
+                    }
+                    _uiState.update {
+                        it.copy(regenerandoPlan = false, planSemanal = res.data, msgExito = msg)
+                    }
                 } else {
                     _uiState.update {
-                        it.copy(regenerandoPlan = false, error = res.msg ?: "No se pudo regenerar el plan")
+                        it.copy(
+                            regenerandoPlan = false,
+                            msgAviso = res.msg ?: "No se pudo regenerar el plan"
+                        )
                     }
                 }
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(regenerandoPlan = false, error = ApiErrorParser.message(e))
+                    it.copy(regenerandoPlan = false, msgAviso = ApiErrorParser.message(e))
                 }
             }
         }

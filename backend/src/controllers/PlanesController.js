@@ -97,7 +97,10 @@ const postRegenerarDia = async (req, res) => {
     });
   } catch (e) {
     console.error('postRegenerarDia:', e.message);
-    return res.status(400).json({ ok: false, msg: e.message });
+    const msg = (e.message || '').includes('Incorrect string value')
+      ? 'No se pudo guardar la nueva opción. Reinicia la app o contacta soporte.'
+      : e.message;
+    return res.status(400).json({ ok: false, msg });
   }
 };
 
@@ -125,7 +128,10 @@ const postRegenerarPlan = async (req, res) => {
     });
   } catch (e) {
     console.error('postRegenerarPlan:', e.message);
-    return res.status(400).json({ ok: false, msg: e.message });
+    const msg = (e.message || '').includes('Incorrect string value')
+      ? 'No se pudo guardar la nueva semana. Reinicia la app o contacta soporte.'
+      : e.message;
+    return res.status(400).json({ ok: false, msg });
   }
 };
 

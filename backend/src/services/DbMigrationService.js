@@ -32,6 +32,23 @@ class DbMigrationService {
     return true;
   }
 
+  /** Convierte tablas con JSON/texto a utf8mb4 para soportar emojis (🏠, 💪, etc.). */
+  static async ensureUtf8mb4Table(table) {
+    if (!(await DbMigrationService.tableExists(table))) return false;
+    const [rows] = await db.query(
+      `SELECT TABLE_COLLATION FROM information_schema.TABLES
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? LIMIT 1`,
+      [table]
+    );
+    const coll = rows[0]?.TABLE_COLLATION || '';
+    if (coll.startsWith('utf8mb4')) return false;
+    await db.query(
+      `ALTER TABLE \`${table}\` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+    );
+    console.log(`[migrate] ${table} convertida a utf8mb4`);
+    return true;
+  }
+
   static async runOnStartup() {
     try {
       await DbMigrationService.addColumnIfMissing(
@@ -269,13 +286,13 @@ class DbMigrationService {
             yearweek INT NOT NULL,
             variacion_seed INT NOT NULL DEFAULT 0,
             entorno_entreno VARCHAR(20) NOT NULL,
-            plan_json LONGTEXT NOT NULL,
-            explicacion_ia TEXT NULL,
+            plan_json LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+            explicacion_ia TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id_cache),
             UNIQUE KEY uniq_plan_gen_semana (usuarios_id_usuario, oposiciones_id_oposicion, yearweek),
             CONSTRAINT fk_pgc_usuario FOREIGN KEY (usuarios_id_usuario) REFERENCES usuarios (id_usuario) ON DELETE CASCADE
-          ) ENGINE=InnoDB
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
         console.log('[migrate] tabla planes_generados_cache creada');
       }
@@ -606,6 +623,18 @@ class DbMigrationService {
 
       const BancoPlanesImportService = require('./BancoPlanesImportService');
       const banco = await BancoPlanesImportService.importarBancoCompleto(false);
+
+      for (const tbl of [
+        'planes_generados_cache',
+        'actividad_posts',
+        'post_comentarios',
+        'gps_actividades',
+        'grupo_mensajes',
+        'mensajes_chat',
+        'usuarios'
+      ]) {
+        await DbMigrationService.ensureUtf8mb4Table(tbl);
+      }
 
       console.log('[migrate] Esquema comprobado OK');
       return { banco };

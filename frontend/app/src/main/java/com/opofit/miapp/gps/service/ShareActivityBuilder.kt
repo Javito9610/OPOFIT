@@ -41,6 +41,7 @@ fun buildPendingShareFromGps(activity: ActivitySummary): PendingShare {
             avgHrBpm = activity.avgHrBpm,
             kcal = activity.kcal
         ),
-        segmentSlugs = segmentSlugs
+        segmentSlugs = segmentSlugs,
+        routePoints = activity.points.map { RoutePoint(it.lat, it.lng) }
     )
 }

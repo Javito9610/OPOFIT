@@ -185,10 +185,18 @@ class PlanGeneradorService {
     }
   }
 
+  static sinEmojis4Bytes(str) {
+    if (!str) return str;
+    return str.replace(/[\u{10000}-\u{10FFFF}]/gu, '').replace(
+      /[\uD800-\uDBFF][\uDC00-\uDFFF]/g,
+      ''
+    );
+  }
+
   static async guardarCache(userId, idOposicion, yw, entorno, seed, plan, explicacion) {
     const json = JSON.stringify(plan);
-    await db.query(
-      `INSERT INTO planes_generados_cache
+    const params = [userId, idOposicion, yw, seed, entorno, json, explicacion || null];
+    const sql = `INSERT INTO planes_generados_cache
          (usuarios_id_usuario, oposiciones_id_oposicion, yearweek, variacion_seed, entorno_entreno, plan_json, explicacion_ia)
        VALUES (?, ?, ?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE
@@ -196,9 +204,19 @@ class PlanGeneradorService {
          entorno_entreno = VALUES(entorno_entreno),
          plan_json = VALUES(plan_json),
          explicacion_ia = VALUES(explicacion_ia),
-         created_at = CURRENT_TIMESTAMP`,
-      [userId, idOposicion, yw, seed, entorno, json, explicacion || null]
-    );
+         created_at = CURRENT_TIMESTAMP`;
+    try {
+      await db.query(sql, params);
+    } catch (e) {
+      const msg = e.message || '';
+      if (msg.includes('Incorrect string value') || msg.includes('ER_TRUNCATED_WRONG_VALUE_FOR_FIELD')) {
+        const safeJson = PlanGeneradorService.sinEmojis4Bytes(json);
+        const safeExpl = explicacion ? PlanGeneradorService.sinEmojis4Bytes(explicacion) : null;
+        await db.query(sql, [userId, idOposicion, yw, seed, entorno, safeJson, safeExpl]);
+        return;
+      }
+      throw e;
+    }
   }
 
   static async aplicarGeneracionInteligente(userId, idOposicion, planBase, nivel, opts = {}) {
