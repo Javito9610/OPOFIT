@@ -32,8 +32,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.opofit.miapp.ui.theme.AccentOrange
+import com.opofit.miapp.ui.utils.isCompactScreen
 import com.opofit.miapp.utils.MediaUrlUtil
 
 @Composable
@@ -117,26 +119,28 @@ fun StatCard(
     icon: ImageVector? = null,
     accentColor: Color = MaterialTheme.colorScheme.primary
 ) {
+    val compact = isCompactScreen()
+    val pad = if (compact) 10.dp else 12.dp
     ElevatedCard(modifier = modifier) {
         Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            modifier = Modifier.padding(pad),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 if (icon != null) {
                     Surface(
                         shape = CircleShape,
                         color = accentColor.copy(alpha = 0.12f),
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(if (compact) 26.dp else 30.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                             Icon(
                                 imageVector = icon,
                                 contentDescription = null,
-                                modifier = Modifier.size(16.dp),
+                                modifier = Modifier.size(if (compact) 14.dp else 16.dp),
                                 tint = accentColor
                             )
                         }
@@ -146,20 +150,26 @@ fun StatCard(
                     text = label.uppercase(),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
             Text(
                 text = value,
-                style = MaterialTheme.typography.headlineSmall,
+                style = if (compact) MaterialTheme.typography.titleLarge
+                else MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1
             )
             if (!supporting.isNullOrBlank()) {
                 Text(
                     text = supporting,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }

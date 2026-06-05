@@ -59,7 +59,10 @@ import com.opofit.miapp.ui.theme.AccentOrange
 import com.opofit.miapp.ui.theme.AccentSlate
 import com.opofit.miapp.ui.theme.AccentTeal
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.opofit.miapp.ui.utils.isCompactScreen
+import com.opofit.miapp.ui.utils.isVeryCompactScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.ui.components.ElevatedCard
 import com.opofit.miapp.ui.components.EntrenoHoyHeroCard
@@ -110,6 +113,8 @@ fun HomeScreen(
     val uiState by homeViewModel.uiState.collectAsState()
     val resumen = uiState.resumen
     val displayName = userName?.trim().orEmpty().ifBlank { if (esFitness) "Atleta" else "Opositor" }
+    val compact = isCompactScreen()
+    val veryCompact = isVeryCompactScreen()
 
     LaunchedEffect(oposicionId) {
         homeViewModel.cargarResumen(oposicionId)
@@ -182,7 +187,12 @@ fun HomeScreen(
                 }
                 else -> {
                     LazyColumn(
-                        contentPadding = PaddingValues(start = 16.dp, top = 0.dp, end = 16.dp, bottom = 28.dp),
+                        contentPadding = PaddingValues(
+                            start = if (compact) 12.dp else 16.dp,
+                            top = 0.dp,
+                            end = if (compact) 12.dp else 16.dp,
+                            bottom = 28.dp
+                        ),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         item {
@@ -204,17 +214,18 @@ fun HomeScreen(
 
                         item {
                             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                                val avatarSize = if (compact) 52 else 64
                                 Row(
                                     Modifier
                                         .fillMaxWidth()
-                                        .padding(20.dp),
+                                        .padding(if (compact) 14.dp else 20.dp),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(if (compact) 12.dp else 16.dp)
                                 ) {
                                     Box(
                                         Modifier
                                             .width(4.dp)
-                                            .height(64.dp)
+                                            .height(avatarSize.dp)
                                             .background(
                                                 Brush.verticalGradient(
                                                     colors = listOf(
@@ -225,13 +236,16 @@ fun HomeScreen(
                                                 MaterialTheme.shapes.small
                                             )
                                     )
-                                    ProfileAvatar(displayName, sizeDp = 64)
+                                    ProfileAvatar(displayName, sizeDp = avatarSize)
                                     Column(Modifier.weight(1f)) {
                                         Text(
                                             "Hola, $displayName",
-                                            style = MaterialTheme.typography.titleLarge,
+                                            style = if (compact) MaterialTheme.typography.titleMedium
+                                            else MaterialTheme.typography.titleLarge,
                                             fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSurface
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
                                         )
                                         Text(
                                             if (esFitness) {
@@ -297,34 +311,70 @@ fun HomeScreen(
                                 subtitle = "Resumen rápido"
                             )
                             Spacer(Modifier.height(8.dp))
-                            Row(
-                                Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                StatCard(
-                                    label = "Sesiones",
-                                    value = "${resumen?.sesionesSemana ?: 0}",
-                                    supporting = "últimos 7 días",
-                                    icon = Icons.Filled.FitnessCenter,
-                                    accentColor = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                StatCard(
-                                    label = "Minutos",
-                                    value = "${resumen?.minutosSemana ?: 0}",
-                                    supporting = "entrenando",
-                                    icon = Icons.Filled.Timer,
-                                    accentColor = AccentTeal,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                StatCard(
-                                    label = "Racha",
-                                    value = "${resumen?.rachaDias ?: 0}",
-                                    supporting = if ((resumen?.rachaDias ?: 0) > 0) "días seguidos" else "sin racha",
-                                    icon = Icons.Filled.LocalFireDepartment,
-                                    accentColor = AccentOrange,
-                                    modifier = Modifier.weight(1f)
-                                )
+                            if (compact) {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Row(
+                                        Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        StatCard(
+                                            label = "Sesiones",
+                                            value = "${resumen?.sesionesSemana ?: 0}",
+                                            supporting = if (veryCompact) "7 días" else "últimos 7 días",
+                                            icon = Icons.Filled.FitnessCenter,
+                                            accentColor = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        StatCard(
+                                            label = "Minutos",
+                                            value = "${resumen?.minutosSemana ?: 0}",
+                                            supporting = "entrenando",
+                                            icon = Icons.Filled.Timer,
+                                            accentColor = AccentTeal,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+                                    StatCard(
+                                        label = "Racha",
+                                        value = "${resumen?.rachaDias ?: 0}",
+                                        supporting = if ((resumen?.rachaDias ?: 0) > 0) {
+                                            if (veryCompact) "días" else "días seguidos"
+                                        } else "sin racha",
+                                        icon = Icons.Filled.LocalFireDepartment,
+                                        accentColor = AccentOrange,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            } else {
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    StatCard(
+                                        label = "Sesiones",
+                                        value = "${resumen?.sesionesSemana ?: 0}",
+                                        supporting = "últimos 7 días",
+                                        icon = Icons.Filled.FitnessCenter,
+                                        accentColor = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    StatCard(
+                                        label = "Minutos",
+                                        value = "${resumen?.minutosSemana ?: 0}",
+                                        supporting = "entrenando",
+                                        icon = Icons.Filled.Timer,
+                                        accentColor = AccentTeal,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    StatCard(
+                                        label = "Racha",
+                                        value = "${resumen?.rachaDias ?: 0}",
+                                        supporting = if ((resumen?.rachaDias ?: 0) > 0) "días seguidos" else "sin racha",
+                                        icon = Icons.Filled.LocalFireDepartment,
+                                        accentColor = AccentOrange,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
                             }
                         }
 
@@ -464,6 +514,7 @@ fun HomeScreen(
                                                 containerColor = link.containerColor,
                                                 contentColor = link.contentColor,
                                                 onClick = link.onClick,
+                                                compact = compact,
                                                 modifier = Modifier.weight(1f)
                                             )
                                         }
@@ -518,6 +569,7 @@ private fun NavCard(
     containerColor: Color,
     contentColor: Color,
     onClick: () -> Unit,
+    compact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -530,12 +582,29 @@ private fun NavCard(
         Column(
             Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+                .padding(if (compact) 10.dp else 14.dp),
+            verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp)
         ) {
-            Icon(icon, null, tint = contentColor, modifier = Modifier.size(28.dp))
-            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            Text(subtitle, style = MaterialTheme.typography.labelSmall, color = contentColor.copy(alpha = 0.85f))
+            Icon(
+                icon,
+                null,
+                tint = contentColor,
+                modifier = Modifier.size(if (compact) 22.dp else 28.dp)
+            )
+            Text(
+                title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.labelSmall,
+                color = contentColor.copy(alpha = 0.85f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }

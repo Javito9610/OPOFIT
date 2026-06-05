@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -63,6 +64,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.gps.model.ActivitySummary
@@ -513,27 +515,37 @@ private fun HrConnectDialog(
     onDismiss: () -> Unit
 ) {
     val found by viewModel.hrFound.collectAsState()
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Conectar pulsómetro") },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Cerrar") }
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 520.dp),
+            shape = MaterialTheme.shapes.large
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 Text(
-                    "Busca bandas BLE con pulso en vivo (Polar, Wahoo, Garmin broadcast HR).\n\n" +
-                        "Amazfit / Zepp: la mayoría NO emiten pulso por Bluetooth a apps de terceros. " +
-                        "Activa «Compartir pulso» o «Broadcast HR» en Zepp si tu modelo lo tiene; " +
-                        "si no aparece, sincroniza entrenos vía Health Connect en Integraciones.\n\n" +
-                        "Si no encuentra nada, prueba «Buscar todos».",
-                    style = MaterialTheme.typography.bodySmall
+                    "Conectar pulsómetro",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
                 )
+                Text(
+                    "Bandas BLE con pulso en vivo (Polar, Wahoo, Garmin broadcast HR). " +
+                        "Amazfit/Zepp: activa «Broadcast HR» en la app del reloj; si no, usa Health Connect. " +
+                        "Prueba «Buscar todos» si no aparece el tuyo.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
                 when (val st = hrState) {
                     is HrBleManager.State.Idle -> {
                         Text(
                             if (found.isEmpty()) "Pulsa Buscar para escanear."
-                            else "Selecciona uno para conectar."
+                            else "${found.size} dispositivo(s) — selecciona uno:",
+                            style = MaterialTheme.typography.labelMedium
                         )
                     }
                     is HrBleManager.State.Scanning -> {
@@ -556,22 +568,66 @@ private fun HrConnectDialog(
                         color = MaterialTheme.colorScheme.error
                     )
                 }
-                found.take(8).forEach { device ->
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp, max = 260.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    if (found.isEmpty()) {
+                        item {
+                            Text(
+                                "La lista se actualiza al escanear.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else {
+                        items(found, key = { it.address }) { device ->
+                            OutlinedButton(
+                                onClick = { viewModel.connectHr(device) },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(Modifier.fillMaxWidth()) {
+                                    Text(
+                                        device.name?.ifBlank { null } ?: "Dispositivo sin nombre",
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Text(
+                                        "${device.address} · ${device.rssi} dBm",
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = { viewModel.startHrScan() },
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Buscar HR") }
                     OutlinedButton(
-                        onClick = { viewModel.connectHr(device) },
+                        onClick = { viewModel.startHrScanBroad() },
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Buscar todos") }
+                }
+                if (hrState is HrBleManager.State.Connected) {
+                    OutlinedButton(
+                        onClick = { viewModel.disconnectHr() },
                         modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(device.name ?: device.address)
-                    }
+                    ) { Text("Desconectar") }
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { viewModel.startHrScan() }) { Text("Buscar HR") }
-                    OutlinedButton(onClick = { viewModel.startHrScanBroad() }) { Text("Buscar todos") }
-                    if (hrState is HrBleManager.State.Connected) {
-                        OutlinedButton(onClick = { viewModel.disconnectHr() }) { Text("Desconectar") }
-                    }
-                }
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End)
+                ) { Text("Cerrar") }
             }
         }
-    )
+    }
 }

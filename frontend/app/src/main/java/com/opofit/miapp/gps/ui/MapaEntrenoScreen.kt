@@ -11,8 +11,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -57,13 +60,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.opofit.miapp.ui.utils.isCompactScreen
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
@@ -88,6 +96,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
+private const val TAB_RUTAS = 0
+private const val TAB_LUGARES = 1
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapaEntrenoScreen(
@@ -105,7 +116,7 @@ fun MapaEntrenoScreen(
     val snackbar = remember { SnackbarHostState() }
     val tokenManager = remember { TokenManager(context) }
     val esModoLugares = modoInicial == MapaEntrenoNav.MODO_LUGARES
-    var tab by remember { mutableIntStateOf(if (esModoLugares) 0 else 1) }
+    var tab by remember { mutableIntStateOf(if (esModoLugares) TAB_LUGARES else TAB_RUTAS) }
     var lat by remember { mutableDoubleStateOf(40.4168) }
     var lng by remember { mutableDoubleStateOf(-3.7038) }
     var ubicacionLista by remember { mutableStateOf(false) }
@@ -148,23 +159,33 @@ fun MapaEntrenoScreen(
     val esBici = actividad == "BICI" || actividad == "BIKE"
     val esCaminar = actividad == "CAMINAR" || actividad == "WALK"
 
+    fun cargarMiUbicacion() {
+        scope.launch {
+            try {
+                val obtenida = cargarUbicacion(context) { la, ln ->
+                    lat = la
+                    lng = ln
+                    permisoDenegado = false
+                    camera.position = CameraPosition.fromLatLngZoom(LatLng(la, ln), 14f)
+                }
+                ubicacionLista = true
+                if (!obtenida) {
+                    snackbar.showSnackbar("Usando ubicación aproximada. Activa el GPS para mayor precisión.")
+                }
+            } catch (e: Exception) {
+                ubicacionLista = true
+                snackbar.showSnackbar("No se pudo obtener tu ubicación: ${e.message}")
+            }
+        }
+    }
+
     val permLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { granted ->
         locationOk = granted[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
             granted[Manifest.permission.ACCESS_COARSE_LOCATION] == true
         if (locationOk) {
-            scope.launch {
-                try {
-                    cargarUbicacion(context) { la, ln ->
-                        lat = la; lng = ln; ubicacionLista = true
-                        permisoDenegado = false
-                        camera.position = CameraPosition.fromLatLngZoom(LatLng(la, ln), 14f)
-                    }
-                } catch (e: Exception) {
-                    snackbar.showSnackbar("No se pudo obtener tu ubicación: ${e.message}")
-                }
-            }
+            cargarMiUbicacion()
         } else {
             permisoDenegado = true
             ubicacionLista = false
@@ -178,20 +199,6 @@ fun MapaEntrenoScreen(
         permLauncher.launch(
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
         )
-    }
-
-    fun cargarMiUbicacion() {
-        scope.launch {
-            try {
-                cargarUbicacion(context) { la, ln ->
-                    lat = la; lng = ln; ubicacionLista = true
-                    permisoDenegado = false
-                    camera.position = CameraPosition.fromLatLngZoom(LatLng(la, ln), 14f)
-                }
-            } catch (e: Exception) {
-                snackbar.showSnackbar("No se pudo obtener tu ubicación: ${e.message}")
-            }
-        }
     }
 
     suspend fun auth(): String {
@@ -247,7 +254,6 @@ fun MapaEntrenoScreen(
                     RetrofitClient.mapasApi.rutaSugerida(auth(), lat, lng, distKm, variacion, actividad, terreno)
                 }
                 ruta = resp.data
-                tab = 1
                 onListo?.invoke()
             } catch (e: Exception) {
                 snackbar.showSnackbar("Error generando ruta: ${e.message}")
@@ -290,7 +296,6 @@ fun MapaEntrenoScreen(
                     val generada = resp.data
                     if (generada != null && generada.puntos.size >= 2) {
                         ruta = generada
-                        tab = 1
                         guardarEIniciar(generada)
                     }
                 } catch (e: Exception) {
@@ -316,13 +321,42 @@ fun MapaEntrenoScreen(
         if (ubicacionLista && esModoLugares) cargarLugares()
     }
 
-    LaunchedEffect(ubicacionLista, tipoLugar) {
-        if (ubicacionLista && tab == 0) cargarLugares()
+    LaunchedEffect(ubicacionLista, tipoLugar, tab) {
+        if (ubicacionLista && (tab == TAB_LUGARES || esModoLugares)) cargarLugares()
+    }
+
+    LaunchedEffect(lat, lng, ubicacionLista) {
+        if (ubicacionLista) {
+            camera.position = CameraPosition.fromLatLngZoom(LatLng(lat, lng), 14f)
+        }
+    }
+
+    LaunchedEffect(lugares, tab, esModoLugares, ubicacionLista) {
+        if (!ubicacionLista || lugares.isEmpty()) return@LaunchedEffect
+        if (tab != TAB_LUGARES && !esModoLugares) return@LaunchedEffect
+        val builder = LatLngBounds.builder()
+        builder.include(LatLng(lat, lng))
+        lugares.forEach { builder.include(LatLng(it.lat, it.lng)) }
+        try {
+            camera.move(CameraUpdateFactory.newLatLngBounds(builder.build(), 120))
+        } catch (_: Exception) {
+            camera.position = CameraPosition.fromLatLngZoom(LatLng(lat, lng), 13f)
+        }
+    }
+
+    LaunchedEffect(ruta, tab, esModoLugares) {
+        if (esModoLugares || tab != TAB_RUTAS) return@LaunchedEffect
+        val pts = ruta?.puntos?.takeIf { it.size >= 2 } ?: return@LaunchedEffect
+        val builder = LatLngBounds.builder()
+        pts.forEach { builder.include(LatLng(it.lat, it.lng)) }
+        try {
+            camera.move(CameraUpdateFactory.newLatLngBounds(builder.build(), 100))
+        } catch (_: Exception) { }
     }
 
     /** Al cambiar km, regenera la ruta sugerida y la dibuja en el mapa. */
     LaunchedEffect(ubicacionLista, distKm, tab, modoPersonalizado, esModoLugares, actividad, terreno) {
-        if (!ubicacionLista || esModoLugares || tab != 1 || modoPersonalizado) return@LaunchedEffect
+        if (!ubicacionLista || esModoLugares || tab != TAB_RUTAS || modoPersonalizado) return@LaunchedEffect
         variacion = 0
         delay(350)
         generarRuta()
@@ -363,54 +397,88 @@ fun MapaEntrenoScreen(
             )
         }
     ) { pad ->
+        val compact = isCompactScreen()
+        val panelScroll = rememberScrollState()
+        val mapFraction = if (compact) 0.38f else 0.42f
         Column(Modifier.fillMaxSize().padding(pad)) {
             if (!esModoLugares) {
                 TabRow(selectedTabIndex = tab) {
-                    Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text("Ruta sugerida") })
-                    Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text("Lugares") })
+                    Tab(
+                        selected = tab == TAB_RUTAS,
+                        onClick = { tab = TAB_RUTAS },
+                        text = { Text(if (compact) "Ruta" else "Ruta sugerida", maxLines = 1) }
+                    )
+                    Tab(
+                        selected = tab == TAB_LUGARES,
+                        onClick = {
+                            tab = TAB_LUGARES
+                            if (ubicacionLista) cargarLugares()
+                        },
+                        text = { Text("Lugares", maxLines = 1) }
+                    )
                 }
             }
             if (!locationOk) {
                 Card(
                     Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                        .padding(horizontal = 12.dp, vertical = if (compact) 4.dp else 8.dp)
                 ) {
-                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(
+                        Modifier.padding(if (compact) 10.dp else 14.dp),
+                        verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)
+                    ) {
                         Text(
                             "Ubicación necesaria",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold
                         )
-                        Text(
-                            if (permisoDenegado) {
-                                "Sin permiso de ubicación no podemos mostrar parques de calistenia ni lugares cerca de ti. Actívalo en Ajustes o pulsa el botón."
-                            } else {
-                                "Para buscar parques, pistas y gimnasios cerca necesitamos acceder a tu ubicación."
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        if (!compact) {
+                            Text(
+                                if (permisoDenegado) {
+                                    "Sin permiso de ubicación no podemos mostrar parques de calistenia ni lugares cerca de ti. Actívalo en Ajustes o pulsa el botón."
+                                } else {
+                                    "Para buscar parques, pistas y gimnasios cerca necesitamos acceder a tu ubicación."
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                         Button(onClick = { solicitarUbicacion() }, modifier = Modifier.fillMaxWidth()) {
                             Icon(Icons.Filled.MyLocation, null, Modifier.size(18.dp))
                             Spacer(Modifier.size(8.dp))
-                            Text("Permitir ubicación")
+                            Text(if (compact) "Activar ubicación" else "Permitir ubicación")
                         }
                     }
                 }
             }
-            Box(Modifier.weight(1f).fillMaxWidth()) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .weight(mapFraction)
+                    .heightIn(min = if (compact) 120.dp else 140.dp)
+            ) {
+                val mostrarLugares = tab == TAB_LUGARES || esModoLugares
+                val mostrarRuta = tab == TAB_RUTAS && !esModoLugares
                 GoogleMap(
                     modifier = Modifier.fillMaxSize(),
                     cameraPositionState = camera,
-                    properties = MapProperties(isMyLocationEnabled = locationOk),
-                    uiSettings = MapUiSettings(myLocationButtonEnabled = false),
+                    properties = MapProperties(
+                        isMyLocationEnabled = locationOk,
+                        mapType = MapType.NORMAL
+                    ),
+                    uiSettings = MapUiSettings(
+                        myLocationButtonEnabled = false,
+                        zoomControlsEnabled = true
+                    ),
                     onMapClick = { click ->
-                        if (tab == 1 && modoPersonalizado) waypoints.add(click)
+                        if (mostrarRuta && modoPersonalizado) waypoints.add(click)
                     }
                 ) {
-                    Marker(state = MarkerState(LatLng(lat, lng)), title = "Tú")
-                    if (tab == 0 || esModoLugares) {
+                    if (ubicacionLista) {
+                        Marker(state = MarkerState(LatLng(lat, lng)), title = "Tú")
+                    }
+                    if (mostrarLugares) {
                         lugares.forEach { l ->
                             Marker(
                                 state = MarkerState(LatLng(l.lat, l.lng)),
@@ -419,23 +487,32 @@ fun MapaEntrenoScreen(
                             )
                         }
                     }
-                    if (tab == 1 || !esModoLugares) {
+                    if (mostrarRuta) {
                         ruta?.puntos?.takeIf { it.size >= 2 }?.let { pts ->
                             val latLngs = pts.map { LatLng(it.lat, it.lng) }
                             Polyline(points = latLngs, color = Color(0xFF2E7D32), width = 10f)
                         }
-                    }
-                    waypoints.forEachIndexed { i, p ->
-                        Marker(state = MarkerState(p), title = "Punto ${i + 1}")
+                        waypoints.forEachIndexed { i, p ->
+                            Marker(state = MarkerState(p), title = "Punto ${i + 1}")
+                        }
                     }
                 }
                 if (loading) {
                     CircularProgressIndicator(Modifier.align(Alignment.Center))
                 }
             }
-            Card(Modifier.fillMaxWidth().padding(12.dp)) {
-                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (tab == 0 || esModoLugares) {
+            Column(
+                Modifier
+                    .weight(1f - mapFraction)
+                    .fillMaxWidth()
+                    .verticalScroll(panelScroll)
+            ) {
+            Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
+                Column(
+                    Modifier.padding(if (compact) 10.dp else 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)
+                ) {
+                    if (tab == TAB_LUGARES || esModoLugares) {
                         Text(
                             when (tipoLugar) {
                                 "CALISTENIA" -> "Parques y zonas de barras / street workout"
@@ -461,7 +538,13 @@ fun MapaEntrenoScreen(
                                 )
                             }
                         }
-                        if (ubicacionLista && !loading && lugares.isEmpty()) {
+                        if (!ubicacionLista) {
+                            Text(
+                                "Activa la ubicación para buscar lugares cerca de ti.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else if (!loading && lugares.isEmpty()) {
                             Text(
                                 when (tipoLugar) {
                                     "CALISTENIA" ->
@@ -477,14 +560,25 @@ fun MapaEntrenoScreen(
                         }
                         if (lugares.isNotEmpty()) {
                             Text("${lugares.size} lugares cerca", style = MaterialTheme.typography.labelMedium)
-                            lugares.take(3).forEach { l ->
+                            lugares.take(5).forEach { l ->
                                 Text(
                                     "• ${l.nombre} (${"%.1f".format(l.distanciaM / 1000)} km)",
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
                         }
-                    } else {
+                        if (ubicacionLista) {
+                            OutlinedButton(
+                                onClick = { cargarLugares() },
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !loading
+                            ) {
+                                Icon(Icons.Filled.Refresh, null, Modifier.size(16.dp))
+                                Spacer(Modifier.size(6.dp))
+                                Text("Actualizar lugares")
+                            }
+                        }
+                    } else if (tab == TAB_RUTAS) {
                         flowCtx?.tituloSesion?.let { t ->
                             Text(
                                 "Sesión: $t",
@@ -517,8 +611,15 @@ fun MapaEntrenoScreen(
                             }
                         }
                         Text(
-                            "${limites.etiqueta}: ${"%.1f".format(distKm)} km (máx. ${limites.maxKm.toInt()} km)",
-                            fontWeight = FontWeight.Medium
+                            if (compact) {
+                                "${"%.1f".format(distKm)} km · máx ${limites.maxKm.toInt()}"
+                            } else {
+                                "${limites.etiqueta}: ${"%.1f".format(distKm)} km (máx. ${limites.maxKm.toInt()} km)"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             FilterChip(
@@ -532,15 +633,17 @@ fun MapaEntrenoScreen(
                                 label = { Text("Montaña") }
                             )
                         }
-                        Text(
-                            when {
-                                esBici -> "Ruta por carretera o camino (modo bici)"
-                                esCaminar -> "Ruta a pie por calles y caminos"
-                                else -> "Ruta de carrera por calles y caminos reales"
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        if (!compact) {
+                            Text(
+                                when {
+                                    esBici -> "Ruta por carretera o camino (modo bici)"
+                                    esCaminar -> "Ruta a pie por calles y caminos"
+                                    else -> "Ruta de carrera por calles y caminos reales"
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                         Slider(
                             value = distKm.toFloat().coerceIn(limites.minKm, limites.maxKm),
                             onValueChange = { distKm = it.toDouble() },
@@ -641,13 +744,17 @@ fun MapaEntrenoScreen(
                             Spacer(Modifier.size(8.dp))
                             Text(
                                 when {
+                                    compact && ruta != null -> "Iniciar con esta ruta"
+                                    compact -> "Generar e iniciar"
                                     ruta != null && esBici -> "Iniciar bici con esta ruta"
                                     ruta != null && esCaminar -> "Iniciar caminata con esta ruta"
                                     ruta != null -> "Iniciar carrera con esta ruta"
                                     esBici -> "Generar ruta e iniciar bici"
                                     esCaminar -> "Generar ruta e iniciar caminata"
                                     else -> "Generar ruta e iniciar carrera"
-                                }
+                                },
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                         OutlinedButton(
@@ -657,12 +764,16 @@ fun MapaEntrenoScreen(
                         ) {
                             Icon(Icons.Filled.Route, null, Modifier.size(18.dp))
                             Spacer(Modifier.size(6.dp))
-                            Text("Actividad libre (sin seguir ruta)")
+                            Text(
+                                if (compact) "Actividad libre" else "Actividad libre (sin seguir ruta)",
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (compact) {
                             OutlinedButton(
                                 onClick = { otraPropuesta() },
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.fillMaxWidth(),
                                 enabled = !loading && !modoPersonalizado
                             ) {
                                 Icon(Icons.Filled.Refresh, null, Modifier.size(16.dp))
@@ -686,16 +797,54 @@ fun MapaEntrenoScreen(
                                         )
                                     }
                                 },
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.fillMaxWidth(),
                                 enabled = ruta != null
                             ) {
                                 Icon(Icons.Filled.Download, null, Modifier.size(16.dp))
                                 Spacer(Modifier.size(4.dp))
-                                Text("GPX")
+                                Text("Exportar GPX")
+                            }
+                        } else {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedButton(
+                                    onClick = { otraPropuesta() },
+                                    modifier = Modifier.weight(1f),
+                                    enabled = !loading && !modoPersonalizado
+                                ) {
+                                    Icon(Icons.Filled.Refresh, null, Modifier.size(16.dp))
+                                    Spacer(Modifier.size(4.dp))
+                                    Text("Otra propuesta")
+                                }
+                                OutlinedButton(
+                                    onClick = {
+                                        val r = ruta ?: return@OutlinedButton
+                                        val planned = PlannedRoute(
+                                            id = r.id,
+                                            nombre = r.nombre,
+                                            distanciaKm = r.distanciaKm,
+                                            puntos = r.puntos.map { RoutePoint(it.lat, it.lng) },
+                                            origen = r.origen
+                                        )
+                                        val intent = RouteGpxExport.shareIntent(context, planned)
+                                        if (intent != null) {
+                                            context.startActivity(
+                                                android.content.Intent.createChooser(intent, "Exportar GPX")
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    enabled = ruta != null
+                                ) {
+                                    Icon(Icons.Filled.Download, null, Modifier.size(16.dp))
+                                    Spacer(Modifier.size(4.dp))
+                                    Text("GPX")
+                                }
                             }
                         }
                     }
                 }
+            }
+            Spacer(Modifier.size(8.dp))
             }
         }
     }
@@ -704,10 +853,17 @@ fun MapaEntrenoScreen(
 private suspend fun cargarUbicacion(
     context: android.content.Context,
     onResult: (Double, Double) -> Unit
-) {
-    try {
+): Boolean {
+    return try {
         val fused = LocationServices.getFusedLocationProviderClient(context)
         val loc = fused.lastLocation.await()
-        if (loc != null) onResult(loc.latitude, loc.longitude)
-    } catch (_: Exception) { /* ubicación por defecto */ }
+        if (loc != null) {
+            onResult(loc.latitude, loc.longitude)
+            true
+        } else {
+            false
+        }
+    } catch (_: Exception) {
+        false
+    }
 }

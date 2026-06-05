@@ -10,33 +10,35 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.delay
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.opofit.miapp.integraciones.GoogleFitManager
 import com.opofit.miapp.ui.components.OpoFitSplashScreen
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.rememberNavController
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.ui.navigation.AppNavigation
 import com.opofit.miapp.ui.theme.MiAppTheme
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
 
     private val authViewModel: AuthViewModel by viewModels()
     private var onGoogleFitPermissionsResult: ((Boolean) -> Unit)? = null
+    private var keepSystemSplash = true
 
     private val requestNotificationPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        installSplashScreen().setKeepOnScreenCondition { keepSystemSplash }
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
@@ -44,12 +46,18 @@ class MainActivity : ComponentActivity() {
             val darkMode = TokenManager(this).getDarkMode().collectAsState(initial = false).value
             MiAppTheme(darkTheme = darkMode) {
                 val uiState by authViewModel.uiState.collectAsState()
-                var splashMinTimeDone by remember { mutableStateOf(false) }
+                var minSplashDone by remember { mutableStateOf(false) }
+
+                SideEffect {
+                    keepSystemSplash = false
+                }
 
                 LaunchedEffect(Unit) {
-                    delay(2200)
-                    splashMinTimeDone = true
+                    delay(1600)
+                    minSplashDone = true
                 }
+
+                val showSplash = !uiState.isSessionChecked || !minSplashDone
 
                 LaunchedEffect(uiState.isLoggedIn) {
                     if (uiState.isLoggedIn && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -57,7 +65,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                if (!uiState.isSessionChecked || !splashMinTimeDone) {
+                if (showSplash) {
                     OpoFitSplashScreen()
                 } else {
                     val navController = rememberNavController()
@@ -71,7 +79,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** Muestra el diálogo de permisos de Google Fit sin salir de OpoFit (como Health Connect). */
     fun requestGoogleFitPermissions(onResult: (Boolean) -> Unit) {
         val gf = GoogleFitManager.get(this)
         if (gf.hasPermissions()) {
