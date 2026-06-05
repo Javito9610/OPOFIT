@@ -405,7 +405,7 @@ fun MapaEntrenoScreen(
                         }
                         Text("Distancia: ${"%.1f".format(distKm)} km", fontWeight = FontWeight.Medium)
                         Text(
-                            "La ruta en verde se actualiza al mover la distancia",
+                            "Ruta por calles y caminos reales (modo a pie)",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -454,6 +454,13 @@ fun MapaEntrenoScreen(
                             Text(
                                 "${r.nombre} · ${"%.2f".format(r.distanciaKm)} km",
                                 fontWeight = FontWeight.Medium
+                            )
+                            val porCalles = r.origen.contains("calles") || r.origen.contains("osrm")
+                            Text(
+                                if (porCalles) "Trazado por calles" else "Ruta aproximada (sin datos de calles)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (porCalles) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.error
                             )
                         }
                         Button(

@@ -18,7 +18,7 @@ const lugares = async (req, res) => {
 const rutaSugerida = async (req, res) => {
   try {
     const { lat, lng, distKm, variacion } = req.query;
-    const data = MapasService.generarRutaSugerida(lat, lng, distKm, variacion);
+    const data = await MapasService.generarRutaSugerida(lat, lng, distKm, variacion);
     res.json({ ok: true, data });
   } catch (e) {
     console.error('Mapas ruta sugerida:', e.message);
@@ -29,7 +29,7 @@ const rutaSugerida = async (req, res) => {
 const rutaPersonalizada = async (req, res) => {
   try {
     const { waypoints, nombre } = req.body || {};
-    const data = MapasService.rutaEntreWaypoints(waypoints, nombre);
+    const data = await MapasService.rutaEntreWaypoints(waypoints, nombre);
     res.json({ ok: true, data });
   } catch (e) {
     console.error('Mapas ruta personalizada:', e.message);

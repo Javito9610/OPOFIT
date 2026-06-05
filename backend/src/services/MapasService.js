@@ -177,27 +177,161 @@ class MapasService {
     }));
   }
 
-  /** Genera ruta circular sugerida (sin coste Directions API). */
-  static generarRutaSugerida(lat, lng, distKm = 5, variacion = 0) {
+  /** Genera ruta circular sugerida siguiendo calles (Directions / OSRM). */
+  static async generarRutaSugerida(lat, lng, distKm = 5, variacion = 0) {
     const latN = Number(lat);
     const lngN = Number(lng);
-    const km = Math.min(21, Math.max(1, Number(distKm) || 5));
+    const km = MapasService.redondearKm(distKm);
     const seed = Math.max(0, Number(variacion) || 0);
-    const puntos = MapasService.puntosCircuito(latN, lngN, km, seed);
-    const distanciaTotalM = MapasService.longitudPolyline(puntos);
     const etiqueta = seed > 0 ? ` (opción ${(seed % 8) + 1})` : '';
+
+    let puntos = null;
+    let origen = 'sugerida_geometrica';
+
+    try {
+      const porCalles = await MapasService.rutaCircularPorCalles(latN, lngN, km, seed);
+      if (porCalles?.puntos?.length >= 2) {
+        puntos = porCalles.puntos;
+        origen = porCalles.origen;
+      }
+    } catch (e) {
+      console.warn('Ruta por calles:', e.message);
+    }
+
+    if (!puntos) {
+      puntos = MapasService.puntosCircuito(latN, lngN, km, seed);
+    }
+
+    const distanciaTotalM = MapasService.longitudPolyline(puntos);
     return {
       id: crypto.randomBytes(8).toString('hex'),
       nombre: `Rodaje ${km} km${etiqueta}`,
       distanciaKm: Number((distanciaTotalM / 1000).toFixed(2)),
       distanciaObjetivoKm: km,
       variacion: seed,
-      puntos,
-      origen: 'sugerida'
+      puntos: MapasService.simplificarPolyline(puntos),
+      origen
     };
   }
 
-  /** Circuito con desplazamiento y giro según variacion → otra propuesta distinta. */
+  static redondearKm(distKm) {
+    const km = Math.min(21, Math.max(1, Number(distKm) || 5));
+    return Math.round(km * 10) / 10;
+  }
+
+  /** Busca un bucle por calles cercano a la distancia objetivo. */
+  static async rutaCircularPorCalles(lat, lng, distKm, seed) {
+    const key = apiKey();
+    const numWp = 4 + (seed % 3);
+    const anguloBase = (seed % 16) * (Math.PI / 8);
+    const centroLat = lat + Math.sin(seed * 0.61) * 0.003;
+    const centroLng = lng + Math.cos(seed * 0.43) * 0.003;
+    const scales = [0.9, 1.05, 1.2, 1.35, 1.5, 1.7];
+    let mejor = null;
+    let mejorDiff = Infinity;
+
+    for (const scale of scales) {
+      const radioM = ((distKm * 1000) / (2 * Math.PI)) * scale;
+      const anillo = MapasService.waypointsAnillo(centroLat, centroLng, radioM, numWp, anguloBase);
+      const wps = [{ lat, lng }, ...anillo, { lat, lng }];
+
+      let puntos = null;
+      let origen = null;
+      try {
+        if (key) {
+          puntos = await MapasService.directionsRoute(wps, key, 'walking');
+          origen = 'sugerida_calles';
+        }
+      } catch (_e) {
+        puntos = null;
+      }
+      if (!puntos) {
+        try {
+          puntos = await MapasService.osrmRoute(wps);
+          origen = 'sugerida_osrm';
+        } catch (_e) {
+          continue;
+        }
+      }
+      if (!puntos?.length) continue;
+
+      const distM = MapasService.longitudPolyline(puntos);
+      const diff = Math.abs(distM / 1000 - distKm);
+      if (diff < mejorDiff) {
+        mejorDiff = diff;
+        mejor = { puntos, origen };
+        if (diff <= distKm * 0.1) break;
+      }
+    }
+
+    return mejor;
+  }
+
+  static waypointsAnillo(lat, lng, radioM, n, anguloBase = 0) {
+    const mPorGradoLat = 111320;
+    const mPorGradoLng = 111320 * Math.cos((lat * Math.PI) / 180);
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const ang = anguloBase + (2 * Math.PI * i) / n;
+      pts.push({
+        lat: lat + (radioM * Math.sin(ang)) / mPorGradoLat,
+        lng: lng + (radioM * Math.cos(ang)) / mPorGradoLng
+      });
+    }
+    return pts;
+  }
+
+  static async directionsRoute(waypoints, key, mode = 'walking') {
+    const wps = (waypoints || []).filter(
+      (p) => Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng))
+    );
+    if (wps.length < 2) throw new Error('Waypoints insuficientes');
+
+    const origin = `${wps[0].lat},${wps[0].lng}`;
+    const destination = `${wps[wps.length - 1].lat},${wps[wps.length - 1].lng}`;
+    const middle = wps.slice(1, -1).map((p) => `${p.lat},${p.lng}`).join('|');
+
+    let url =
+      `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}` +
+      `&destination=${destination}&mode=${mode}&key=${key}`;
+    if (middle) url += `&waypoints=${encodeURIComponent(middle)}`;
+
+    const data = await fetchJson(url);
+    if (data.status !== 'OK') {
+      throw new Error(data.error_message || `Directions: ${data.status}`);
+    }
+
+    const encoded = data.routes?.[0]?.overview_polyline?.points;
+    if (!encoded) throw new Error('Directions sin polyline');
+    return decodePolyline(encoded);
+  }
+
+  static async osrmRoute(waypoints) {
+    const wps = (waypoints || []).filter(
+      (p) => Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng))
+    );
+    if (wps.length < 2) throw new Error('Waypoints insuficientes');
+
+    const coords = wps.map((p) => `${p.lng},${p.lat}`).join(';');
+    const url =
+      `https://router.project-osrm.org/route/v1/foot/${coords}` +
+      '?overview=full&geometries=geojson&steps=false';
+    const res = await fetch(url, { headers: { 'User-Agent': 'OpoFit/1.0' } });
+    if (!res.ok) throw new Error(`OSRM ${res.status}`);
+    const data = await res.json();
+    if (data.code !== 'Ok' || !data.routes?.[0]) {
+      throw new Error(data.message || 'OSRM sin ruta');
+    }
+    return data.routes[0].geometry.coordinates.map(([lng, lat]) => ({ lat, lng }));
+  }
+
+  static simplificarPolyline(puntos, max = 450) {
+    if (!puntos?.length || puntos.length <= max) return puntos || [];
+    const step = Math.ceil(puntos.length / max);
+    return puntos.filter((_, i) => i % step === 0 || i === puntos.length - 1);
+  }
+
+  /** Fallback geométrico si no hay routing disponible. */
   static puntosCircuito(lat, lng, distKm, variacion = 0) {
     const n = 32;
     const seed = Math.max(0, Number(variacion) || 0);
@@ -225,17 +359,33 @@ class MapasService {
     return m;
   }
 
-  static rutaEntreWaypoints(waypoints, nombre = 'Ruta personalizada') {
+  static async rutaEntreWaypoints(waypoints, nombre = 'Ruta personalizada') {
     const pts = (waypoints || [])
       .filter((p) => Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)))
       .map((p) => ({ lat: Number(p.lat), lng: Number(p.lng) }));
     if (pts.length < 2) throw new Error('Se necesitan al menos 2 puntos');
+
+    let routed = pts;
+    let origen = 'personalizada';
+    const key = apiKey();
+    try {
+      if (key) {
+        routed = await MapasService.directionsRoute(pts, key, 'walking');
+        origen = 'personalizada_calles';
+      } else {
+        routed = await MapasService.osrmRoute(pts);
+        origen = 'personalizada_osrm';
+      }
+    } catch (e) {
+      console.warn('Ruta personalizada por calles:', e.message);
+    }
+
     return {
       id: crypto.randomBytes(8).toString('hex'),
       nombre,
-      distanciaKm: Number((MapasService.longitudPolyline(pts) / 1000).toFixed(2)),
-      puntos: pts,
-      origen: 'personalizada'
+      distanciaKm: Number((MapasService.longitudPolyline(routed) / 1000).toFixed(2)),
+      puntos: MapasService.simplificarPolyline(routed),
+      origen
     };
   }
 
@@ -259,6 +409,37 @@ function escapeXml(s) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+/** Decodifica polyline de Google Directions. */
+function decodePolyline(encoded) {
+  const points = [];
+  let index = 0;
+  let lat = 0;
+  let lng = 0;
+  while (index < encoded.length) {
+    let shift = 0;
+    let result = 0;
+    let b;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    const dlat = (result & 1) ? ~(result >> 1) : (result >> 1);
+    lat += dlat;
+    shift = 0;
+    result = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    const dlng = (result & 1) ? ~(result >> 1) : (result >> 1);
+    lng += dlng;
+    points.push({ lat: lat / 1e5, lng: lng / 1e5 });
+  }
+  return points;
 }
 
 module.exports = MapasService;
