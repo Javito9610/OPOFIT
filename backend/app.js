@@ -42,6 +42,8 @@ app.use('/api/dashboard', require('./src/routes/DashboardRoute'));
 app.use('/api/planes', require('./src/routes/PlanesRoute'));
 app.use('/api/gps', require('./src/routes/GpsRoute'));
 app.use('/api/historial-pro', require('./src/routes/HistorialAvanzadoRoute'));
+app.use('/api/analisis', require('./src/routes/AnalisisRoute'));
+app.use('/api/logros', require('./src/routes/LogrosRoute'));
 app.use('/api/integraciones', require('./src/routes/IntegracionesRoute'));
 app.use('/api/amigos', require('./src/routes/AmigosRoute'));
 app.use('/api/premium', require('./src/routes/PremiumRoute'));

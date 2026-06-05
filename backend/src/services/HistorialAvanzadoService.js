@@ -13,6 +13,7 @@ class HistorialAvanzadoService {
     const ahora = new Date();
     const desde = new Date(ahora);
     switch (String(periodo).toLowerCase()) {
+      case 'all': desde.setFullYear(2000, 0, 1); break;
       case 'year': desde.setFullYear(desde.getFullYear() - 1); break;
       case 'month': desde.setMonth(desde.getMonth() - 1); break;
       case 'week':
