@@ -22,6 +22,8 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
@@ -44,8 +46,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -66,6 +70,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun MisDispositivosScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToGpsHub: () -> Unit = {},
     viewModel: IntegracionesViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -100,6 +105,7 @@ fun MisDispositivosScreen(
     }
 
     val proveedores = state.estado.proveedores.associateBy { it.provider }
+    var showAvanzado by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -133,30 +139,25 @@ fun MisDispositivosScreen(
                 ) {
                     Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            "Conecta tu reloj o pulsera",
+                            "Conecta tu reloj sin APIs de pago",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
-                            "OpoFit se conecta con prácticamente cualquier reloj o pulsera del mercado " +
-                                "(Garmin, Polar, Mi Band, Amazfit, Fitbit, Samsung Galaxy Watch, Suunto, Coros, " +
-                                "Wahoo, Whoop, Oura, y más).\n\n" +
-                                "Los tres caminos:",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Text(
-                            "1. Health Connect — el camino recomendado en Android. Tu reloj envía datos " +
-                                "a Health Connect y OpoFit los lee.\n" +
-                                "2. Strava — funciona para todos los relojes que ya sincronizan a Strava " +
-                                "(incluso Apple Watch vía iPhone).\n" +
-                                "3. Polar AccessLink — si tienes un Polar y prefieres conexión directa.",
+                            "Funciona con Garmin, Polar, Samsung, Fitbit, Mi Band, Amazfit, Suunto, Coros y más.\n\n" +
+                                "Recomendado:\n" +
+                                "1. Health Connect — sincronización automática desde la app de tu reloj.\n" +
+                                "2. Importar GPX — exporta desde Strava/Garmin/Wikiloc e impórtalo en Rutas GPS.\n" +
+                                "3. Banda BLE — pulso en vivo durante una actividad GPS.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }
+            }
+            item {
+                ImportGpxCard(onOpenGpsHub = onNavigateToGpsHub)
             }
             item {
                 HealthConnectCard(
@@ -180,25 +181,56 @@ fun MisDispositivosScreen(
                 )
             }
             item {
-                StravaCard(
-                    estado = proveedores["STRAVA"],
-                    configurado = state.estado.stravaConfigured,
-                    onConnect = { openOauthUrl(IntegracionesApi.stravaStartUrl()) },
-                    onSync = { viewModel.syncStrava() },
-                    onDisconnect = { viewModel.disconnectStrava() }
-                )
-            }
-            item {
-                PolarCard(
-                    estado = proveedores["POLAR"],
-                    configurado = state.estado.polarConfigured,
-                    onConnect = { openOauthUrl(IntegracionesApi.polarStartUrl()) },
-                    onSync = { viewModel.syncPolar() },
-                    onDisconnect = { viewModel.disconnectPolar() }
-                )
-            }
-            item {
                 BleDirectoCard()
+            }
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { showAvanzado = !showAvanzado }
+                ) {
+                    Row(
+                        Modifier.padding(14.dp).fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "Conexiones opcionales (avanzado)",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                "Strava / Polar — requieren configuración del servidor",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Icon(
+                            if (showAvanzado) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                            contentDescription = null
+                        )
+                    }
+                }
+            }
+            if (showAvanzado) {
+                item {
+                    StravaCard(
+                        estado = proveedores["STRAVA"],
+                        configurado = state.estado.stravaConfigured,
+                        onConnect = { openOauthUrl(IntegracionesApi.stravaStartUrl()) },
+                        onSync = { viewModel.syncStrava() },
+                        onDisconnect = { viewModel.disconnectStrava() }
+                    )
+                }
+                item {
+                    PolarCard(
+                        estado = proveedores["POLAR"],
+                        configurado = state.estado.polarConfigured,
+                        onConnect = { openOauthUrl(IntegracionesApi.polarStartUrl()) },
+                        onSync = { viewModel.syncPolar() },
+                        onDisconnect = { viewModel.disconnectPolar() }
+                    )
+                }
             }
             item {
                 AppleWatchCard()
@@ -366,9 +398,10 @@ private fun StravaCard(
     ) {
         if (!configurado) {
             Text(
-                "El backend no tiene credenciales de Strava. Añade STRAVA_CLIENT_ID y STRAVA_CLIENT_SECRET al .env del servidor.",
+                "Strava exige suscripción de desarrollador para nuevas apps. " +
+                    "No es necesario para usar OpoFit: usa Health Connect o importa GPX desde Rutas GPS.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             return@ProviderCard
         }
@@ -409,9 +442,10 @@ private fun PolarCard(
     ) {
         if (!configurado) {
             Text(
-                "El backend no tiene credenciales de Polar. Añade POLAR_CLIENT_ID y POLAR_CLIENT_SECRET al .env del servidor.",
+                "Requiere credenciales Polar en el servidor (POLAR_CLIENT_ID/SECRET). " +
+                    "Alternativa: Health Connect o importar GPX desde Rutas GPS.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             return@ProviderCard
         }
@@ -425,6 +459,27 @@ private fun PolarCard(
                 }
                 OutlinedButton(onClick = onDisconnect) { Text("Desconectar") }
             }
+        }
+    }
+}
+
+@Composable
+private fun ImportGpxCard(onOpenGpsHub: () -> Unit) {
+    ProviderCard(
+        title = "Importar desde Strava / Garmin / Wikiloc",
+        subtitle = "Sin API de pago — exporta GPX e impórtalo en OpoFit",
+        icon = Icons.Filled.UploadFile,
+        estado = "Recomendado",
+        estadoOk = true
+    ) {
+        Text(
+            "En Strava: actividad → ⋮ → Exportar GPX. En Garmin/Wikiloc: exportar ruta como .gpx. " +
+                "Luego en Rutas GPS pulsa \"Elegir fichero .gpx\".",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Button(onClick = onOpenGpsHub) {
+            Text("Ir a Rutas GPS e importar")
         }
     }
 }

@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BluetoothConnected
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
@@ -41,6 +42,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -79,7 +82,9 @@ fun GpsHubScreen(
     val history by viewModel.history.collectAsState()
     val tracking by viewModel.tracking.collectAsState()
     val hrState by viewModel.hrState.collectAsState()
+    val importMsg by viewModel.importMessage.collectAsState()
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var showPermDialog by remember { mutableStateOf(false) }
     var showHrDialog by remember { mutableStateOf(false) }
@@ -137,7 +142,20 @@ fun GpsHubScreen(
         }
     }
 
+    val gpxPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) viewModel.importGpx(uri)
+    }
+
     LaunchedEffect(Unit) { viewModel.loadHistory() }
+
+    LaunchedEffect(importMsg) {
+        importMsg?.let { msg ->
+            snackbarHostState.showSnackbar(msg)
+            viewModel.consumeImportMessage()
+        }
+    }
 
     if (showPermDialog) {
         AlertDialog(
@@ -190,7 +208,8 @@ fun GpsHubScreen(
                     navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
@@ -278,6 +297,34 @@ fun GpsHubScreen(
                                 Spacer(Modifier.size(8.dp))
                                 Text("Iniciar ${selectedType.display.lowercase()}")
                             }
+                        }
+                    }
+                }
+            }
+
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.UploadFile, null, tint = MaterialTheme.colorScheme.primary)
+                            Text(
+                                "  Importar actividad (GPX)",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        Text(
+                            "¿Tienes actividades en Strava, Garmin o Wikiloc? Expórtalas como GPX " +
+                                "y impórtalas aquí sin necesitar API de pago.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        OutlinedButton(
+                            onClick = { gpxPicker.launch(arrayOf("application/gpx+xml", "application/xml", "*/*")) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Filled.UploadFile, null, Modifier.size(18.dp))
+                            Text("  Elegir fichero .gpx")
                         }
                     }
                 }

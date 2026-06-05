@@ -14,6 +14,8 @@ import com.opofit.miapp.gps.service.GpsLastResult
 import com.opofit.miapp.gps.service.GpsTracker
 import com.opofit.miapp.gps.service.GpsTrackingService
 import com.opofit.miapp.gps.service.HrBleManager
+import com.opofit.miapp.gps.util.GpxImport
+import android.net.Uri
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -48,6 +50,9 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _lastSaved = MutableStateFlow<ActivitySummary?>(null)
     val lastSaved: StateFlow<ActivitySummary?> = _lastSaved.asStateFlow()
+
+    private val _importMessage = MutableStateFlow<String?>(null)
+    val importMessage: StateFlow<String?> = _importMessage.asStateFlow()
 
     init {
         loadHistory()
@@ -208,5 +213,35 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
 
     fun consumeLastSaved() {
         _lastSaved.value = null
+    }
+
+    /** Importa un fichero GPX (Strava, Garmin, Wikiloc...) y lo guarda en historial. */
+    fun importGpx(uri: Uri) {
+        viewModelScope.launch {
+            _importMessage.value = null
+            try {
+                val ctx = getApplication<Application>()
+                val summary = ctx.contentResolver.openInputStream(uri)?.use { stream ->
+                    GpxImport.parse(stream).getOrThrow()
+                } ?: throw IllegalArgumentException("No se pudo leer el fichero")
+                val existing = repo.get(summary.id)
+                if (existing != null) {
+                    _importMessage.value = "Esta actividad ya estaba importada"
+                    return@launch
+                }
+                repo.save(summary)
+                _lastSaved.value = summary
+                loadHistory()
+                syncToBackend(summary)
+                val dist = com.opofit.miapp.gps.util.GpsMetrics.formatDistance(summary.distanceM)
+                _importMessage.value = "Importado: ${summary.type.display} · $dist"
+            } catch (e: Exception) {
+                _importMessage.value = e.message ?: "No se pudo importar el GPX"
+            }
+        }
+    }
+
+    fun consumeImportMessage() {
+        _importMessage.value = null
     }
 }

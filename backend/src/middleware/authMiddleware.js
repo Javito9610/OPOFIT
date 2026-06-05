@@ -1,13 +1,26 @@
 const jwt = require('jsonwebtoken');
-const validarToken = (req, res, next) => {
+
+/** Lee JWT del header Authorization o, en flujos OAuth por navegador, de ?token= */
+function extraerToken(req) {
   const authHeader = req.header('Authorization');
-  if (!authHeader) {
+  if (authHeader) {
+    const partes = authHeader.split(' ');
+    if (partes.length === 2 && partes[0] === 'Bearer') return partes[1];
+    if (partes.length === 1) return partes[0];
+  }
+  const q = req.query?.token;
+  if (typeof q === 'string' && q.trim()) return q.trim();
+  return null;
+}
+
+const validarToken = (req, res, next) => {
+  const token = extraerToken(req);
+  if (!token) {
     return res.status(401).json({
       ok: false,
       msg: 'No hay token en la petición. Acceso denegado.'
     });
   }
-  const token = authHeader.split(' ')[1];
   try {
     if (!process.env.JWT_SECRET) {
       return res.status(500).json({

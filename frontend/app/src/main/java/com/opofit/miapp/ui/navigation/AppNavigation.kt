@@ -360,7 +360,8 @@ fun AppNavigation(
 
         composable(NavDestinations.MIS_DISPOSITIVOS) {
             MisDispositivosScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToGpsHub = { navController.navigate(NavDestinations.GPS_HUB) }
             )
         }
     }

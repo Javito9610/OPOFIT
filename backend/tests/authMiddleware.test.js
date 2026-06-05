@@ -74,4 +74,13 @@ describe('authMiddleware - validarToken', () => {
     validarToken(req, res, next);
     expect(jwt.verify).toHaveBeenCalledWith(token, 'test-secret');
   });
+
+  test('acepta token en query (?token=) para OAuth por navegador', () => {
+    req.header.mockReturnValue(undefined);
+    req.query = { token: 'jwt-desde-navegador' };
+    jwt.verify.mockReturnValue({ id: 42 });
+    validarToken(req, res, next);
+    expect(jwt.verify).toHaveBeenCalledWith('jwt-desde-navegador', 'test-secret');
+    expect(next).toHaveBeenCalled();
+  });
 });
