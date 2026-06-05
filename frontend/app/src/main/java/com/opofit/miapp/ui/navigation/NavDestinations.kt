@@ -34,6 +34,7 @@ object NavDestinations {
     const val COMUNIDAD = "comunidad"
 
     const val GPS_HUB = "gps_hub"
+    const val MAPA_ENTRENO = "mapa_entreno?distKm={distKm}"
     const val GPS_RECORDING = "gps_recording"
     const val GPS_ACTIVITY_DETAIL = "gps_activity/{activity_id}"
 

@@ -154,8 +154,16 @@ fun PlanPersonalizacionCard(
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
+            if (!personalizacion.entorno_etiqueta.isNullOrBlank()) {
+                Text(
+                    "${personalizacion.entorno_emoji ?: ""} Entorno: ${personalizacion.entorno_etiqueta}",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
             Text(
-                personalizacion.resumen,
+                personalizacion.explicacion_ia ?: personalizacion.resumen,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSecondaryContainer
             )
@@ -181,8 +189,13 @@ fun PlanPersonalizacionCard(
                     }
                 }
             }
+            val extras = buildList {
+                add("${personalizacion.ajustes_aplicados} ejercicios adaptados")
+                personalizacion.sustituciones?.takeIf { it > 0 }?.let { add("$it sustituidos a tu entorno") }
+                add("racha ${personalizacion.racha_dias} días")
+            }
             Text(
-                "${personalizacion.ajustes_aplicados} ejercicios adaptados · racha ${personalizacion.racha_dias} días",
+                extras.joinToString(" · "),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
             )

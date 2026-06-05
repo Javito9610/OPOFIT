@@ -20,6 +20,10 @@ data class EjercicioPlan(
     val id_ejercicio: Int? = null,
     val nombre: String,
     val video_url: String? = null,
+    val animacion_url: String? = null,
+    val instrucciones_tecnicas: String? = null,
+    val tipo_ilustracion: String? = null,
+    val equipamiento: String? = null,
     val categoria: String? = null,
     val pilar: String? = null,
     val series: Int,
@@ -29,7 +33,9 @@ data class EjercicioPlan(
     val series_base: Int? = null,
     val repeticiones_base: Int? = null,
     val personalizado: Boolean = false,
-    val motivo_ajuste: String? = null
+    val motivo_ajuste: String? = null,
+    val sustituido: Boolean = false,
+    val nombre_original: String? = null
 )
 
 data class PilarResumen(
@@ -46,7 +52,44 @@ data class PersonalizacionPlan(
     val ajustes_aplicados: Int = 0,
     val nivel_usado: String? = null,
     val racha_dias: Int = 0,
-    val sesiones_semana: Int = 0
+    val sesiones_semana: Int = 0,
+    val explicacion_ia: String? = null,
+    val entorno_entreno: String? = null,
+    val entorno_etiqueta: String? = null,
+    val entorno_emoji: String? = null,
+    val variacion_seed: Int? = null,
+    val sustituciones: Int? = null,
+    val coaching_fuente: String? = null
+)
+
+data class EntornoEntrenoOpcion(
+    val id: String,
+    val etiqueta: String,
+    val emoji: String? = null,
+    val descripcion: String? = null
+)
+
+data class EntornoUsuarioData(
+    val entorno: String? = null,
+    val seed: Int = 0
+)
+
+data class EntornosListResponse(
+    val ok: Boolean,
+    val data: List<EntornoEntrenoOpcion>? = null,
+    val msg: String? = null
+)
+
+data class EntornoUsuarioResponse(
+    val ok: Boolean,
+    val data: EntornoUsuarioData? = null,
+    val msg: String? = null
+)
+
+data class PlanRegenerarResponse(
+    val ok: Boolean,
+    val data: PlanSemanal? = null,
+    val msg: String? = null
 )
 
 data class DiaPlan(

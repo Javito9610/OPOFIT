@@ -41,6 +41,7 @@ app.use('/api/ranking', require('./src/routes/RankingRoute'));
 app.use('/api/dashboard', require('./src/routes/DashboardRoute'));
 app.use('/api/planes', require('./src/routes/PlanesRoute'));
 app.use('/api/gps', require('./src/routes/GpsRoute'));
+app.use('/api/mapas', require('./src/routes/MapasRoute'));
 app.use('/api/historial-pro', require('./src/routes/HistorialAvanzadoRoute'));
 app.use('/api/analisis', require('./src/routes/AnalisisRoute'));
 app.use('/api/logros', require('./src/routes/LogrosRoute'));
@@ -58,7 +59,14 @@ if (process.env.NOTIFICATIONS_CRON === 'true') {
       .then((r) => console.log('[cron] Recordatorios:', r))
       .catch((e) => console.error('[cron] Error:', e.message));
   });
+  const RssService = require('./src/services/RssService');
+  cron.schedule('0 */6 * * *', () => {
+    RssService.pollYNotificarAlertas()
+      .then((r) => console.log('[cron] Alertas RSS:', r))
+      .catch((e) => console.error('[cron] RSS:', e.message));
+  });
   console.log('Cron de recordatorios activo (cada hora, hora preferida del usuario)');
+  console.log('Cron alertas RSS activo (cada 6 horas)');
 }
 
 const DbMigrationService = require('./src/services/DbMigrationService');

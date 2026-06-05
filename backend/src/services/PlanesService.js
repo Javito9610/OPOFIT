@@ -2,6 +2,7 @@ const db = require('../config/db');
 const RutinaService = require('./RutinasService');
 const BancoPlanesImportService = require('./BancoPlanesImportService');
 const PlanPersonalizadorService = require('./PlanPersonalizadorService');
+const PlanGeneradorService = require('./PlanGeneradorService');
 
 const NOMBRES_DIA = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -26,7 +27,8 @@ class PlanesService {
   static async cargarEjerciciosSesion(idPlanDia, idRutinaOpo) {
     const [desdePlan] = await db.query(
       `SELECT pde.orden, pde.nombre_prescripcion AS nombre, pde.series, pde.repeticiones, pde.descanso,
-              pde.notas AS unidad, e.id_ejercicio, e.video_url, e.categoria, e.pilar
+              pde.notas AS unidad, e.id_ejercicio, e.video_url, e.animacion_url, e.instrucciones_tecnicas,
+              e.tipo_ilustracion, e.categoria, e.pilar, e.grupo_muscular, e.equipamiento
        FROM plan_dia_ejercicios pde
        LEFT JOIN ejercicios e ON pde.ejercicios_id_ejercicio = e.id_ejercicio
        WHERE pde.plan_dias_id = ?
@@ -38,6 +40,11 @@ class PlanesService {
         id_ejercicio: e.id_ejercicio,
         nombre: e.nombre,
         video_url: e.video_url,
+        animacion_url: e.animacion_url,
+        instrucciones_tecnicas: e.instrucciones_tecnicas,
+        tipo_ilustracion: e.tipo_ilustracion,
+        grupo_muscular: e.grupo_muscular,
+        equipamiento: e.equipamiento,
         categoria: e.categoria,
         pilar: e.pilar,
         series: e.series,
@@ -100,7 +107,7 @@ class PlanesService {
     return `${y}-${m}-${day}`;
   }
 
-  static async obtenerPlanSemanal(userId, idOposicion, nivel, genero) {
+  static async obtenerPlanSemanal(userId, idOposicion, nivel, genero, opts = {}) {
     const idPlan = await PlanesService.obtenerPlanId(idOposicion, nivel, genero);
     if (!idPlan) return null;
 
@@ -156,17 +163,38 @@ class PlanesService {
       proxima_sesion: proxima
     };
 
+    let plan = planBase;
     try {
-      return await PlanPersonalizadorService.personalizarPlan(
-        userId,
-        idOposicion,
-        planBase,
-        nivel
-      );
+      plan = await PlanPersonalizadorService.personalizarPlan(userId, idOposicion, planBase, nivel);
     } catch (err) {
       console.error('Plan personalizador:', err.message);
-      return planBase;
     }
+
+    try {
+      plan = await PlanGeneradorService.aplicarGeneracionInteligente(
+        userId,
+        idOposicion,
+        plan,
+        nivel,
+        opts
+      );
+      if (plan.generacion?.activa && plan.personalizacion) {
+        plan.personalizacion = {
+          ...plan.personalizacion,
+          explicacion_ia: plan.generacion.explicacion_ia,
+          entorno_entreno: plan.generacion.entorno_entreno,
+          entorno_etiqueta: plan.generacion.entorno_etiqueta,
+          entorno_emoji: plan.generacion.entorno_emoji,
+          variacion_seed: plan.generacion.variacion_seed,
+          sustituciones: plan.generacion.sustituciones,
+          coaching_fuente: plan.generacion.coaching_fuente
+        };
+      }
+    } catch (err) {
+      console.error('Plan generador:', err.message);
+    }
+
+    return plan;
   }
 
   static async obtenerCalendarioMes(userId, idOposicion, nivel, genero, year, month) {

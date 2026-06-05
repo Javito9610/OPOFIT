@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BluetoothConnected
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.UploadFile
@@ -75,6 +76,7 @@ import java.util.Locale
 fun GpsHubScreen(
     onNavigateBack: () -> Unit,
     onStartRecording: () -> Unit,
+    onOpenMapa: () -> Unit = {},
     onOpenActivity: (String) -> Unit,
     viewModel: GpsViewModel = viewModel()
 ) {
@@ -297,6 +299,14 @@ fun GpsHubScreen(
                                 Spacer(Modifier.size(8.dp))
                                 Text("Iniciar ${selectedType.display.lowercase()}")
                             }
+                        }
+                        OutlinedButton(
+                            onClick = onOpenMapa,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Filled.Explore, null, Modifier.size(18.dp))
+                            Spacer(Modifier.size(6.dp))
+                            Text("Lugares y rutas cerca")
                         }
                     }
                 }

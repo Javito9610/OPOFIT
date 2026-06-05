@@ -33,6 +33,9 @@ const state = {
   notif_tokens: [],
   rutinas_compartidas: [],
   plan_dias: [],
+  planes_entrenamiento: [],
+  plan_dia_ejercicios: [],
+  planes_generados_cache: [],
   banco_dias: [],
   fcm_tokens: [],
   bbb_seed: false
@@ -81,6 +84,8 @@ function makeUser(overrides = {}) {
     perfil_publico: 1,
     hora_recordatorio_entreno: '18:00:00',
     recordatorio_entreno_activo: 0,
+    entorno_entreno: null,
+    plan_variacion_seed: 0,
     ...overrides
   };
   state.usuarios.push(u);
@@ -111,6 +116,27 @@ function query(sql, params = []) {
   if (s.startsWith('select genero from usuarios where id_usuario')) {
     const u = state.usuarios.find((x) => x.id_usuario === Number(params[0]));
     return Promise.resolve([u ? [{ genero: u.genero }] : [], []]);
+  }
+  if (s.startsWith('select genero, peso, altura from usuarios where id_usuario')) {
+    const u = state.usuarios.find((x) => x.id_usuario === Number(params[0]));
+    return Promise.resolve([u ? [{ genero: u.genero, peso: u.peso, altura: u.altura }] : [], []]);
+  }
+  if (s.startsWith('select entorno_entreno, plan_variacion_seed from usuarios where id_usuario')) {
+    const u = state.usuarios.find((x) => x.id_usuario === Number(params[0]));
+    return Promise.resolve([
+      u ? [{ entorno_entreno: u.entorno_entreno, plan_variacion_seed: u.plan_variacion_seed || 0 }] : [],
+      []
+    ]);
+  }
+  if (s.startsWith('update usuarios set entorno_entreno = ? where id_usuario')) {
+    const u = state.usuarios.find((x) => x.id_usuario === Number(params[1]));
+    if (u) u.entorno_entreno = params[0];
+    return Promise.resolve([{ affectedRows: u ? 1 : 0 }, []]);
+  }
+  if (s.startsWith('update usuarios set plan_variacion_seed = coalesce(plan_variacion_seed, 0) + 1')) {
+    const u = state.usuarios.find((x) => x.id_usuario === Number(params[0]));
+    if (u) u.plan_variacion_seed = Number(u.plan_variacion_seed || 0) + 1;
+    return Promise.resolve([{ affectedRows: u ? 1 : 0 }, []]);
   }
   if (s.startsWith('select id_usuario from usuarios where id_usuario')) {
     const u = state.usuarios.find((x) => x.id_usuario === Number(params[0]));
@@ -591,6 +617,140 @@ function query(sql, params = []) {
   }
   if (s.startsWith('select * from ejercicios')) {
     return Promise.resolve([state.ejercicios.slice(), []]);
+  }
+  if (s.includes('from ejercicios') && s.includes('entornos')) {
+    const rows = state.ejercicios.map((e) => ({
+      id_ejercicio: e.id_ejercicio,
+      nombre: e.nombre,
+      pilar: e.pilar,
+      grupo_muscular: e.grupo_muscular || 'General',
+      equipamiento: e.equipamiento || '—',
+      entornos: e.entornos,
+      tipo_ilustracion: e.tipo_ilustracion,
+      video_url: e.video_url,
+      animacion_url: e.animacion_url,
+      instrucciones_tecnicas: e.instrucciones_tecnicas,
+      categoria: e.categoria
+    }));
+    return Promise.resolve([rows, []]);
+  }
+
+  // ---------- PLANES ENTRENAMIENTO ----------
+  if (s.startsWith('select id_plan from planes_entrenamiento')) {
+    const row = state.planes_entrenamiento.find(
+      (p) =>
+        p.oposiciones_id_oposicion === Number(params[0]) &&
+        p.nivel === params[1] &&
+        p.genero === params[2] &&
+        p.fuente === 'opofit_banco_planes'
+    );
+    return Promise.resolve([row ? [{ id_plan: row.id_plan }] : [], []]);
+  }
+  if (s.startsWith('select pd.id_plan_dia, pd.dia_semana')) {
+    const rows = state.plan_dias
+      .filter((d) => d.planes_id_plan === Number(params[0]))
+      .sort((a, b) => a.orden - b.orden);
+    return Promise.resolve([rows, []]);
+  }
+  if (s.startsWith('select pde.orden, pde.nombre_prescripcion')) {
+    const rows = state.plan_dia_ejercicios
+      .filter((p) => p.plan_dias_id === Number(params[0]))
+      .sort((a, b) => a.orden - b.orden)
+      .map((p) => {
+        const e = state.ejercicios.find((x) => x.id_ejercicio === p.ejercicios_id_ejercicio);
+        return {
+          orden: p.orden,
+          nombre: p.nombre_prescripcion,
+          series: p.series,
+          repeticiones: p.repeticiones,
+          descanso: p.descanso,
+          unidad: p.notas,
+          id_ejercicio: e?.id_ejercicio,
+          video_url: e?.video_url,
+          animacion_url: e?.animacion_url,
+          instrucciones_tecnicas: e?.instrucciones_tecnicas,
+          tipo_ilustracion: e?.tipo_ilustracion,
+          categoria: e?.categoria,
+          pilar: e?.pilar,
+          grupo_muscular: e?.grupo_muscular,
+          equipamiento: e?.equipamiento
+        };
+      });
+    return Promise.resolve([rows, []]);
+  }
+  if (s.startsWith('select 1 from historial_sesiones') && s.includes('date(fecha_entreno)')) {
+    const hit = state.historial_sesiones.some(
+      (h) =>
+        h.usuarios_id_usuario === Number(params[0]) &&
+        h.rutinas_opo_id_rutina_opo === Number(params[1]) &&
+        new Date(h.fecha_entreno).toISOString().slice(0, 10) === String(params[2])
+    );
+    return Promise.resolve([hit ? [{ ok: 1 }] : [], []]);
+  }
+  if (s.startsWith('select distinct dayofweek(fecha_entreno)')) {
+    const rows = state.historial_sesiones
+      .filter((h) => h.usuarios_id_usuario === Number(params[0]) && h.tipo_rutina === 'OPO')
+      .map((h) => {
+        const d = new Date(h.fecha_entreno);
+        const dow = d.getDay() === 0 ? 7 : d.getDay();
+        return { dow, rutinas_opo_id_rutina_opo: h.rutinas_opo_id_rutina_opo, f: d.toISOString().slice(0, 10) };
+      });
+    return Promise.resolve([rows, []]);
+  }
+  if (s.startsWith('select count(*) as sesionessemana from historial_sesiones')) {
+    const n = state.historial_sesiones.filter(
+      (h) => h.usuarios_id_usuario === Number(params[0]) && h.tipo_rutina === 'OPO'
+    ).length;
+    return Promise.resolve([[{ sesionesSemana: n }], []]);
+  }
+
+  // ---------- PLANES GENERADOS CACHE ----------
+  if (s.startsWith('select plan_json, explicacion_ia, variacion_seed, entorno_entreno from planes_generados_cache')) {
+    const row = state.planes_generados_cache.find(
+      (c) =>
+        c.usuarios_id_usuario === Number(params[0]) &&
+        c.oposiciones_id_oposicion === Number(params[1]) &&
+        c.yearweek === Number(params[2])
+    );
+    return Promise.resolve([row ? [row] : [], []]);
+  }
+  if (s.startsWith('insert into planes_generados_cache')) {
+    const existing = state.planes_generados_cache.findIndex(
+      (c) =>
+        c.usuarios_id_usuario === Number(params[0]) &&
+        c.oposiciones_id_oposicion === Number(params[1]) &&
+        c.yearweek === Number(params[2])
+    );
+    const row = {
+      usuarios_id_usuario: Number(params[0]),
+      oposiciones_id_oposicion: Number(params[1]),
+      yearweek: Number(params[2]),
+      variacion_seed: Number(params[3]),
+      entorno_entreno: params[4],
+      plan_json: params[5],
+      explicacion_ia: params[6]
+    };
+    if (existing >= 0) state.planes_generados_cache[existing] = row;
+    else state.planes_generados_cache.push(row);
+    return Promise.resolve([{ insertId: 1, affectedRows: 1 }, []]);
+  }
+  if (s.startsWith('delete from planes_generados_cache')) {
+    const before = state.planes_generados_cache.length;
+    if (params.length === 1) {
+      state.planes_generados_cache = state.planes_generados_cache.filter(
+        (c) => c.usuarios_id_usuario !== Number(params[0])
+      );
+    } else {
+      state.planes_generados_cache = state.planes_generados_cache.filter(
+        (c) =>
+          !(
+            c.usuarios_id_usuario === Number(params[0]) &&
+            c.oposiciones_id_oposicion === Number(params[1]) &&
+            c.yearweek === Number(params[2])
+          )
+      );
+    }
+    return Promise.resolve([{ affectedRows: before - state.planes_generados_cache.length }, []]);
   }
 
   // ---------- SIMULACROS ----------

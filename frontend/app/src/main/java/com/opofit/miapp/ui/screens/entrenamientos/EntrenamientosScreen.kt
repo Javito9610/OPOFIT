@@ -57,8 +57,11 @@ import com.opofit.miapp.data.responsemodels.EjercicioRealizado
 import com.opofit.miapp.data.responsemodels.EjercicioPlan
 import com.opofit.miapp.gps.service.GpsLastResult
 import com.opofit.miapp.gps.util.TcxExport
+import com.opofit.miapp.ui.components.EntrenoActiveStepCard
+import com.opofit.miapp.ui.components.ExerciseValueInput
 import com.opofit.miapp.ui.components.RecordCelebrationDialog
 import com.opofit.miapp.ui.components.RestTimerSheet
+import com.opofit.miapp.utils.EntrenoValidation
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.HistorialViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasViewModel
@@ -120,6 +123,7 @@ fun EntrenamientosScreen(
     var showRestTimer by remember { mutableStateOf(false) }
     var restTimerSecs by remember { mutableIntStateOf(90) }
     var nextEjercicioNombre by remember { mutableStateOf("") }
+    var erroresValor by remember { mutableStateOf(mapOf<Int, String>()) }
 
     fun objetivoSegundosDesdeNombre(nombre: String): Int? {
         val regex = Regex("(\\d+)\\s*min\\b", RegexOption.IGNORE_CASE)
@@ -505,145 +509,142 @@ fun EntrenamientosScreen(
                 }
             }
 
-            val pasoActual = ejerciciosEstado.indexOfFirst { !it.completado }.let { if (it < 0) ejerciciosEstado.size - 1 else it }
-            if (ejerciciosEstado.isNotEmpty()) {
+            val pasoActualIdx = ejerciciosEstado.indexOfFirst { !it.completado }
+            val activo = ejerciciosEstado.getOrNull(pasoActualIdx)
+
+            fun unidadEjercicio(idx: Int): String? =
+                rutinasState.rutinaCompleta.getOrNull(selectedRutinaIndex)?.ejercicios?.getOrNull(idx)?.unidad?.ifBlank { null }
+
+            fun aplicarCronometro(idx: Int) {
+                val e = ejerciciosEstado.getOrNull(idx) ?: return
+                val unidadEff = EntrenoValidation.inferirUnidad(e.nombre, unidadEjercicio(idx))
+                val nuevoValor = when {
+                    e.tipo != null -> e.valorConseguido
+                    unidadEff == "min" -> "%.2f".format(segundos / 60.0)
+                    unidadEff == "seg" -> segundos.toString()
+                    else -> e.valorConseguido
+                }
+                ejerciciosEstado[idx] = e.copy(valorConseguido = nuevoValor)
+                val err = EntrenoValidation.validarValor(nuevoValor, unidadEff)
+                erroresValor = if (err == null) erroresValor - idx else erroresValor + (idx to err)
+            }
+
+            fun marcarCompletado(idx: Int) {
+                val estado = ejerciciosEstado.getOrNull(idx) ?: return
+                if (estado.completado) return
+                ejerciciosEstado[idx] = estado.copy(completado = true)
+                val nextIdx = idx + 1
+                if (nextIdx < ejerciciosEstado.size) {
+                    restTimerSecs = estado.descansoSeg.coerceIn(30, 300)
+                    nextEjercicioNombre = ejerciciosEstado[nextIdx].nombre
+                    showRestTimer = true
+                }
+            }
+
+            if (activo != null) {
                 item {
-                    Text(
-                        text = "Paso ${pasoActual + 1} de ${ejerciciosEstado.size}: ${ejerciciosEstado.getOrNull(pasoActual)?.nombre ?: ""}",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                    val unidadEff = EntrenoValidation.inferirUnidad(activo.nombre, unidadEjercicio(pasoActualIdx))
+                    val secsCalc = activo.objetivoSegundos?.let { minOf(segundos, it) } ?: segundos
+                    val (ritmoTxt, velTxt) = ritmoVelocidadTexto(activo.tipo, activo.distancia, secsCalc)
+                    val labelDist = when (activo.tipo) {
+                        "SWIM" -> if (unitDist == "mi") "Distancia (yd)" else "Distancia (m)"
+                        "RUN" -> if (unitDist == "mi") "Distancia (mi)" else "Distancia (km)"
+                        else -> "Distancia"
+                    }
+                    EntrenoActiveStepCard(
+                        paso = pasoActualIdx + 1,
+                        total = ejerciciosEstado.size,
+                        nombre = activo.nombre,
+                        objetivoSegundos = activo.objetivoSegundos,
+                        tipoCardio = activo.tipo,
+                        unidad = unidadEff,
+                        valor = activo.valorConseguido,
+                        distancia = activo.distancia,
+                        segundosCronometro = segundos,
+                        onValorChange = { v ->
+                            ejerciciosEstado[pasoActualIdx] = activo.copy(valorConseguido = v)
+                            val err = EntrenoValidation.validarValor(v, unidadEff)
+                            erroresValor = if (err == null) erroresValor - pasoActualIdx else erroresValor + (pasoActualIdx to err)
+                        },
+                        onDistanciaChange = { v ->
+                            val baseValue = when (activo.tipo) {
+                                "RUN" -> {
+                                    val d = v.replace(",", ".").toDoubleOrNull()
+                                    if (d != null && unitDist == "mi") Units.miToKm(d).toString() else v
+                                }
+                                "SWIM" -> {
+                                    val d = v.replace(",", ".").toDoubleOrNull()
+                                    if (d != null && unitDist == "mi") Units.ydToM(d).toString() else v
+                                }
+                                else -> v
+                            }
+                            ejerciciosEstado[pasoActualIdx] = activo.copy(distancia = v, valorConseguido = baseValue)
+                        },
+                        onUsarCronometro = {
+                            if (activo.tipo != null && segundos > 0) {
+                                /* ritmo ya usa segundos; opcionalmente fijar tiempo en valor */
+                            } else {
+                                aplicarCronometro(pasoActualIdx)
+                            }
+                        },
+                        onCompletar = { marcarCompletado(pasoActualIdx) },
+                        onGps = if (esEjercicioGps(activo.nombre, activo.tipo)) onNavigateToGps else null,
+                        errorValor = erroresValor[pasoActualIdx],
+                        ritmoTexto = ritmoTxt,
+                        velocidadTexto = velTxt,
+                        labelDistancia = labelDist
                     )
                 }
             }
 
+            val completados = ejerciciosEstado.withIndex().filter { it.value.completado }
+            if (completados.isNotEmpty()) {
+                item {
+                    Text(
+                        "Completados (${completados.size})",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
             itemsIndexed(ejerciciosEstado) { index, estado ->
-                val esPasoActual = index == pasoActual && !estado.completado
+                if (!estado.completado && index == pasoActualIdx) return@itemsIndexed
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = if (esPasoActual) 6.dp else 2.dp),
-                    colors = if (esPasoActual) {
-                        CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-                    } else {
-                        CardDefaults.cardColors()
-                    }
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Checkbox(
-                                checked = estado.completado,
-                                onCheckedChange = { checked ->
-                                    val wasDone = estado.completado
-                                    ejerciciosEstado[index] = estado.copy(completado = checked)
-                                    if (checked && !wasDone) {
-                                        val nextIdx = index + 1
-                                        if (nextIdx < ejerciciosEstado.size) {
-                                            restTimerSecs = estado.descansoSeg.coerceIn(30, 300)
-                                            nextEjercicioNombre = ejerciciosEstado[nextIdx].nombre
-                                            showRestTimer = true
-                                        }
-                                    }
-                                }
-                            )
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = estado.nombre,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            if (estado.objetivoSegundos != null && estado.tipo != null) {
-                                    Text(
-                                        text = "Objetivo: ${formatTime(estado.objetivoSegundos)}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        }
-
-                    if (estado.tipo != null) {
-                        val secsCalc = estado.objetivoSegundos?.let { minOf(segundos, it) } ?: segundos
-                        val (ritmoTxt, velTxt) = ritmoVelocidadTexto(estado.tipo, estado.distancia, secsCalc)
-                        val labelDist = when (estado.tipo) {
-                            "SWIM" -> if (unitDist == "mi") "Distancia (yd)" else "Distancia (m)"
-                            "RUN" -> if (unitDist == "mi") "Distancia (mi)" else "Distancia (km)"
-                            else -> "Distancia"
-                        }
-                            OutlinedTextField(
-                                value = estado.distancia,
-                                onValueChange = { v ->
-                                val baseValue = when (estado.tipo) {
-                                    "RUN" -> {
-                                        val d = v.replace(",", ".").toDoubleOrNull()
-                                        if (d != null && unitDist == "mi") Units.miToKm(d).toString() else v
-                                    }
-                                    "SWIM" -> {
-                                        val d = v.replace(",", ".").toDoubleOrNull()
-                                        if (d != null && unitDist == "mi") Units.ydToM(d).toString() else v
-                                    }
-                                    else -> v
-                                }
-                                val next = estado.copy(distancia = v, valorConseguido = baseValue)
-                                ejerciciosEstado[index] = next
-                                },
-                                label = { Text(labelDist) },
-                                placeholder = { Text(if (estado.tipo == "SWIM") "Ej: 1500" else "Ej: 7.20") },
-                                modifier = Modifier.fillMaxWidth(),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            singleLine = true,
-                            supportingText = {
-                                if (segundos <= 0) {
-                                    Text("Inicia el cronómetro para calcular ritmo y velocidad.")
-                                }
-                            }
-                            )
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Column {
-                                    Text("Ritmo medio", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    Text(ritmoTxt, fontWeight = FontWeight.Bold)
-                                }
-                                Column(horizontalAlignment = Alignment.End) {
-                                    Text("Velocidad media", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    Text(velTxt, fontWeight = FontWeight.Bold)
-                                }
-                            }
-                            if (esEjercicioGps(estado.nombre, estado.tipo)) {
-                                OutlinedButton(
-                                    onClick = onNavigateToGps,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Icon(Icons.Filled.Explore, null, Modifier.size(18.dp))
-                                    Spacer(Modifier.size(6.dp))
-                                    Text("Registrar con GPS")
-                                }
-                            }
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (estado.completado) {
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                         } else {
-                            val unidad = rutinasState.rutinaCompleta
-                                .getOrNull(selectedRutinaIndex)
-                                ?.ejercicios
-                                ?.getOrNull(index)
-                                ?.unidad
-                                ?.ifBlank { null }
-
-                            OutlinedTextField(
-                                value = estado.valorConseguido,
-                                onValueChange = { v ->
-                                    ejerciciosEstado[index] = estado.copy(valorConseguido = v)
-                                },
-                                label = { Text(if (unidad != null) "Valor ($unidad)" else "Valor") },
-                                modifier = Modifier.fillMaxWidth(),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                singleLine = true
+                            MaterialTheme.colorScheme.surface
+                        }
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Checkbox(
+                            checked = estado.completado,
+                            onCheckedChange = { checked ->
+                                if (checked) marcarCompletado(index)
+                                else ejerciciosEstado[index] = estado.copy(completado = false)
+                            }
+                        )
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                estado.nombre,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (estado.completado) FontWeight.Normal else FontWeight.Medium
                             )
+                            if (estado.completado && estado.valorConseguido.isNotBlank()) {
+                                Text(
+                                    "Valor: ${estado.valorConseguido}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
@@ -667,7 +668,17 @@ fun EntrenamientosScreen(
                     }
                 } else {
                     val hayEjerciciosCompletados = ejerciciosEstado.any { it.completado }
-                    val puedeFinalizar = hayEjerciciosCompletados && cronometroIniciadoAlgunaVez && segundos > 0
+                    val valoresInvalidos = ejerciciosEstado.withIndex().any { (i, e) ->
+                        e.completado && EntrenoValidation.validarValor(
+                            e.valorConseguido,
+                            EntrenoValidation.inferirUnidad(
+                                e.nombre,
+                                rutinasState.rutinaCompleta.getOrNull(selectedRutinaIndex)?.ejercicios?.getOrNull(i)?.unidad
+                            )
+                        ) != null
+                    }
+                    val puedeFinalizar =
+                        hayEjerciciosCompletados && cronometroIniciadoAlgunaVez && segundos > 0 && !valoresInvalidos
                     if (ejerciciosEstado.isNotEmpty() && !hayEjerciciosCompletados) {
                         Text(
                             text = "Marca al menos un ejercicio como completado para finalizar.",
@@ -681,6 +692,14 @@ fun EntrenamientosScreen(
                             text = "Inicia el cronómetro para poder registrar el entrenamiento.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                    }
+                    if (valoresInvalidos) {
+                        Text(
+                            text = "Corrige los valores marcados en rojo antes de finalizar.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
                     }

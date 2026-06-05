@@ -18,6 +18,7 @@ function buildApp() {
   app.use('/api/dashboard', require('../../src/routes/DashboardRoute'));
   app.use('/api/planes', require('../../src/routes/PlanesRoute'));
   app.use('/api/gps', require('../../src/routes/GpsRoute'));
+  app.use('/api/mapas', require('../../src/routes/MapasRoute'));
   app.use('/api/historial-pro', require('../../src/routes/HistorialAvanzadoRoute'));
   app.use('/api/analisis', require('../../src/routes/AnalisisRoute'));
   app.use('/api/logros', require('../../src/routes/LogrosRoute'));

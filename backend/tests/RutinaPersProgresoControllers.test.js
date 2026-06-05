@@ -7,6 +7,7 @@ jest.mock('../src/services/PremiumService');
 jest.mock('../src/services/InfoPruebasService');
 
 const rutinaPersService = require('../src/services/RutinaPersService');
+const db = require('../src/config/db');
 const progresoService = require('../src/services/ProgresoService');
 const RutinaService = require('../src/services/RutinasService');
 const PlanesService = require('../src/services/PlanesService');
@@ -195,6 +196,8 @@ describe('ProgresoController', () => {
         duracion: 30,
         ejercicios: [{ id_ejercicio: 1, valor: 10 }]
       };
+      RutinaService.inferUnidad.mockReturnValue('reps');
+      db.query.mockResolvedValue([[{ nombre: 'Dominadas' }]]);
       progresoService.registrarEntreno.mockResolvedValue({
         idHistorial: 7,
         recordsRotos: []
@@ -202,6 +205,21 @@ describe('ProgresoController', () => {
       await guardarEntrenamiento(req, res);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ ok: true, id: 7 }));
+    });
+
+    test('400 si valor de ejercicio es imposible', async () => {
+      req.body = {
+        tipoRutina: 'OPO',
+        idRutina: 1,
+        duracion: 30,
+        ejercicios: [{ id_ejercicio: 1, valor: 50000 }]
+      };
+      RutinaService.inferUnidad.mockReturnValue('reps');
+      db.query.mockResolvedValue([[{ nombre: 'Dominadas pronas' }]]);
+      await guardarEntrenamiento(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+      const body = res.json.mock.calls[0][0];
+      expect(body.msg).toMatch(/imposible|entero|alto/i);
     });
 
     test('500 sin error.message', async () => {

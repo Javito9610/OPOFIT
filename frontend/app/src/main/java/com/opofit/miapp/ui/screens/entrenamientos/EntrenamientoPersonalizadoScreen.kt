@@ -52,6 +52,8 @@ import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.EjercicioRealizado
 import com.opofit.miapp.data.responsemodels.RegistrarHistorialRequest
 import com.opofit.miapp.gps.service.GpsLastResult
+import com.opofit.miapp.ui.components.ExerciseValueInput
+import com.opofit.miapp.utils.EntrenoValidation
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasLibresViewModel
 import com.opofit.miapp.utils.Units
@@ -411,12 +413,12 @@ fun EntrenamientoPersonalizadoScreen(
                                             }
                                         }
                                     } else {
-                                        OutlinedTextField(
+                                        val unidadEff = EntrenoValidation.inferirUnidad(ej.nombre, null)
+                                        ExerciseValueInput(
                                             value = ej.valor,
                                             onValueChange = { v -> ejerciciosUi[idx] = ej.copy(valor = v) },
-                                            label = { Text("Valor (reps)") },
-                                            modifier = Modifier.fillMaxWidth(),
-                                            singleLine = true
+                                            unidad = unidadEff,
+                                            modifier = Modifier.fillMaxWidth()
                                         )
                                     }
                                 }

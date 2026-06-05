@@ -6,11 +6,11 @@ class RutinaService {
       .normalize('NFD')
       .replace(/\p{Diacritic}/gu, '')
       .toLowerCase();
-    if (n.includes('min')) return 'min';
-    if (n.includes('seg') || n.includes('sprint') || n.includes('segundo')) return 's';
-    if (n.includes('km')) return 'km';
+    if (/\bmin\b/.test(n) || /\d+\s*min/.test(n)) return 'min';
+    if (/\bseg\b/.test(n) || n.includes('sprint') || n.includes('segundo')) return 's';
+    if (/\bkm\b/.test(n) || /\d+\s*km/.test(n)) return 'km';
     if (n.includes('natacion') || n.includes('nadar')) return 'm';
-    if (n.includes('metro') || /(\d+)\s?m\b/.test(n)) return 'm';
+    if (n.includes('metro') || /\d+\s*m\b/.test(n)) return 'm';
     return 'reps';
   }
   static async calcularNotaYNivel(userId, idOposicion) {

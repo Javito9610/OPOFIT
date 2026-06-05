@@ -1,6 +1,7 @@
 jest.mock('../src/config/db');
 jest.mock('../src/services/NotificationService');
 jest.mock('../src/services/PlanesService');
+jest.mock('../src/services/PlanGeneradorService');
 jest.mock('../src/services/RutinasService');
 jest.mock('../src/services/PremiumService');
 jest.mock('../src/services/HistorialAvanzadoService');
@@ -8,6 +9,7 @@ jest.mock('../src/services/HistorialAvanzadoService');
 const db = require('../src/config/db');
 const NotificationService = require('../src/services/NotificationService');
 const PlanesService = require('../src/services/PlanesService');
+const PlanGeneradorService = require('../src/services/PlanGeneradorService');
 const RutinaService = require('../src/services/RutinasService');
 const PremiumService = require('../src/services/PremiumService');
 const HistorialAvanzadoService = require('../src/services/HistorialAvanzadoService');
@@ -144,6 +146,38 @@ describe('PlanesController', () => {
     const res = mockRes();
     await PlanesController.getCalendario(req, res);
     expect(res.status).toHaveBeenCalledWith(500);
+  });
+
+  test('getEntornos devuelve lista', async () => {
+    PlanGeneradorService.listarEntornos.mockReturnValue([{ id: 'CASA', etiqueta: 'En casa' }]);
+    const res = mockRes();
+    await PlanesController.getEntornos({}, res);
+    expect(res.json).toHaveBeenCalledWith({ ok: true, data: [{ id: 'CASA', etiqueta: 'En casa' }] });
+  });
+
+  test('putEntornoUsuario guarda entorno', async () => {
+    PlanGeneradorService.guardarEntorno.mockResolvedValue('GYM');
+    const req = mockReq({ usuario: { id: 2 }, body: { entorno: 'GYM' } });
+    const res = mockRes();
+    await PlanesController.putEntornoUsuario(req, res);
+    expect(PlanGeneradorService.guardarEntorno).toHaveBeenCalledWith(2, 'GYM');
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ ok: true, data: { entorno: 'GYM' } }));
+  });
+
+  test('postRegenerarPlan devuelve plan nuevo', async () => {
+    RutinaService.calcularNotaYNivel.mockResolvedValue({
+      pruebasFaltantes: 0,
+      nivelSugerido: 'INTERMEDIO',
+      genero: 'HOMBRE'
+    });
+    PremiumService.getEstadoPremium.mockResolvedValue({ esPremium: true });
+    PlanGeneradorService.regenerarPlan.mockResolvedValue({ semana: [{ dia_semana: 1 }] });
+    const req = mockReq({ usuario: { id: 1 }, params: { idOposicion: '1' } });
+    const res = mockRes();
+    await PlanesController.postRegenerarPlan(req, res);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ ok: true, data: { semana: [{ dia_semana: 1 }] } })
+    );
   });
 });
 

@@ -43,6 +43,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.data.responsemodels.EjercicioRealizado
+import com.opofit.miapp.ui.components.ExerciseValueInput
+import com.opofit.miapp.utils.EntrenoValidation
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.HistorialViewModel
 import java.text.SimpleDateFormat
@@ -71,8 +73,9 @@ fun RegistrarEntrenamientoScreen(
     var tipoRutinaSeleccionada by remember { mutableStateOf("OPO") } 
     var rutinaId by remember { mutableStateOf("") } 
 
-    data class EjercicioRow(val idEjercicio: String = "", val valor: String = "")
+    data class EjercicioRow(val idEjercicio: String = "", val valor: String = "", val nombre: String = "")
     val ejercicios = remember { mutableStateListOf(EjercicioRow()) }
+    var erroresValor by remember { mutableStateOf(mapOf<Int, String>()) }
 
     val oposiciones = listOf(
         "Policía Nacional" to 1,
@@ -230,14 +233,18 @@ fun RegistrarEntrenamientoScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true
                     )
-                    OutlinedTextField(
-                        value = row.valor,
-                        onValueChange = { ejercicios[index] = row.copy(valor = it) },
-                        label = { Text("Valor") },
-                        modifier = Modifier.weight(1f),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        ExerciseValueInput(
+                            value = row.valor,
+                            onValueChange = { v ->
+                                ejercicios[index] = row.copy(valor = v)
+                                val err = EntrenoValidation.validarValor(v, EntrenoValidation.inferirUnidad(row.nombre, null))
+                                erroresValor = if (err == null) erroresValor - index else erroresValor + (index to err)
+                            },
+                            unidad = EntrenoValidation.inferirUnidad(row.nombre, null),
+                            error = erroresValor[index]
+                        )
+                    }
                 }
             }
 

@@ -412,9 +412,17 @@ private fun NoticiasTab(
 
     val rssOrdenadas = remember(noticiasRss) {
         noticiasRss.sortedWith(
-            compareByDescending<NoticiaRss> { esRelevanteParaOposicion(it) }
+            compareByDescending<NoticiaRss> { it.urgente }
+                .thenByDescending { esRelevanteParaOposicion(it) || it.relevancia == "alta" }
                 .thenByDescending { it.fecha }
         )
+    }
+
+    fun etiquetaCategoria(cat: String): String = when (cat) {
+        "convocatoria" -> "📢 Convocatoria"
+        "plazo" -> "⏰ Plazo"
+        "noticia" -> "📰 Noticia"
+        else -> "📋 Info"
     }
 
     LazyColumn(
@@ -505,13 +513,14 @@ private fun NoticiasTab(
                                 color = if (relevante) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
                             )
                         }
-                        if (noticia.descripcion.isNotBlank()) {
+                        val texto = noticia.resumen.ifBlank { noticia.descripcion }
+                        if (texto.isNotBlank()) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = noticia.descripcion,
+                                text = texto,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = if (relevante) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
-                                maxLines = 3
+                                maxLines = 4
                             )
                         }
                         if (noticia.enlace.isNotBlank()) {

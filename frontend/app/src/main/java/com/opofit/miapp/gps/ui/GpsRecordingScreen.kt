@@ -49,7 +49,9 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.opofit.miapp.gps.model.GpsTrackingState
+import com.opofit.miapp.gps.service.RoutePreferences
 import com.opofit.miapp.gps.util.GpsMetrics
+import androidx.compose.ui.platform.LocalContext
 
 private val SpeedPalette = listOf(
     Color(0xFFD32F2F),
@@ -66,8 +68,19 @@ fun GpsRecordingScreen(
     viewModel: GpsViewModel = viewModel()
 ) {
     val state by viewModel.tracking.collectAsState()
+    val context = LocalContext.current
     val cameraPositionState = rememberCameraPositionState()
+    var plannedRoute by remember { mutableStateOf<List<LatLng>>(emptyList()) }
+    var plannedNombre by remember { mutableStateOf<String?>(null) }
     var startedSession by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        val route = RoutePreferences.load(context)
+        if (route != null && route.puntos.size >= 2) {
+            plannedRoute = route.puntos.map { LatLng(it.lat, it.lng) }
+            plannedNombre = route.nombre
+        }
+    }
     var showFinishDialog by remember { mutableStateOf(false) }
     var noPointsDialog by remember { mutableStateOf(false) }
 
@@ -127,7 +140,7 @@ fun GpsRecordingScreen(
     }
 
     Box(Modifier.fillMaxSize()) {
-        MapWithRoute(state, cameraPositionState)
+        MapWithRoute(state, cameraPositionState, plannedRoute)
 
         Surface(
             tonalElevation = 6.dp,
@@ -236,6 +249,7 @@ fun GpsRecordingScreen(
                         state.lastErrorMsg
                             ?: buildString {
                                 append("${state.type.emoji} ${state.type.display}")
+                                plannedNombre?.let { append(" · Ruta: $it") }
                                 if (state.hrDeviceConnected) append(" · ${state.hrDeviceName ?: "Banda BLE"}")
                                 if (state.paused) append(" · En pausa")
                             },
@@ -261,7 +275,11 @@ private fun MetricBlock(label: String, value: String) {
 }
 
 @Composable
-internal fun MapWithRoute(state: GpsTrackingState, cameraPositionState: CameraPositionState) {
+internal fun MapWithRoute(
+    state: GpsTrackingState,
+    cameraPositionState: CameraPositionState,
+    plannedRoute: List<LatLng> = emptyList()
+) {
     val pts = remember(state.points.size) {
         state.points.map { LatLng(it.lat, it.lng) }
     }
@@ -284,6 +302,13 @@ internal fun MapWithRoute(state: GpsTrackingState, cameraPositionState: CameraPo
                 compassEnabled = true
             )
         ) {
+            if (plannedRoute.size >= 2) {
+                Polyline(
+                    points = plannedRoute,
+                    color = Color(0xFF2E7D32),
+                    width = 8f
+                )
+            }
             if (pts.size >= 2) {
                 Polyline(
                     points = pts,

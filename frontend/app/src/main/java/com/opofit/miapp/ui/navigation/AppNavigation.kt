@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.opofit.miapp.gps.ui.GpsActivityDetailScreen
 import com.opofit.miapp.gps.ui.GpsHubScreen
+import com.opofit.miapp.gps.ui.MapaEntrenoScreen
 import com.opofit.miapp.gps.ui.GpsRecordingScreen
 import com.opofit.miapp.ui.screens.ajustes.AjustesScreen
 import com.opofit.miapp.ui.screens.historial.EjercicioHistorialScreen
@@ -206,7 +207,7 @@ fun AppNavigation(
                 onEntrenamientoFinalizado = {
                     navController.popBackStack()
                 },
-                onNavigateToGps = { navController.navigate(NavDestinations.GPS_HUB) },
+                onNavigateToGps = { navController.navigate("mapa_entreno?distKm=0") },
                 initialEnfoque = enfoque,
                 initialPlanDiaId = idPlanDia.takeIf { it > 0 },
                 initialRutinaOpoId = idRutinaOpo.takeIf { it > 0 }
@@ -294,7 +295,20 @@ fun AppNavigation(
             GpsHubScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onStartRecording = { navController.navigate(NavDestinations.GPS_RECORDING) },
+                onOpenMapa = { navController.navigate("mapa_entreno?distKm=0") },
                 onOpenActivity = { id -> navController.navigate("gps_activity/$id") }
+            )
+        }
+
+        composable(
+            route = NavDestinations.MAPA_ENTRENO,
+            arguments = listOf(navArgument("distKm") { type = NavType.FloatType; defaultValue = 0f })
+        ) { backStackEntry ->
+            val distKm = backStackEntry.arguments?.getFloat("distKm")?.toDouble()?.takeIf { it > 0 }
+            MapaEntrenoScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onUsarRutaEnGps = { navController.navigate(NavDestinations.GPS_RECORDING) },
+                distanciaObjetivoKm = distKm
             )
         }
 

@@ -2,8 +2,10 @@ const Parser = require('rss-parser');
 const https = require('https');
 const http = require('http');
 const zlib = require('zlib');
+const crypto = require('crypto');
 const { URL } = require('url');
 const db = require('../config/db');
+const NotificationService = require('./NotificationService');
 
 const parser = new Parser({
   timeout: 10000,
@@ -80,6 +82,34 @@ const FEEDS_GENERICOS_FILTRAR = new Set([
   'https://www.boe.es/rss/canal.php?c=personal'
 ]);
 
+/** Títulos ya notificados por push (persistencia ligera en memoria + hash) */
+const _alertasEnviadas = new Set();
+
+const PATRONES_CATEGORIA = {
+  convocatoria: [
+    'convocatoria',
+    'proceso selectivo',
+    'oposición',
+    'oposicion',
+    'ingreso',
+    'plaza',
+    'acceso libre',
+    'escala básica',
+    'escala basica'
+  ],
+  plazo: [
+    'plazo',
+    'inscripción',
+    'inscripcion',
+    'solicitud',
+    'fecha límite',
+    'fecha limite',
+    'hasta el día',
+    'hasta el dia',
+    'presentación de instancias'
+  ]
+};
+
 class RssService {
   static _matchesOposicion(texto, idOposicion) {
     const t = (texto || '').toLowerCase();
@@ -104,7 +134,46 @@ class RssService {
   static _extractDescription(item) {
     const raw =
       item?.contentSnippet || item?.summary || item?.content || item?.['content:encoded'] || '';
-    return RssService.stripHtmlTags(String(raw)).substring(0, 280);
+    return RssService.stripHtmlTags(String(raw)).substring(0, 500);
+  }
+
+  static _resumen(texto, max = 140) {
+    const t = RssService.stripHtmlTags(String(texto || '')).replace(/\s+/g, ' ').trim();
+    if (!t) return '';
+    const cortado = t.length <= max ? t : `${t.substring(0, max - 1).trim()}…`;
+    const punto = cortado.indexOf('. ');
+    if (punto > 40 && punto < max) return cortado.substring(0, punto + 1);
+    return cortado;
+  }
+
+  static _clasificar(titulo, descripcion, tipoBase = 'rss') {
+    if (tipoBase === 'curada') return 'convocatoria';
+    const t = `${titulo} ${descripcion}`.toLowerCase();
+    if (PATRONES_CATEGORIA.plazo.some((k) => t.includes(k))) return 'plazo';
+    if (PATRONES_CATEGORIA.convocatoria.some((k) => t.includes(k))) return 'convocatoria';
+    return 'noticia';
+  }
+
+  static _esUrgente(categoria) {
+    return categoria === 'convocatoria' || categoria === 'plazo';
+  }
+
+  static _hashAlerta(idOposicion, titulo) {
+    return crypto.createHash('sha1').update(`${idOposicion}:${titulo}`).digest('hex');
+  }
+
+  static _enriquecerNoticia(noticia, idOposicion) {
+    const descripcion = noticia.descripcion || '';
+    const categoria = RssService._clasificar(noticia.titulo, descripcion, noticia.tipo);
+    return {
+      ...noticia,
+      categoria,
+      resumen: RssService._resumen(descripcion || noticia.titulo),
+      urgente: RssService._esUrgente(categoria),
+      relevancia: RssService._matchesOposicion(`${noticia.titulo} ${descripcion}`, idOposicion)
+        ? 'alta'
+        : 'media'
+    };
   }
 
   static stripHtmlTags(text) {
@@ -193,14 +262,19 @@ class RssService {
        ORDER BY fecha_publicacion DESC LIMIT 10`,
       [idOposicion]
     );
-    return (rows || []).map((n) => ({
-      titulo: n.titulo,
-      enlace: '',
-      fecha: n.fecha_publicacion ? new Date(n.fecha_publicacion).toISOString() : '',
-      fuente: 'OpoFit - Convocatoria',
-      descripcion: (n.contenido || '').substring(0, 280),
-      tipo: 'curada'
-    }));
+    return (rows || []).map((n) =>
+      RssService._enriquecerNoticia(
+        {
+          titulo: n.titulo,
+          enlace: '',
+          fecha: n.fecha_publicacion ? new Date(n.fecha_publicacion).toISOString() : '',
+          fuente: 'OpoFit - Convocatoria',
+          descripcion: (n.contenido || '').substring(0, 500),
+          tipo: 'curada'
+        },
+        idOposicion
+      )
+    );
   }
 
   static async obtenerNoticiasRss(idOposicion) {
@@ -227,14 +301,19 @@ class RssService {
           const key = titulo.toLowerCase();
           if (seen.has(key)) continue;
           seen.add(key);
-          todasNoticias.push({
-            titulo,
-            enlace: RssService._extractLink(item),
-            fecha: item.pubDate || item.isoDate || '',
-            fuente: feedConfig.nombre,
-            descripcion: RssService._extractDescription(item),
-            tipo: 'rss'
-          });
+          todasNoticias.push(
+            RssService._enriquecerNoticia(
+              {
+                titulo,
+                enlace: RssService._extractLink(item),
+                fecha: item.pubDate || item.isoDate || '',
+                fuente: feedConfig.nombre,
+                descripcion: RssService._extractDescription(item),
+                tipo: 'rss'
+              },
+              id
+            )
+          );
         }
       } catch (error) {
         console.warn(`RSS ${feedConfig.url}: ${error.message}`);
@@ -242,12 +321,42 @@ class RssService {
     }
 
     todasNoticias.sort((a, b) => {
+      const pa = a.urgente ? 1 : 0;
+      const pb = b.urgente ? 1 : 0;
+      if (pb !== pa) return pb - pa;
       const da = a.fecha ? new Date(a.fecha) : new Date(0);
       const db = b.fecha ? new Date(b.fecha) : new Date(0);
       return db - da;
     });
 
     return todasNoticias.slice(0, MAX_TOTAL_NEWS);
+  }
+
+  /** Envía push por nuevas convocatorias/plazos (cron cada 6 h). */
+  static async pollYNotificarAlertas() {
+    const ids = [1, 2, 3, 4, 5, 6];
+    let enviados = 0;
+    for (const id of ids) {
+      try {
+        const noticias = await RssService.obtenerNoticiasRss(id);
+        const urgentes = noticias.filter((n) => n.urgente && n.relevancia === 'alta').slice(0, 3);
+        for (const n of urgentes) {
+          const hash = RssService._hashAlerta(id, n.titulo);
+          if (_alertasEnviadas.has(hash)) continue;
+          _alertasEnviadas.add(hash);
+          const etiqueta = n.categoria === 'plazo' ? '⏰ Plazo' : '📢 Convocatoria';
+          const r = await NotificationService.enviarNoticiaOposicion(
+            id,
+            `${etiqueta} — ${n.titulo}`.slice(0, 120),
+            n.resumen || n.descripcion?.slice(0, 160) || 'Nueva actualización en tu oposición'
+          );
+          enviados += r.enviados || 0;
+        }
+      } catch (e) {
+        console.warn(`[rss-alert] opo ${id}: ${e.message}`);
+      }
+    }
+    return { enviados, oposiciones: ids.length };
   }
 }
 

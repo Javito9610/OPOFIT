@@ -53,6 +53,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.data.local.TokenManager
+import com.opofit.miapp.ui.components.EntornoEntrenoSheet
+import com.opofit.miapp.ui.components.ExerciseStickFigure
 import com.opofit.miapp.ui.components.PlanCalendarioMes
 import com.opofit.miapp.ui.components.PlanDiaCard
 import com.opofit.miapp.ui.components.PlanPersonalizacionCard
@@ -111,6 +113,14 @@ fun RutinasScreen(
             rutinasViewModel.cargarCalendario(userId, oposicionId, mesCalendario.year, mesCalendario.monthValue)
         }
     }
+
+    EntornoEntrenoSheet(
+        visible = uiState.mostrarSheetEntorno,
+        opciones = uiState.entornosOpciones,
+        seleccionado = uiState.entornoEntreno,
+        onDismiss = { rutinasViewModel.cerrarSheetEntorno() },
+        onConfirmar = { entorno -> rutinasViewModel.guardarEntreno(userId, oposicionId, entorno) }
+    )
 
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
@@ -407,6 +417,27 @@ fun RutinasScreen(
                                                 subtitle = plan.personalizacion?.resumen
                                                     ?: "Plan adaptado a tus marcas y nivel"
                                             )
+                                            Row(
+                                                Modifier.fillMaxWidth().padding(top = 4.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                OutlinedButton(onClick = { rutinasViewModel.abrirSheetEntorno() }) {
+                                                    Text(
+                                                        if (uiState.entornoEntreno.isNullOrBlank()) "¿Dónde entrenas?"
+                                                        else "Cambiar entorno"
+                                                    )
+                                                }
+                                                FilledTonalButton(
+                                                    onClick = { rutinasViewModel.regenerarPlan(userId, oposicionId) },
+                                                    enabled = !uiState.regenerandoPlan && !uiState.entornoEntreno.isNullOrBlank()
+                                                ) {
+                                                    if (uiState.regenerandoPlan) {
+                                                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                                                    } else {
+                                                        Text("Generar otra semana")
+                                                    }
+                                                }
+                                            }
                                         }
                                         items(plan.semana.size) { i ->
                                             val dia = plan.semana[i]
@@ -421,12 +452,32 @@ fun RutinasScreen(
                                                         val adj = if (ej.personalizado && ej.series_base != null) {
                                                             " (${ej.series_base}→${ej.series})"
                                                         } else ""
-                                                        Text(
-                                                            "• ${ej.series}×${ej.repeticiones} ${ej.nombre}$adj",
-                                                            style = MaterialTheme.typography.bodySmall,
-                                                            color = if (ej.personalizado) MaterialTheme.colorScheme.primary
-                                                            else MaterialTheme.colorScheme.onSurfaceVariant
-                                                        )
+                                                        Row(
+                                                            Modifier.fillMaxWidth(),
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                        ) {
+                                                            ExerciseStickFigure(
+                                                                tipoIlustracion = ej.tipo_ilustracion,
+                                                                size = 44.dp
+                                                            )
+                                                            Column(Modifier.weight(1f)) {
+                                                                Text(
+                                                                    "${ej.series}×${ej.repeticiones} ${ej.nombre}$adj",
+                                                                    style = MaterialTheme.typography.bodySmall,
+                                                                    color = if (ej.personalizado || ej.sustituido)
+                                                                        MaterialTheme.colorScheme.primary
+                                                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                                                                )
+                                                                ej.instrucciones_tecnicas?.takeIf { it.isNotBlank() }?.let { tip ->
+                                                                    Text(
+                                                                        tip,
+                                                                        style = MaterialTheme.typography.labelSmall,
+                                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
                                                     }
                                                     if (dia.ejercicios.size > 4) {
                                                         Text(

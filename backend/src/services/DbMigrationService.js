@@ -245,6 +245,40 @@ class DbMigrationService {
       await DbMigrationService.addColumnIfMissing('ejercicios', 'pilar', "ENUM('FUERZA','RESISTENCIA','VELOCIDAD','MOVILIDAD','CORE') NULL");
       await DbMigrationService.addColumnIfMissing('ejercicios', 'grupo_muscular', 'VARCHAR(80) NULL');
       await DbMigrationService.addColumnIfMissing('ejercicios', 'equipamiento', 'VARCHAR(120) NULL');
+      await DbMigrationService.addColumnIfMissing('ejercicios', 'entornos', 'VARCHAR(200) NULL');
+      await DbMigrationService.addColumnIfMissing('ejercicios', 'tipo_ilustracion', 'VARCHAR(24) NULL');
+      await DbMigrationService.addColumnIfMissing('ejercicios', 'animacion_url', 'VARCHAR(500) NULL');
+
+      await DbMigrationService.addColumnIfMissing(
+        'usuarios',
+        'entorno_entreno',
+        "VARCHAR(20) NULL"
+      );
+      await DbMigrationService.addColumnIfMissing(
+        'usuarios',
+        'plan_variacion_seed',
+        'INT NOT NULL DEFAULT 0'
+      );
+
+      if (!(await DbMigrationService.tableExists('planes_generados_cache'))) {
+        await db.query(`
+          CREATE TABLE planes_generados_cache (
+            id_cache INT NOT NULL AUTO_INCREMENT,
+            usuarios_id_usuario INT NOT NULL,
+            oposiciones_id_oposicion INT NOT NULL,
+            yearweek INT NOT NULL,
+            variacion_seed INT NOT NULL DEFAULT 0,
+            entorno_entreno VARCHAR(20) NOT NULL,
+            plan_json LONGTEXT NOT NULL,
+            explicacion_ia TEXT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_cache),
+            UNIQUE KEY uniq_plan_gen_semana (usuarios_id_usuario, oposiciones_id_oposicion, yearweek),
+            CONSTRAINT fk_pgc_usuario FOREIGN KEY (usuarios_id_usuario) REFERENCES usuarios (id_usuario) ON DELETE CASCADE
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla planes_generados_cache creada');
+      }
 
       if (!(await DbMigrationService.tableExists('plan_dia_ejercicios'))) {
         await db.query(`
@@ -367,6 +401,9 @@ class DbMigrationService {
 
       const EjerciciosCatalogoService = require('./EjerciciosCatalogoService');
       await EjerciciosCatalogoService.seedCatalogoAmpliado();
+      const EjerciciosEntornoCatalogo = require('./EjerciciosEntornoCatalogo');
+      await EjerciciosEntornoCatalogo.seedEjerciciosEntorno();
+      await EjerciciosEntornoCatalogo.seedMetadatosExistentes();
 
       const BancoPlanesImportService = require('./BancoPlanesImportService');
       const banco = await BancoPlanesImportService.importarBancoCompleto(false);

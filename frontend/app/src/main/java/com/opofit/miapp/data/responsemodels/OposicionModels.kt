@@ -40,7 +40,11 @@ data class NoticiaRss(
     val enlace: String = "",
     val fecha: String = "",
     val fuente: String = "",
-    val descripcion: String = ""
+    val descripcion: String = "",
+    val categoria: String = "",
+    val resumen: String = "",
+    val urgente: Boolean = false,
+    val relevancia: String = ""
 )
 
 data class NoticiasRssResponse(

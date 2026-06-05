@@ -1,4 +1,5 @@
 const progresoService = require("../services/ProgresoService");
+const EntrenoValidator = require("../utils/EntrenoValidator");
 const guardarEntrenamiento = async (req, res) => {
   try {
     const {
@@ -25,11 +26,9 @@ const guardarEntrenamiento = async (req, res) => {
         msg: "Falta idRutina o no es válido"
       });
     }
-    if (duracion == null || !Number.isFinite(Number(duracion)) || Number(duracion) < 0) {
-      return res.status(400).json({
-        ok: false,
-        msg: "Falta duracion o no es válida"
-      });
+    const valDur = EntrenoValidator.validarDuracionMin(duracion);
+    if (!valDur.ok) {
+      return res.status(400).json({ ok: false, msg: valDur.msg });
     }
     if (!Array.isArray(ejercicios) || ejercicios.length === 0) {
       return res.status(400).json({
@@ -37,17 +36,13 @@ const guardarEntrenamiento = async (req, res) => {
         msg: "Datos de entrenamiento incompletos o vacíos"
       });
     }
-    // Coherencia: si un ejercicio trae valor, debe ser un numero posible.
-    for (const ej of ejercicios) {
-      if (ej && ej.valor != null) {
-        const v = Number(ej.valor);
-        if (!Number.isFinite(v) || v < 0 || v > 1000000) {
-          return res.status(400).json({
-            ok: false,
-            msg: "Hay un resultado de ejercicio con un valor imposible. Revisa los datos."
-          });
-        }
-      }
+    const valEj = await EntrenoValidator.validarEjerciciosEntreno(ejercicios);
+    if (!valEj.ok) {
+      return res.status(400).json({
+        ok: false,
+        msg: valEj.errores.map((e) => e.msg).join('; '),
+        errores: valEj.errores
+      });
     }
     const resultado = await progresoService.registrarEntreno({
       userId: Number(userId),
