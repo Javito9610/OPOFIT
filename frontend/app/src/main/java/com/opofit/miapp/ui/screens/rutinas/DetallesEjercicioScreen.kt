@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.screens.rutinas
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
@@ -70,9 +71,8 @@ fun DetallesEjercicioScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ElevatedCard(
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
@@ -107,11 +107,8 @@ fun DetallesEjercicioScreen(
             }
 
             if (!videoUrl.isNullOrBlank()) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    )
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(

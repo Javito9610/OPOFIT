@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.screens.premium
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -89,7 +90,7 @@ fun PremiumScreen(onNavigateBack: () -> Unit) {
             )
             beneficios.forEach { Text("✓ $it") }
             if (esPremium) {
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+                ElevatedCard() {
                     Text(
                         "Premium activo${premiumHasta?.let { " hasta $it" } ?: ""}",
                         Modifier.padding(16.dp),

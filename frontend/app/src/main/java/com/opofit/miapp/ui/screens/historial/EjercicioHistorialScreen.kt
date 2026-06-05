@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.screens.historial
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,13 +31,14 @@ import androidx.compose.material.icons.filled.Pool
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.SyncProblem
 import androidx.compose.material.icons.filled.Timeline
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import com.opofit.miapp.ui.components.ElevatedCard
+import com.opofit.miapp.ui.theme.AccentOrange
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -138,10 +140,7 @@ fun EjercicioHistorialScreen(
 @Composable
 private fun HeaderHero(h: HistorialEjercicio) {
     val color = colorPilar(h.pilar)
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.12f))
-    ) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -221,13 +220,7 @@ private fun SesionRow(
     val previo = sortedPrev.lastOrNull()
     val delta = previo?.let { punto.valor - it.valor }
     val mejora = delta != null && ((h.menorEsMejor && delta < 0) || (!h.menorEsMejor && delta > 0))
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (esMejor) MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.35f)
-            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-        )
-    ) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -251,7 +244,7 @@ private fun SesionRow(
                             Icons.Filled.EmojiEvents,
                             null,
                             modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.tertiary
+                            tint = AccentOrange
                         )
                     }
                 }
@@ -345,7 +338,7 @@ private fun fechaCorta(iso: String?): String {
 @Composable
 private fun ChartCard(h: HistorialEjercicio) {
     val (titulo, subtitulo) = tituloGrafica(h)
-    Card(modifier = Modifier.fillMaxWidth()) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.Timeline, null, tint = colorPilar(h.pilar))
@@ -422,7 +415,7 @@ private fun ChartRitmoCard(h: HistorialEjercicio) {
             if (dist <= 0 || secs <= 0) null else secs / dist
         }
     }
-    Card(modifier = Modifier.fillMaxWidth()) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 "Ritmo por sesión (min/km)",
@@ -466,7 +459,7 @@ private fun ChartRitmoCard(h: HistorialEjercicio) {
 @Composable
 private fun HrCard(h: HistorialEjercicio) {
     val hayHR = h.puntos.any { it.gpsActividadUuid != null }
-    Card(modifier = Modifier.fillMaxWidth()) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.FavoriteBorder, null, tint = Color(0xFFD32F2F))
@@ -495,7 +488,7 @@ private fun HrCard(h: HistorialEjercicio) {
 
 @Composable
 private fun CadenciaCard(h: HistorialEjercicio) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 @Suppress("DEPRECATION")
@@ -526,7 +519,7 @@ private fun CadenciaCard(h: HistorialEjercicio) {
 
 @Composable
 private fun KcalCard(h: HistorialEjercicio) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.LocalFireDepartment, null, tint = Color(0xFFEF6C00))
@@ -566,15 +559,16 @@ private fun EmptyMetricInfo(
     titulo: String,
     detalle: String
 ) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
+        modifier = Modifier.fillMaxWidth()
+    ) {
     Row(
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = Modifier
-            .background(
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                RoundedCornerShape(12.dp)
-            )
-            .padding(12.dp)
+        modifier = Modifier.padding(12.dp)
     ) {
         Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Column {
@@ -586,19 +580,22 @@ private fun EmptyMetricInfo(
             )
         }
     }
+    }
 }
 
 @Composable
 private fun InfoChip(text: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                RoundedCornerShape(12.dp)
-            )
-            .padding(12.dp)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
     ) {
-        Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            text,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(12.dp)
+        )
     }
 }

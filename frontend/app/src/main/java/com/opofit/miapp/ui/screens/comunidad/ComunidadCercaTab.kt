@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.screens.comunidad
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -72,7 +73,7 @@ fun ComunidadCercaTab(
             )
         }
         item {
-            Card(Modifier.fillMaxWidth()) {
+            ElevatedCard(Modifier.fillMaxWidth()) {
                 Row(
                     Modifier.padding(14.dp).fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -111,7 +112,7 @@ fun ComunidadCercaTab(
             }
         }
         items(usuarios) { u ->
-            Card(Modifier.fillMaxWidth()) {
+            ElevatedCard(Modifier.fillMaxWidth()) {
                 Row(
                     Modifier.padding(14.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),

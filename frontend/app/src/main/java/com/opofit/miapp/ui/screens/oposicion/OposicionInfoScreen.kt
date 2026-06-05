@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.screens.oposicion
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -145,13 +146,10 @@ fun OposicionInfoScreen(
                     val avisoConvocatoria = oposicion?.convocatoria_ref?.takeIf { it.isNotBlank() }
                         ?: oposicion?.notas_usuario?.takeIf { it.isNotBlank() }
                     if (avisoConvocatoria != null) {
-                        Card(
+                        ElevatedCard(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer
-                            )
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
                         ) {
                             Text(
                                 avisoConvocatoria,
@@ -211,11 +209,8 @@ private fun InfoTab(
     ) {
         
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+            ElevatedCard(
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
@@ -245,9 +240,8 @@ private fun InfoTab(
                 )
             }
             items(pruebas) { prueba ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
@@ -335,12 +329,8 @@ private fun TrucosTab(
                 )
             }
             items(allTrucos.toList()) { (nombrePrueba, truco) ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                    )
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
@@ -371,9 +361,8 @@ private fun TrucosTab(
             )
         }
         items(consejosGenerales) { (titulo, consejo) ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ElevatedCard(
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
@@ -450,9 +439,8 @@ private fun NoticiasTab(
 
         if (noticiasRss.isEmpty()) {
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
@@ -472,18 +460,14 @@ private fun NoticiasTab(
         } else {
             items(rssOrdenadas) { noticia ->
                 val relevante = esRelevanteParaOposicion(noticia)
-                Card(
+                ElevatedCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .then(
                             if (noticia.enlace.isNotBlank()) {
                                 Modifier.clickable { UrlOpener.open(context, noticia.enlace) }
                             } else Modifier
-                        ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (relevante) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
-                    )
+                        )
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         if (relevante) {
@@ -566,7 +550,7 @@ private fun FitnessInfoContent(modifier: Modifier = Modifier) {
             )
         }
         item {
-            Card(modifier = Modifier.fillMaxWidth()) {
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("💪 Plan y entrenos", fontWeight = FontWeight.SemiBold)
                     Text("Plan personalizado de fuerza, resistencia y velocidad sin pruebas oficiales.")
@@ -644,9 +628,8 @@ private fun BaremosTab(
             grouped.forEach { (nombrePrueba, baremos) ->
                 item {
                     val unidad = unidadParaPrueba(baremos)
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ElevatedCard(
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(

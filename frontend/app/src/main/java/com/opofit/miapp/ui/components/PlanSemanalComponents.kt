@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.components
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -68,12 +69,7 @@ fun PlanDiaCard(
     regenerando: Boolean = false
 ) {
     var dragTotal by remember(dia.id_plan_dia) { mutableFloatStateOf(0f) }
-    val container = when {
-        dia.es_hoy && !dia.completada -> MaterialTheme.colorScheme.primaryContainer
-        dia.completada -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
-        else -> MaterialTheme.colorScheme.surface
-    }
-    Card(
+    ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
             .pointerInput(dia.id_plan_dia, onOtraOpcion, dia.completada) {
@@ -86,9 +82,7 @@ fun PlanDiaCard(
                         onHorizontalDrag = { _, amount -> dragTotal += amount }
                     )
                 }
-            },
-        colors = CardDefaults.cardColors(containerColor = container),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (dia.es_hoy) 4.dp else 1.dp)
+            }
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(
@@ -182,24 +176,21 @@ fun PlanPersonalizacionCard(
     personalizacion: PersonalizacionPlan,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        )
+    ElevatedCard(
+        modifier = modifier.fillMaxWidth()
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     Icons.Filled.AutoAwesome,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                    tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
                     "  Tu plan inteligente",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
             if (!personalizacion.entorno_etiqueta.isNullOrBlank()) {
@@ -207,13 +198,13 @@ fun PlanPersonalizacionCard(
                     "${personalizacion.entorno_emoji ?: ""} Entorno: ${personalizacion.entorno_etiqueta}",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Text(
                 personalizacion.explicacion_ia ?: personalizacion.resumen,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             if (personalizacion.pilares_debiles.isNotEmpty() || personalizacion.pilares_fuertes.isNotEmpty()) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -245,7 +236,7 @@ fun PlanPersonalizacionCard(
             Text(
                 extras.joinToString(" · "),
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -260,9 +251,9 @@ fun EntrenoHoyHeroCard(
     onPrepararRuta: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    ElevatedCard(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
+        containerColor = MaterialTheme.colorScheme.primary
     ) {
         Column {
             Box(

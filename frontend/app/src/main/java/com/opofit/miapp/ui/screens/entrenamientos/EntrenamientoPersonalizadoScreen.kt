@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.screens.entrenamientos
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -387,9 +388,8 @@ fun EntrenamientoPersonalizadoScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         item {
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                            ElevatedCard(
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 Column(modifier = Modifier.padding(16.dp)) {
                                     Text("Tiempo", color = MaterialTheme.colorScheme.onPrimaryContainer)
@@ -515,7 +515,7 @@ fun EntrenamientoPersonalizadoScreen(
                         }
 
                         itemsIndexed(ejerciciosUi) { idx, ej ->
-                            Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(1.dp)) {
+                            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Checkbox(

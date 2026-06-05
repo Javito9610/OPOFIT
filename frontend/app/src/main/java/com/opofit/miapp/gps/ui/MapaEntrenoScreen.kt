@@ -1,5 +1,6 @@
 package com.opofit.miapp.gps.ui
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -419,7 +420,7 @@ fun MapaEntrenoScreen(
                 }
             }
             if (!locationOk) {
-                Card(
+                ElevatedCard(
                     Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 12.dp, vertical = if (compact) 4.dp else 8.dp)
@@ -507,7 +508,7 @@ fun MapaEntrenoScreen(
                     .fillMaxWidth()
                     .verticalScroll(panelScroll)
             ) {
-            Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
+            ElevatedCard(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
                 Column(
                     Modifier.padding(if (compact) 10.dp else 12.dp),
                     verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)

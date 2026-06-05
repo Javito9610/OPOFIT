@@ -16,8 +16,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import com.opofit.miapp.ui.components.ElevatedCard
+import com.opofit.miapp.ui.components.SectionHeader
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -151,12 +151,7 @@ fun PerfilScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
-                    ) {
+                    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -172,12 +167,12 @@ fun PerfilScreen(
                                         text = perfilData?.nombre ?: authState.userName ?: "Usuario",
                                         style = MaterialTheme.typography.headlineSmall,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
                                         text = perfilData?.email ?: authState.userEmail ?: "",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     AssistChip(
                                         onClick = {},
@@ -216,27 +211,27 @@ fun PerfilScreen(
                             if (peso != null || altura != null || imc != null) {
                                 val pesoShown = if (peso != null && unitPeso == "lb") Units.kgToLb(peso) else peso
                                 Spacer(modifier = Modifier.height(8.dp))
-                                Divider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f))
+                                Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Column {
-                                        Text("Peso", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
-                                        Text(pesoShown?.let { String.format("%.1f %s", it, unitPeso) } ?: "-", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                        Text("Peso", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(pesoShown?.let { String.format("%.1f %s", it, unitPeso) } ?: "-", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                                     }
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text("Altura", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
+                                        Text("Altura", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         Text(
                                             altura?.let { Units.formatAltura(it, unitDist) } ?: "-",
                                             fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                     }
                                     Column(horizontalAlignment = Alignment.End) {
-                                        Text("IMC", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
-                                        Text(imc?.let { String.format("%.2f", it) } ?: "-", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                        Text("IMC", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(imc?.let { String.format("%.2f", it) } ?: "-", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                                     }
                                 }
                             }
@@ -284,30 +279,35 @@ fun PerfilScreen(
 
                 if (perfilState.marcasUsuario.isNotEmpty()) {
                     item {
-                        Text(
-                            text = "Mis Marcas",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                        SectionHeader(
+                            title = "Mis marcas",
+                            subtitle = "Tus mejores registros oficiales"
                         )
                     }
                     items(perfilState.marcasUsuario) { marca ->
-                        Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(1.dp)) {
-                            Column(modifier = Modifier.padding(12.dp)) {
+                        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(14.dp)) {
                                 Text(
                                     text = Units.nombreConEquivalenciaDistancia(marca.nombre_prueba, unitDist),
                                     style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.SemiBold
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
-                                Divider(modifier = Modifier.padding(vertical = 4.dp))
+                                Divider(
+                                    modifier = Modifier.padding(vertical = 6.dp),
+                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                                )
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text(
                                         text = "Marca: ${Units.formatMarcaDisplay(marca.valord_record, marca.unidad, unitDist)}",
-                                        style = MaterialTheme.typography.bodyMedium
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.primary
                                     )
                                     Text(
-                                        text = "Fecha: ${marca.fecha_logro?.take(10) ?: "-"}",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.secondary
+                                        text = marca.fecha_logro?.take(10) ?: "-",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }

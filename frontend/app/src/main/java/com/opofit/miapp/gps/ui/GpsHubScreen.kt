@@ -1,5 +1,6 @@
 package com.opofit.miapp.gps.ui
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -244,11 +245,8 @@ fun GpsHubScreen(
         ) {
             flowCtx?.returnRoute?.let { _ ->
                 item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                        )
+                    ElevatedCard(
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
@@ -278,11 +276,8 @@ fun GpsHubScreen(
             }
 
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(
@@ -389,7 +384,7 @@ fun GpsHubScreen(
             }
 
             item {
-                Card(modifier = Modifier.fillMaxWidth()) {
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Filled.UploadFile, null, tint = MaterialTheme.colorScheme.primary)
@@ -472,7 +467,7 @@ private fun TypeChip(
 private fun ActivityRow(activity: ActivitySummary, onClick: () -> Unit) {
     val date = SimpleDateFormat("d MMM · HH:mm", Locale.forLanguageTag("es-ES"))
         .format(Date(activity.startedAtMs))
-    Card(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
         Row(
             Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -519,16 +514,16 @@ private fun HrConnectDialog(
     onDismiss: () -> Unit
 ) {
     val found by viewModel.hrFound.collectAsState()
+    val liveHr by viewModel.hrManager().heartRate.collectAsState()
     val deviceListScroll = rememberScrollState()
     val connectingAddress = (hrState as? HrBleManager.State.Connecting)?.device?.address
     val connectedAddress = (hrState as? HrBleManager.State.Connected)?.device?.address
 
     Dialog(onDismissRequest = onDismiss) {
-        Card(
+        ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 520.dp),
-            shape = MaterialTheme.shapes.large
+                .heightIn(max = 520.dp)
         ) {
             Column(
                 modifier = Modifier.padding(20.dp),
@@ -569,6 +564,12 @@ private fun HrConnectDialog(
                             Spacer(Modifier.size(6.dp))
                             Text("Conectado a ${st.device.name ?: st.device.address}")
                         }
+                        Text(
+                            liveHr?.let { "Pulso en vivo: $it bpm" }
+                                ?: "Esperando pulso… (mide en el reloj o en la muñeca)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                     is HrBleManager.State.Error -> Text(
                         st.message,

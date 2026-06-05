@@ -572,12 +572,10 @@ private fun NavCard(
     compact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    ElevatedCard(
         modifier = modifier,
         onClick = onClick,
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = containerColor, contentColor = contentColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        containerColor = containerColor
     ) {
         Column(
             Modifier

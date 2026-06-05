@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.opofit.miapp.data.api.GpsActivityPayload
 import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
+import com.opofit.miapp.gps.data.GpsRemoteSync
 import com.opofit.miapp.gps.data.GpsRepository
 import com.opofit.miapp.gps.model.ActivitySummary
 import com.opofit.miapp.gps.model.ActivityType
@@ -107,7 +108,7 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
         return null
     }
 
-    private fun syncToBackend(summary: ActivitySummary) {
+    fun syncToBackend(summary: ActivitySummary) {
         viewModelScope.launch {
             try {
                 val token = tokenManager.getToken().first().orEmpty()
@@ -226,9 +227,34 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
     fun loadHistory() {
         viewModelScope.launch {
             _history.update { it.copy(loading = true) }
-            val items = repo.listAll()
-            _history.update { it.copy(loading = false, items = items) }
+            val local = repo.listAll()
+            val merged = try {
+                val token = tokenManager.getToken().first().orEmpty()
+                if (token.isBlank()) local else syncRemoteActivities("Bearer $token", local)
+            } catch (_: Exception) {
+                local
+            }
+            local.filter { it.syncedRemoteId == null }.forEach { syncToBackend(it) }
+            _history.update { it.copy(loading = false, items = merged) }
         }
+    }
+
+    private suspend fun syncRemoteActivities(token: String, local: List<ActivitySummary>): List<ActivitySummary> {
+        val resp = RetrofitClient.gpsApi.listar(token)
+        if (!resp.ok || resp.data.isNullOrEmpty()) return local
+        val localIds = local.map { it.id }.toSet()
+        val merged = local.toMutableList()
+        resp.data.take(30).forEach { item ->
+            if (item.id !in localIds && repo.get(item.id) == null) {
+                val det = RetrofitClient.gpsApi.detalle(token, item.id)
+                val summary = det.data?.let { GpsRemoteSync.fromDetalle(it) }
+                if (summary != null) {
+                    repo.save(summary)
+                    merged.add(summary)
+                }
+            }
+        }
+        return merged.sortedByDescending { it.startedAtMs }
     }
 
     fun get(id: String): ActivitySummary? = repo.get(id)

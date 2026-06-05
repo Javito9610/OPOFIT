@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.screens.perfil
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -268,9 +269,8 @@ fun EditarPerfilScreen(
             }
 
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -365,9 +365,8 @@ fun EditarPerfilScreen(
 
             if (!esFitness && (perfilState.nuevoNivel != null || perfilState.nuevaNota != null)) {
                 item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+                    ElevatedCard(
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
                             Text("¡Perfil actualizado!", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)

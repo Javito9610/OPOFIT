@@ -73,6 +73,33 @@ fun SectionHeader(
     }
 }
 
+/** Estilo estándar de tarjetas OpoFit: blanco, borde visible y sombra sobre el fondo gris. */
+object OpoCardDefaults {
+    @Composable
+    fun colors(containerColor: Color = MaterialTheme.colorScheme.surface) =
+        CardDefaults.cardColors(containerColor = containerColor)
+
+    @Composable
+    fun elevation() = CardDefaults.cardElevation(
+        defaultElevation = 5.dp,
+        pressedElevation = 7.dp,
+        focusedElevation = 6.dp,
+        hoveredElevation = 6.dp
+    )
+
+    @Composable
+    fun border() = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.58f))
+}
+
+/** Alias corto — usar en lugar de `Card` de Material para contraste uniforme. */
+@Composable
+fun OpoCard(
+    modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    onClick: (() -> Unit)? = null,
+    content: @Composable () -> Unit
+) = ElevatedCard(modifier, containerColor, onClick, content)
+
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun ElevatedCard(
@@ -81,9 +108,9 @@ fun ElevatedCard(
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
-    val colors = CardDefaults.cardColors(containerColor = containerColor)
-    val elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
-    val border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
+    val colors = OpoCardDefaults.colors(containerColor)
+    val elevation = OpoCardDefaults.elevation()
+    val border = OpoCardDefaults.border()
     val shape = MaterialTheme.shapes.large
 
     if (onClick != null) {

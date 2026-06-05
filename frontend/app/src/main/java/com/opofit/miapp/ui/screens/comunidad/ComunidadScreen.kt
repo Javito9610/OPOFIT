@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.screens.comunidad
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -290,7 +291,7 @@ fun ComunidadScreen(
                     if (pendientes.isNotEmpty()) {
                         item { Text("Solicitudes pendientes", fontWeight = FontWeight.Bold) }
                         items(pendientes) { s ->
-                            Card(Modifier.fillMaxWidth()) {
+                            ElevatedCard(Modifier.fillMaxWidth()) {
                                 Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text(s.solicitante_nombre)
                                     Row {
@@ -322,7 +323,7 @@ fun ComunidadScreen(
                     item { Text("Tus amigos", fontWeight = FontWeight.Bold) }
                     if (amigos.isEmpty()) item { Text("Busca compañeros en la pestaña Buscar.") }
                     items(amigos) { a ->
-                        Card(
+                        ElevatedCard(
                             Modifier
                                 .fillMaxWidth()
                                 .clickable {
@@ -367,7 +368,7 @@ fun ComunidadScreen(
                     ) { Text(if (esFitness) "Buscar usuarios" else "Buscar en mi oposición") }
                     Spacer(Modifier.height(12.dp))
                     resultados.forEach { u ->
-                        Card(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                        ElevatedCard(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                             Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text(u.nombre)
                                 TextButton(onClick = {
@@ -396,12 +397,7 @@ fun ComunidadScreen(
                         ) {
                             items(mensajes) { m ->
                                 val esMio = m.id_remitente == (authState.userId ?: -1)
-                                Card(
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = if (esMio) MaterialTheme.colorScheme.primaryContainer
-                                        else MaterialTheme.colorScheme.surfaceVariant
-                                    )
-                                ) {
+                                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                                     Column(Modifier.padding(8.dp)) {
                                         Text(m.texto)
                                         Text(

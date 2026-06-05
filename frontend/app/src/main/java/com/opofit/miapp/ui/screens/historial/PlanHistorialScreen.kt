@@ -13,7 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material3.Card
+import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -104,7 +104,7 @@ fun PlanHistorialScreen(
                 }
             } else {
                 items(h.sesiones, key = { it.id }) { s ->
-                    Card(modifier = Modifier.fillMaxWidth(), onClick = { onOpenSesion(s.id) }) {
+                    ElevatedCard(modifier = Modifier.fillMaxWidth(), onClick = { onOpenSesion(s.id) }) {
                         Row(
                             Modifier.padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically,

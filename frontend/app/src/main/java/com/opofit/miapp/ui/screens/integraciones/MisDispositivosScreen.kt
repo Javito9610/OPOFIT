@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.screens.integraciones
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
@@ -262,11 +263,8 @@ fun MisDispositivosScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
@@ -335,7 +333,7 @@ fun MisDispositivosScreen(
                 BleDirectoCard()
             }
             item {
-                Card(
+                ElevatedCard(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = { showAvanzado = !showAvanzado }
                 ) {
@@ -387,11 +385,8 @@ fun MisDispositivosScreen(
                 AppleWatchCard()
             }
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                    )
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -428,7 +423,7 @@ private fun ProviderCard(
     estadoOk: Boolean,
     content: @Composable () -> Unit
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
@@ -463,10 +458,7 @@ private fun ProviderCard(
 
 @Composable
 private fun RelojesGuiaCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
-    ) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 "¿Cómo se conecta mi reloj?",
@@ -744,12 +736,7 @@ private fun BleDirectoCard() {
 
 @Composable
 private fun AppleWatchCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
-    ) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.Watch, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)

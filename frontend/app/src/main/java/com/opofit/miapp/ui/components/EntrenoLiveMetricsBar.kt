@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.components
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,16 +42,15 @@ fun EntrenoLiveMetricsBar(
 
     if (!cronometroActivo && !gpsActivo) return
 
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+    ElevatedCard(
+        modifier = modifier.fillMaxWidth()
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
                 if (gpsActivo) "📍 GPS en vivo" else "⏱ Sesión en curso",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onTertiaryContainer
+                color = MaterialTheme.colorScheme.primary
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 MetricChip("Tiempo", TimeFormatUtil.formatElapsedMs(

@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.screens.simulacro
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
@@ -139,7 +140,7 @@ fun SimulacroScreen(
                     Text("Nota media estimada: $notaFinal / 10", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
                     perfilTrasSimulacro?.let { p ->
                         if (p.subirNivel) {
-                            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)) {
+                            ElevatedCard() {
                                 Text(
                                     "¡Has mejorado! Nivel proyectado: ${p.nivelTrasSimulacro} (antes ${p.nivelActual})",
                                     modifier = Modifier.padding(12.dp),
@@ -168,11 +169,7 @@ fun SimulacroScreen(
                 else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (hayAptoNoApto) {
                         item {
-                            Card(
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                                )
-                            ) {
+                            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                                 Text(
                                     "Oficialmente estas pruebas se califican Apto / No Apto (BOE). La nota 0-10 es orientativa para entrenar.",
                                     modifier = Modifier.padding(12.dp),
@@ -193,7 +190,7 @@ fun SimulacroScreen(
                         )
                     }
                     item {
-                        Card(Modifier.fillMaxWidth()) {
+                        ElevatedCard(Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(pruebaActual!!.nombre_prueba, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                                 pruebaActual.descripcion?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }

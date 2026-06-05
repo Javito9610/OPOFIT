@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.screens.auth
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -187,12 +188,7 @@ fun RegisterScreen(
             )
 
             
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large,
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(
                     modifier = Modifier.padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -296,18 +292,12 @@ fun RegisterScreen(
 
                     
                     if (imc != "0.00") {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
-                            ),
-                            shape = MaterialTheme.shapes.small
-                        ) {
+                        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                             Text(
                                 text = "IMC calculado: $imc",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                             )
                         }
@@ -428,12 +418,9 @@ fun RegisterScreen(
                     
                     val errorMessage = localError.ifEmpty { uiState.error }
                     if (errorMessage.isNotEmpty()) {
-                        Card(
+                        ElevatedCard(
                             modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer
-                            ),
-                            shape = MaterialTheme.shapes.small
+                            containerColor = MaterialTheme.colorScheme.errorContainer
                         ) {
                             Text(
                                 text = errorMessage,

@@ -38,6 +38,7 @@ object GpsTracker {
     private var userWeightKg: Double? = null
 
     fun begin(type: ActivityType, weightKg: Double? = null) {
+        val prev = _state.value
         sessionId = UUID.randomUUID().toString()
         lastLocation = null
         lastMovingTickMs = 0L
@@ -51,7 +52,10 @@ object GpsTracker {
             active = true,
             paused = false,
             type = type,
-            startedAtMs = System.currentTimeMillis()
+            startedAtMs = System.currentTimeMillis(),
+            hrDeviceName = prev.hrDeviceName,
+            hrDeviceConnected = prev.hrDeviceConnected,
+            currentHrBpm = prev.currentHrBpm
         )
     }
 
@@ -220,11 +224,13 @@ object GpsTracker {
 
     fun onHrSample(bpm: Int) {
         val current = _state.value
-        if (!current.active || current.paused) return
-        hrSum += bpm
-        hrCount += 1
-        val avg = (hrSum / hrCount).toInt()
-        val max = maxOf(current.maxHrBpm ?: 0, bpm)
+        val tracking = current.active && !current.paused
+        if (tracking) {
+            hrSum += bpm
+            hrCount += 1
+        }
+        val avg = if (tracking && hrCount > 0) (hrSum / hrCount).toInt() else current.avgHrBpm
+        val max = if (tracking) maxOf(current.maxHrBpm ?: 0, bpm) else current.maxHrBpm
         _state.update {
             it.copy(
                 currentHrBpm = bpm,

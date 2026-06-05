@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.screens.comunidad
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -64,7 +65,7 @@ fun ComunidadGruposTab(
             )
         }
         item {
-            Card(Modifier.fillMaxWidth()) {
+            ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Crear grupo", fontWeight = FontWeight.SemiBold)
                     OutlinedTextField(
@@ -104,7 +105,7 @@ fun ComunidadGruposTab(
             }
         }
         items(grupos) { g ->
-            Card(Modifier.fillMaxWidth()) {
+            ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(12.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Column(Modifier.weight(1f)) {

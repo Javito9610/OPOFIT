@@ -1,5 +1,6 @@
 package com.opofit.miapp.gps.ui
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -64,6 +65,7 @@ import com.opofit.miapp.gps.model.SplitTime
 import com.opofit.miapp.gps.service.ShareActivityContext
 import com.opofit.miapp.gps.service.buildPendingShareFromGps
 import com.opofit.miapp.gps.util.GpsMetrics
+import com.opofit.miapp.ui.components.HeartRateZoneBreakdown
 import com.opofit.miapp.gps.util.GpxExport
 import com.opofit.miapp.ui.components.LineAreaChart
 import com.opofit.miapp.ui.components.MetricBadge
@@ -228,7 +230,7 @@ private fun RouteMap(activity: ActivitySummary) {
             }
         }
     }
-    Card(modifier = Modifier.fillMaxWidth()) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column {
             Box(modifier = Modifier.fillMaxWidth().height(240.dp)) {
                 GoogleMap(
@@ -296,7 +298,7 @@ private fun RouteMap(activity: ActivitySummary) {
 
 @Composable
 private fun OverviewCard(a: ActivitySummary) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
                 GpsMetrics.formatDistance(a.distanceM),
@@ -366,7 +368,7 @@ private fun MetricsGrid(a: ActivitySummary) {
 
 @Composable
 private fun BestSegmentsCard(a: ActivitySummary) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
                 "Mejores parciales",
@@ -394,7 +396,7 @@ private fun BestSegmentsCard(a: ActivitySummary) {
 private fun ElevationChartCard(activity: ActivitySummary) {
     val altitudes = remember(activity.id) { activity.points.mapNotNull { it.altitude } }
     if (altitudes.size < 2) return
-    Card(modifier = Modifier.fillMaxWidth()) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp)) {
             Text("Altitud", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             Text(
@@ -421,7 +423,7 @@ private fun ElevationChartCard(activity: ActivitySummary) {
 private fun HrChartCard(activity: ActivitySummary) {
     val hrs = remember(activity.id) { activity.points.mapNotNull { it.hrBpm?.toDouble() } }
     if (hrs.size < 2) return
-    Card(modifier = Modifier.fillMaxWidth()) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp)) {
             Text("Pulso", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             Text(
@@ -440,6 +442,11 @@ private fun HrChartCard(activity: ActivitySummary) {
                 fillBottom = Color(0xFFD32F2F).copy(alpha = 0.0f),
                 yFormatter = { "${it.toInt()}" }
             )
+            Spacer(Modifier.height(12.dp))
+            HeartRateZoneBreakdown(
+                samples = hrs.map { it.toInt() },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -448,7 +455,7 @@ private fun HrChartCard(activity: ActivitySummary) {
 private fun PaceChartCard(activity: ActivitySummary) {
     val paceValues = activity.splits.filter { it.paceSecPerKm > 0 }.map { it.paceSecPerKm }
     if (paceValues.size >= 2) {
-        Card(modifier = Modifier.fillMaxWidth()) {
+        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(14.dp)) {
                 Text("Ritmo por km", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                 LineAreaChart(
@@ -469,7 +476,7 @@ private fun PaceChartCard(activity: ActivitySummary) {
     } else {
         val speeds = activity.points.mapNotNull { it.speedMps?.toDouble() }
         if (speeds.size >= 4) {
-            Card(modifier = Modifier.fillMaxWidth()) {
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(14.dp)) {
                     Text("Velocidad", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                     LineAreaChart(
@@ -502,7 +509,7 @@ private fun SplitsCard(activity: ActivitySummary) {
             }
         )
     }
-    Card(modifier = Modifier.fillMaxWidth()) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Parciales", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -534,10 +541,7 @@ private fun SplitsCard(activity: ActivitySummary) {
 
 @Composable
 private fun SplitKmRow(split: SplitKm) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
-    ) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             Modifier.padding(10.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -559,10 +563,7 @@ private fun SplitKmRow(split: SplitKm) {
 
 @Composable
 private fun SplitMileRow(split: SplitMile) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
-    ) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             Modifier.padding(10.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -578,10 +579,7 @@ private fun SplitMileRow(split: SplitMile) {
 
 @Composable
 private fun SplitTimeRow(split: SplitTime) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
-    ) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             Modifier.padding(10.dp),
             verticalAlignment = Alignment.CenterVertically,

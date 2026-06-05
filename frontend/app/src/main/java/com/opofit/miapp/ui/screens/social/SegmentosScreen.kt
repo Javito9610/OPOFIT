@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.screens.social
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -139,7 +140,7 @@ fun SegmentosScreen(onNavigateBack: () -> Unit) {
                     }
                 } else {
                     items(ranking) { e ->
-                        Card(Modifier.fillMaxWidth()) {
+                        ElevatedCard(Modifier.fillMaxWidth()) {
                             Row(
                                 Modifier.padding(12.dp),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),

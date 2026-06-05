@@ -13,6 +13,38 @@ data class GpsSyncResponse(
     val msg: String? = null
 )
 
+data class GpsListItem(
+    val id: String,
+    val idRemoto: Int? = null,
+    val type: String? = null,
+    val startedAtMs: Long = 0L,
+    val endedAtMs: Long = 0L,
+    val durationSec: Int = 0,
+    val distanceM: Double = 0.0,
+    val avgPaceSecPerKm: Double = 0.0,
+    val avgSpeedMps: Double = 0.0,
+    val elevationGainM: Double = 0.0,
+    val elevationLossM: Double = 0.0,
+    val elevationMinM: Double? = null,
+    val elevationMaxM: Double? = null,
+    val avgHrBpm: Int? = null,
+    val kcal: Int? = null,
+    val avgStrideM: Double? = null,
+    val avgInclinePct: Double? = null
+)
+
+data class GpsListResponse(
+    val ok: Boolean,
+    val data: List<GpsListItem>? = null,
+    val msg: String? = null
+)
+
+data class GpsDetalleResponse(
+    val ok: Boolean,
+    val data: com.google.gson.JsonObject? = null,
+    val msg: String? = null
+)
+
 data class GpsSyncData(
     val idActividad: Int? = null,
     val uuid: String? = null
@@ -66,5 +98,11 @@ interface GpsApi {
     @GET("/api/gps/actividades")
     suspend fun listar(
         @Header("Authorization") token: String
-    ): GpsSyncResponse
+    ): GpsListResponse
+
+    @GET("/api/gps/actividades/{uuid}")
+    suspend fun detalle(
+        @Header("Authorization") token: String,
+        @Path("uuid") uuid: String
+    ): GpsDetalleResponse
 }

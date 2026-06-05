@@ -19,8 +19,8 @@ import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import com.opofit.miapp.ui.components.ElevatedCard
+import com.opofit.miapp.ui.theme.AccentOrange
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -87,7 +87,7 @@ fun SesionDetalleScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                Card(modifier = Modifier.fillMaxWidth()) {
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
                             s.fechaEntreno?.let { DateFormatUtil.formatearFechaHora(it) } ?: "",
@@ -134,26 +134,25 @@ fun SesionDetalleScreen(
             }
             s.gpsActividad?.let { gps ->
                 item {
-                    Card(
+                    ElevatedCard(
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = { s.gpsActividadUuid?.let(onOpenGpsActividad) },
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                        onClick = { s.gpsActividadUuid?.let(onOpenGpsActividad) }
                     ) {
                         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
                                 "Actividad GPS vinculada",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
                                 "${GpsMetrics.formatDistance(gps.distanceM)} · ${GpsMetrics.formatDuration(gps.durationSec)} · ${GpsMetrics.formatPace(gps.avgPaceSecPerKm)}/km",
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                color = MaterialTheme.colorScheme.primary
                             )
                             Text(
                                 "Toca para ver mapa, splits y gráficas",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -175,7 +174,7 @@ fun SesionDetalleScreen(
 
 @Composable
 private fun EjercicioRealizadoRow(ej: EjercicioSesion, onClick: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
         Row(
             Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -219,7 +218,7 @@ private fun EjercicioRealizadoRow(ej: EjercicioSesion, onClick: () -> Unit) {
                     Box(
                         Modifier
                             .background(
-                                MaterialTheme.colorScheme.tertiaryContainer,
+                                AccentOrange.copy(alpha = 0.12f),
                                 RoundedCornerShape(50)
                             )
                             .padding(horizontal = 8.dp, vertical = 2.dp)
@@ -229,12 +228,12 @@ private fun EjercicioRealizadoRow(ej: EjercicioSesion, onClick: () -> Unit) {
                                 Icons.Filled.EmojiEvents,
                                 null,
                                 modifier = Modifier.size(12.dp),
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer
+                                tint = AccentOrange
                             )
                             Text(
                                 " PR",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                color = AccentOrange
                             )
                         }
                     }

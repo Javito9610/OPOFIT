@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.components
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,7 +33,7 @@ fun PostFeedCard(
     onClick: () -> Unit = {},
     onLike: () -> Unit = {}
 ) {
-    Card(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 ProfileAvatar(post.usuarioNombre ?: "?", sizeDp = 44, avatarUrl = post.avatarUrl)

@@ -20,8 +20,7 @@ import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Map
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -160,7 +159,7 @@ fun HistorialScreen(
         ) {
         Column(modifier = Modifier.fillMaxSize()) {
             Text(
-                "Desliza abajo para sincronizar entrenos del reloj",
+                "Desliza abajo para sincronizar: entrenos del reloj y actividades GPS de tu cuenta",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
@@ -253,7 +252,7 @@ private fun ResumenTab(resumen: ResumenHistorial?, periodo: String, onPeriodoCha
             }
         }
         item {
-            Card(modifier = Modifier.fillMaxWidth()) {
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(14.dp)) {
                     Text(
                         "Calendario de actividad",
@@ -278,7 +277,7 @@ private fun ResumenTab(resumen: ResumenHistorial?, periodo: String, onPeriodoCha
         }
         if (resumen.porTipo.isNotEmpty()) {
             item {
-                Card(modifier = Modifier.fillMaxWidth()) {
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
                             "Distribución por tipo de entreno",
@@ -303,7 +302,7 @@ private fun ResumenTab(resumen: ResumenHistorial?, periodo: String, onPeriodoCha
         }
         if (resumen.topPrs.isNotEmpty()) {
             item {
-                Card(modifier = Modifier.fillMaxWidth()) {
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
                             "Mejores marcas",
@@ -387,10 +386,9 @@ private fun SesionCard(
         sesion.tipoRutina == "PERS" -> Icons.Filled.Bolt
         else -> Icons.Filled.FitnessCenter
     }
-    Card(
+    ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        onClick = onClick,
-        colors = CardDefaults.cardColors()
+        onClick = onClick
     ) {
         Row(
             Modifier.padding(14.dp),
@@ -474,7 +472,7 @@ private fun GpsTab(
             }
         } else {
             items(actividades, key = { it.id }) { a ->
-                Card(
+                ElevatedCard(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = { onOpen(a.id) }
                 ) {

@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.screens.rutinas
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -184,9 +185,8 @@ fun RutinasLibresScreen(
                     ) {
                         items(uiState.rutinas) { rutina ->
                             val firstEj = rutina.ejercicios.firstOrNull()
-                            Card(
+                            ElevatedCard(
                                 modifier = Modifier.fillMaxWidth(),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                                 onClick = { onNavigateToDetallesRutina(rutina.id_rutina_pers) }
                             ) {
                                 Row(

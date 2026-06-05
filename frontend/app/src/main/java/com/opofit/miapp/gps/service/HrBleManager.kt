@@ -65,6 +65,7 @@ class HrBleManager(private val context: Context) {
     private var onConnectionChanged: ((deviceName: String?, connected: Boolean) -> Unit)? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private var connectTimeout: Runnable? = null
+    private var pendingConnectedDevice: FoundDevice? = null
 
     fun setListeners(
         onHr: (Int) -> Unit,
@@ -289,6 +290,11 @@ class HrBleManager(private val context: Context) {
                     failConnection(g, "No se pudo activar las notificaciones de pulso")
                     return@post
                 }
+                val deviceName = try { g.device.name } catch (_: SecurityException) { null }
+                val current = _state.value
+                val foundDev = if (current is State.Connecting) current.device
+                else FoundDevice(g.device.address, deviceName, 0)
+                pendingConnectedDevice = foundDev.copy(name = deviceName ?: foundDev.name)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     g.writeDescriptor(descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
                 } else {
@@ -296,14 +302,29 @@ class HrBleManager(private val context: Context) {
                     descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
                     @Suppress("DEPRECATION")
                     g.writeDescriptor(descriptor)
+                    // En API antiguas onDescriptorWrite no siempre se invoca.
+                    mainHandler.postDelayed({ confirmConnectedIfPending() }, 1200L)
                 }
-                val deviceName = try { g.device.name } catch (_: SecurityException) { null }
-                val current = _state.value
-                val foundDev = if (current is State.Connecting) current.device
-                else FoundDevice(g.device.address, deviceName, 0)
+            }
+        }
+
+        override fun onDescriptorWrite(
+            g: BluetoothGatt,
+            descriptor: BluetoothGattDescriptor,
+            status: Int
+        ) {
+            mainHandler.post {
+                if (descriptor.uuid != CCC_DESCRIPTOR) return@post
+                val device = pendingConnectedDevice ?: return@post
+                if (status != BluetoothGatt.GATT_SUCCESS) {
+                    pendingConnectedDevice = null
+                    failConnection(g, "No se pudieron activar las notificaciones de pulso")
+                    return@post
+                }
+                pendingConnectedDevice = null
                 cancelConnectTimeout()
-                _state.value = State.Connected(foundDev.copy(name = deviceName ?: foundDev.name))
-                onConnectionChanged?.invoke(deviceName ?: foundDev.name, true)
+                _state.value = State.Connected(device)
+                onConnectionChanged?.invoke(device.name, true)
             }
         }
 
@@ -322,6 +343,15 @@ class HrBleManager(private val context: Context) {
         ) {
             mainHandler.post { handlePayload(characteristic.uuid, value) }
         }
+    }
+
+    private fun confirmConnectedIfPending() {
+        val device = pendingConnectedDevice ?: return
+        if (_state.value !is State.Connecting) return
+        pendingConnectedDevice = null
+        cancelConnectTimeout()
+        _state.value = State.Connected(device)
+        onConnectionChanged?.invoke(device.name, true)
     }
 
     private fun handlePayload(uuid: UUID, value: ByteArray?) {

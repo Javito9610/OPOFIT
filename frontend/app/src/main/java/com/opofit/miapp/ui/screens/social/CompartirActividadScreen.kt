@@ -42,6 +42,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import android.graphics.Bitmap
+import android.net.Uri
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -73,7 +75,8 @@ fun CompartirActividadScreen(
     var titulo by remember { mutableStateOf(pending?.tituloSugerido.orEmpty()) }
     var texto by remember { mutableStateOf("") }
     var publico by remember { mutableStateOf(false) }
-    var fotoPreview by remember { mutableStateOf<String?>(null) }
+    var fotoUri by remember { mutableStateOf<Uri?>(null) }
+    var fotoBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var fotoBase64 by remember { mutableStateOf<String?>(null) }
     var usarFoto by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(false) }
@@ -87,11 +90,16 @@ fun CompartirActividadScreen(
 
     val pickFoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
-            val b64 = ImagePickerUtil.uriToJpegBase64(context, uri)
-            if (b64 != null) {
+            val bitmap = ImagePickerUtil.uriToBitmap(context, uri)
+            val b64 = bitmap?.let { ImagePickerUtil.bitmapToJpegBase64(it) }
+            if (bitmap != null && b64 != null) {
+                fotoUri = uri
+                fotoBitmap = bitmap
                 fotoBase64 = b64
-                fotoPreview = b64
                 usarFoto = true
+                error = ""
+            } else {
+                error = "No se pudo cargar la foto. Prueba con otra imagen (JPG o PNG)."
             }
         }
     }
@@ -125,7 +133,8 @@ fun CompartirActividadScreen(
             ShareCardPreview(
                 titulo = titulo,
                 stats = pending.stats,
-                fotoFondo = fotoPreview,
+                fotoFondoUri = fotoUri,
+                fotoFondoBitmap = null,
                 usarFoto = usarFoto,
                 routePoints = pending.routePoints,
                 modifier = Modifier.fillMaxWidth()
@@ -137,7 +146,7 @@ fun CompartirActividadScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("Foto de fondo")
-                Switch(checked = usarFoto, onCheckedChange = { usarFoto = it }, enabled = fotoPreview != null)
+                Switch(checked = usarFoto, onCheckedChange = { usarFoto = it }, enabled = fotoUri != null)
             }
             OutlinedButton(
                 onClick = {
@@ -145,7 +154,7 @@ fun CompartirActividadScreen(
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(if (fotoPreview == null) "Elegir foto de fondo" else "Cambiar foto")
+                Text(if (fotoUri == null) "Elegir foto de fondo" else "Cambiar foto")
             }
 
             OutlinedTextField(
@@ -185,7 +194,8 @@ fun CompartirActividadScreen(
                                         ShareCardPreview(
                                             titulo = titulo,
                                             stats = pending.stats,
-                                            fotoFondo = fotoPreview,
+                                            fotoFondoUri = fotoUri,
+                                            fotoFondoBitmap = fotoBitmap,
                                             usarFoto = usarFoto,
                                             routePoints = pending.routePoints,
                                             modifier = Modifier.fillMaxWidth()
@@ -214,7 +224,8 @@ fun CompartirActividadScreen(
                                         ShareCardPreview(
                                             titulo = titulo,
                                             stats = pending.stats,
-                                            fotoFondo = fotoPreview,
+                                            fotoFondoUri = fotoUri,
+                                            fotoFondoBitmap = fotoBitmap,
                                             usarFoto = usarFoto,
                                             routePoints = pending.routePoints,
                                             modifier = Modifier.fillMaxWidth()
@@ -243,7 +254,8 @@ fun CompartirActividadScreen(
                                         ShareCardPreview(
                                             titulo = titulo,
                                             stats = pending.stats,
-                                            fotoFondo = fotoPreview,
+                                            fotoFondoUri = fotoUri,
+                                            fotoFondoBitmap = fotoBitmap,
                                             usarFoto = usarFoto,
                                             routePoints = pending.routePoints,
                                             modifier = Modifier.fillMaxWidth()

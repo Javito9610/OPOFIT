@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.screens.ranking
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -154,10 +155,7 @@ fun RankingScreen(
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    )
+                ElevatedCard(
                 ) {
                     Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
@@ -235,11 +233,7 @@ fun RankingScreen(
 
 @Composable
 private fun PodiumRow(top3: List<RankingEntry>) {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
-        )
-    ) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             Modifier
                 .fillMaxWidth()
@@ -286,11 +280,10 @@ private fun RankingCard(entry: RankingEntry, onClick: () -> Unit) {
         3 -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
-    Card(
+    ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .clickable(onClick = onClick)
     ) {
         Row(
             Modifier.padding(16.dp),

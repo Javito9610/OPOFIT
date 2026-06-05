@@ -56,6 +56,7 @@ import com.opofit.miapp.gps.service.RoutePreferences
 import com.opofit.miapp.gps.service.ShareActivityContext
 import com.opofit.miapp.gps.service.buildPendingShareFromGps
 import com.opofit.miapp.gps.util.GpsMetrics
+import com.opofit.miapp.ui.components.HeartRateZoneLive
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 
@@ -74,6 +75,8 @@ fun GpsRecordingScreen(
     viewModel: GpsViewModel = viewModel()
 ) {
     val state by viewModel.tracking.collectAsState()
+    val liveHr by viewModel.hrManager().heartRate.collectAsState()
+    val displayHr = state.currentHrBpm ?: liveHr
     val context = LocalContext.current
     val cameraPositionState = rememberCameraPositionState()
     var plannedRoute by remember { mutableStateOf<List<LatLng>>(emptyList()) }
@@ -211,12 +214,18 @@ fun GpsRecordingScreen(
                     )
                     MetricBlock(
                         "♥ Pulso",
-                        state.currentHrBpm?.let { "$it bpm" }
+                        displayHr?.let { "$it bpm" }
                             ?: if (state.hrDeviceConnected) "esperando…" else "—"
                     )
                     MetricBlock(
                         "Vel. máx",
                         GpsMetrics.formatSpeedKmh(state.maxSpeedMps.toDouble())
+                    )
+                }
+                if (displayHr != null) {
+                    HeartRateZoneLive(
+                        bpm = displayHr,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
                 Row(

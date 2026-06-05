@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.screens.rutinas
 
+import com.opofit.miapp.ui.components.ElevatedCard
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.clickable
@@ -203,12 +204,8 @@ fun RutinasScreen(
                             .padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer
-                            ),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ElevatedCard(
+                            modifier = Modifier.fillMaxWidth(), containerColor = MaterialTheme.colorScheme.errorContainer
                         ) {
                             Column(modifier = Modifier.padding(20.dp)) {
                                 Text(
@@ -250,12 +247,8 @@ fun RutinasScreen(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     if (faltan > 0) {
-                                        Card(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            colors = CardDefaults.cardColors(
-                                                containerColor = MaterialTheme.colorScheme.secondaryContainer
-                                            ),
-                                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                                        ElevatedCard(
+                                            modifier = Modifier.fillMaxWidth()
                                         ) {
                                             Column(
                                                 modifier = Modifier.padding(20.dp),
@@ -354,11 +347,8 @@ fun RutinasScreen(
                             ) {
                                 if (!esFitness && uiState.notaActual.isNotEmpty()) {
                                     item {
-                                        Card(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            colors = CardDefaults.cardColors(
-                                                containerColor = MaterialTheme.colorScheme.primaryContainer
-                                            )
+                                        ElevatedCard(
+                                            modifier = Modifier.fillMaxWidth()
                                         ) {
                                             Text(
                                                 text = "Nota ${uiState.notaActual} · ${uiState.nivelAsignado}",
@@ -372,11 +362,8 @@ fun RutinasScreen(
                                 }
                                 if (!uiState.msgPremium.isNullOrBlank()) {
                                     item {
-                                        Card(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            colors = CardDefaults.cardColors(
-                                                containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                                            )
+                                        ElevatedCard(
+                                            modifier = Modifier.fillMaxWidth()
                                         ) {
                                             Text(
                                                 text = uiState.msgPremium!!,
@@ -502,7 +489,7 @@ fun RutinasScreen(
                                         }
                                     ) { i ->
                                         val dia = plan.semana[i]
-                                        Card(Modifier.fillMaxWidth()) {
+                                        ElevatedCard(Modifier.fillMaxWidth()) {
                                             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                                 PlanDiaCard(
                                                     dia = dia,
@@ -608,11 +595,8 @@ fun RutinasScreen(
                             ) {
                                 if (!esFitness && uiState.notaActual.isNotEmpty()) {
                                     item {
-                                        Card(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            colors = CardDefaults.cardColors(
-                                                containerColor = MaterialTheme.colorScheme.primaryContainer
-                                            )
+                                        ElevatedCard(
+                                            modifier = Modifier.fillMaxWidth()
                                         ) {
                                             Text(
                                                 text = "Nota ${uiState.notaActual} · ${uiState.nivelAsignado}",
@@ -626,11 +610,8 @@ fun RutinasScreen(
                                 }
                                 if (!uiState.msgPremium.isNullOrBlank()) {
                                     item {
-                                        Card(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            colors = CardDefaults.cardColors(
-                                                containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                                            )
+                                        ElevatedCard(
+                                            modifier = Modifier.fillMaxWidth()
                                         ) {
                                             Text(
                                                 text = uiState.msgPremium!!,
@@ -657,11 +638,8 @@ fun RutinasScreen(
                                 }
                                     if (filteredBlocks.isEmpty()) {
                                         item {
-                                            Card(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                colors = CardDefaults.cardColors(
-                                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                                                )
+                                            ElevatedCard(
+                                                modifier = Modifier.fillMaxWidth()
                                             ) {
                                                 Box(
                                                     modifier = Modifier.fillMaxWidth().padding(32.dp),
@@ -677,9 +655,8 @@ fun RutinasScreen(
                                         }
                                     }
                                     items(filteredBlocks) { bloque ->
-                                        Card(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                        ElevatedCard(
+                                            modifier = Modifier.fillMaxWidth()
                                         ) {
                                             Column(modifier = Modifier.padding(16.dp)) {
                                                 Text(

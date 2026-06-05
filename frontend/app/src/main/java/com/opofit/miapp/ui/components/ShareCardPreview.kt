@@ -1,5 +1,8 @@
 package com.opofit.miapp.ui.components
 
+import android.graphics.Bitmap
+import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,7 +36,6 @@ import coil.compose.AsyncImage
 import com.opofit.miapp.data.responsemodels.PostStats
 import com.opofit.miapp.gps.service.RoutePoint
 import com.opofit.miapp.gps.util.GpsMetrics
-import com.opofit.miapp.utils.MediaUrlUtil
 import androidx.compose.foundation.Canvas
 import kotlin.math.max
 
@@ -40,7 +43,8 @@ import kotlin.math.max
 fun ShareCardPreview(
     titulo: String,
     stats: PostStats?,
-    fotoFondo: String? = null,
+    fotoFondoUri: Uri? = null,
+    fotoFondoBitmap: Bitmap? = null,
     usarFoto: Boolean = true,
     routePoints: List<RoutePoint> = emptyList(),
     modifier: Modifier = Modifier
@@ -60,9 +64,16 @@ fun ShareCardPreview(
             .aspectRatio(9f / 16f)
             .clip(RoundedCornerShape(16.dp))
     ) {
-        if (usarFoto && !fotoFondo.isNullOrBlank()) {
+        if (usarFoto && fotoFondoBitmap != null) {
+            Image(
+                bitmap = fotoFondoBitmap.asImageBitmap(),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else if (usarFoto && fotoFondoUri != null) {
             AsyncImage(
-                model = MediaUrlUtil.resolveAvatar(fotoFondo) ?: fotoFondo,
+                model = fotoFondoUri,
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
