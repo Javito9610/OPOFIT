@@ -612,14 +612,18 @@ fun MapaEntrenoScreen(
                         }
                         Text(
                             if (compact) {
-                                "${"%.1f".format(distKm)} km · máx ${limites.maxKm.toInt()}"
+                                "Objetivo: ${"%.1f".format(distKm)} km"
                             } else {
-                                "${limites.etiqueta}: ${"%.1f".format(distKm)} km (máx. ${limites.maxKm.toInt()} km)"
+                                val verbo = when {
+                                    esBici -> "pedalear"
+                                    esCaminar -> "caminar"
+                                    else -> "correr"
+                                }
+                                "¿Cuántos km quieres $verbo? ${"%.1f".format(distKm)} km (máx. ${limites.maxKm.toInt()})"
                             },
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            maxLines = 2
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             FilterChip(
@@ -635,10 +639,10 @@ fun MapaEntrenoScreen(
                         }
                         if (!compact) {
                             Text(
-                                when {
-                                    esBici -> "Ruta por carretera o camino (modo bici)"
-                                    esCaminar -> "Ruta a pie por calles y caminos"
-                                    else -> "Ruta de carrera por calles y caminos reales"
+                                if (terreno == "MONTANA") {
+                                    "Montaña: caminos y senderos (menos calles)"
+                                } else {
+                                    "Ciudad: calles y urbanización (sigue el mapa real)"
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -723,13 +727,28 @@ fun MapaEntrenoScreen(
                             }
                         }
                         ruta?.let { r ->
+                            val objetivoKm = r.distanciaObjetivoKm ?: distKm
+                            val realKm = r.distanciaKm
+                            val diffKm = kotlin.math.abs(realKm - objetivoKm)
                             Text(
-                                "${r.nombre} · ${"%.2f".format(r.distanciaKm)} km",
+                                "Recorrido real: ${"%.2f".format(realKm)} km",
                                 fontWeight = FontWeight.Medium
                             )
+                            Text(
+                                "Objetivo del entreno: ${"%.1f".format(objetivoKm)} km",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            if (diffKm > objetivoKm * 0.15) {
+                                Text(
+                                    "La ruta por calles no coincide exacta con el objetivo. Prueba «Otra propuesta» o baja el slider.",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.tertiary
+                                )
+                            }
                             val porCalles = r.origen.contains("calles") || r.origen.contains("osrm")
                             Text(
-                                if (porCalles) "Trazado por calles" else "Ruta aproximada (sin datos de calles)",
+                                if (porCalles) "Trazado por calles reales" else "Ruta aproximada (sin datos de calles)",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (porCalles) MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.error

@@ -216,8 +216,7 @@ class MapasService {
     const km = MapasService.redondearKm(distKm, actividad, terreno);
     const seed = Math.max(0, Number(variacion) || 0);
     const limites = MapasService.limitesRuta(actividad, terreno);
-    const etiqueta = seed > 0 ? ` (opción ${(seed % 8) + 1})` : '';
-    const sufijoTerreno = (terreno === 'MONTANA' || terreno === 'MONTAÑA') ? ' · montaña' : ' · ciudad';
+    const etiqueta = seed > 0 ? ` · opción ${(seed % 8) + 1}` : '';
 
     let puntos = null;
     let origen = 'sugerida_geometrica';
@@ -237,10 +236,13 @@ class MapasService {
     }
 
     const distanciaTotalM = MapasService.longitudPolyline(puntos);
-    const prefijo = limites.label.includes('Bici') ? 'Ruta bici' : 'Rodaje';
+    const act = String(actividad || 'CARRERA').toUpperCase();
+    let prefijo = 'Carrera';
+    if (act === 'BICI' || act === 'BIKE' || act === 'BICICLETA') prefijo = 'Ruta bici';
+    else if (act === 'CAMINAR' || act === 'WALK') prefijo = 'Caminata';
     return {
       id: crypto.randomBytes(8).toString('hex'),
-      nombre: `${prefijo} ${km} km${sufijoTerreno}${etiqueta}`,
+      nombre: `${prefijo} ${km} km${etiqueta}`,
       distanciaKm: Number((distanciaTotalM / 1000).toFixed(2)),
       distanciaObjetivoKm: km,
       variacion: seed,
@@ -275,43 +277,63 @@ class MapasService {
     const centroLat = lat + Math.sin(seed * 0.61) * 0.003;
     const centroLng = lng + Math.cos(seed * 0.43) * 0.003;
     const esMontana = terreno === 'MONTANA' || terreno === 'MONTAÑA';
-    const scales = esMontana ? [1.05, 1.2, 1.4, 1.65, 1.9] : [0.9, 1.05, 1.2, 1.35, 1.5, 1.7];
+    const scalesBase = esMontana
+      ? [0.55, 0.65, 0.75, 0.85, 0.95, 1.05, 1.2, 1.4, 1.65]
+      : [0.42, 0.50, 0.58, 0.66, 0.74, 0.82, 0.90, 0.98, 1.08, 1.18, 1.30];
     const mode = MapasService.modoRuta(actividad);
     const osrmProfile = MapasService.perfilOsrm(actividad);
-    let mejor = null;
-    let mejorDiff = Infinity;
 
-    for (const scale of scales) {
-      const radioM = ((distKm * 1000) / (2 * Math.PI)) * scale;
-      const anillo = MapasService.waypointsAnillo(centroLat, centroLng, radioM, numWp, anguloBase);
-      const wps = [{ lat, lng }, ...anillo, { lat, lng }];
+    const probarScales = async (scales) => {
+      let mejor = null;
+      let mejorDiff = Infinity;
+      for (const scale of scales) {
+        const radioM = ((distKm * 1000) / (2 * Math.PI)) * scale;
+        const anillo = MapasService.waypointsAnillo(centroLat, centroLng, radioM, numWp, anguloBase);
+        const wps = [{ lat, lng }, ...anillo, { lat, lng }];
 
-      let puntos = null;
-      let origen = null;
-      try {
-        if (key) {
-          puntos = await MapasService.directionsRoute(wps, key, mode);
-          origen = 'sugerida_calles';
-        }
-      } catch (_e) {
-        puntos = null;
-      }
-      if (!puntos) {
+        let puntos = null;
+        let origen = null;
         try {
-          puntos = await MapasService.osrmRoute(wps, osrmProfile);
-          origen = 'sugerida_osrm';
+          if (key) {
+            puntos = await MapasService.directionsRoute(wps, key, mode);
+            origen = 'sugerida_calles';
+          }
         } catch (_e) {
-          continue;
+          puntos = null;
+        }
+        if (!puntos) {
+          try {
+            puntos = await MapasService.osrmRoute(wps, osrmProfile);
+            origen = 'sugerida_osrm';
+          } catch (_e) {
+            continue;
+          }
+        }
+        if (!puntos?.length) continue;
+
+        const distM = MapasService.longitudPolyline(puntos);
+        const diff = Math.abs(distM / 1000 - distKm);
+        if (diff < mejorDiff) {
+          mejorDiff = diff;
+          mejor = { puntos, origen };
+          if (diff <= distKm * 0.1) break;
         }
       }
-      if (!puntos?.length) continue;
+      return { mejor, mejorDiff };
+    };
 
-      const distM = MapasService.longitudPolyline(puntos);
-      const diff = Math.abs(distM / 1000 - distKm);
-      if (diff < mejorDiff) {
-        mejorDiff = diff;
-        mejor = { puntos, origen };
-        if (diff <= distKm * 0.1) break;
+    let { mejor, mejorDiff } = await probarScales(scalesBase);
+
+    if (mejor && mejorDiff > distKm * 0.12) {
+      const actualKm = MapasService.longitudPolyline(mejor.puntos) / 1000;
+      const ratio = actualKm > 0 ? distKm / actualKm : 1;
+      const refinados = scalesBase
+        .map((s) => Math.round(s * ratio * 100) / 100)
+        .filter((s, i, arr) => s >= 0.35 && s <= 1.85 && arr.indexOf(s) === i);
+      const segundo = await probarScales(refinados);
+      if (segundo.mejor && segundo.mejorDiff < mejorDiff) {
+        mejor = segundo.mejor;
+        mejorDiff = segundo.mejorDiff;
       }
     }
 

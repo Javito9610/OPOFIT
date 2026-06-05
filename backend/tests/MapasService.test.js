@@ -40,7 +40,7 @@ describe('MapasService', () => {
     const ruta = await MapasService.generarRutaSugerida(40.4168, -3.7038, 5);
     expect(ruta.puntos.length).toBeGreaterThan(3);
     expect(ruta.origen).toMatch(/calles|osrm/);
-    expect(ruta.nombre).toMatch(/Rodaje 5 km/);
+    expect(ruta.nombre).toMatch(/Carrera 5 km/);
     expect(ruta.distanciaKm).toBeGreaterThan(0);
   });
 

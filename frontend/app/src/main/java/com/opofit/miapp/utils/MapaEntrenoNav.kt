@@ -36,9 +36,9 @@ object MapaEntrenoNav {
                 LimitesRuta(1f, 30f, 14, "Caminata")
             }
         } else if (ter == "MONTANA") {
-            LimitesRuta(1f, 42f, 20, "Carrera montaña")
+            LimitesRuta(1f, 42f, 20, "Distancia objetivo")
         } else {
-            LimitesRuta(1f, 42f, 20, "Carrera ciudad")
+            LimitesRuta(1f, 42f, 20, "Distancia objetivo")
         }
     }
 
