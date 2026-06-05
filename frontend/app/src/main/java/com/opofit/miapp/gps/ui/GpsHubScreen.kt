@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
@@ -44,6 +47,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -515,6 +519,9 @@ private fun HrConnectDialog(
     onDismiss: () -> Unit
 ) {
     val found by viewModel.hrFound.collectAsState()
+    val deviceListScroll = rememberScrollState()
+    val connectingAddress = (hrState as? HrBleManager.State.Connecting)?.device?.address
+    val connectedAddress = (hrState as? HrBleManager.State.Connected)?.device?.address
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -569,35 +576,78 @@ private fun HrConnectDialog(
                     )
                 }
 
-                LazyColumn(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 48.dp, max = 260.dp),
+                        .heightIn(min = 48.dp, max = 260.dp)
+                        .verticalScroll(deviceListScroll),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     if (found.isEmpty()) {
-                        item {
-                            Text(
-                                "La lista se actualiza al escanear.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        Text(
+                            "La lista se actualiza al escanear.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     } else {
-                        items(found, key = { it.address }) { device ->
-                            OutlinedButton(
-                                onClick = { viewModel.connectHr(device) },
-                                modifier = Modifier.fillMaxWidth()
+                        found.forEach { device ->
+                            val isConnecting = connectingAddress == device.address
+                            val isConnected = connectedAddress == device.address
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(enabled = !isConnecting) {
+                                        viewModel.connectHr(device)
+                                    },
+                                shape = MaterialTheme.shapes.medium,
+                                color = when {
+                                    isConnected -> MaterialTheme.colorScheme.tertiaryContainer
+                                    isConnecting -> MaterialTheme.colorScheme.secondaryContainer
+                                    else -> MaterialTheme.colorScheme.surfaceVariant
+                                },
+                                tonalElevation = 1.dp
                             ) {
-                                Column(Modifier.fillMaxWidth()) {
-                                    Text(
-                                        device.name?.ifBlank { null } ?: "Dispositivo sin nombre",
-                                        fontWeight = FontWeight.SemiBold
+                                Row(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Icon(
+                                        if (isConnected) Icons.Filled.BluetoothConnected else Icons.Filled.Bluetooth,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
                                     )
-                                    Text(
-                                        "${device.address} · ${device.rssi} dBm",
-                                        style = MaterialTheme.typography.labelSmall
-                                    )
+                                    Column(Modifier.weight(1f)) {
+                                        Text(
+                                            device.name?.ifBlank { null } ?: "Dispositivo sin nombre",
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 1
+                                        )
+                                        Text(
+                                            "${device.address} · ${device.rssi} dBm",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    when {
+                                        isConnecting -> CircularProgressIndicator(
+                                            modifier = Modifier.size(18.dp),
+                                            strokeWidth = 2.dp
+                                        )
+                                        isConnected -> Text(
+                                            "OK",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        else -> Text(
+                                            "Conectar",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
                                 }
                             }
                         }

@@ -114,7 +114,7 @@ fun RestTimerSheet(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(60, 90, 120, 180).forEach { s ->
                     FilterChip(
-                        selected = initialSeconds == s && segundosRestantes == s,
+                        selected = segundosRestantes == s,
                         onClick = { segundosRestantes = s },
                         label = { Text("${s}s") }
                     )

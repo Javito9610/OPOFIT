@@ -14,8 +14,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -44,6 +47,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,6 +68,8 @@ import com.opofit.miapp.ui.components.EntrenoLiveMetricsBar
 import com.opofit.miapp.ui.components.ExerciseValueInput
 import com.opofit.miapp.ui.components.RecordCelebrationDialog
 import com.opofit.miapp.ui.components.RestTimerSheet
+import com.opofit.miapp.utils.EntrenoExerciseUtil
+import com.opofit.miapp.utils.EntrenoRelojImport
 import com.opofit.miapp.utils.EntrenoValidation
 import com.opofit.miapp.utils.TimeFormatUtil
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
@@ -71,8 +77,12 @@ import com.opofit.miapp.ui.viewmodels.HistorialViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasViewModel
 import com.opofit.miapp.utils.MapaEntrenoNav
 import com.opofit.miapp.utils.Units
+import com.opofit.miapp.utils.rutinasUnicasPorEnfoque
+import com.opofit.miapp.ui.components.enfoqueLabel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 private data class EjercicioEstado(
@@ -81,9 +91,10 @@ private data class EjercicioEstado(
     var completado: Boolean = false,
     var valorConseguido: String = "",
     val objetivoSegundos: Int? = null,
-    val tipo: String? = null, 
+    val tipo: String? = null,
     var distancia: String = "",
-    val descansoSeg: Int = 90
+    val descansoSeg: Int = 90,
+    val pilar: String? = null
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -107,8 +118,11 @@ fun EntrenamientosScreen(
     val oposicionId = authState.oposicionId ?: 1
 
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val tokenManager = remember { TokenManager(context) }
     var unitDist by remember { mutableStateOf("km") }
+    var sessionStartMs by remember { mutableStateOf<Long?>(null) }
+    var importingReloj by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         tokenManager.getUnitDistancia().collectLatest { u ->
             if (!u.isNullOrBlank()) unitDist = u
@@ -129,6 +143,18 @@ fun EntrenamientosScreen(
     var restTimerSecs by remember { mutableIntStateOf(90) }
     var nextEjercicioNombre by remember { mutableStateOf("") }
     var erroresValor by remember { mutableStateOf(mapOf<Int, String>()) }
+    var avisoMsg by remember { mutableStateOf<String?>(null) }
+    var gpsActividadUuid by remember { mutableStateOf<String?>(null) }
+
+    val rutinasSelector = remember(rutinasState.rutinaCompleta) {
+        rutinasUnicasPorEnfoque(rutinasState.rutinaCompleta)
+    }
+    val enModoPlan = (initialPlanDiaId ?: 0) > 0
+    val diaPlanSesion = remember(initialPlanDiaId, rutinasState.planSemanal) {
+        initialPlanDiaId?.let { id ->
+            rutinasState.planSemanal?.semana?.find { it.id_plan_dia == id }
+        }
+    }
 
     fun objetivoSegundosDesdeNombre(nombre: String): Int? {
         val regex = Regex("(\\d+)\\s*min\\b", RegexOption.IGNORE_CASE)
@@ -136,14 +162,8 @@ fun EntrenamientosScreen(
         return min * 60
     }
 
-    fun tipoCardio(nombre: String): String? {
-        val n = nombre.lowercase()
-        return when {
-            n.contains("natación") || n.contains("natacion") -> "SWIM"
-            n.contains("carrera") || n.contains("trote") || n.contains("rodaje") || n.contains("fartlek") -> "RUN"
-            else -> null
-        }
-    }
+    fun enfoqueActual(): String? =
+        diaPlanSesion?.enfoque ?: rutinasSelector.getOrNull(selectedRutinaIndex)?.bloque
 
     fun esEjercicioGps(nombre: String, tipo: String?): Boolean {
         val n = nombre.lowercase()
@@ -152,57 +172,154 @@ fun EntrenamientosScreen(
         return Regex("\\b(bici|ciclismo|bicicleta|caminar|marcha|paseo)\\b").containsMatchIn(n)
     }
 
+    fun slotsParaImport(): List<EntrenoRelojImport.Slot> =
+        ejerciciosEstado.mapIndexed { idx, e ->
+            EntrenoRelojImport.Slot(
+                index = idx,
+                nombre = e.nombre,
+                tipo = e.tipo,
+                pilar = e.pilar,
+                objetivoSegundos = e.objetivoSegundos,
+                hecho = e.completado,
+                valor = e.valorConseguido,
+                distancia = e.distancia
+            )
+        }
+
+    fun unidadEjercicioGlobal(idx: Int): String {
+        val e = ejerciciosEstado.getOrNull(idx)
+        val planUnidad = if (enModoPlan) {
+            diaPlanSesion?.ejercicios?.getOrNull(idx)?.unidad
+        } else null
+        val apiUnidad = planUnidad?.ifBlank { null }
+            ?: rutinasSelector.getOrNull(selectedRutinaIndex)?.ejercicios?.getOrNull(idx)?.unidad?.ifBlank { null }
+        return EntrenoValidation.inferirUnidad(
+            e?.nombre ?: "",
+            apiUnidad,
+            e?.pilar,
+            enfoqueActual()
+        )
+    }
+
+    fun aplicarImportReloj(result: EntrenoRelojImport.Result) {
+        gpsActividadUuid = result.activityId
+        if (result.elapsedMs > elapsedMs) {
+            elapsedMs = result.elapsedMs
+            cronometroIniciadoAlgunaVez = true
+        }
+        result.updates.forEach { u ->
+            val e = ejerciciosEstado.getOrNull(u.index) ?: return@forEach
+            ejerciciosEstado[u.index] = e.copy(
+                valorConseguido = u.valor ?: e.valorConseguido,
+                distancia = u.distancia ?: e.distancia,
+                completado = u.hecho ?: e.completado
+            )
+        }
+        avisoMsg = result.message
+    }
+
+    fun importarActividadReloj(activity: com.opofit.miapp.gps.model.ActivitySummary) {
+        val result = EntrenoRelojImport.apply(
+            activity = activity,
+            slots = slotsParaImport(),
+            unidadFor = { idx -> unidadEjercicioGlobal(idx) },
+            esGps = { slot -> esEjercicioGps(slot.nombre, slot.tipo) },
+            unitDist = unitDist
+        )
+        aplicarImportReloj(result)
+    }
+
+    val importFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            importingReloj = true
+            try {
+                val activity = EntrenoRelojImport.importFromUri(context, uri)
+                if (activity == null) {
+                    avisoMsg = "No se pudo leer el fichero del reloj."
+                } else {
+                    importarActividadReloj(activity)
+                }
+            } catch (e: Exception) {
+                avisoMsg = e.message ?: "Error al importar el fichero."
+            } finally {
+                importingReloj = false
+            }
+        }
+    }
+
     LaunchedEffect(userId, oposicionId) {
         if (userId > 0 && rutinasState.rutinaCompleta.isEmpty()) {
             rutinasViewModel.cargarRutina(userId, oposicionId)
         }
     }
 
-    LaunchedEffect(rutinasState.rutinaCompleta) {
-        if (!initialApplied && initialEnfoque.isNotBlank() && rutinasState.rutinaCompleta.isNotEmpty()) {
-            val idx = rutinasState.rutinaCompleta.indexOfFirst { it.bloque.equals(initialEnfoque, ignoreCase = true) }
-            if (idx >= 0) {
-                selectedRutinaIndex = idx
+    LaunchedEffect(rutinasSelector, initialRutinaOpoId, initialEnfoque) {
+        if (rutinasSelector.isEmpty()) return@LaunchedEffect
+        when {
+            initialRutinaOpoId != null && initialRutinaOpoId > 0 -> {
+                val idx = rutinasSelector.indexOfFirst { it.id_rutina_opo == initialRutinaOpoId }
+                if (idx >= 0) selectedRutinaIndex = idx
+                initialApplied = true
             }
-            initialApplied = true
+            !initialApplied && initialEnfoque.isNotBlank() -> {
+                val idx = rutinasSelector.indexOfFirst { it.bloque.equals(initialEnfoque, ignoreCase = true) }
+                if (idx >= 0) selectedRutinaIndex = idx
+                initialApplied = true
+            }
         }
-        if (rutinasState.rutinaCompleta.isNotEmpty() && selectedRutinaIndex !in rutinasState.rutinaCompleta.indices) {
-            selectedRutinaIndex = 0
-        }
-        if (rutinasState.rutinaCompleta.isEmpty()) {
+        if (selectedRutinaIndex !in rutinasSelector.indices) selectedRutinaIndex = 0
+    }
+
+    LaunchedEffect(rutinasSelector) {
+        if (rutinasSelector.isEmpty()) {
             ejerciciosEstado.clear()
             cronometroActivo = false
             elapsedMs = 0L
         }
     }
 
-    LaunchedEffect(selectedRutinaIndex, rutinasState.rutinaCompleta, initialPlanDiaId, rutinasState.planSemanal) {
+    LaunchedEffect(selectedRutinaIndex, rutinasSelector, initialPlanDiaId, rutinasState.planSemanal, enModoPlan) {
         ejerciciosEstado.clear()
-        val diaPlan = initialPlanDiaId?.let { id ->
-            rutinasState.planSemanal?.semana?.find { it.id_plan_dia == id }
-        }
-        fun agregarEjercicio(nombre: String, idEjercicio: Int?, descanso: Int, idx: Int) {
+        val diaPlan = if (enModoPlan) diaPlanSesion else null
+        val enfoqueBloque = diaPlan?.enfoque ?: rutinasSelector.getOrNull(selectedRutinaIndex)?.bloque
+        fun agregarEjercicio(
+            nombre: String,
+            idEjercicio: Int?,
+            descanso: Int,
+            idx: Int,
+            pilar: String? = null,
+            unidadApi: String? = null
+        ) {
+            val pil = pilar ?: enfoqueBloque
             val objetivo = objetivoSegundosDesdeNombre(nombre)
-            val tipo = tipoCardio(nombre)
+            val tipo = EntrenoExerciseUtil.tipoCardio(nombre, pil, enfoqueBloque)
             val desc = if (descanso > 0) descanso else 90
+            val unidadEff = EntrenoValidation.inferirUnidad(nombre, unidadApi, pil, enfoqueBloque)
+            val valorInicial = when {
+                tipo != null && unidadEff == "min" -> objetivo?.let { (it / 60.0).toString() } ?: ""
+                else -> ""
+            }
             ejerciciosEstado.add(
                 EjercicioEstado(
                     nombre = nombre,
                     idEjercicio = idEjercicio ?: (selectedRutinaIndex * 100 + idx + 1),
                     objetivoSegundos = objetivo,
                     tipo = tipo,
-                    descansoSeg = desc
+                    descansoSeg = desc,
+                    pilar = pil,
+                    valorConseguido = valorInicial
                 )
             )
         }
         val planEj = diaPlan?.ejercicios?.takeIf { it.isNotEmpty() }
         if (planEj != null) {
             planEj.forEachIndexed { idx, ej ->
-                agregarEjercicio(ej.nombre, ej.id_ejercicio, ej.descanso, idx)
+                agregarEjercicio(ej.nombre, ej.id_ejercicio, ej.descanso, idx, ej.pilar, ej.unidad)
             }
         } else {
-            rutinasState.rutinaCompleta.getOrNull(selectedRutinaIndex)?.ejercicios?.forEachIndexed { idx, ej ->
-                agregarEjercicio(ej.nombre, ej.id_ejercicio, ej.descanso, idx)
+            rutinasSelector.getOrNull(selectedRutinaIndex)?.ejercicios?.forEachIndexed { idx, ej ->
+                agregarEjercicio(ej.nombre, ej.id_ejercicio, ej.descanso, idx, unidadApi = ej.unidad)
             }
         }
         cronometroActivo = false
@@ -263,7 +380,6 @@ fun EntrenamientosScreen(
     }
 
     val gpsLast by GpsLastResult.value.collectAsState()
-    var gpsActividadUuid by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(gpsLast?.id) {
         val summary = gpsLast ?: return@LaunchedEffect
         gpsActividadUuid = summary.id
@@ -347,6 +463,17 @@ fun EntrenamientosScreen(
             )
         }
     ) { innerPadding ->
+        avisoMsg?.let { msg ->
+            AlertDialog(
+                onDismissRequest = { avisoMsg = null },
+                confirmButton = {
+                    Button(onClick = { avisoMsg = null }) { Text("Entendido") }
+                },
+                title = { Text("Aviso") },
+                text = { Text(msg) }
+            )
+        }
+
         if (showObjetivoDialog) {
             AlertDialog(
                 onDismissRequest = { showObjetivoDialog = false },
@@ -397,14 +524,43 @@ fun EntrenamientosScreen(
                 }
             }
 
-            if (rutinasState.rutinaCompleta.isNotEmpty()) {
+            if (enModoPlan && diaPlanSesion != null) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        )
+                    ) {
+                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                "Sesión del plan",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f)
+                            )
+                            Text(
+                                diaPlanSesion.titulo ?: enfoqueLabel(diaPlanSesion.enfoque),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            diaPlanSesion.nombre_dia?.let { dia ->
+                                Text(
+                                    dia,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                                )
+                            }
+                        }
+                    }
+                }
+            } else if (rutinasSelector.isNotEmpty()) {
                 item {
                     ExposedDropdownMenuBox(
                         expanded = expandedRutinas,
                         onExpandedChange = { expandedRutinas = it }
                     ) {
-                        val bloqueSeleccionado = rutinasState.rutinaCompleta.getOrNull(selectedRutinaIndex)
-                        val label = bloqueSeleccionado?.bloque ?: "Selecciona rutina"
+                        val bloqueSeleccionado = rutinasSelector.getOrNull(selectedRutinaIndex)
+                        val label = bloqueSeleccionado?.bloque?.let { enfoqueLabel(it) } ?: "Selecciona rutina"
                         OutlinedTextField(
                             value = label,
                             onValueChange = {},
@@ -420,10 +576,9 @@ fun EntrenamientosScreen(
                             expanded = expandedRutinas,
                             onDismissRequest = { expandedRutinas = false }
                         ) {
-                            rutinasState.rutinaCompleta.forEachIndexed { idx, b ->
-                                val name = b.bloque
+                            rutinasSelector.forEachIndexed { idx, b ->
                                 DropdownMenuItem(
-                                    text = { Text(name) },
+                                    text = { Text(enfoqueLabel(b.bloque)) },
                                     onClick = {
                                         selectedRutinaIndex = idx
                                         expandedRutinas = false
@@ -433,7 +588,9 @@ fun EntrenamientosScreen(
                         }
                     }
                 }
+            }
 
+            if (rutinasSelector.isNotEmpty() || enModoPlan) {
                 item {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -442,7 +599,10 @@ fun EntrenamientosScreen(
                         Button(
                             onClick = {
                                 cronometroActivo = !cronometroActivo
-                                if (cronometroActivo) cronometroIniciadoAlgunaVez = true
+                                if (cronometroActivo) {
+                                    cronometroIniciadoAlgunaVez = true
+                                    if (sessionStartMs == null) sessionStartMs = System.currentTimeMillis()
+                                }
                             },
                             modifier = Modifier.weight(1f),
                             enabled = ejerciciosEstado.isNotEmpty()
@@ -450,7 +610,12 @@ fun EntrenamientosScreen(
                             Text(if (cronometroActivo) "Pausar" else "Iniciar")
                         }
                         Button(
-                            onClick = { cronometroActivo = false; elapsedMs = 0L; cronometroIniciadoAlgunaVez = false },
+                            onClick = {
+                                cronometroActivo = false
+                                elapsedMs = 0L
+                                cronometroIniciadoAlgunaVez = false
+                                sessionStartMs = null
+                            },
                             modifier = Modifier.weight(1f),
                             enabled = elapsedMs > 0L
                         ) {
@@ -460,30 +625,35 @@ fun EntrenamientosScreen(
                 }
 
                 item {
-                    val planEjercicios = initialPlanDiaId?.let { id ->
-                        rutinasState.planSemanal?.semana?.find { it.id_plan_dia == id }?.ejercicios
-                    } ?: rutinasState.rutinaCompleta.getOrNull(selectedRutinaIndex)?.ejercicios?.map { ej ->
-                        EjercicioPlan(
-                            id_ejercicio = ej.id_ejercicio,
-                            nombre = ej.nombre,
-                            video_url = ej.video_url,
-                            series = ej.series,
-                            repeticiones = ej.repeticiones,
-                            descanso = ej.descanso,
-                            unidad = ej.unidad
-                        )
+                    val planEjercicios = if (enModoPlan) {
+                        diaPlanSesion?.ejercicios
+                    } else {
+                        rutinasSelector.getOrNull(selectedRutinaIndex)?.ejercicios?.map { ej ->
+                            EjercicioPlan(
+                                id_ejercicio = ej.id_ejercicio,
+                                nombre = ej.nombre,
+                                video_url = ej.video_url,
+                                series = ej.series,
+                                repeticiones = ej.repeticiones,
+                                descanso = ej.descanso,
+                                unidad = ej.unidad
+                            )
+                        }
                     }
                     if (!planEjercicios.isNullOrEmpty()) {
                         OutlinedButton(
                             onClick = {
                                 val steps = TcxExport.stepsFromEjercicios(planEjercicios)
-                                val titulo = rutinasState.rutinaCompleta.getOrNull(selectedRutinaIndex)?.bloque
+                                val titulo = diaPlanSesion?.titulo
+                                    ?: rutinasSelector.getOrNull(selectedRutinaIndex)?.bloque?.let { enfoqueLabel(it) }
                                     ?: "Entreno OpoFit"
                                 val intent = TcxExport.shareIntent(context, titulo, steps)
                                 if (intent != null) {
                                     context.startActivity(
                                         android.content.Intent.createChooser(intent, "Enviar al reloj")
                                     )
+                                } else {
+                                    avisoMsg = "No se pudo generar el archivo para el reloj."
                                 }
                             },
                             modifier = Modifier.fillMaxWidth()
@@ -492,6 +662,62 @@ fun EntrenamientosScreen(
                             Spacer(Modifier.size(6.dp))
                             Text("Enviar entrenamiento al reloj (TCX)")
                         }
+                        Text(
+                            "TCX = plan al reloj (antes). Tras entrenar, importa el resultado real abajo.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = {
+                                    scope.launch {
+                                        importingReloj = true
+                                        try {
+                                            val token = tokenManager.getToken().first().orEmpty()
+                                            EntrenoRelojImport.syncFromWatch(context, token)
+                                            val since = sessionStartMs?.minus(15 * 60_000L)
+                                            val activity = EntrenoRelojImport.findRecentActivity(context, since)
+                                            if (activity == null) {
+                                                avisoMsg = "No hay actividades recientes. Conecta Health Connect en Ajustes → Dispositivos, o importa un fichero TCX."
+                                            } else {
+                                                importarActividadReloj(activity)
+                                            }
+                                        } catch (e: Exception) {
+                                            avisoMsg = e.message ?: "Error al sincronizar con el reloj."
+                                        } finally {
+                                            importingReloj = false
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                enabled = !importingReloj
+                            ) {
+                                if (importingReloj) {
+                                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                                } else {
+                                    Icon(Icons.Filled.Sync, null, Modifier.size(18.dp))
+                                }
+                                Spacer(Modifier.size(6.dp))
+                                Text("Importar del reloj")
+                            }
+                            OutlinedButton(
+                                onClick = { importFileLauncher.launch("*/*") },
+                                modifier = Modifier.weight(1f),
+                                enabled = !importingReloj
+                            ) {
+                                Icon(Icons.Filled.UploadFile, null, Modifier.size(18.dp))
+                                Spacer(Modifier.size(6.dp))
+                                Text("Fichero TCX/GPX")
+                            }
+                        }
+                        Text(
+                            "Rellena distancia, tiempo y vueltas reales. Luego revisa y pulsa Finalizar para guardar el seguimiento.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }
@@ -524,15 +750,35 @@ fun EntrenamientosScreen(
             val pasoActualIdx = ejerciciosEstado.indexOfFirst { !it.completado }
             val activo = ejerciciosEstado.getOrNull(pasoActualIdx)
 
-            fun unidadEjercicio(idx: Int): String? =
-                rutinasState.rutinaCompleta.getOrNull(selectedRutinaIndex)?.ejercicios?.getOrNull(idx)?.unidad?.ifBlank { null }
+            fun unidadEjercicio(idx: Int): String {
+                val e = ejerciciosEstado.getOrNull(idx)
+                val planUnidad = if (enModoPlan) {
+                    diaPlanSesion?.ejercicios?.getOrNull(idx)?.unidad
+                } else null
+                val apiUnidad = planUnidad?.ifBlank { null }
+                    ?: rutinasSelector.getOrNull(selectedRutinaIndex)?.ejercicios?.getOrNull(idx)?.unidad?.ifBlank { null }
+                return EntrenoValidation.inferirUnidad(
+                    e?.nombre ?: "",
+                    apiUnidad,
+                    e?.pilar,
+                    enfoqueActual()
+                )
+            }
 
             fun aplicarCronometro(idx: Int) {
                 val e = ejerciciosEstado.getOrNull(idx) ?: return
-                val unidadEff = EntrenoValidation.inferirUnidad(e.nombre, unidadEjercicio(idx))
+                if (elapsedMs <= 0L) {
+                    avisoMsg = "Inicia el cronómetro antes de aplicar el tiempo."
+                    return
+                }
+                val unidadEff = unidadEjercicio(idx)
                 val sec = TimeFormatUtil.secondsFromMs(elapsedMs)
                 val nuevoValor = when {
-                    e.tipo != null -> e.valorConseguido
+                    e.tipo != null -> when {
+                        e.objetivoSegundos != null || unidadEff == "min" -> "%.3f".format(sec / 60.0)
+                        unidadEff == "s" -> "%.3f".format(sec)
+                        else -> "%.3f".format(sec / 60.0)
+                    }
                     unidadEff == "min" -> "%.3f".format(sec / 60.0)
                     unidadEff == "s" -> "%.3f".format(sec)
                     else -> e.valorConseguido
@@ -540,11 +786,21 @@ fun EntrenamientosScreen(
                 ejerciciosEstado[idx] = e.copy(valorConseguido = nuevoValor)
                 val err = EntrenoValidation.validarValor(nuevoValor, unidadEff)
                 erroresValor = if (err == null) erroresValor - idx else erroresValor + (idx to err)
+                if (err == null) {
+                    avisoMsg = "Tiempo del cronómetro aplicado (${TimeFormatUtil.formatElapsedMs(elapsedMs)})."
+                }
             }
 
             fun marcarCompletado(idx: Int) {
-                val estado = ejerciciosEstado.getOrNull(idx) ?: return
+                var estado = ejerciciosEstado.getOrNull(idx) ?: return
                 if (estado.completado) return
+                if (elapsedMs > 0L && estado.valorConseguido.isBlank()) {
+                    val unidadEff = unidadEjercicio(idx)
+                    if (estado.tipo != null || unidadEff == "min" || unidadEff == "s") {
+                        aplicarCronometro(idx)
+                        estado = ejerciciosEstado.getOrNull(idx) ?: return
+                    }
+                }
                 ejerciciosEstado[idx] = estado.copy(completado = true)
                 val nextIdx = idx + 1
                 if (nextIdx < ejerciciosEstado.size) {
@@ -570,7 +826,7 @@ fun EntrenamientosScreen(
 
             if (activo != null) {
                 item {
-                    val unidadEff = EntrenoValidation.inferirUnidad(activo.nombre, unidadEjercicio(pasoActualIdx))
+                    val unidadEff = unidadEjercicio(pasoActualIdx)
                     val secsCalc = activo.objetivoSegundos?.let { minOf(TimeFormatUtil.secondsFromMs(elapsedMs), it.toDouble()) }
                         ?: TimeFormatUtil.secondsFromMs(elapsedMs)
                     val (ritmoTxt, velTxt) = ritmoVelocidadTexto(activo.tipo, activo.distancia, secsCalc)
@@ -700,10 +956,7 @@ fun EntrenamientosScreen(
                     val valoresInvalidos = ejerciciosEstado.withIndex().any { (i, e) ->
                         e.completado && EntrenoValidation.validarValor(
                             e.valorConseguido,
-                            EntrenoValidation.inferirUnidad(
-                                e.nombre,
-                                rutinasState.rutinaCompleta.getOrNull(selectedRutinaIndex)?.ejercicios?.getOrNull(i)?.unidad
-                            )
+                            unidadEjercicio(i)
                         ) != null
                     }
                     val puedeFinalizar =
@@ -738,13 +991,15 @@ fun EntrenamientosScreen(
                             val realizados = ejerciciosEstado
                                 .filter { it.completado }
                                 .map { EjercicioRealizado(it.idEjercicio, it.valorConseguido.toDoubleOrNull() ?: 0.0) }
-                            val rutinaOpoId = initialRutinaOpoId
-                                ?: rutinasState.planSemanal?.semana?.find { it.id_plan_dia == initialPlanDiaId }?.id_rutina_opo
-                                ?: rutinasState.rutinaCompleta.getOrNull(selectedRutinaIndex)?.id_rutina_opo
+                            val rutinaOpoId = diaPlanSesion?.id_rutina_opo
+                                ?: initialRutinaOpoId
+                                ?: rutinasSelector.getOrNull(selectedRutinaIndex)?.id_rutina_opo
                                 ?: 1
-                            val tituloRutina = initialEnfoque.ifBlank {
-                                rutinasState.rutinaCompleta.getOrNull(selectedRutinaIndex)?.bloque ?: "Entrenamiento"
-                            }
+                            val tituloRutina = diaPlanSesion?.titulo
+                                ?: initialEnfoque.ifBlank {
+                                    rutinasSelector.getOrNull(selectedRutinaIndex)?.bloque?.let { enfoqueLabel(it) }
+                                        ?: "Entrenamiento"
+                                }
                             historialViewModel.registrarEntrenamiento(
                                 userId = userId,
                                 tipoRutina = "OPO",

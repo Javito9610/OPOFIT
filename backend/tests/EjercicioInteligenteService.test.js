@@ -94,6 +94,43 @@ describe('EjercicioInteligenteService.generarInstrucciones', () => {
     });
     expect(txt.toLowerCase()).toMatch(/ritmo|aeróbic|rpe|hablar/);
   });
+
+  test('patada de tríceps no duplica texto al regenerar', () => {
+    const base = {
+      nombre: 'Patada de tríceps',
+      pilar: 'FUERZA',
+      grupo_muscular: 'Brazos',
+      equipamiento: 'Mancuernas',
+      instrucciones_tecnicas: 'Codo fijo, extensión completa.'
+    };
+    const primera = generarInstrucciones(base);
+    const segunda = generarInstrucciones({
+      ...base,
+      instrucciones_tecnicas: primera,
+      prescripcion_inteligente: true
+    });
+    expect(segunda).toBe(primera);
+    expect((segunda.match(/Codos apuntan al techo/g) || []).length).toBe(1);
+    expect((segunda.match(/Mueve cada lado con simetría/g) || []).length).toBe(1);
+  });
+
+  test('limpia instrucciones corruptas con frases repetidas', () => {
+    const corrupto =
+      'Codos apuntan al techo o quedan pegados al cuerpo según variante. Extiende antebrazos sin abrir codos. Controla la fase excéntrica. ' +
+      'Codos apuntan al techo o quedan pegados al cuerpo según variante. Extiende antebrazos sin abrir codos. Controla la fase excéntrica. ' +
+      'Detalle técnico: Codo fijo, extensión completa en cada repetición de Patada de tríceps. ' +
+      'Mueve cada lado con simetría; evita impulso con la espalda. Mueve cada lado con simetría; evita impulso con la espalda.';
+    const limpio = generarInstrucciones({
+      nombre: 'Patada de tríceps',
+      pilar: 'FUERZA',
+      grupo_muscular: 'Brazos',
+      equipamiento: 'Mancuernas',
+      instrucciones_tecnicas: corrupto
+    });
+    expect((limpio.match(/Codos apuntan al techo/g) || []).length).toBe(1);
+    expect((limpio.match(/Mueve cada lado con simetría/g) || []).length).toBe(1);
+    expect((limpio.match(/Detalle técnico:/g) || []).length).toBe(1);
+  });
 });
 
 describe('EjercicioInteligenteService.aplicarInteligencia', () => {
@@ -111,6 +148,22 @@ describe('EjercicioInteligenteService.aplicarInteligencia', () => {
     expect(ej.prescripcion_inteligente).toBe(true);
     expect(ej.repeticiones).toBeLessThanOrEqual(18);
     expect(ej.instrucciones_tecnicas.length).toBeGreaterThan(50);
+  });
+
+  test('enriquecer + aplicarInteligencia no duplica instrucciones', () => {
+    const { enriquecerEjercicio } = require('../src/services/EjercicioMetadataService');
+    const ej = aplicarInteligencia(
+      enriquecerEjercicio({
+        nombre: 'Patada de tríceps',
+        pilar: 'FUERZA',
+        grupo_muscular: 'Brazos',
+        equipamiento: 'Mancuernas',
+        instrucciones_tecnicas: 'Codo fijo, extensión completa.'
+      }),
+      { seed: 3 }
+    );
+    expect((ej.instrucciones_tecnicas.match(/Codos apuntan al techo/g) || []).length).toBe(1);
+    expect((ej.instrucciones_tecnicas.match(/Detalle técnico:/g) || []).length).toBe(1);
   });
 
   test('clasifica sprint como velocidad', () => {

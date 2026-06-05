@@ -7,10 +7,13 @@ class RutinaService {
       .replace(/\p{Diacritic}/gu, '')
       .toLowerCase();
     if (/\bmin\b/.test(n) || /\d+\s*min/.test(n)) return 'min';
-    if (/\bseg\b/.test(n) || n.includes('sprint') || n.includes('segundo')) return 's';
+    if (/\bseg\b/.test(n) || (n.includes('sprint') && /\d+\s*s\b/.test(n)) || n.includes('segundo')) return 's';
     if (/\bkm\b/.test(n) || /\d+\s*km/.test(n)) return 'km';
     if (n.includes('natacion') || n.includes('nadar')) return 'm';
     if (n.includes('metro') || /\d+\s*m\b/.test(n)) return 'm';
+    if (/\b(run|running|tempo|jog|jogging|trote|rodaje|fartlek|carrera|trail|interval|hiit|marcha|rucking)\b/.test(n)) {
+      return 'min';
+    }
     return 'reps';
   }
   static async calcularNotaYNivel(userId, idOposicion) {
@@ -70,7 +73,8 @@ class RutinaService {
       [idOposicion, nivel, genero]
     );
     if (!rutinas || rutinas.length === 0) return null;
-    const planCompleto = [];
+
+    const candidatos = [];
     for (const r of rutinas) {
       const [ejercicios] = await db.query(
         `SELECT e.id_ejercicio, e.nombre, e.video_url, d.series, d.repeticiones, d.descanso
@@ -79,17 +83,43 @@ class RutinaService {
          WHERE d.rutinas_opo_id_rutina_opo = ?`,
         [r.id_rutina_opo]
       );
-      planCompleto.push({
-        id_rutina_opo: r.id_rutina_opo,
-        bloque: r.enfoque_tipo,
-        nivel: r.nivel,
+      candidatos.push({
+        rutina: r,
         ejercicios: ejercicios.map((e) => ({
           ...e,
           unidad: RutinaService.inferUnidad(e.nombre)
         }))
       });
     }
-    return planCompleto;
+
+    // Tras importar planes pueden existir varias rutinas_opo con el mismo enfoque.
+    // Devolvemos solo una por FUERZA / RESISTENCIA / VELOCIDAD (la más completa).
+    const ordenEnfoque = ['FUERZA', 'RESISTENCIA', 'VELOCIDAD'];
+    const mejorPorEnfoque = new Map();
+    for (const c of candidatos) {
+      const key = c.rutina.enfoque_tipo;
+      const prev = mejorPorEnfoque.get(key);
+      if (
+        !prev
+        || c.ejercicios.length > prev.ejercicios.length
+        || (c.ejercicios.length === prev.ejercicios.length
+          && c.rutina.id_rutina_opo < prev.rutina.id_rutina_opo)
+      ) {
+        mejorPorEnfoque.set(key, c);
+      }
+    }
+
+    return ordenEnfoque
+      .filter((enfoque) => mejorPorEnfoque.has(enfoque))
+      .map((enfoque) => {
+        const c = mejorPorEnfoque.get(enfoque);
+        return {
+          id_rutina_opo: c.rutina.id_rutina_opo,
+          bloque: c.rutina.enfoque_tipo,
+          nivel: c.rutina.nivel,
+          ejercicios: c.ejercicios
+        };
+      });
   }
 }
 module.exports = RutinaService;

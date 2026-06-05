@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.opofit.miapp.data.responsemodels.EjercicioPlan
+import com.opofit.miapp.utils.EntrenoExerciseUtil
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -79,7 +80,8 @@ fun ExerciseDetailSheet(
             HorizontalDivider()
             Text("Cómo hacerlo", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             Text(
-                ejercicio.instrucciones_tecnicas?.takeIf { it.isNotBlank() }
+                EntrenoExerciseUtil.deduplicarInstrucciones(ejercicio.instrucciones_tecnicas)
+                    ?.takeIf { it.isNotBlank() }
                     ?: "Ejecuta el movimiento con técnica controlada y progresión según tu nivel.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface

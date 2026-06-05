@@ -69,6 +69,7 @@ import com.opofit.miapp.ui.components.SectionHeader
 import java.time.YearMonth
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasViewModel
+import com.opofit.miapp.utils.EntrenoExerciseUtil
 import com.opofit.miapp.utils.FitnessMode
 import com.opofit.miapp.utils.MapaEntrenoNav
 import com.opofit.miapp.utils.PrescripcionFormat
@@ -543,7 +544,8 @@ fun RutinasScreen(
                                                                     MaterialTheme.colorScheme.primary
                                                                 else MaterialTheme.colorScheme.onSurfaceVariant
                                                             )
-                                                            ej.instrucciones_tecnicas?.takeIf { it.isNotBlank() }?.let { tip ->
+                                                            EntrenoExerciseUtil.deduplicarInstrucciones(ej.instrucciones_tecnicas)
+                                                                ?.takeIf { it.isNotBlank() }?.let { tip ->
                                                                 Text(
                                                                     tip,
                                                                     style = MaterialTheme.typography.labelSmall,

@@ -74,10 +74,27 @@ fun EntrenoActiveStepCard(
                 )
             }
             if (tipoCardio != null) {
-                OutlinedButton(onClick = onUsarCronometro, modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(
+                    onClick = onUsarCronometro,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = elapsedMsCronometro > 0L
+                ) {
                     Icon(Icons.Filled.Timer, null, Modifier.size(18.dp))
                     Spacer(Modifier.size(6.dp))
-                    Text("Usar tiempo del cronómetro (${TimeFormatUtil.formatElapsedMs(elapsedMsCronometro)})")
+                    Text(
+                        if (valor.isNotBlank()) {
+                            "Tiempo aplicado: $valor ${unidad ?: "min"}"
+                        } else {
+                            "Usar tiempo del cronómetro (${TimeFormatUtil.formatElapsedMs(elapsedMsCronometro)})"
+                        }
+                    )
+                }
+                if (elapsedMsCronometro <= 0L) {
+                    Text(
+                        "Inicia el cronómetro arriba para registrar el tiempo de este ejercicio.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
+                    )
                 }
                 androidx.compose.material3.OutlinedTextField(
                     value = distancia,

@@ -3,6 +3,7 @@ package com.opofit.miapp.gps.service
 import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
@@ -16,6 +17,8 @@ import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.ParcelUuid
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,6 +63,8 @@ class HrBleManager(private val context: Context) {
     private var gatt: BluetoothGatt? = null
     private var onHrSample: ((Int) -> Unit)? = null
     private var onConnectionChanged: ((deviceName: String?, connected: Boolean) -> Unit)? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var connectTimeout: Runnable? = null
 
     fun setListeners(
         onHr: (Int) -> Unit,
@@ -151,57 +156,155 @@ class HrBleManager(private val context: Context) {
             _state.value = State.Error("Faltan permisos de Bluetooth")
             return
         }
+        if (!hasBluetooth()) {
+            _state.value = State.Error("Activa el Bluetooth en el sistema")
+            return
+        }
         stopScan()
-        disconnect()
+        closeGatt()
         val remote = adapter?.getRemoteDevice(device.address) ?: run {
             _state.value = State.Error("Dispositivo no encontrado")
             return
         }
         _state.value = State.Connecting(device)
-        gatt = remote.connectGatt(context, true, gattCallback)
+        scheduleConnectTimeout()
+        gatt = openGatt(remote)
+        if (gatt == null) {
+            cancelConnectTimeout()
+            _state.value = State.Error("No se pudo iniciar la conexión BLE")
+        }
     }
 
     fun disconnect() {
-        gatt?.disconnect()
-        gatt?.close()
-        gatt = null
+        cancelConnectTimeout()
+        closeGatt()
         _heartRate.value = null
         onConnectionChanged?.invoke(null, false)
         _state.value = State.Idle
     }
 
+    private fun closeGatt() {
+        gatt?.disconnect()
+        gatt?.close()
+        gatt = null
+    }
+
+    private fun openGatt(remote: BluetoothDevice): BluetoothGatt? {
+        // autoConnect=false: conexión inmediata al pulsar (autoConnect=true suele no conectar).
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            remote.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+        } else {
+            @Suppress("DEPRECATION")
+            remote.connectGatt(context, false, gattCallback)
+        }
+    }
+
+    private fun scheduleConnectTimeout() {
+        cancelConnectTimeout()
+        val timeout = Runnable {
+            if (_state.value is State.Connecting) {
+                closeGatt()
+                _state.value = State.Error(
+                    "Tiempo de conexión agotado. Acerca el reloj, actívalo y vuelve a pulsar Conectar."
+                )
+                onConnectionChanged?.invoke(null, false)
+            }
+        }
+        connectTimeout = timeout
+        mainHandler.postDelayed(timeout, 20_000L)
+    }
+
+    private fun cancelConnectTimeout() {
+        connectTimeout?.let { mainHandler.removeCallbacks(it) }
+        connectTimeout = null
+    }
+
+    private fun failConnection(g: BluetoothGatt, message: String) {
+        cancelConnectTimeout()
+        closeGatt()
+        _state.value = State.Error(message)
+        onConnectionChanged?.invoke(null, false)
+        try {
+            g.close()
+        } catch (_: Exception) { }
+    }
+
+    private fun connectionErrorMessage(status: Int): String = when (status) {
+        8 -> "Conexión cancelada. Vuelve a intentarlo."
+        19 -> "El dispositivo se desconectó. Activa «Broadcast HR» en Zepp/Amazfit."
+        22 -> "Empareja el reloj en Ajustes → Bluetooth y vuelve a intentarlo."
+        133 -> "Error BLE (133). Apaga y enciende el Bluetooth o acerca el reloj."
+        else -> "No se pudo conectar (código $status). Prueba emparejarlo antes en Ajustes."
+    }
+
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(g: BluetoothGatt, status: Int, newState: Int) {
-            if (newState == BluetoothProfile.STATE_CONNECTED) {
-                g.discoverServices()
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                _state.value = State.Idle
-                onConnectionChanged?.invoke(null, false)
+            mainHandler.post {
+                when (newState) {
+                    BluetoothProfile.STATE_CONNECTED -> {
+                        if (status == BluetoothGatt.GATT_SUCCESS) {
+                            g.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH)
+                            g.discoverServices()
+                        } else {
+                            failConnection(g, connectionErrorMessage(status))
+                        }
+                    }
+                    BluetoothProfile.STATE_DISCONNECTED -> {
+                        val wasConnecting = _state.value is State.Connecting
+                        val wasConnected = _state.value is State.Connected
+                        if (gatt == g) closeGatt()
+                        when {
+                            status != BluetoothGatt.GATT_SUCCESS && wasConnecting ->
+                                _state.value = State.Error(connectionErrorMessage(status))
+                            wasConnected && status != BluetoothGatt.GATT_SUCCESS ->
+                                _state.value = State.Error("Se perdió la conexión con el reloj")
+                            _state.value !is State.Error ->
+                                _state.value = State.Idle
+                        }
+                        onConnectionChanged?.invoke(null, false)
+                    }
+                }
             }
         }
 
         override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
-            val service = g.getService(HR_SERVICE) ?: run {
-                _state.value = State.Error("El dispositivo no expone Heart Rate")
-                return
+            mainHandler.post {
+                if (status != BluetoothGatt.GATT_SUCCESS) {
+                    failConnection(g, "No se pudieron leer los servicios del reloj")
+                    return@post
+                }
+                val service = g.getService(HR_SERVICE) ?: run {
+                    failConnection(
+                        g,
+                        "Este dispositivo no expone pulso BLE. En Amazfit activa «Broadcast HR» en Zepp."
+                    )
+                    return@post
+                }
+                val ch = service.getCharacteristic(HR_MEASUREMENT) ?: run {
+                    failConnection(g, "El reloj no envía medidas de pulso por BLE")
+                    return@post
+                }
+                g.setCharacteristicNotification(ch, true)
+                val descriptor = ch.getDescriptor(CCC_DESCRIPTOR) ?: run {
+                    failConnection(g, "No se pudo activar las notificaciones de pulso")
+                    return@post
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    g.writeDescriptor(descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+                } else {
+                    @Suppress("DEPRECATION")
+                    descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                    @Suppress("DEPRECATION")
+                    g.writeDescriptor(descriptor)
+                }
+                val deviceName = try { g.device.name } catch (_: SecurityException) { null }
+                val current = _state.value
+                val foundDev = if (current is State.Connecting) current.device
+                else FoundDevice(g.device.address, deviceName, 0)
+                cancelConnectTimeout()
+                _state.value = State.Connected(foundDev.copy(name = deviceName ?: foundDev.name))
+                onConnectionChanged?.invoke(deviceName ?: foundDev.name, true)
             }
-            val ch = service.getCharacteristic(HR_MEASUREMENT) ?: return
-            g.setCharacteristicNotification(ch, true)
-            val descriptor = ch.getDescriptor(CCC_DESCRIPTOR) ?: return
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                g.writeDescriptor(descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
-            } else {
-                @Suppress("DEPRECATION")
-                descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                @Suppress("DEPRECATION")
-                g.writeDescriptor(descriptor)
-            }
-            val deviceName = try { g.device.name } catch (_: SecurityException) { null }
-            val current = _state.value
-            val foundDev = if (current is State.Connecting) current.device
-            else FoundDevice(g.device.address, deviceName, 0)
-            _state.value = State.Connected(foundDev.copy(name = deviceName ?: foundDev.name))
-            onConnectionChanged?.invoke(deviceName ?: foundDev.name, true)
         }
 
         @Deprecated("Compat with older API")
@@ -209,7 +312,7 @@ class HrBleManager(private val context: Context) {
             g: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic
         ) {
-            handlePayload(characteristic.uuid, characteristic.value)
+            mainHandler.post { handlePayload(characteristic.uuid, characteristic.value) }
         }
 
         override fun onCharacteristicChanged(
@@ -217,7 +320,7 @@ class HrBleManager(private val context: Context) {
             characteristic: BluetoothGattCharacteristic,
             value: ByteArray
         ) {
-            handlePayload(characteristic.uuid, value)
+            mainHandler.post { handlePayload(characteristic.uuid, value) }
         }
     }
 

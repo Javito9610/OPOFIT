@@ -1,15 +1,12 @@
 package com.opofit.miapp.utils
 
 object EntrenoValidation {
-    fun inferirUnidad(nombre: String, unidadExplicita: String?): String {
-        if (!unidadExplicita.isNullOrBlank()) return unidadExplicita.lowercase()
-        val n = nombre.lowercase()
-        if (Regex("""\bmin\b""").containsMatchIn(n) || Regex("""\d+\s*min""").containsMatchIn(n)) return "min"
-        if (n.contains("seg") || n.contains("sprint")) return "s"
-        if (n.contains("km")) return "km"
-        if (n.contains("natac") || n.contains("metro") || Regex("""\d+\s?m\b""").containsMatchIn(n)) return "m"
-        return "reps"
-    }
+    fun inferirUnidad(
+        nombre: String,
+        unidadExplicita: String?,
+        pilar: String? = null,
+        enfoqueBloque: String? = null
+    ): String = EntrenoExerciseUtil.inferirUnidad(nombre, unidadExplicita, pilar, enfoqueBloque)
 
     fun validarValor(valor: String, unidad: String): String? {
         if (valor.isBlank()) return "Introduce un valor"

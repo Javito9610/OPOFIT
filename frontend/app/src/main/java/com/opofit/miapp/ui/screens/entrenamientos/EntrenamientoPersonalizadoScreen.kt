@@ -12,8 +12,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -57,6 +62,8 @@ import com.opofit.miapp.gps.service.buildPendingShareFromEntreno
 import com.opofit.miapp.utils.MapaEntrenoNav
 import com.opofit.miapp.ui.components.EntrenoLiveMetricsBar
 import com.opofit.miapp.ui.components.ExerciseValueInput
+import com.opofit.miapp.utils.EntrenoExerciseUtil
+import com.opofit.miapp.utils.EntrenoRelojImport
 import com.opofit.miapp.utils.EntrenoValidation
 import com.opofit.miapp.utils.TimeFormatUtil
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
@@ -105,20 +112,15 @@ fun EntrenamientoPersonalizadoScreen(
     var elapsedMs by remember { mutableStateOf(0L) }
     var showObjetivoDialog by remember { mutableStateOf(false) }
     var objetivoEjercicioNombre by remember { mutableStateOf<String?>(null) }
+    var avisoMsg by remember { mutableStateOf<String?>(null) }
+    var sessionStartMs by remember { mutableStateOf<Long?>(null) }
+    var importingReloj by remember { mutableStateOf(false) }
+    var gpsActividadUuid by remember { mutableStateOf<String?>(null) }
 
     fun objetivoSegundosDesdeNombre(nombre: String): Int? {
         val regex = Regex("(\\d+)\\s*min\\b", RegexOption.IGNORE_CASE)
         val min = regex.find(nombre)?.groupValues?.getOrNull(1)?.toIntOrNull() ?: return null
         return min * 60
-    }
-
-    fun tipoCardio(nombre: String): String? {
-        val n = nombre.lowercase()
-        return when {
-            n.contains("natación") || n.contains("natacion") -> "SWIM"
-            n.contains("carrera") || n.contains("trote") || n.contains("rodaje") || n.contains("fartlek") -> "RUN"
-            else -> null
-        }
     }
 
     fun esEjercicioGps(nombre: String, tipo: String?): Boolean {
@@ -168,26 +170,115 @@ fun EntrenamientoPersonalizadoScreen(
         val checked: Boolean,
         val objetivoSegundos: Int? = null,
         val tipo: String? = null,
-        val distancia: String = ""
+        val distancia: String = "",
+        val pilar: String? = null
     )
     val ejerciciosUi = remember(rutinaId, rutina?.ejercicios) {
         mutableStateListOf<EjUi>().apply {
             rutina?.ejercicios?.forEach { ej ->
                 val nombre = ej.nombre_ejercicio ?: "Ejercicio"
                 val objetivo = objetivoSegundosDesdeNombre(nombre)
-                val tipo = tipoCardio(nombre)
+                val tipo = EntrenoExerciseUtil.tipoCardio(nombre, null, null)
+                val unidad = EntrenoValidation.inferirUnidad(nombre, null, null, null)
                 add(
                     EjUi(
                         id = ej.id_ejercicio,
                         nombre = nombre,
-                        valor = (ej.repeticiones ?: 0).toString(),
+                        valor = if (tipo != null && unidad == "min") "" else (ej.repeticiones ?: 0).toString(),
                         checked = false,
                         objetivoSegundos = objetivo,
-                        tipo = tipo
+                        tipo = tipo,
+                        pilar = null
                     )
                 )
             }
         }
+    }
+
+    fun slotsParaImport(): List<EntrenoRelojImport.Slot> =
+        ejerciciosUi.mapIndexed { idx, e ->
+            EntrenoRelojImport.Slot(
+                index = idx,
+                nombre = e.nombre,
+                tipo = e.tipo,
+                pilar = e.pilar,
+                objetivoSegundos = e.objetivoSegundos,
+                hecho = e.checked,
+                valor = e.valor,
+                distancia = e.distancia
+            )
+        }
+
+    fun aplicarImportReloj(result: EntrenoRelojImport.Result) {
+        gpsActividadUuid = result.activityId
+        if (result.elapsedMs > elapsedMs) {
+            elapsedMs = result.elapsedMs
+            cronometroIniciadoAlgunaVez = true
+        }
+        result.updates.forEach { u ->
+            val e = ejerciciosUi.getOrNull(u.index) ?: return@forEach
+            ejerciciosUi[u.index] = e.copy(
+                valor = u.valor ?: e.valor,
+                distancia = u.distancia ?: e.distancia,
+                checked = u.hecho ?: e.checked
+            )
+        }
+        avisoMsg = result.message
+    }
+
+    fun importarActividadReloj(activity: com.opofit.miapp.gps.model.ActivitySummary) {
+        val result = EntrenoRelojImport.apply(
+            activity = activity,
+            slots = slotsParaImport(),
+            unidadFor = { idx ->
+                val ej = ejerciciosUi.getOrNull(idx)
+                EntrenoValidation.inferirUnidad(ej?.nombre ?: "", null, ej?.pilar, null)
+            },
+            esGps = { slot -> esEjercicioGps(slot.nombre, slot.tipo) },
+            unitDist = unitDist
+        )
+        aplicarImportReloj(result)
+    }
+
+    val importFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            importingReloj = true
+            try {
+                val activity = EntrenoRelojImport.importFromUri(context, uri)
+                if (activity == null) {
+                    avisoMsg = "No se pudo leer el fichero del reloj."
+                } else {
+                    importarActividadReloj(activity)
+                }
+            } catch (e: Exception) {
+                avisoMsg = e.message ?: "Error al importar el fichero."
+            } finally {
+                importingReloj = false
+            }
+        }
+    }
+
+    fun aplicarCronometro(idx: Int) {
+        val ej = ejerciciosUi.getOrNull(idx) ?: return
+        if (elapsedMs <= 0L) {
+            avisoMsg = "Inicia el cronómetro antes de aplicar el tiempo."
+            return
+        }
+        val unidadEff = EntrenoValidation.inferirUnidad(ej.nombre, null, ej.pilar, null)
+        val sec = TimeFormatUtil.secondsFromMs(elapsedMs)
+        val nuevoValor = when {
+            ej.tipo != null -> when {
+                ej.objetivoSegundos != null || unidadEff == "min" -> "%.3f".format(sec / 60.0)
+                unidadEff == "s" -> "%.3f".format(sec)
+                else -> "%.3f".format(sec / 60.0)
+            }
+            unidadEff == "min" -> "%.3f".format(sec / 60.0)
+            unidadEff == "s" -> "%.3f".format(sec)
+            else -> ej.valor
+        }
+        ejerciciosUi[idx] = ej.copy(valor = nuevoValor, checked = true)
+        avisoMsg = "Tiempo aplicado (${TimeFormatUtil.formatElapsedMs(elapsedMs)})."
     }
 
     LaunchedEffect(cronometroActivo, ejerciciosUi) {
@@ -206,7 +297,6 @@ fun EntrenamientoPersonalizadoScreen(
     }
 
     val gpsLast by GpsLastResult.value.collectAsState()
-    var gpsActividadUuid by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(gpsLast?.id) {
         val summary = gpsLast ?: return@LaunchedEffect
         gpsActividadUuid = summary.id
@@ -251,6 +341,17 @@ fun EntrenamientoPersonalizadoScreen(
             )
         }
     ) { innerPadding ->
+        avisoMsg?.let { msg ->
+            AlertDialog(
+                onDismissRequest = { avisoMsg = null },
+                confirmButton = {
+                    Button(onClick = { avisoMsg = null }) { Text("Entendido") }
+                },
+                title = { Text("Aviso") },
+                text = { Text(msg) }
+            )
+        }
+
         if (showObjetivoDialog) {
             AlertDialog(
                 onDismissRequest = { showObjetivoDialog = false },
@@ -311,7 +412,10 @@ fun EntrenamientoPersonalizadoScreen(
                                 Button(
                                     onClick = {
                                         cronometroActivo = !cronometroActivo
-                                        if (cronometroActivo) cronometroIniciadoAlgunaVez = true
+                                        if (cronometroActivo) {
+                                            cronometroIniciadoAlgunaVez = true
+                                            if (sessionStartMs == null) sessionStartMs = System.currentTimeMillis()
+                                        }
                                     },
                                     modifier = Modifier.weight(1f),
                                     enabled = ejerciciosUi.isNotEmpty()
@@ -323,8 +427,10 @@ fun EntrenamientoPersonalizadoScreen(
                                         cronometroActivo = false
                                         elapsedMs = 0L
                                         cronometroIniciadoAlgunaVez = false
+                                        sessionStartMs = null
                                     },
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.weight(1f),
+                                    enabled = elapsedMs > 0L
                                 ) {
                                     Text("Reiniciar")
                                 }
@@ -344,6 +450,60 @@ fun EntrenamientoPersonalizadoScreen(
                                     tipoCardio = activoEj?.tipo
                                 )
                             }
+                        }
+
+                        item {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = {
+                                        scope.launch {
+                                            importingReloj = true
+                                            try {
+                                                val token = tokenManager.getToken().first().orEmpty()
+                                                EntrenoRelojImport.syncFromWatch(context, token)
+                                                val since = sessionStartMs?.minus(15 * 60_000L)
+                                                val activity = EntrenoRelojImport.findRecentActivity(context, since)
+                                                if (activity == null) {
+                                                    avisoMsg = "No hay actividades recientes del reloj. Conecta Health Connect o importa un fichero TCX."
+                                                } else {
+                                                    importarActividadReloj(activity)
+                                                }
+                                            } catch (e: Exception) {
+                                                avisoMsg = e.message ?: "Error al sincronizar."
+                                            } finally {
+                                                importingReloj = false
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    enabled = !importingReloj
+                                ) {
+                                    if (importingReloj) {
+                                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                                    } else {
+                                        Icon(Icons.Filled.Sync, null, Modifier.size(18.dp))
+                                    }
+                                    Spacer(Modifier.size(6.dp))
+                                    Text("Importar del reloj")
+                                }
+                                OutlinedButton(
+                                    onClick = { importFileLauncher.launch("*/*") },
+                                    modifier = Modifier.weight(1f),
+                                    enabled = !importingReloj
+                                ) {
+                                    Icon(Icons.Filled.UploadFile, null, Modifier.size(18.dp))
+                                    Spacer(Modifier.size(6.dp))
+                                    Text("TCX/GPX")
+                                }
+                            }
+                            Text(
+                                "Tras entrenar en el reloj, importa aquí los valores reales y luego finaliza para guardar el seguimiento.",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
 
                         item {
@@ -374,6 +534,15 @@ fun EntrenamientoPersonalizadoScreen(
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
+                                        }
+                                        OutlinedButton(
+                                            onClick = { aplicarCronometro(idx) },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            enabled = elapsedMs > 0L && !ej.checked
+                                        ) {
+                                            Icon(Icons.Filled.Timer, null, Modifier.size(18.dp))
+                                            Spacer(Modifier.size(6.dp))
+                                            Text("Usar tiempo del cronómetro (${TimeFormatUtil.formatElapsedMs(elapsedMs)})")
                                         }
                                         val secsCalc = ej.objetivoSegundos?.let {
                                             minOf(TimeFormatUtil.secondsFromMs(elapsedMs), it.toDouble())
@@ -436,7 +605,18 @@ fun EntrenamientoPersonalizadoScreen(
                                             }
                                         }
                                     } else {
-                                        val unidadEff = EntrenoValidation.inferirUnidad(ej.nombre, null)
+                                        val unidadEff = EntrenoValidation.inferirUnidad(ej.nombre, null, ej.pilar, null)
+                                        if ((unidadEff == "min" || unidadEff == "s") && elapsedMs > 0L) {
+                                            OutlinedButton(
+                                                onClick = { aplicarCronometro(idx) },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                enabled = !ej.checked
+                                            ) {
+                                                Icon(Icons.Filled.Timer, null, Modifier.size(18.dp))
+                                                Spacer(Modifier.size(6.dp))
+                                                Text("Aplicar ${TimeFormatUtil.formatElapsedMs(elapsedMs)} del cronómetro")
+                                            }
+                                        }
                                         ExerciseValueInput(
                                             value = ej.valor,
                                             onValueChange = { v -> ejerciciosUi[idx] = ej.copy(valor = v) },

@@ -1,6 +1,7 @@
 package com.opofit.miapp.gps.util
 
 import android.util.Xml
+import com.opofit.miapp.gps.model.ActivityLap
 import com.opofit.miapp.gps.model.ActivitySummary
 import com.opofit.miapp.gps.model.ActivityType
 import com.opofit.miapp.gps.model.GpsPoint
@@ -33,6 +34,10 @@ object TcxImport {
             var sport: String? = null
             var lapDistanceM: Double? = null
             var lapTimeSec: Int? = null
+            val laps = mutableListOf<ActivityLap>()
+            var inLap = false
+            var currentLapTime: Int? = null
+            var currentLapDist: Double? = null
             val points = mutableListOf<GpsPoint>()
             var inTrackpoint = false
             var lat = 0.0
@@ -47,8 +52,19 @@ object TcxImport {
                 when (event) {
                     XmlPullParser.START_TAG -> when (parser.name) {
                         "Activity" -> sport = parser.getAttributeValue(null, "Sport")
-                        "TotalTimeSeconds" -> lapTimeSec = parser.nextText().toDoubleOrNull()?.toInt()
-                        "DistanceMeters" -> lapDistanceM = parser.nextText().toDoubleOrNull()
+                        "Lap" -> {
+                            inLap = true
+                            currentLapTime = null
+                            currentLapDist = null
+                        }
+                        "TotalTimeSeconds" -> {
+                            val v = parser.nextText().toDoubleOrNull()?.toInt()
+                            if (inLap) currentLapTime = v else lapTimeSec = v
+                        }
+                        "DistanceMeters" -> {
+                            val v = parser.nextText().toDoubleOrNull()
+                            if (inLap) currentLapDist = v else lapDistanceM = v
+                        }
                         "Trackpoint" -> {
                             inTrackpoint = true
                             lat = 0.0; lon = 0.0; ele = null; timeMs = null; hr = null; cad = null
@@ -62,6 +78,14 @@ object TcxImport {
                         "Cadence" -> if (inTrackpoint) cad = parser.nextText().toIntOrNull()
                     }
                     XmlPullParser.END_TAG -> when (parser.name) {
+                        "Lap" -> {
+                            val t = currentLapTime ?: 0
+                            val d = currentLapDist ?: 0.0
+                            if (t > 0 || d > 0) {
+                                laps += ActivityLap(laps.size + 1, t.coerceAtLeast(1), d)
+                            }
+                            inLap = false
+                        }
                         "Trackpoint" -> {
                             val ts = timeMs ?: 0L
                             if (lat != 0.0 || lon != 0.0 || ts > 0L) {
@@ -83,8 +107,18 @@ object TcxImport {
                 event = parser.next()
             }
 
-            if (points.size < 2 && (lapDistanceM == null || lapDistanceM < 25.0)) {
-                throw IllegalArgumentException("El TCX no contiene ruta ni distancia suficiente")
+            val lapList = laps.toMutableList()
+            if (lapList.isEmpty() && (lapTimeSec != null || lapDistanceM != null)) {
+                lapList += ActivityLap(
+                    1,
+                    (lapTimeSec ?: 1).coerceAtLeast(1),
+                    lapDistanceM ?: 0.0
+                )
+            }
+            val totalLapDist = lapList.sumOf { it.distanceM }
+            val totalLapTime = lapList.sumOf { it.durationSec }
+            if (points.size < 2 && totalLapDist < 25.0 && totalLapTime < 30 && lapList.isEmpty()) {
+                throw IllegalArgumentException("El TCX no contiene ruta, vueltas ni duración suficiente")
             }
 
             val normalized = if (points.size >= 2) normalizeTimestamps(points) else emptyList()
@@ -93,9 +127,12 @@ object TcxImport {
                 ?: (System.currentTimeMillis() - (lapTimeSec ?: 60) * 1000L)
             val endedAt = normalized.lastOrNull()?.timestampMs
                 ?: (startedAt + (lapTimeSec ?: 60) * 1000L)
-            val durationSec = max(1, lapTimeSec ?: ((endedAt - startedAt) / 1000).toInt())
+            val durationSec = max(
+                1,
+                if (lapList.isNotEmpty()) totalLapTime else lapTimeSec ?: ((endedAt - startedAt) / 1000).toInt()
+            )
 
-            var distanceM = lapDistanceM ?: 0.0
+            var distanceM = if (totalLapDist > 0) totalLapDist else lapDistanceM ?: 0.0
             var maxSpeed = 0.0
             if (normalized.size >= 2) {
                 distanceM = 0.0
@@ -106,7 +143,9 @@ object TcxImport {
                     if (dt > 0) maxSpeed = max(maxSpeed, seg / dt)
                 }
             }
-            if (distanceM < 25.0) throw IllegalArgumentException("La actividad es demasiado corta (menos de 25 m)")
+            if (distanceM < 25.0 && durationSec < 30 && lapList.isEmpty()) {
+                throw IllegalArgumentException("La actividad es demasiado corta")
+            }
 
             val movingSec = durationSec
             val avgSpeed = if (movingSec > 0) distanceM / movingSec else 0.0
@@ -147,7 +186,8 @@ object TcxImport {
                 splitsMile = if (normalized.isNotEmpty()) GpsMetrics.computeSplitsMile(normalized) else emptyList(),
                 splitsTime = if (normalized.isNotEmpty()) GpsMetrics.computeSplitsTime(normalized) else emptyList(),
                 bestSegments = if (normalized.isNotEmpty()) GpsMetrics.computeBestSegments(normalized, distanceM) else emptyList(),
-                points = normalized
+                points = normalized,
+                laps = lapList
             )
         }
     }

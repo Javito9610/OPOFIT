@@ -134,11 +134,10 @@ class PlanGeneradorService {
   static mapearEjercicio(ej, sustituto, entorno) {
     const base = EjercicioMetadataService.enriquecerEjercicio(ej);
     if (!sustituto) {
-      const out = { ...base, entorno_aplicado: entorno, sustituido: false };
-      return {
-        ...out,
-        instrucciones_tecnicas: EjercicioInteligenteService.generarInstrucciones(out)
-      };
+      return EjercicioInteligenteService.aplicarInteligencia(
+        { ...base, entorno_aplicado: entorno, sustituido: false },
+        { seed: ej.orden || 1 }
+      );
     }
     const grupo = EjercicioMetadataService.inferirGrupoMuscular(
       base.grupo_muscular,

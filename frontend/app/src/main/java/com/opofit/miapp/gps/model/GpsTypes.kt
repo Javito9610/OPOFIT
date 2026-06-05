@@ -61,6 +61,13 @@ data class BestSegment(
     val paceSecPerKm: Double
 )
 
+/** Vuelta/paso de una actividad importada (TCX del reloj, series del entreno estructurado). */
+data class ActivityLap(
+    val index: Int,
+    val durationSec: Int,
+    val distanceM: Double = 0.0
+)
+
 data class ActivitySummary(
     val id: String = UUID.randomUUID().toString(),
     val type: ActivityType,
@@ -91,6 +98,7 @@ data class ActivitySummary(
     val splitsTime: List<SplitTime> = emptyList(),
     val bestSegments: List<BestSegment> = emptyList(),
     val points: List<GpsPoint> = emptyList(),
+    val laps: List<ActivityLap> = emptyList(),
     val syncedRemoteId: Int? = null
 )
 

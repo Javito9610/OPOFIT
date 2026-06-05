@@ -64,6 +64,10 @@ function clasificarPerfil(ej) {
   const parsed = parsearPrescripcionNombre(ej.nombre);
   if (parsed) return { perfil: 'PARSED', ...parsed };
 
+  if (/tempo\s*run|\brun\b|jogging|\btrail\b|carrera|trote|rodaje|fartlek|interval|hiit|z2|continua|marcha|rucking/.test(nombre)) {
+    return { perfil: 'CARDIO_INTERVAL', unidad: 'min' };
+  }
+
   if (pilar === 'RESISTENCIA') {
     if (/hiit|fartlek|interval|tempo|cambios/.test(nombre)) return { perfil: 'CARDIO_INTERVAL', unidad: 'min' };
     if (/carrera|trote|rodaje|z2|continua|marcha|rucking/.test(nombre)) return { perfil: 'CARDIO_CONTINUO', unidad: 'min' };
@@ -321,15 +325,65 @@ function textoMovimiento(nombre, pilar, grupo, equipamiento) {
   return null;
 }
 
+const MARCADORES_INSTRUCCION_GENERADA = [
+  'Detalle técnico:',
+  'Material:',
+  'Mueve cada lado con simetría',
+  'Agarre firme, muñecas neutras',
+  'Busca un espacio despejado',
+  'Calienta 5-10 min',
+  'Ritmo aeróbico: puedes hablar'
+];
+
+function instruccionYaGenerada(texto) {
+  const t = String(texto || '').trim();
+  if (!t) return false;
+  if (MARCADORES_INSTRUCCION_GENERADA.some((m) => t.includes(m))) return true;
+  const rep = (t.match(/Codos apuntan al techo/g) || []).length;
+  return rep > 1;
+}
+
+function deduplicarInstrucciones(texto) {
+  const t = String(texto || '').trim();
+  if (!t) return t;
+  const partes = t.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
+  const visto = new Set();
+  const unicos = [];
+  for (const p of partes) {
+    const key = p.toLowerCase().replace(/\s+/g, ' ');
+    if (visto.has(key)) continue;
+    visto.add(key);
+    unicos.push(p);
+  }
+  return unicos.join(' ');
+}
+
+function pistaBancoDesdeEjercicio(ej) {
+  const banco = String(ej.instrucciones_banco || '').trim();
+  if (banco && banco.length <= 72 && !instruccionYaGenerada(banco) && !meta().esInstruccionGenerica(banco)) {
+    return banco;
+  }
+  const actual = String(ej.instrucciones_tecnicas || '').trim();
+  if (!actual || instruccionYaGenerada(actual) || meta().esInstruccionGenerica(actual) || actual.length > 72) {
+    return null;
+  }
+  return actual;
+}
+
 function expandirPistaBanco(banco, nombre) {
   const t = String(banco || '').trim();
-  if (!t || meta().esInstruccionGenerica(t)) return null;
-  if (t.length >= 80) return t;
+  if (!t || meta().esInstruccionGenerica(t) || instruccionYaGenerada(t) || t.length > 72) return null;
   return `Detalle técnico: ${t.replace(/\.$/, '')} en cada repetición de ${nombre}.`;
 }
 
 function generarInstrucciones(ej) {
   const nombre = meta().normalizarNombreEjercicio(ej.nombre);
+  const prev = String(ej.instrucciones_tecnicas || '').trim();
+
+  if (ej.prescripcion_inteligente || ej.instrucciones_inteligentes || instruccionYaGenerada(prev)) {
+    if (prev) return deduplicarInstrucciones(prev);
+  }
+
   const pilar = ej.pilar || ej.categoria || 'FUERZA';
   const grupo = meta().inferirGrupoMuscular(ej.grupo_muscular, nombre, pilar);
   const equip = ej.equipamiento || '';
@@ -338,11 +392,11 @@ function generarInstrucciones(ej) {
     textoMovimiento(nombre, pilar, grupo, equip) ||
     meta().instruccionesDesdeNombre(nombre, pilar);
 
-  const pista = expandirPistaBanco(ej.instrucciones_tecnicas, nombre);
+  const pista = expandirPistaBanco(pistaBancoDesdeEjercicio(ej), nombre);
   const equipo = contextoEquipamiento(equip);
 
   const partes = [nucleo, pista, equipo].filter(Boolean);
-  if (partes.length) return partes.join(' ');
+  if (partes.length) return deduplicarInstrucciones(partes.join(' '));
 
   return `Ejecuta ${nombre} con técnica controlada, rango completo y carga acorde a tu nivel. Descansa lo indicado entre series.`;
 }
@@ -363,7 +417,8 @@ function aplicarInteligencia(ej, ctx = {}) {
     unidad: prescripcion.unidad,
     descanso: prescripcion.descanso ?? ej.descanso ?? 90,
     instrucciones_tecnicas: instrucciones,
-    prescripcion_inteligente: true
+    prescripcion_inteligente: true,
+    instrucciones_inteligentes: true
   };
 }
 
@@ -372,6 +427,7 @@ module.exports = {
   parsearPrescripcionNombre,
   generarPrescripcion,
   generarInstrucciones,
+  deduplicarInstrucciones,
   aplicarInteligencia,
   variar
 };

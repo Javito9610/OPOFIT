@@ -63,6 +63,10 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         loadHistory()
+        hrBle.setListeners(
+            onHr = { bpm -> GpsTracker.onHrSample(bpm) },
+            onConnection = { name, connected -> GpsTracker.onHrDeviceChanged(name, connected) }
+        )
     }
 
     fun selectType(t: ActivityType) {

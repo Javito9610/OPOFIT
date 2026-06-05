@@ -9,6 +9,18 @@ const EjercicioInteligenteService = require('./EjercicioInteligenteService');
 const NOMBRES_DIA = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
 class PlanesService {
+  static resolverUnidad(notas, nombre, pilar) {
+    const validas = new Set(['reps', 'rep', 'min', 's', 'seg', 'km', 'm', 'amrap']);
+    const inferida = RutinaService.inferUnidad(nombre);
+    const nota = String(notas || '').toLowerCase().trim();
+    const pil = String(pilar || '').toUpperCase();
+    if (inferida !== 'reps') return inferida;
+    if (pil === 'RESISTENCIA') return 'min';
+    if (pil === 'VELOCIDAD' && /\bsprint\b/.test(String(nombre || '').toLowerCase())) return 'm';
+    if (nota && validas.has(nota)) return nota === 'seg' ? 's' : nota;
+    return inferida;
+  }
+
   static normalizarGenero(genero) {
     const g = String(genero || '').toUpperCase();
     return g.includes('MUJER') ? 'MUJER' : 'HOMBRE';
@@ -54,7 +66,7 @@ class PlanesService {
             series: e.series,
             repeticiones: e.repeticiones,
             descanso: e.descanso,
-            unidad: e.unidad || RutinaService.inferUnidad(e.nombre),
+            unidad: PlanesService.resolverUnidad(e.unidad, e.nombre, e.pilar),
             orden: e.orden || idx + 1
           }),
           { seed: e.orden || idx + 1 }

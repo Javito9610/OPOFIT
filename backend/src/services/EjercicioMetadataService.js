@@ -174,7 +174,6 @@ function enriquecerEjercicio(ej) {
   const nombreLimpio = normalizarNombreEjercicio(ej.nombre);
   const pilar = ej.pilar || ej.categoria || 'FUERZA';
   const grupo = inferirGrupoMuscular(ej.grupo_muscular, nombreLimpio, pilar);
-  const instrucciones = enriquecerInstrucciones(nombreLimpio, pilar, ej.instrucciones_tecnicas, ej);
   const tipo =
     ej.tipo_ilustracion ||
     EntornoEntreno.inferirTipoIlustracion(nombreLimpio, pilar, grupo);
@@ -183,7 +182,6 @@ function enriquecerEjercicio(ej) {
     ...ej,
     nombre: nombreLimpio,
     grupo_muscular: grupo,
-    instrucciones_tecnicas: instrucciones,
     tipo_ilustracion: tipo,
     motivo_ajuste: motivo,
     nombre_original: ej.nombre_original
