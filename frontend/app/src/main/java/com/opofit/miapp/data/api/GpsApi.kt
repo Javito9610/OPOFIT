@@ -41,6 +41,8 @@ data class GpsActivityPayload(
     val maxHrBpm: Int?,
     val minHrBpm: Int?,
     val kcal: Int?,
+    val avgStrideM: Double? = null,
+    val avgInclinePct: Double? = null,
     val points: List<Map<String, Any?>>,
     val splits: List<Map<String, Any?>>,
     val splitsMile: List<Map<String, Any?>>,

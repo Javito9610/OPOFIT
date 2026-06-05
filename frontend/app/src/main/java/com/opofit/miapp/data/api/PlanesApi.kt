@@ -40,4 +40,11 @@ interface PlanesApi {
         @Header("Authorization") token: String,
         @Path("idOposicion") idOposicion: Int
     ): PlanRegenerarResponse
+
+    @POST("/api/planes/regenerar-dia/{idOposicion}/{idPlanDia}")
+    suspend fun regenerarDia(
+        @Header("Authorization") token: String,
+        @Path("idOposicion") idOposicion: Int,
+        @Path("idPlanDia") idPlanDia: Int
+    ): PlanRegenerarResponse
 }

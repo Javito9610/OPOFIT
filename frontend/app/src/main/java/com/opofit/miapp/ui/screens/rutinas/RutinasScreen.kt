@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -146,10 +147,18 @@ fun RutinasScreen(
             )
         }
     ) { innerPadding ->
-        Box(
+        PullToRefreshBox(
+            isRefreshing = uiState.isLoading && (uiState.planSemanal != null || uiState.rutinaCompleta.isNotEmpty()),
+            onRefresh = {
+                rutinasViewModel.cargarRutina(userId, oposicionId)
+                rutinasViewModel.cargarCalendario(userId, oposicionId, mesCalendario.year, mesCalendario.monthValue)
+            },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+        ) {
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
             when {
                 uiState.isLoading -> {
@@ -451,7 +460,11 @@ fun RutinasScreen(
                                                 PlanDiaCard(
                                                     dia = dia,
                                                     onEntrenar = onNavigateToEntrenamientos,
-                                                    expanded = !dia.es_hoy
+                                                    expanded = !dia.es_hoy,
+                                                    onOtraOpcion = if (!dia.completada && !uiState.entornoEntreno.isNullOrBlank()) {
+                                                        { rutinasViewModel.regenerarDia(userId, oposicionId, dia.id_plan_dia) }
+                                                    } else null,
+                                                    regenerando = uiState.regenerandoDiaId == dia.id_plan_dia
                                                 )
                                                 dia.ejercicios.take(4).forEach { ej ->
                                                     val adj = if (ej.personalizado && ej.series_base != null) {
@@ -688,6 +701,7 @@ fun RutinasScreen(
                         }
                 }
             }
+        }
         }
     }
 }

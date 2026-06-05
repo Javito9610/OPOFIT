@@ -10,11 +10,18 @@ import com.opofit.miapp.gps.data.GpsRepository
 import com.opofit.miapp.gps.model.ActivitySummary
 import com.opofit.miapp.gps.model.ActivityType
 import com.opofit.miapp.gps.model.GpsTrackingState
+import com.opofit.miapp.data.responsemodels.EsfuerzoDesdeActividadRequest
+import com.opofit.miapp.data.responsemodels.EsfuerzoSlug
 import com.opofit.miapp.gps.service.GpsLastResult
+import com.opofit.miapp.gps.service.GpsRecordingContext
 import com.opofit.miapp.gps.service.GpsTracker
 import com.opofit.miapp.gps.service.GpsTrackingService
 import com.opofit.miapp.gps.service.HrBleManager
+import com.opofit.miapp.gps.service.RoutePreferences
+import com.opofit.miapp.utils.SegmentSlugUtil
 import com.opofit.miapp.gps.util.GpxImport
+import com.opofit.miapp.gps.util.TcxImport
+import com.opofit.miapp.integraciones.EntrenoSyncService
 import android.net.Uri
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,7 +70,9 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun startTracking() {
-        GpsTrackingService.start(getApplication(), _selectedType.value)
+        val type = GpsRecordingContext.consumeType() ?: _selectedType.value
+        _selectedType.value = type
+        GpsTrackingService.start(getApplication(), type)
     }
 
     fun pause() {
@@ -87,8 +96,10 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
             GpsLastResult.set(summary)
             loadHistory()
             syncToBackend(summary)
+            viewModelScope.launch { RoutePreferences.clear(getApplication()) }
             return summary.id
         }
+        viewModelScope.launch { RoutePreferences.clear(getApplication()) }
         return null
     }
 
@@ -171,9 +182,27 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
                 if (resp.ok && resp.data?.idActividad != null) {
                     repo.markSynced(summary.id, resp.data.idActividad)
                 }
+                registrarSegmentosVirtuales(token, summary)
             } catch (_: Exception) {
                 /* mantenemos la actividad solo en local; reintentos quedan para una futura cola. */
             }
+        }
+    }
+
+    private fun registrarSegmentosVirtuales(token: String, summary: ActivitySummary) {
+        viewModelScope.launch {
+            try {
+                if (summary.bestSegments.isEmpty()) return@launch
+                val esfuerzos = summary.bestSegments.mapNotNull { seg ->
+                    val slug = SegmentSlugUtil.slugFromLabel(seg.label) ?: return@mapNotNull null
+                    EsfuerzoSlug(slug, seg.durationSec * 1000L)
+                }
+                if (esfuerzos.isEmpty()) return@launch
+                RetrofitClient.segmentosApi.desdeActividad(
+                    "Bearer $token",
+                    EsfuerzoDesdeActividadRequest(summary.id, esfuerzos)
+                )
+            } catch (_: Exception) { }
         }
     }
 
@@ -215,14 +244,31 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
         _lastSaved.value = null
     }
 
-    /** Importa un fichero GPX (Strava, Garmin, Wikiloc...) y lo guarda en historial. */
-    fun importGpx(uri: Uri) {
+    /** Importa GPX o TCX exportado desde reloj (Garmin, Polar, Suunto, Coros…). */
+    fun importActividad(uri: Uri) {
         viewModelScope.launch {
             _importMessage.value = null
             try {
                 val ctx = getApplication<Application>()
+                val name = runCatching {
+                    ctx.contentResolver.query(uri, null, null, null, null)?.use { c ->
+                        val idx = c.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                        if (idx >= 0 && c.moveToFirst()) c.getString(idx) else null
+                    }
+                }.getOrNull().orEmpty().lowercase()
                 val summary = ctx.contentResolver.openInputStream(uri)?.use { stream ->
-                    GpxImport.parse(stream).getOrThrow()
+                    when {
+                        name.endsWith(".tcx") -> TcxImport.parse(stream).getOrThrow()
+                        else -> {
+                            val bytes = stream.readBytes()
+                            val gpx = runCatching {
+                                GpxImport.parse(bytes.inputStream()).getOrThrow()
+                            }
+                            gpx.getOrElse {
+                                TcxImport.parse(bytes.inputStream()).getOrThrow()
+                            }
+                        }
+                    }
                 } ?: throw IllegalArgumentException("No se pudo leer el fichero")
                 val existing = repo.get(summary.id)
                 if (existing != null) {
@@ -236,7 +282,28 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
                 val dist = com.opofit.miapp.gps.util.GpsMetrics.formatDistance(summary.distanceM)
                 _importMessage.value = "Importado: ${summary.type.display} · $dist"
             } catch (e: Exception) {
-                _importMessage.value = e.message ?: "No se pudo importar el GPX"
+                _importMessage.value = e.message ?: "No se pudo importar el fichero"
+            }
+        }
+    }
+
+    /** @deprecated Usa [importActividad] */
+    fun importGpx(uri: Uri) = importActividad(uri)
+
+    /** Sincroniza entrenos del reloj (Health Connect) y servicios conectados. */
+    fun syncDesdeReloj() {
+        viewModelScope.launch {
+            _history.update { it.copy(loading = true) }
+            _importMessage.value = null
+            try {
+                val token = tokenManager.getToken().first().orEmpty()
+                val res = EntrenoSyncService.syncDesdeRelojYCloud(getApplication(), token)
+                loadHistory()
+                _importMessage.value = res.mensaje()
+            } catch (e: Exception) {
+                _importMessage.value = e.message ?: "Error al sincronizar"
+            } finally {
+                _history.update { it.copy(loading = false) }
             }
         }
     }

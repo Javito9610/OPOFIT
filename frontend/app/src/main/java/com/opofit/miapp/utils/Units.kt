@@ -53,7 +53,7 @@ object Units {
         if (valor == null) return "-"
         val u = unidadRaw?.lowercase()?.trim().orEmpty()
         return when {
-            u == "s" || u == "seg" || u == "segundos" -> String.format("%.1f s", valor)
+            u == "s" || u == "seg" || u == "segundos" -> TimeFormatUtil.formatSecondsValue(valor, showMs = true)
             u == "reps" || u.contains("rep") -> String.format("%.1f reps", valor)
             u == "m" || u == "metros" || u == "metro" -> if (unitDist == "mi") {
                 if (valor >= 1000) "%.2f mi".format(mToMi(valor)) else "%.0f yd".format(mToYd(valor))

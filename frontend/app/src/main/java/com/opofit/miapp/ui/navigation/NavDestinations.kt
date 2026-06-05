@@ -32,6 +32,9 @@ object NavDestinations {
     const val RANKING = "ranking"
     const val PREMIUM = "premium"
     const val COMUNIDAD = "comunidad"
+    const val COMPARTIR_ACTIVIDAD = "compartir_actividad"
+    const val POST_DETALLE = "post_detalle/{postId}"
+    const val SEGMENTOS = "segmentos"
 
     const val GPS_HUB = "gps_hub"
     const val MAPA_ENTRENO =

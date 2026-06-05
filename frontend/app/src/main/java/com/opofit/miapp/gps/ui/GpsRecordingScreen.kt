@@ -49,7 +49,10 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.opofit.miapp.gps.model.GpsTrackingState
+import com.opofit.miapp.gps.service.GpsRecordingContext
 import com.opofit.miapp.gps.service.RoutePreferences
+import com.opofit.miapp.gps.service.ShareActivityContext
+import com.opofit.miapp.gps.service.buildPendingShareFromGps
 import com.opofit.miapp.gps.util.GpsMetrics
 import androidx.compose.ui.platform.LocalContext
 
@@ -75,10 +78,17 @@ fun GpsRecordingScreen(
     var startedSession by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        val route = RoutePreferences.load(context)
-        if (route != null && route.puntos.size >= 2) {
-            plannedRoute = route.puntos.map { LatLng(it.lat, it.lng) }
-            plannedNombre = route.nombre
+        val conRuta = GpsRecordingContext.consumeConRuta()
+        if (conRuta) {
+            val route = RoutePreferences.load(context)
+            if (route != null && route.puntos.size >= 2) {
+                plannedRoute = route.puntos.map { LatLng(it.lat, it.lng) }
+                plannedNombre = route.nombre
+            }
+        } else {
+            RoutePreferences.clear(context)
+            plannedRoute = emptyList()
+            plannedNombre = null
         }
     }
     var showFinishDialog by remember { mutableStateOf(false) }
@@ -106,7 +116,12 @@ fun GpsRecordingScreen(
                 Button(onClick = {
                     showFinishDialog = false
                     val id = viewModel.stopAndSave()
-                    if (id != null) onFinishSaved(id) else noPointsDialog = true
+                    if (id != null) {
+                        viewModel.get(id)?.let { act ->
+                            ShareActivityContext.set(buildPendingShareFromGps(act))
+                        }
+                        onFinishSaved(id)
+                    } else noPointsDialog = true
                 }) { Text("Guardar") }
             },
             dismissButton = {
@@ -203,6 +218,17 @@ fun GpsRecordingScreen(
                 }
                 Row(
                     Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    MetricBlock("Zancada", GpsMetrics.formatStride(state.currentStrideM ?: state.avgStrideM))
+                    MetricBlock("Pendiente", GpsMetrics.formatIncline(state.currentInclinePct ?: state.avgInclinePct))
+                    MetricBlock(
+                        "♥ media",
+                        state.avgHrBpm?.let { "$it bpm" } ?: "—"
+                    )
+                }
+                Row(
+                    Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     if (state.paused) {
@@ -249,7 +275,8 @@ fun GpsRecordingScreen(
                         state.lastErrorMsg
                             ?: buildString {
                                 append("${state.type.emoji} ${state.type.display}")
-                                plannedNombre?.let { append(" · Ruta: $it") }
+                                if (plannedNombre != null) append(" · Ruta: $plannedNombre")
+                                else append(" · Libre")
                                 if (state.hrDeviceConnected) append(" · ${state.hrDeviceName ?: "Banda BLE"}")
                                 if (state.paused) append(" · En pausa")
                             },

@@ -29,6 +29,9 @@ import com.opofit.miapp.ui.screens.rutinas.DetallesRutinaScreen
 import com.opofit.miapp.ui.screens.rutinas.RutinasLibresScreen
 import com.opofit.miapp.ui.screens.simulacro.SimulacroScreen
 import com.opofit.miapp.ui.screens.comunidad.ComunidadScreen
+import com.opofit.miapp.ui.screens.social.CompartirActividadScreen
+import com.opofit.miapp.ui.screens.social.PostDetalleScreen
+import com.opofit.miapp.ui.screens.social.SegmentosScreen
 import com.opofit.miapp.ui.screens.ranking.RankingScreen
 import com.opofit.miapp.ui.screens.premium.PremiumScreen
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
@@ -136,6 +139,9 @@ fun AppNavigation(
                 onNavigateToMisDispositivos = {
                     navController.navigate(NavDestinations.MIS_DISPOSITIVOS)
                 },
+                onNavigateToPost = { id ->
+                    navController.navigate("post_detalle/$id")
+                },
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate(NavDestinations.LOGIN) {
@@ -194,7 +200,13 @@ fun AppNavigation(
                 rutinaId = rutinaId,
                 authViewModel = authViewModel,
                 onNavigateBack = { navController.popBackStack() },
-                onEntrenamientoFinalizado = { navController.popBackStack() },
+                onEntrenamientoFinalizado = { offerShare ->
+                    if (offerShare) {
+                        navController.navigate(NavDestinations.COMPARTIR_ACTIVIDAD)
+                    } else {
+                        navController.popBackStack()
+                    }
+                },
                 onNavigateToGps = { distKm ->
                     EntrenoFlowContext.vincularEntrenamiento(
                         returnRoute = MapaEntrenoNav.rutaEntrenamientoPers(rutinaId),
@@ -221,8 +233,12 @@ fun AppNavigation(
             EntrenamientosScreen(
                 authViewModel = authViewModel,
                 onNavigateBack = { navController.popBackStack() },
-                onEntrenamientoFinalizado = {
-                    navController.popBackStack()
+                onEntrenamientoFinalizado = { offerShare ->
+                    if (offerShare) {
+                        navController.navigate(NavDestinations.COMPARTIR_ACTIVIDAD)
+                    } else {
+                        navController.popBackStack()
+                    }
                 },
                 onNavigateToGps = { distKm ->
                     EntrenoFlowContext.vincularEntrenamiento(
@@ -243,7 +259,13 @@ fun AppNavigation(
             RegistrarEntrenamientoScreen(
                 authViewModel = authViewModel,
                 onNavigateBack = { navController.popBackStack() },
-                onRegistrado = { navController.popBackStack() }
+                onRegistrado = { offerShare ->
+                    if (offerShare) {
+                        navController.navigate(NavDestinations.COMPARTIR_ACTIVIDAD)
+                    } else {
+                        navController.popBackStack()
+                    }
+                }
             )
         }
 
@@ -308,8 +330,38 @@ fun AppNavigation(
         composable(NavDestinations.COMUNIDAD) {
             ComunidadScreen(
                 authViewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onOpenPost = { id -> navController.navigate("post_detalle/$id") },
+                onOpenSegmentos = { navController.navigate(NavDestinations.SEGMENTOS) }
+            )
+        }
+
+        composable(NavDestinations.COMPARTIR_ACTIVIDAD) {
+            CompartirActividadScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onPublicado = { postId ->
+                    navController.navigate("post_detalle/$postId") {
+                        popUpTo(NavDestinations.GPS_HUB) { inclusive = false }
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = NavDestinations.POST_DETALLE,
+            arguments = listOf(navArgument("postId") { type = NavType.IntType })
+        ) { entry ->
+            val postId = entry.arguments?.getInt("postId") ?: 0
+            PostDetalleScreen(
+                postId = postId,
                 onNavigateBack = { navController.popBackStack() }
             )
+        }
+
+        composable(NavDestinations.SEGMENTOS) {
+            SegmentosScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable(NavDestinations.PREMIUM) {
@@ -352,6 +404,7 @@ fun AppNavigation(
             MapaEntrenoScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onUsarRutaEnGps = { navController.navigate(NavDestinations.GPS_RECORDING) },
+                onActividadLibre = { navController.navigate(NavDestinations.GPS_RECORDING) },
                 distanciaObjetivoKm = distKm,
                 modoInicial = modo,
                 tipoLugarInicial = tipo,
@@ -370,8 +423,8 @@ fun AppNavigation(
                             launchSingleTop = true
                         }
                     } else {
-                        navController.navigate("gps_activity/$id") {
-                            popUpTo(NavDestinations.GPS_HUB) { inclusive = false }
+                        navController.navigate(NavDestinations.COMPARTIR_ACTIVIDAD) {
+                            popUpTo(NavDestinations.GPS_RECORDING) { inclusive = true }
                         }
                     }
                 },
@@ -386,7 +439,8 @@ fun AppNavigation(
             val id = backStackEntry.arguments?.getString("activity_id") ?: ""
             GpsActivityDetailScreen(
                 activityId = id,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onShareToProfile = { navController.navigate(NavDestinations.COMPARTIR_ACTIVIDAD) }
             )
         }
 

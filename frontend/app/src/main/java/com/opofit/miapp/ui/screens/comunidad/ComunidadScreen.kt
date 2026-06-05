@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -15,8 +16,9 @@ import androidx.compose.ui.unit.dp
 import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.AmigoItem
-import com.opofit.miapp.data.responsemodels.FeedActividadItem
+import com.opofit.miapp.data.responsemodels.ActividadPost
 import com.opofit.miapp.ui.components.EmptyState
+import com.opofit.miapp.ui.components.PostFeedCard
 import com.opofit.miapp.ui.components.ProfileAvatar
 import com.opofit.miapp.data.responsemodels.CrearGrupoRequest
 import com.opofit.miapp.data.responsemodels.CrearQuedadaRequest
@@ -40,7 +42,9 @@ import retrofit2.HttpException
 @Composable
 fun ComunidadScreen(
     authViewModel: AuthViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onOpenPost: (Int) -> Unit = {},
+    onOpenSegmentos: () -> Unit = {}
 ) {
     val authState by authViewModel.uiState.collectAsState()
     val oposicionId = authState.oposicionId ?: 1
@@ -57,7 +61,7 @@ fun ComunidadScreen(
     var mensajes by remember { mutableStateOf<List<com.opofit.miapp.data.responsemodels.MensajeChat>>(emptyList()) }
     var textoMsg by remember { mutableStateOf("") }
     var msg by remember { mutableStateOf("") }
-    var feed by remember { mutableStateOf<List<FeedActividadItem>>(emptyList()) }
+    var feed by remember { mutableStateOf<List<ActividadPost>>(emptyList()) }
     var loadingFeed by remember { mutableStateOf(false) }
     var grupos by remember { mutableStateOf<List<GrupoComunidad>>(emptyList()) }
     var grupoSel by remember { mutableStateOf<GrupoComunidad?>(null) }
@@ -72,15 +76,11 @@ fun ComunidadScreen(
             loadingFeed = true
             try {
                 val token = tokenManager.getToken().first() ?: ""
-                val r = RetrofitClient.amigosApi.feed("Bearer $token")
+                val r = RetrofitClient.postsApi.feed("Bearer $token")
                 feed = if (r.ok) r.data.orEmpty() else emptyList()
             } catch (e: Exception) {
                 feed = emptyList()
-                if (e is HttpException && e.code() == 404) {
-                    // Servidor sin endpoint desplegado aún: vacío sin alarmar al usuario.
-                } else {
-                    msg = ApiErrorParser.message(e)
-                }
+                msg = ApiErrorParser.message(e)
             } finally {
                 loadingFeed = false
             }
@@ -140,6 +140,11 @@ fun ComunidadScreen(
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
+                actions = {
+                    IconButton(onClick = onOpenSegmentos) {
+                        Icon(Icons.Filled.EmojiEvents, contentDescription = "Segmentos")
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
@@ -168,9 +173,9 @@ fun ComunidadScreen(
                         }
                     } else if (feed.isEmpty()) {
                         EmptyState(
-                            emoji = "👥",
-                            title = "Sin actividad de amigos",
-                            message = "Añade amigos en Buscar para ver sus entrenos y simulacros aquí.",
+                            emoji = "🏃",
+                            title = "Sin publicaciones aún",
+                            message = "Cuando tú o tus amigos compartáis una actividad aparecerá aquí con stats, fotos y comentarios.",
                             modifier = Modifier.fillMaxWidth()
                         )
                     } else {
@@ -178,38 +183,23 @@ fun ComunidadScreen(
                             Modifier.padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            items(feed) { f ->
-                                Card(Modifier.fillMaxWidth()) {
-                                    Row(
-                                        Modifier.padding(14.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                                    ) {
-                                        ProfileAvatar(f.usuarioNombre ?: "?", sizeDp = 44)
-                                        Column(Modifier.weight(1f)) {
-                                            Text(
-                                                f.usuarioNombre ?: "Opositor",
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                            Text(
-                                                f.detalle ?: "",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                            f.fecha?.let {
-                                                Text(
-                                                    DateFormatUtil.formatearFechaHora(it),
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                            items(feed, key = { it.idPost }) { post ->
+                                PostFeedCard(
+                                    post = post,
+                                    onClick = { onOpenPost(post.idPost) },
+                                    onLike = {
+                                        scope.launch {
+                                            try {
+                                                val token = tokenManager.getToken().first() ?: ""
+                                                val r = RetrofitClient.postsApi.toggleLike(
+                                                    "Bearer $token",
+                                                    post.idPost
                                                 )
-                                            }
+                                                if (r.ok) cargarFeed()
+                                            } catch (_: Exception) { }
                                         }
-                                        Text(
-                                            if (f.tipo == "SIMULACRO") "🎯" else "💪",
-                                            style = MaterialTheme.typography.headlineSmall
-                                        )
                                     }
-                                }
+                                )
                             }
                         }
                     }

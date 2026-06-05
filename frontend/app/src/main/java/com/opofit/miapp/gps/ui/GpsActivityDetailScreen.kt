@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -60,6 +61,8 @@ import com.opofit.miapp.gps.model.ActivitySummary
 import com.opofit.miapp.gps.model.SplitKm
 import com.opofit.miapp.gps.model.SplitMile
 import com.opofit.miapp.gps.model.SplitTime
+import com.opofit.miapp.gps.service.ShareActivityContext
+import com.opofit.miapp.gps.service.buildPendingShareFromGps
 import com.opofit.miapp.gps.util.GpsMetrics
 import com.opofit.miapp.gps.util.GpxExport
 import com.opofit.miapp.ui.components.LineAreaChart
@@ -85,6 +88,7 @@ private enum class SplitMode(val label: String) {
 fun GpsActivityDetailScreen(
     activityId: String,
     onNavigateBack: () -> Unit,
+    onShareToProfile: () -> Unit = {},
     viewModel: GpsViewModel = viewModel()
 ) {
     val activity: ActivitySummary? = remember(activityId) { viewModel.get(activityId) }
@@ -177,6 +181,19 @@ fun GpsActivityDetailScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item { RouteMap(activity) }
+            item {
+                OutlinedButton(
+                    onClick = {
+                        ShareActivityContext.set(buildPendingShareFromGps(activity))
+                        onShareToProfile()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Filled.Share, null, Modifier.size(18.dp))
+                    Spacer(Modifier.size(8.dp))
+                    Text("Publicar en mi perfil")
+                }
+            }
             item { OverviewCard(activity) }
             item { MetricsGrid(activity) }
             if (activity.bestSegments.isNotEmpty()) {

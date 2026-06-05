@@ -52,9 +52,13 @@ import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.EjercicioRealizado
 import com.opofit.miapp.data.responsemodels.RegistrarHistorialRequest
 import com.opofit.miapp.gps.service.GpsLastResult
+import com.opofit.miapp.gps.service.ShareActivityContext
+import com.opofit.miapp.gps.service.buildPendingShareFromEntreno
 import com.opofit.miapp.utils.MapaEntrenoNav
+import com.opofit.miapp.ui.components.EntrenoLiveMetricsBar
 import com.opofit.miapp.ui.components.ExerciseValueInput
 import com.opofit.miapp.utils.EntrenoValidation
+import com.opofit.miapp.utils.TimeFormatUtil
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasLibresViewModel
 import com.opofit.miapp.utils.Units
@@ -70,7 +74,7 @@ fun EntrenamientoPersonalizadoScreen(
     rutinaId: Int,
     authViewModel: AuthViewModel,
     onNavigateBack: () -> Unit,
-    onEntrenamientoFinalizado: () -> Unit,
+    onEntrenamientoFinalizado: (offerShare: Boolean) -> Unit,
     onNavigateToGps: (distKm: Double?) -> Unit = {},
     rutinasLibresViewModel: RutinasLibresViewModel = viewModel()
 ) {
@@ -98,7 +102,7 @@ fun EntrenamientoPersonalizadoScreen(
 
     var cronometroActivo by remember { mutableStateOf(false) }
     var cronometroIniciadoAlgunaVez by remember { mutableStateOf(false) }
-    var tiempoSegundos by remember { mutableIntStateOf(0) }
+    var elapsedMs by remember { mutableStateOf(0L) }
     var showObjetivoDialog by remember { mutableStateOf(false) }
     var objetivoEjercicioNombre by remember { mutableStateOf<String?>(null) }
 
@@ -124,7 +128,7 @@ fun EntrenamientoPersonalizadoScreen(
         return Regex("\\b(bici|ciclismo|bicicleta|caminar|marcha|paseo)\\b").containsMatchIn(n)
     }
 
-    fun ritmoVelocidadTexto(tipo: String?, distText: String, secs: Int): Pair<String, String> {
+    fun ritmoVelocidadTexto(tipo: String?, distText: String, secs: Double): Pair<String, String> {
         val dist = distText.replace(",", ".").toDoubleOrNull() ?: return "-" to "-"
         if (dist <= 0.0 || secs <= 0) return "-" to "-"
         return when (tipo) {
@@ -188,11 +192,12 @@ fun EntrenamientoPersonalizadoScreen(
 
     LaunchedEffect(cronometroActivo, ejerciciosUi) {
         while (cronometroActivo) {
-            delay(1000)
-            tiempoSegundos += 1
+            delay(50L)
+            elapsedMs += 50L
+            val elapsedSec = (elapsedMs / 1000).toInt()
             val currentTimed = ejerciciosUi.firstOrNull { !it.checked && it.objetivoSegundos != null }
             val obj = currentTimed?.objetivoSegundos
-            if (obj != null && tiempoSegundos >= obj && cronometroActivo) {
+            if (obj != null && elapsedSec >= obj && cronometroActivo) {
                 cronometroActivo = false
                 objetivoEjercicioNombre = currentTimed.nombre
                 showObjetivoDialog = true
@@ -213,8 +218,9 @@ fun EntrenamientoPersonalizadoScreen(
                 distancia = mostrado,
                 valor = km.toString()
             )
-            if (tiempoSegundos < summary.durationSec) {
-                tiempoSegundos = summary.durationSec
+            val gpsMs = summary.durationSec * 1000L
+            if (elapsedMs < gpsMs) {
+                elapsedMs = gpsMs
                 cronometroIniciadoAlgunaVez = true
             }
         }
@@ -225,14 +231,8 @@ fun EntrenamientoPersonalizadoScreen(
     var error by remember { mutableStateOf("") }
 
     val alMenosUnoMarcado = ejerciciosUi.any { it.checked }
-    val puedeFinalizar = cronometroIniciadoAlgunaVez && tiempoSegundos > 0 && alMenosUnoMarcado && !guardando
+    val puedeFinalizar = cronometroIniciadoAlgunaVez && elapsedMs > 0L && alMenosUnoMarcado && !guardando
 
-    fun formatTime(s: Int): String {
-        val mm = s / 60
-        val ss = s % 60
-        return "%02d:%02d".format(mm, ss)
-    }
-    
 
     Scaffold(
         topBar = {
@@ -293,7 +293,7 @@ fun EntrenamientoPersonalizadoScreen(
                                 Column(modifier = Modifier.padding(16.dp)) {
                                     Text("Tiempo", color = MaterialTheme.colorScheme.onPrimaryContainer)
                                     Text(
-                                        text = formatTime(tiempoSegundos),
+                                        text = TimeFormatUtil.formatElapsedMs(elapsedMs),
                                         style = MaterialTheme.typography.headlineLarge,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -321,13 +321,28 @@ fun EntrenamientoPersonalizadoScreen(
                                 Button(
                                     onClick = {
                                         cronometroActivo = false
-                                        tiempoSegundos = 0
+                                        elapsedMs = 0L
                                         cronometroIniciadoAlgunaVez = false
                                     },
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Text("Reiniciar")
                                 }
+                            }
+                        }
+
+                        if (cronometroActivo || cronometroIniciadoAlgunaVez) {
+                            item {
+                                val activoEj = ejerciciosUi.firstOrNull { !it.checked }
+                                val distKm = activoEj?.distancia?.replace(",", ".")?.toDoubleOrNull()?.let { d ->
+                                    if (unitDist == "mi" && activoEj.tipo == "RUN") Units.miToKm(d) else d
+                                }
+                                EntrenoLiveMetricsBar(
+                                    elapsedMs = elapsedMs,
+                                    cronometroActivo = cronometroActivo || cronometroIniciadoAlgunaVez,
+                                    distanciaKm = distKm,
+                                    tipoCardio = activoEj?.tipo
+                                )
                             }
                         }
 
@@ -355,12 +370,14 @@ fun EntrenamientoPersonalizadoScreen(
                                     if (ej.tipo != null) {
                                         if (ej.objetivoSegundos != null) {
                                             Text(
-                                                text = "Objetivo: ${formatTime(ej.objetivoSegundos)}",
+                                                text = "Objetivo: ${TimeFormatUtil.formatElapsedMs(ej.objetivoSegundos * 1000L, showMs = false)}",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
-                                        val secsCalc = ej.objetivoSegundos?.let { minOf(tiempoSegundos, it) } ?: tiempoSegundos
+                                        val secsCalc = ej.objetivoSegundos?.let {
+                                            minOf(TimeFormatUtil.secondsFromMs(elapsedMs), it.toDouble())
+                                        } ?: TimeFormatUtil.secondsFromMs(elapsedMs)
                                         val (ritmoTxt, velTxt) = ritmoVelocidadTexto(ej.tipo, ej.distancia, secsCalc)
                                         val labelDist = when (ej.tipo) {
                                             "SWIM" -> if (unitDist == "mi") "Distancia (yd)" else "Distancia (m)"
@@ -388,7 +405,7 @@ fun EntrenamientoPersonalizadoScreen(
                                             modifier = Modifier.fillMaxWidth(),
                                             singleLine = true,
                                             supportingText = {
-                                                if (tiempoSegundos <= 0) {
+                                                if (elapsedMs <= 0L) {
                                                     Text("Inicia el cronómetro para calcular ritmo y velocidad.")
                                                 }
                                             }
@@ -468,13 +485,24 @@ fun EntrenamientoPersonalizadoScreen(
                                             userId = userId,
                                             tipoRutina = "PERS",
                                             idRutina = rutinaId,
-                                            duracion = (tiempoSegundos / 60).coerceAtLeast(1), // Backend espera minutos
+                                            duracion = ((elapsedMs / 60_000L).toInt()).coerceAtLeast(1), // Backend espera minutos
                                             ejercicios = ejercicios,
                                             gpsActividadUuid = gpsActividadUuid
                                         )
                                         val resp = RetrofitClient.progresoApi.registrarEntrenamiento("Bearer $token", body)
                                         if (resp.ok) {
-                                            onEntrenamientoFinalizado()
+                                            val idHistorial = resp.id?.takeIf { it > 0 }
+                                            idHistorial?.let { id ->
+                                                ShareActivityContext.set(
+                                                    buildPendingShareFromEntreno(
+                                                        titulo = rutina?.nombre_personalizado ?: "Rutina personalizada",
+                                                        idHistorial = id,
+                                                        duracionMin = ((elapsedMs / 60_000L).toInt()).coerceAtLeast(1),
+                                                        ejerciciosCount = ejercicios.size
+                                                    )
+                                                )
+                                            }
+                                            onEntrenamientoFinalizado(idHistorial != null)
                                         } else {
                                             error = resp.msg ?: resp.message ?: "No se pudo guardar el entrenamiento"
                                             guardando = false

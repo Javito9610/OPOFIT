@@ -21,6 +21,7 @@ import com.opofit.miapp.data.responsemodels.PruebaOficialSimulacro
 import com.opofit.miapp.data.responsemodels.ResultadoSimulacroItem
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.utils.ApiErrorParser
+import com.opofit.miapp.utils.TimeFormatUtil
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -53,7 +54,7 @@ fun SimulacroScreen(
     var mensajeExito by remember { mutableStateOf<String?>(null) }
 
     var cronometroActivo by remember { mutableStateOf(false) }
-    var segundos by remember { mutableIntStateOf(0) }
+    var elapsedMs by remember { mutableStateOf(0L) }
     val valores = remember { mutableStateMapOf<Int, String>() }
 
     LaunchedEffect(oposicionId) {
@@ -77,8 +78,8 @@ fun SimulacroScreen(
 
     LaunchedEffect(cronometroActivo) {
         while (cronometroActivo) {
-            delay(1000)
-            segundos++
+            delay(50L)
+            elapsedMs += 50L
         }
     }
 
@@ -86,14 +87,12 @@ fun SimulacroScreen(
         cronometroActivo = false
         errorCampo = ""
         val p = pruebas.getOrNull(paso) ?: return@LaunchedEffect
-        segundos = if (p.unidad == "s") {
-            valores[p.id_pruebas_oficiales]?.toDoubleOrNull()?.toInt() ?: 0
+        elapsedMs = if (p.unidad == "s") {
+            valores[p.id_pruebas_oficiales]?.toDoubleOrNull()?.let { TimeFormatUtil.msFromSeconds(it) } ?: 0L
         } else {
-            0
+            0L
         }
     }
-
-    fun formatTime(s: Int) = "%02d:%02d".format(s / 60, s % 60)
 
     val pruebaActual = pruebas.getOrNull(paso)
     val esTiempo = pruebaActual?.unidad == "s"
@@ -204,12 +203,12 @@ fun SimulacroScreen(
                                 if (esTiempo) {
                                     val idPrueba = pruebaActual.id_pruebas_oficiales
                                     Text("Modo cronómetro", fontWeight = FontWeight.SemiBold)
-                                    Text(formatTime(segundos), style = MaterialTheme.typography.displayMedium)
+                                    Text(TimeFormatUtil.formatElapsedMs(elapsedMs), style = MaterialTheme.typography.displayMedium)
                                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                         Button(onClick = {
                                             if (cronometroActivo) {
                                                 cronometroActivo = false
-                                                valores[idPrueba] = segundos.toString()
+                                                valores[idPrueba] = "%.3f".format(TimeFormatUtil.secondsFromMs(elapsedMs))
                                                 errorCampo = ""
                                             } else {
                                                 cronometroActivo = true
@@ -219,7 +218,7 @@ fun SimulacroScreen(
                                         }
                                         OutlinedButton(onClick = {
                                             cronometroActivo = false
-                                            segundos = 0
+                                            elapsedMs = 0L
                                             valores.remove(idPrueba)
                                             errorCampo = ""
                                         }) {
@@ -227,7 +226,7 @@ fun SimulacroScreen(
                                         }
                                     }
                                     Text(
-                                        "Al pulsar Siguiente se usará el tiempo del cronómetro (${segundos}s).",
+                                        "Al pulsar Siguiente se usará el tiempo del cronómetro (${TimeFormatUtil.formatSecondsValue(TimeFormatUtil.secondsFromMs(elapsedMs))}).",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -264,7 +263,7 @@ fun SimulacroScreen(
                                     onClick = {
                                         paso--
                                         cronometroActivo = false
-                                        segundos = 0
+                                        elapsedMs = 0L
                                         errorCampo = ""
                                     },
                                     modifier = Modifier.weight(1f)
@@ -275,9 +274,10 @@ fun SimulacroScreen(
                                     val id = pruebaActual!!.id_pruebas_oficiales
                                     val v = if (esTiempo) {
                                         cronometroActivo = false
-                                        if (segundos > 0) {
-                                            valores[id] = segundos.toString()
-                                            segundos.toDouble()
+                                        if (elapsedMs > 0L) {
+                                            val sec = TimeFormatUtil.secondsFromMs(elapsedMs)
+                                            valores[id] = "%.3f".format(sec)
+                                            sec
                                         } else null
                                     } else {
                                         valores[id]?.toDoubleOrNull()
@@ -290,10 +290,10 @@ fun SimulacroScreen(
                                         }
                                         return@Button
                                     }
-                                    valores[id] = v.toString()
+                                    valores[id] = if (esTiempo) "%.3f".format(v) else v.toString()
                                     errorCampo = ""
                                     cronometroActivo = false
-                                    segundos = 0
+                                    elapsedMs = 0L
                                     if (paso < pruebas.size - 1) {
                                         paso++
                                     } else {

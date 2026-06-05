@@ -41,7 +41,8 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
         val entornoEntreno: String? = null,
         val entornosOpciones: List<EntornoEntrenoOpcion> = emptyList(),
         val mostrarSheetEntorno: Boolean = false,
-        val regenerandoPlan: Boolean = false
+        val regenerandoPlan: Boolean = false,
+        val regenerandoDiaId: Int? = null
     )
 
     private val _uiState = MutableStateFlow(RutinasUiState())
@@ -120,6 +121,40 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = ApiErrorParser.message(e)) }
+            }
+        }
+    }
+
+    fun regenerarDia(userId: Int, oposicionId: Int, idPlanDia: Int) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(regenerandoDiaId = idPlanDia, error = "") }
+            try {
+                val token = tokenManager.getToken().first() ?: ""
+                if (_uiState.value.entornoEntreno.isNullOrBlank()) {
+                    _uiState.update {
+                        it.copy(
+                            regenerandoDiaId = null,
+                            mostrarSheetEntorno = true,
+                            error = "Elige primero dónde entrenas"
+                        )
+                    }
+                    return@launch
+                }
+                val res = RetrofitClient.planesApi.regenerarDia("Bearer $token", oposicionId, idPlanDia)
+                if (res.ok && res.data != null) {
+                    _uiState.update { it.copy(regenerandoDiaId = null, planSemanal = res.data) }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            regenerandoDiaId = null,
+                            error = res.msg ?: "No se pudo cambiar este día"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(regenerandoDiaId = null, error = ApiErrorParser.message(e))
+                }
             }
         }
     }

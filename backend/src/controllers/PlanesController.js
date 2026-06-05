@@ -72,6 +72,35 @@ const putEntornoUsuario = async (req, res) => {
   }
 };
 
+const postRegenerarDia = async (req, res) => {
+  try {
+    const userId = req.usuario?.id;
+    const { idOposicion, idPlanDia } = req.params;
+    if (!userId || !idOposicion || !idPlanDia) {
+      return res.status(400).json({ ok: false, msg: 'Parámetros inválidos' });
+    }
+    const { bloqueado, calc, nivel } = await resolverNivel(userId, idOposicion);
+    if (bloqueado) {
+      return res.status(400).json({ ok: false, msg: 'Completa las marcas del perfil primero' });
+    }
+    const plan = await PlanGeneradorService.regenerarDia(
+      userId,
+      idOposicion,
+      idPlanDia,
+      nivel,
+      calc.genero
+    );
+    return res.status(200).json({
+      ok: true,
+      msg: 'Nueva opción para este día',
+      data: plan
+    });
+  } catch (e) {
+    console.error('postRegenerarDia:', e.message);
+    return res.status(400).json({ ok: false, msg: e.message });
+  }
+};
+
 const postRegenerarPlan = async (req, res) => {
   try {
     const userId = req.usuario?.id;
@@ -105,5 +134,6 @@ module.exports = {
   getEntornos,
   getEntornoUsuario,
   putEntornoUsuario,
-  postRegenerarPlan
+  postRegenerarPlan,
+  postRegenerarDia
 };

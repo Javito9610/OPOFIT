@@ -2,7 +2,7 @@ const db = require('../config/db');
 
 class EjerciciosService {
   static async listarTodos(filtros = {}) {
-    const { categoria, pilar, busqueda, limite = 500 } = filtros;
+    const { categoria, pilar, busqueda, limite = 800 } = filtros;
     let sql = `SELECT id_ejercicio, nombre, video_url, instrucciones_tecnicas,
                       categoria, pilar, grupo_muscular, equipamiento
                FROM ejercicios WHERE 1=1`;
@@ -22,7 +22,7 @@ class EjerciciosService {
       params.push(q, q, q);
     }
     sql += ' ORDER BY pilar ASC, categoria ASC, nombre ASC LIMIT ?';
-    params.push(Math.min(Number(limite) || 500, 500));
+    params.push(Math.min(Number(limite) || 800, 800));
 
     const [rows] = await db.query(sql, params);
     return rows;

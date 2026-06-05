@@ -100,6 +100,7 @@ fun MainScreen(
     onNavigateToEjercicioHistorial: (Int) -> Unit,
     onNavigateToPlanHistorial: (Int) -> Unit,
     onNavigateToMisDispositivos: () -> Unit,
+    onNavigateToPost: (Int) -> Unit = {},
     onLogout: () -> Unit
 ) {
     val innerNavController = rememberNavController()
@@ -350,7 +351,8 @@ fun MainScreen(
                         onNavigateBack = { navigateToTab(BottomTab.Inicio.route) },
                         onNavigateToEditarPerfil = onNavigateToEditarPerfil,
                         onNavigateToAjustes = onNavigateToAjustes,
-                        onNavigateToComunidad = onNavigateToComunidad
+                        onNavigateToComunidad = onNavigateToComunidad,
+                        onOpenPost = onNavigateToPost
                     )
                 }
 

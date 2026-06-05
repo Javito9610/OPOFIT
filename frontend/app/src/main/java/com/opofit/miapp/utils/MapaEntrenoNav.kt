@@ -10,7 +10,14 @@ object MapaEntrenoNav {
 
     fun actividadDesdeGps(type: ActivityType): String = when (type) {
         ActivityType.BIKE -> "BICI"
+        ActivityType.WALK -> "CAMINAR"
         else -> "CARRERA"
+    }
+
+    fun tipoDesdeActividad(actividad: String): ActivityType = when (actividad.uppercase()) {
+        "BICI", "BIKE" -> ActivityType.BIKE
+        "CAMINAR", "WALK" -> ActivityType.WALK
+        else -> ActivityType.RUN
     }
 
     fun limitesRuta(actividad: String, terreno: String): LimitesRuta {
@@ -21,6 +28,12 @@ object MapaEntrenoNav {
                 LimitesRuta(1f, 100f, 33, "Bici montaña")
             } else {
                 LimitesRuta(1f, 180f, 35, "Bici carretera")
+            }
+        } else if (act == "CAMINAR" || act == "WALK") {
+            if (ter == "MONTANA") {
+                LimitesRuta(1f, 30f, 14, "Caminata montaña")
+            } else {
+                LimitesRuta(1f, 30f, 14, "Caminata")
             }
         } else if (ter == "MONTANA") {
             LimitesRuta(1f, 42f, 20, "Carrera montaña")

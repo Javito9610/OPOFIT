@@ -40,8 +40,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.opofit.miapp.ui.components.PostFeedCard
 import com.opofit.miapp.ui.components.ProfileAvatar
 import com.opofit.miapp.ui.components.StatCard
+import com.opofit.miapp.data.responsemodels.ActividadPost
 import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.responsemodels.PerfilUsuarioData
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
@@ -65,12 +67,14 @@ fun PerfilScreen(
     onNavigateToEditarPerfil: () -> Unit,
     onNavigateToAjustes: () -> Unit = {},
     onNavigateToComunidad: () -> Unit = {},
+    onOpenPost: (Int) -> Unit = {},
     perfilViewModel: PerfilViewModel = viewModel(),
     rutinasViewModel: RutinasViewModel = viewModel()
 ) {
     val authState by authViewModel.uiState.collectAsState()
     val perfilState by perfilViewModel.uiState.collectAsState()
     val rutinasState by rutinasViewModel.uiState.collectAsState()
+    var misPosts by remember { mutableStateOf<List<ActividadPost>>(emptyList()) }
 
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
@@ -103,6 +107,8 @@ fun PerfilScreen(
                 val token = tokenManager.getToken().first().orEmpty()
                 if (token.isNotBlank()) {
                     perfilData = RetrofitClient.usuarioApi.obtenerPerfil("Bearer $token").data
+                    val posts = RetrofitClient.postsApi.porUsuario("Bearer $token", userId)
+                    misPosts = if (posts.ok) posts.data.orEmpty() else emptyList()
                 }
             } catch (_: Exception) { }
         }
@@ -257,6 +263,22 @@ fun PerfilScreen(
                                 modifier = Modifier.weight(1f)
                             )
                         }
+                    }
+                }
+
+                if (misPosts.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "Mis publicaciones",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    items(misPosts, key = { it.idPost }) { post ->
+                        PostFeedCard(
+                            post = post,
+                            onClick = { onOpenPost(post.idPost) }
+                        )
                     }
                 }
 

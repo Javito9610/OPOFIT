@@ -45,6 +45,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.data.responsemodels.EjercicioRealizado
 import com.opofit.miapp.ui.components.ExerciseValueInput
 import com.opofit.miapp.utils.EntrenoValidation
+import com.opofit.miapp.gps.service.ShareActivityContext
+import com.opofit.miapp.gps.service.buildPendingShareFromEntreno
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.HistorialViewModel
 import java.text.SimpleDateFormat
@@ -56,7 +58,7 @@ import java.util.Locale
 fun RegistrarEntrenamientoScreen(
     authViewModel: AuthViewModel,
     onNavigateBack: () -> Unit,
-    onRegistrado: () -> Unit,
+    onRegistrado: (offerShare: Boolean) -> Unit,
     historialViewModel: HistorialViewModel = viewModel()
 ) {
     val authState by authViewModel.uiState.collectAsState()
@@ -90,8 +92,19 @@ fun RegistrarEntrenamientoScreen(
 
     LaunchedEffect(uiState.registradoExitoso) {
         if (uiState.registradoExitoso) {
+            val offerShare = uiState.ultimoEntreno?.let { entreno ->
+                ShareActivityContext.set(
+                    buildPendingShareFromEntreno(
+                        titulo = entreno.titulo,
+                        idHistorial = entreno.idHistorial,
+                        duracionMin = entreno.duracionMin,
+                        ejerciciosCount = entreno.ejerciciosCount
+                    )
+                )
+                true
+            } ?: false
             historialViewModel.resetRegistrado()
-            onRegistrado()
+            onRegistrado(offerShare)
         }
     }
 
@@ -283,12 +296,17 @@ fun RegistrarEntrenamientoScreen(
                                 val v = row.valor.toDoubleOrNull() ?: 0.0
                                 EjercicioRealizado(id, v)
                             }
+                            val tituloRutina = when (tipoRutinaSeleccionada) {
+                                "PERS" -> "Rutina personalizada"
+                                else -> "Entrenamiento $oposicionSeleccionada"
+                            }
                             historialViewModel.registrarEntrenamiento(
                                 userId = userId,
                                 tipoRutina = tipoRutinaSeleccionada,
                                 idRutina = rutinaId.toIntOrNull() ?: 1,
                                 duracion = mins,
-                                ejercicios = realizados
+                                ejercicios = realizados,
+                                tituloRutina = tituloRutina
                             )
                         },
                         modifier = Modifier.fillMaxWidth()

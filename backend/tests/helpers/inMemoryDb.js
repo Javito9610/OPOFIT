@@ -34,6 +34,11 @@ const state = {
   grupo_mensajes: [],
   quedadas: [],
   gps_actividades: [],
+  actividad_posts: [],
+  post_likes: [],
+  post_comentarios: [],
+  segmentos: [],
+  segmento_esfuerzos: [],
   notif_tokens: [],
   rutinas_compartidas: [],
   plan_dias: [],
@@ -66,6 +71,11 @@ let nextId = {
   grupo_mensajes: 1,
   quedadas: 1,
   gps_actividades: 1,
+  actividad_posts: 1,
+  post_likes: 1,
+  post_comentarios: 1,
+  segmentos: 1,
+  segmento_esfuerzos: 1,
   baremos_puntuacion: 1
 };
 
@@ -1188,6 +1198,178 @@ function query(sql, params = []) {
       (a) => !(a.usuarios_id_usuario === Number(params[0]) && a.uuid_local === params[1])
     );
     return Promise.resolve([{ affectedRows: before - state.gps_actividades.length }, []]);
+  }
+
+  if (s.startsWith('insert into actividad_posts')) {
+    const id = nextId.actividad_posts++;
+    state.actividad_posts.push({
+      id_post: id,
+      id_usuario: Number(params[0]),
+      titulo: params[1],
+      texto: params[2],
+      foto_url: params[3],
+      visibilidad: params[4],
+      fuente: params[5],
+      gps_uuid: params[6],
+      id_historial_sesion: params[7],
+      id_simulacro: params[8],
+      stats_json: params[9],
+      creado_en: new Date().toISOString()
+    });
+    return Promise.resolve([{ insertId: id }, []]);
+  }
+  if (s.includes('from actividad_posts p') && s.includes('join usuarios u')) {
+    const viewerId = Number(params[0]);
+    const idPostFilter = s.includes('where p.id_post = ?') ? Number(params[1]) : null;
+    const esFeed = s.includes('or p.visibilidad');
+    const targetUserFilter = !idPostFilter && !esFeed && s.includes('where p.id_usuario = ?')
+      ? Number(params[1])
+      : null;
+    const limite = Number(params[params.length - 1]) || 30;
+    const amigoIds = state.amistades
+      .filter((a) => a.estado === 'ACEPTADA' && (a.id_usuario_a === viewerId || a.id_usuario_b === viewerId))
+      .map((a) => (a.id_usuario_a === viewerId ? a.id_usuario_b : a.id_usuario_a));
+    let posts = state.actividad_posts;
+    if (idPostFilter) posts = posts.filter((p) => p.id_post === idPostFilter);
+    if (targetUserFilter) posts = posts.filter((p) => p.id_usuario === targetUserFilter);
+    const rows = posts
+      .map((p) => {
+        const u = state.usuarios.find((x) => x.id_usuario === p.id_usuario);
+        const likes = state.post_likes.filter((l) => l.id_post === p.id_post).length;
+        const comentarios = state.post_comentarios.filter((c) => c.id_post === p.id_post).length;
+        const yoLike = state.post_likes.some((l) => l.id_post === p.id_post && l.id_usuario === viewerId);
+        return {
+          ...p,
+          usuario_nombre: u?.nombre,
+          avatar_url: u?.avatar_url,
+          likes,
+          comentarios,
+          yo_like: yoLike ? 1 : 0
+        };
+      })
+      .filter((p) => {
+        if (idPostFilter) return true;
+        if (p.id_usuario === viewerId) return true;
+        if (p.visibilidad === 'PUBLICO') return true;
+        return amigoIds.includes(p.id_usuario);
+      })
+      .sort((a, b) => new Date(b.creado_en) - new Date(a.creado_en))
+      .slice(0, idPostFilter ? 1 : limite);
+    if (idPostFilter) return Promise.resolve([[rows[0] || undefined].filter(Boolean), []]);
+    return Promise.resolve([rows, []]);
+  }
+  if (s.startsWith('select c.id_comentario, c.id_usuario, c.texto')) {
+    const idPost = Number(params[0]);
+    const rows = state.post_comentarios
+      .filter((c) => c.id_post === idPost)
+      .map((c) => {
+        const u = state.usuarios.find((x) => x.id_usuario === c.id_usuario);
+        return {
+          ...c,
+          usuario_nombre: u?.nombre,
+          avatar_url: u?.avatar_url
+        };
+      });
+    return Promise.resolve([rows, []]);
+  }
+  if (s.startsWith('select duracion_ms from segmento_esfuerzos')) {
+    const rows = state.segmento_esfuerzos
+      .filter((e) => e.id_usuario === Number(params[0]) && e.id_segmento === Number(params[1]))
+      .sort((a, b) => a.duracion_ms - b.duracion_ms)
+      .slice(0, 1);
+    return Promise.resolve([rows, []]);
+  }
+  if (s.includes('from segmento_esfuerzos e') && s.includes('join usuarios u')) {
+    const idSeg = Number(params[0]);
+    const rows = state.segmento_esfuerzos
+      .filter((e) => e.id_segmento === idSeg)
+      .sort((a, b) => a.duracion_ms - b.duracion_ms)
+      .slice(0, Number(params[1] || 50))
+      .map((e) => {
+        const u = state.usuarios.find((x) => x.id_usuario === e.id_usuario);
+        return {
+          ...e,
+          usuario_nombre: u?.nombre,
+          avatar_url: u?.avatar_url
+        };
+      });
+    return Promise.resolve([rows, []]);
+  }
+  if (s.startsWith('select id_like from post_likes')) {
+    const row = state.post_likes.find(
+      (l) => l.id_post === Number(params[0]) && l.id_usuario === Number(params[1])
+    );
+    return Promise.resolve([[row || undefined].filter(Boolean), []]);
+  }
+  if (s.startsWith('delete from post_likes')) {
+    const before = state.post_likes.length;
+    state.post_likes = state.post_likes.filter(
+      (l) => !(l.id_post === Number(params[0]) && l.id_usuario === Number(params[1]))
+    );
+    return Promise.resolve([{ affectedRows: before - state.post_likes.length }, []]);
+  }
+  if (s.startsWith('insert into post_likes')) {
+    const id = nextId.post_likes++;
+    state.post_likes.push({ id_like: id, id_post: Number(params[0]), id_usuario: Number(params[1]) });
+    return Promise.resolve([{ insertId: id }, []]);
+  }
+  if (s.startsWith('insert into post_comentarios')) {
+    const id = nextId.post_comentarios++;
+    state.post_comentarios.push({
+      id_comentario: id,
+      id_post: Number(params[0]),
+      id_usuario: Number(params[1]),
+      texto: params[2],
+      creado_en: new Date().toISOString()
+    });
+    return Promise.resolve([{ insertId: id }, []]);
+  }
+  if (s.startsWith('insert into segmentos')) {
+    const id = nextId.segmentos++;
+    state.segmentos.push({
+      id_segmento: id,
+      slug: params[0],
+      nombre: params[1],
+      tipo: params[2],
+      distancia_m: Number(params[3]),
+      mejor_si_menor: Number(params[4]),
+      categoria: params[5],
+      activo: 1
+    });
+    return Promise.resolve([{ insertId: id }, []]);
+  }
+  if (s.startsWith('select id_segmento, slug, nombre, tipo, distancia_m')) {
+    return Promise.resolve([
+      state.segmentos.filter((s) => s.activo).sort((a, b) => a.distancia_m - b.distancia_m),
+      []
+    ]);
+  }
+  if (s.startsWith('select id_segmento, mejor_si_menor from segmentos where id_segmento')) {
+    const row = state.segmentos.find((x) => x.id_segmento === Number(params[0]) && x.activo);
+    return Promise.resolve([
+      row ? [{ id_segmento: row.id_segmento, mejor_si_menor: row.mejor_si_menor }] : [],
+      []
+    ]);
+  }
+  if (s.startsWith('select * from segmentos where id_segmento')) {
+    const row = state.segmentos.find((x) => x.id_segmento === Number(params[0]) && x.activo);
+    return Promise.resolve([[row || undefined].filter(Boolean), []]);
+  }
+  if (s.startsWith('select id_segmento from segmentos where slug')) {
+    const row = state.segmentos.find((x) => x.slug === params[0] && x.activo);
+    return Promise.resolve([[row || undefined].filter(Boolean), []]);
+  }
+  if (s.startsWith('insert into segmento_esfuerzos')) {
+    const id = nextId.segmento_esfuerzos++;
+    state.segmento_esfuerzos.push({
+      id_esfuerzo: id,
+      id_segmento: Number(params[0]),
+      id_usuario: Number(params[1]),
+      duracion_ms: Number(params[2]),
+      gps_uuid: params[3],
+      creado_en: new Date().toISOString()
+    });
+    return Promise.resolve([{ insertId: id }, []]);
   }
 
   // Por defecto no encontrada

@@ -10,6 +10,7 @@ import com.opofit.miapp.data.responsemodels.HistorialEjercicio
 import com.opofit.miapp.data.responsemodels.HistorialPlan
 import com.opofit.miapp.data.responsemodels.ResumenHistorial
 import com.opofit.miapp.data.responsemodels.SesionItem
+import com.opofit.miapp.integraciones.EntrenoSyncService
 import com.opofit.miapp.utils.ApiErrorParser
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +30,9 @@ class HistorialAvanzadoViewModel(application: Application) : AndroidViewModel(ap
         val resumen: ResumenHistorial? = null,
         val periodo: String = "month",
         val sesiones: List<SesionItem> = emptyList(),
-        val filtroTipo: String = "TODOS"
+        val filtroTipo: String = "TODOS",
+        val refreshing: Boolean = false,
+        val syncMessage: String? = null
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -108,6 +111,27 @@ class HistorialAvanzadoViewModel(application: Application) : AndroidViewModel(ap
                 _historialEjercicio.value = resp.data
             } catch (_: Exception) {
                 _historialEjercicio.value = null
+            }
+        }
+    }
+
+    fun consumeSyncMessage() = _uiState.update { it.copy(syncMessage = null) }
+
+    /** Pull-to-refresh: importa del reloj/nube y recarga historial. */
+    fun refreshAll(onGpsSynced: (() -> Unit)? = null) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(refreshing = true, syncMessage = null) }
+            try {
+                val token = tokenManager.getToken().first().orEmpty()
+                val sync = EntrenoSyncService.syncDesdeRelojYCloud(getApplication(), token)
+                cargarResumen()
+                cargarSesiones()
+                onGpsSynced?.invoke()
+                _uiState.update { it.copy(refreshing = false, syncMessage = sync.mensaje()) }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(refreshing = false, syncMessage = ApiErrorParser.message(e))
+                }
             }
         }
     }

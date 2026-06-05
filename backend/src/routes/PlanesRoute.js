@@ -6,7 +6,8 @@ const {
   getEntornos,
   getEntornoUsuario,
   putEntornoUsuario,
-  postRegenerarPlan
+  postRegenerarPlan,
+  postRegenerarDia
 } = require('../controllers/PlanesController');
 
 router.get('/calendario/:idOposicion', validarToken, getCalendario);
@@ -14,5 +15,6 @@ router.get('/entornos', validarToken, getEntornos);
 router.get('/entorno', validarToken, getEntornoUsuario);
 router.put('/entorno', validarToken, putEntornoUsuario);
 router.post('/regenerar/:idOposicion', validarToken, postRegenerarPlan);
+router.post('/regenerar-dia/:idOposicion/:idPlanDia', validarToken, postRegenerarDia);
 
 module.exports = router;

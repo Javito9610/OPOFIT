@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.components
 
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -14,18 +15,26 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.opofit.miapp.data.responsemodels.DiaPlan
@@ -50,15 +59,30 @@ fun PlanDiaCard(
     dia: DiaPlan,
     modifier: Modifier = Modifier,
     onEntrenar: (enfoque: String, idPlanDia: Int, idRutinaOpo: Int) -> Unit,
-    expanded: Boolean = false
+    expanded: Boolean = false,
+    onOtraOpcion: (() -> Unit)? = null,
+    regenerando: Boolean = false
 ) {
+    var dragTotal by remember(dia.id_plan_dia) { mutableFloatStateOf(0f) }
     val container = when {
         dia.es_hoy && !dia.completada -> MaterialTheme.colorScheme.primaryContainer
         dia.completada -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
         else -> MaterialTheme.colorScheme.surface
     }
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .pointerInput(dia.id_plan_dia, onOtraOpcion, dia.completada) {
+                if (onOtraOpcion != null && !dia.completada) {
+                    detectHorizontalDragGestures(
+                        onDragEnd = {
+                            if (dragTotal < -100f) onOtraOpcion()
+                            dragTotal = 0f
+                        },
+                        onHorizontalDrag = { _, amount -> dragTotal += amount }
+                    )
+                }
+            },
         colors = CardDefaults.cardColors(containerColor = container),
         elevation = CardDefaults.cardElevation(defaultElevation = if (dia.es_hoy) 4.dp else 1.dp)
     ) {
@@ -108,6 +132,22 @@ fun PlanDiaCard(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.secondary
             )
+            if (!dia.completada && onOtraOpcion != null) {
+                FilledTonalButton(
+                    onClick = onOtraOpcion,
+                    enabled = !regenerando,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (regenerando) {
+                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.width(8.dp))
+                    } else {
+                        Icon(Icons.Filled.SwapHoriz, null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text(if (regenerando) "Generando…" else "Otra opción (desliza ← también)")
+                }
+            }
             if (dia.es_hoy && !dia.completada) {
                 Button(
                     onClick = { onEntrenar(dia.enfoque, dia.id_plan_dia, dia.id_rutina_opo) },

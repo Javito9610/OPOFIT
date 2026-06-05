@@ -22,12 +22,20 @@ class HistorialViewModel(application: Application) : AndroidViewModel(applicatio
 
     private val tokenManager = TokenManager(getApplication())
 
+    data class UltimoEntrenoRegistrado(
+        val idHistorial: Int,
+        val titulo: String,
+        val duracionMin: Int,
+        val ejerciciosCount: Int
+    )
+
     data class HistorialUiState(
         val isLoading: Boolean = false,
         val error: String = "",
         val evolucion: List<PuntoEvolucion> = emptyList(),
         val registradoExitoso: Boolean = false,
-        val recordsRotos: List<RecordRotoItem> = emptyList()
+        val recordsRotos: List<RecordRotoItem> = emptyList(),
+        val ultimoEntreno: UltimoEntrenoRegistrado? = null
     )
 
     private val _uiState = MutableStateFlow(HistorialUiState())
@@ -60,10 +68,19 @@ class HistorialViewModel(application: Application) : AndroidViewModel(applicatio
         idRutina: Int,
         duracion: Int,
         ejercicios: List<EjercicioRealizado>,
-        gpsActividadUuid: String? = null
+        gpsActividadUuid: String? = null,
+        tituloRutina: String? = null
     ) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = "", registradoExitoso = false, recordsRotos = emptyList()) }
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    error = "",
+                    registradoExitoso = false,
+                    recordsRotos = emptyList(),
+                    ultimoEntreno = null
+                )
+            }
             try {
                 val token = tokenManager.getToken().first() ?: ""
                 val body = RegistrarHistorialRequest(
@@ -76,11 +93,21 @@ class HistorialViewModel(application: Application) : AndroidViewModel(applicatio
                 )
                 val response = RetrofitClient.progresoApi.registrarEntrenamiento("Bearer $token", body)
                 if (response.ok) {
+                    val idHistorial = response.id
+                    val ultimo = if (idHistorial != null && idHistorial > 0) {
+                        UltimoEntrenoRegistrado(
+                            idHistorial = idHistorial,
+                            titulo = tituloRutina?.trim().orEmpty().ifBlank { "Entrenamiento" },
+                            duracionMin = duracion,
+                            ejerciciosCount = ejercicios.size
+                        )
+                    } else null
                     _uiState.update {
                         it.copy(
                             isLoading = false,
                             registradoExitoso = true,
-                            recordsRotos = response.recordsRotos.orEmpty()
+                            recordsRotos = response.recordsRotos.orEmpty(),
+                            ultimoEntreno = ultimo
                         )
                     }
                 } else {
@@ -118,7 +145,9 @@ class HistorialViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun resetRegistrado() {
-        _uiState.update { it.copy(registradoExitoso = false, error = "", recordsRotos = emptyList()) }
+        _uiState.update {
+            it.copy(registradoExitoso = false, error = "", recordsRotos = emptyList(), ultimoEntreno = null)
+        }
     }
 
     fun clearRecordsCelebration() {

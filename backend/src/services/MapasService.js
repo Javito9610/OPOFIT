@@ -390,7 +390,7 @@ class MapasService {
     return m;
   }
 
-  static async rutaEntreWaypoints(waypoints, nombre = 'Ruta personalizada') {
+  static async rutaEntreWaypoints(waypoints, nombre = 'Ruta personalizada', actividad = 'CARRERA') {
     const pts = (waypoints || [])
       .filter((p) => Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)))
       .map((p) => ({ lat: Number(p.lat), lng: Number(p.lng) }));
@@ -399,12 +399,14 @@ class MapasService {
     let routed = pts;
     let origen = 'personalizada';
     const key = apiKey();
+    const mode = MapasService.modoRuta(actividad);
+    const osrmProfile = MapasService.perfilOsrm(actividad);
     try {
       if (key) {
-        routed = await MapasService.directionsRoute(pts, key, 'walking');
+        routed = await MapasService.directionsRoute(pts, key, mode);
         origen = 'personalizada_calles';
       } else {
-        routed = await MapasService.osrmRoute(pts);
+        routed = await MapasService.osrmRoute(pts, osrmProfile);
         origen = 'personalizada_osrm';
       }
     } catch (e) {

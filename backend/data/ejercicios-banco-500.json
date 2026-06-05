@@ -1,0 +1,4506 @@
+{
+  "version": 1,
+  "total": 500,
+  "ejercicios": [
+    {
+      "nombre": "Press banca plano con barra",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Barra/banco",
+      "instrucciones_tecnicas": "Escápulas retraídas, toque pecho controlado.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Press banca inclinado con barra",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Barra/banco inclinado",
+      "instrucciones_tecnicas": "Inclinación 30-45°, barra al pecho superior.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Press banca declinado con barra",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Barra/banco declinado",
+      "instrucciones_tecnicas": "Pecho inferior, codos a 45°.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Press banca con mancuernas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Mancuernas/banco",
+      "instrucciones_tecnicas": "Rango completo, muñecas neutras.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Press inclinado con mancuernas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Mancuernas/banco",
+      "instrucciones_tecnicas": "Empuje convergente suave arriba.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Press declinado con mancuernas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Mancuernas/banco",
+      "instrucciones_tecnicas": "Control en la bajada.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Press en máquina convergente",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Máquina pecho",
+      "instrucciones_tecnicas": "Empuje sin bloquear codos.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Cruce de poleas alto",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Polea",
+      "instrucciones_tecnicas": "Codos ligeramente flexionados.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Cruce de poleas bajo",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Polea",
+      "instrucciones_tecnicas": "Pecho inferior, contracción al centro.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Aperturas con mancuernas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Mancuernas/banco",
+      "instrucciones_tecnicas": "Arco amplio, codo fijo.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Pullover con mancuerna",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Mancuerna/banco",
+      "instrucciones_tecnicas": "Brazos semiflexionados, foco dorsal.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Flexiones estándar",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Cuerpo recto, pecho al suelo.",
+      "entornos": "CALISTENIA,CASA,PISTA,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Flexiones inclinadas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Banco/mesa",
+      "instrucciones_tecnicas": "Manos elevadas, progresión.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Flexiones declinadas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Banco",
+      "instrucciones_tecnicas": "Pies elevados, core activo.",
+      "entornos": "CALISTENIA,CASA,PISTA,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Flexiones diamante",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Manos juntas, tríceps y pecho interno.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Flexiones archer",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Peso lateral alternado.",
+      "entornos": "CALISTENIA,CASA,PISTA,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Flexiones con palmada",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Explosivas, aterrizaje suave.",
+      "entornos": "CALISTENIA,CASA,PISTA,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Flexiones pseudo planche",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Manos a la altura de cadera.",
+      "entornos": "CALISTENIA,CASA,PISTA,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Flexiones en anillas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Anillas",
+      "instrucciones_tecnicas": "Estabilidad máxima, pecho profundo.",
+      "entornos": "CALISTENIA,CASA,PISTA,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Fondos en paralelas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Paralelas",
+      "instrucciones_tecnicas": "Descenso 90°, hombros abajo.",
+      "entornos": "CALISTENIA,CASA,PISTA,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Fondos en banco",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Banco",
+      "instrucciones_tecnicas": "Piernas extendidas, codos atrás.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Press landmine unilateral",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Barra/landmine",
+      "instrucciones_tecnicas": "Empuje angular, anti-rotación.",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Press pallof con banda",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Banda",
+      "instrucciones_tecnicas": "Anti-rotación, brazos extendidos.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Flexiones con banda",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "Banda",
+      "instrucciones_tecnicas": "Resistencia en la subida.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Press en TRX",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pecho",
+      "equipamiento": "TRX",
+      "instrucciones_tecnicas": "Inclinación corporal, core firme.",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Press militar con barra",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Hombros",
+      "equipamiento": "Barra/rack",
+      "instrucciones_tecnicas": "Barra frente, glúteos activos.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Press Arnold",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Hombros",
+      "equipamiento": "Mancuernas",
+      "instrucciones_tecnicas": "Rotación controlada al subir.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Press con mancuernas sentado",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Hombros",
+      "equipamiento": "Mancuernas/banco",
+      "instrucciones_tecnicas": "Espalda apoyada, sin arqueo.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Press en máquina de hombros",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Hombros",
+      "equipamiento": "Máquina",
+      "instrucciones_tecnicas": "Empuje vertical controlado.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Elevaciones laterales",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Hombros",
+      "equipamiento": "Mancuernas",
+      "instrucciones_tecnicas": "Codos ligeramente flexionados.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Elevaciones frontales",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Hombros",
+      "equipamiento": "Mancuernas",
+      "instrucciones_tecnicas": "Hasta altura de hombros.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Pájaros con mancuernas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Hombros",
+      "equipamiento": "Mancuernas",
+      "instrucciones_tecnicas": "Deltoides posterior, pecho al banco.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Face pull en polea",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Hombros",
+      "equipamiento": "Polea",
+      "instrucciones_tecnicas": "Codos altos, rotación externa.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Remo al mentón con barra",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Hombros",
+      "equipamiento": "Barra",
+      "instrucciones_tecnicas": "Codos altos, sin balanceo.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Handstand push-up en pared",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Hombros",
+      "equipamiento": "Pared",
+      "instrucciones_tecnicas": "Progresión vertical, core activo.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Pike push-up",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Hombros",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Cadera alta, cabeza al suelo.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Elevaciones laterales con banda",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Hombros",
+      "equipamiento": "Banda",
+      "instrucciones_tecnicas": "Tensión constante.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Y-raise en banco inclinado",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Hombros",
+      "equipamiento": "Mancuernas/banco",
+      "instrucciones_tecnicas": "Deltoides posterior y trapecio medio.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Cuban press",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Hombros",
+      "equipamiento": "Mancuernas",
+      "instrucciones_tecnicas": "Rotación externa + press.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Push press con barra",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Hombros",
+      "equipamiento": "Barra",
+      "instrucciones_tecnicas": "Impulso de piernas, bloqueo arriba.",
+      "entornos": "GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Dominadas pronas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Barra fija",
+      "instrucciones_tecnicas": "Barbilla sobre barra, sin kipping.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Dominadas supinas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Barra fija",
+      "instrucciones_tecnicas": "Chin-up controlado.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Dominadas neutras",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Barra fija",
+      "instrucciones_tecnicas": "Agarre paralelo, hombros abajo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Dominadas asistidas con banda",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Barra/banda",
+      "instrucciones_tecnicas": "Progresión hacia dominada libre.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Dominadas con lastre",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Barra/discos",
+      "instrucciones_tecnicas": "RIR 1-2, técnica estricta.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Dominadas explosivas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Barra fija",
+      "instrucciones_tecnicas": "Pecho a barra con intención.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Dominadas australianas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Barra baja",
+      "instrucciones_tecnicas": "Cuerpo recto, pecho a barra.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Dominadas tipo L-sit",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Barra fija",
+      "instrucciones_tecnicas": "Piernas extendidas, core activo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Muscle-up en barra",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Barra fija",
+      "instrucciones_tecnicas": "Transición limpia, falso agarre.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Remo con barra",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Barra",
+      "instrucciones_tecnicas": "Bisagra, barra al ombligo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Remo pendlay",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Barra",
+      "instrucciones_tecnicas": "Torso paralelo al suelo, tirón explosivo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Remo mancuerna unilateral",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Mancuerna/banco",
+      "instrucciones_tecnicas": "Sin rotar tronco.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Remo en máquina sentado",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Máquina",
+      "instrucciones_tecnicas": "Pecho apoyado, escápulas juntas.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Remo en T-bar",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Barra/T-bar",
+      "instrucciones_tecnicas": "Agarre neutro, tirón al pecho.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Jalón al pecho agarre ancho",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Polea",
+      "instrucciones_tecnicas": "Pecho alto, codos abajo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Jalón al pecho agarre neutro",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Polea",
+      "instrucciones_tecnicas": "Codos al bolsillo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Jalón al pecho agarre supino",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Polea",
+      "instrucciones_tecnicas": "Mayor implicación bíceps.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Pull-over en polea alta",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Polea",
+      "instrucciones_tecnicas": "Brazos rectos, foco dorsal.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Remo invertido en mesa",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Mesa",
+      "instrucciones_tecnicas": "Cuerpo recto bajo mesa.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Remo con banda anclada",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Banda",
+      "instrucciones_tecnicas": "Tirón al abdomen.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Remo con mochila",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Mochila",
+      "instrucciones_tecnicas": "Bisagra de cadera en casa.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Pulldown con banda",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Banda",
+      "instrucciones_tecnicas": "Simula jalón en casa.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Encogimientos con barra",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Barra",
+      "instrucciones_tecnicas": "Trapecio superior, sin balanceo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Encogimientos con mancuernas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Mancuernas",
+      "instrucciones_tecnicas": "Pausa arriba.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Hiperextensiones en banco 45°",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Banco 45°",
+      "instrucciones_tecnicas": "Glúteos y erectores, sin hiperextender.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Superman hold",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Brazos y piernas elevados.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Good morning con barra",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Barra",
+      "instrucciones_tecnicas": "Bisagra de cadera, espalda neutra.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Remo en TRX",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "TRX",
+      "instrucciones_tecnicas": "Cuerpo inclinado, tirón al pecho.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Front lever tuck",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Barra fija",
+      "instrucciones_tecnicas": "Isometría, rodillas al pecho.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Remo con kettlebell",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Espalda",
+      "equipamiento": "Kettlebell",
+      "instrucciones_tecnicas": "Tirón unilateral controlado.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Sentadilla trasera con barra",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Barra/rack",
+      "instrucciones_tecnicas": "Profundidad paralela o más.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Sentadilla frontal con barra",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Barra/rack",
+      "instrucciones_tecnicas": "Codos altos, torso vertical.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Sentadilla goblet",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Mancuerna/kettlebell",
+      "instrucciones_tecnicas": "Carga al pecho.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Sentadilla con pausa",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Barra/rack",
+      "instrucciones_tecnicas": "Pausa 2 s en el fondo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Sentadilla búlgara",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Mancuernas/banco",
+      "instrucciones_tecnicas": "Rodilla trasera casi al suelo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Sentadilla sumo con barra",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Barra",
+      "instrucciones_tecnicas": "Pies anchos, rodillas alineadas.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Sentadilla con mochila",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Mochila",
+      "instrucciones_tecnicas": "Peso en espalda, profundidad controlada.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Sentadilla pistol asistida",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Barra fija",
+      "instrucciones_tecnicas": "Una pierna, agarre para equilibrio.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Sentadilla en cajón",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Barra/cajón",
+      "instrucciones_tecnicas": "Profundidad consistente.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Sentadilla hack en máquina",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Máquina",
+      "instrucciones_tecnicas": "Pies medios en plataforma.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Prensa de piernas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Máquina",
+      "instrucciones_tecnicas": "Sin bloquear rodillas.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Prensa unilateral",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Máquina",
+      "instrucciones_tecnicas": "Corregir desequilibrios.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Zancadas caminando",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Mancuernas",
+      "instrucciones_tecnicas": "Paso largo, torso erguido.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Zancadas en el sitio",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Alternar piernas sin desplazarte.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Zancadas laterales",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Mancuernas",
+      "instrucciones_tecnicas": "Paso lateral, cadera atrás.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Zancadas inversas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Mancuernas",
+      "instrucciones_tecnicas": "Paso atrás, rodilla estable.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Step-up con mancuernas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Mancuernas/cajón",
+      "instrucciones_tecnicas": "Empuje con pierna de apoyo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Peso muerto convencional",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Barra",
+      "instrucciones_tecnicas": "Lumbar neutra, barra pegada.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Peso muerto sumo",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Barra",
+      "instrucciones_tecnicas": "Pies anchos, agarre dentro de rodillas.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Peso muerto rumano",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Barra/mancuernas",
+      "instrucciones_tecnicas": "Bisagra, isquios estirados.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Peso muerto con mochila",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Mochila",
+      "instrucciones_tecnicas": "Bisagra en casa.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Peso muerto trap bar",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Barra hexagonal",
+      "instrucciones_tecnicas": "Torso más vertical.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Hip thrust con barra",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Barra/banco",
+      "instrucciones_tecnicas": "Pausa arriba, mentón al pecho.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Puente de glúteo",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Empuje de cadera, glúteos activos.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Patada de glúteo en polea",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Polea",
+      "instrucciones_tecnicas": "Cadera estable, extensión completa.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Abducción en máquina",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Máquina",
+      "instrucciones_tecnicas": "Glúteo medio, controlado.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Curl femoral tumbado",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Máquina",
+      "instrucciones_tecnicas": "Isquios, sin despegar cadera.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Curl femoral sentado",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Máquina",
+      "instrucciones_tecnicas": "Rango completo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Nordic curl",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Suelo/compañero",
+      "instrucciones_tecnicas": "Excéntrico controlado.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Curl nórdico asistido con banda",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Banda",
+      "instrucciones_tecnicas": "Progresión nordic.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Extensión de cuádriceps",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Máquina",
+      "instrucciones_tecnicas": "Sin bloquear rodilla arriba.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Sissy squat",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Cuádriceps, rodillas adelante.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Gemelos de pie en máquina",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Máquina",
+      "instrucciones_tecnicas": "Rango completo, pausa arriba.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Gemelos en prensa",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Prensa",
+      "instrucciones_tecnicas": "Puntillas en borde de plataforma.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Gemelos unilateral",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Mancuerna",
+      "instrucciones_tecnicas": "Máxima elongación abajo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Tibial anterior con banda",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Banda",
+      "instrucciones_tecnicas": "Prevención shin splints.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Sentadilla con banda en rodillas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Banda",
+      "instrucciones_tecnicas": "Empuje contra banda.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Caminata del granjero",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Mancuernas/kettlebells",
+      "instrucciones_tecnicas": "Hombros cuadrados.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Sled push",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Trineo",
+      "instrucciones_tecnicas": "Inclinación baja, máxima intención.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Sled drag marcha atrás",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Trineo",
+      "instrucciones_tecnicas": "Cadena posterior.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Wall sit 60 s",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Pared",
+      "instrucciones_tecnicas": "Isometría cuádriceps.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Cossack squat",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Movilidad y fuerza lateral.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Split squat con mancuernas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "Mancuernas",
+      "instrucciones_tecnicas": "Pierna delantera carga principal.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Curl con barra Z",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Barra Z",
+      "instrucciones_tecnicas": "Sin balanceo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Curl con mancuernas alterno",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Mancuernas",
+      "instrucciones_tecnicas": "Supinación al subir.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Curl martillo",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Mancuernas",
+      "instrucciones_tecnicas": "Agarre neutro.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Curl concentrado",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Mancuerna/banco",
+      "instrucciones_tecnicas": "Codo apoyado en muslo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Curl en polea baja",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Polea",
+      "instrucciones_tecnicas": "Tensión constante.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Curl con banda",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Banda",
+      "instrucciones_tecnicas": "Resistencia progresiva.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Curl con botellas de agua",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Botellas",
+      "instrucciones_tecnicas": "Peso improvisado en casa.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Curl spider en banco",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Mancuernas/banco",
+      "instrucciones_tecnicas": "Brazos perpendiculares al suelo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Curl 21s con barra",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Barra",
+      "instrucciones_tecnicas": "7+7+7 parcial y completo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Extensión de tríceps en polea",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Polea",
+      "instrucciones_tecnicas": "Codos fijos.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Extensión de tríceps con banda",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Banda",
+      "instrucciones_tecnicas": "Extensión completa.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Press francés con barra Z",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Barra Z/banco",
+      "instrucciones_tecnicas": "Codos apuntan al techo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Extensión tras nuca con mancuerna",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Mancuerna",
+      "instrucciones_tecnicas": "Codos cerrados.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Patada de tríceps",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Mancuerna/banco",
+      "instrucciones_tecnicas": "Codo fijo, extensión completa.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Fondos en banco pies elevados",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Banco",
+      "instrucciones_tecnicas": "Tríceps y pecho inferior.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Extensión en TRX",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "TRX",
+      "instrucciones_tecnicas": "Cuerpo inclinado, codos fijos.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Wrist curl con barra",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Barra",
+      "instrucciones_tecnicas": "Agarre oposición.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Reverse wrist curl",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Barra",
+      "instrucciones_tecnicas": "Extensores de muñeca.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Colgado en barra máx tiempo",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Barra fija",
+      "instrucciones_tecnicas": "Agarre y antebrazo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Farmer hold isométrico",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Mancuernas",
+      "instrucciones_tecnicas": "Agarre máximo tiempo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Pinch grip con discos",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Discos",
+      "instrucciones_tecnicas": "Agarre de pinza.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Towel pull-up",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Barra/toalla",
+      "instrucciones_tecnicas": "Agarre reforzado.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Chin-up con pausa arriba",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Barra fija",
+      "instrucciones_tecnicas": "Isometría bíceps.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Dips asistidos con banda",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Paralelas/banda",
+      "instrucciones_tecnicas": "Progresión fondos.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Close grip bench press",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Brazos",
+      "equipamiento": "Barra/banco",
+      "instrucciones_tecnicas": "Tríceps y pecho interno.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PULL"
+    },
+    {
+      "nombre": "Plancha frontal",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Cadera neutra, glúteos activos.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Plancha lateral",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Cadera elevada.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Plancha con elevación de pierna",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Sin rotar cadera.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Plancha con toque de hombro",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Anti-rotación.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Hollow body hold",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Lumbar pegada al suelo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Dead bug",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Movimiento contralateral controlado.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Bird dog",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Extensión opuesta, cadera estable.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Ab wheel rollout",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Rueda abdominal",
+      "instrucciones_tecnicas": "Rango controlado.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Crunch en polea alta",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Polea",
+      "instrucciones_tecnicas": "Flexión de tronco, no tirar con brazos.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Elevación de piernas colgado",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Barra fija",
+      "instrucciones_tecnicas": "Sin balanceo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Knee raise en paralelas",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Paralelas",
+      "instrucciones_tecnicas": "Pelvis posterior.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Russian twist con disco",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Disco",
+      "instrucciones_tecnicas": "Rotación controlada.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Pallof press",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Polea/banda",
+      "instrucciones_tecnicas": "Anti-rotación.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Suitcase carry",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Mancuerna/kettlebell",
+      "instrucciones_tecnicas": "Anti-lateral flexión.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Turkish get-up",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Kettlebell",
+      "instrucciones_tecnicas": "Movimiento lento y completo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "V-ups",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Tocar pies con manos.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Bicycle crunch",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Codo a rodilla opuesta.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Plancha con reach through",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Alcance bajo el cuerpo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Copenhagen plank",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Banco",
+      "instrucciones_tecnicas": "Aductores y core lateral.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Dragon flag progresión",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Banco",
+      "instrucciones_tecnicas": "Control excéntrico.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "L-sit en paralelas",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Paralelas",
+      "instrucciones_tecnicas": "Isometría core y flexores.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Hanging windshield wiper",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Barra fija",
+      "instrucciones_tecnicas": "Rotación controlada.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Cable woodchop",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Polea",
+      "instrucciones_tecnicas": "Rotación desde cadera.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Bear crawl 20 m",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Rodillas cerca del suelo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Mountain climbers",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Cadera baja, ritmo controlado.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK"
+    },
+    {
+      "nombre": "Series 100 m x 3",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 100 m x 4",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 100 m x 5",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 100 m x 6",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 100 m x 8",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 100 m x 10",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 100 m x 12",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 200 m x 3",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 200 m x 4",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 200 m x 5",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 200 m x 6",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 200 m x 8",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 200 m x 10",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 200 m x 12",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 300 m x 3",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 300 m x 4",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 300 m x 5",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 300 m x 6",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 300 m x 8",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 300 m x 10",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 300 m x 12",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 90 s.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 400 m x 3",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 400 m x 4",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 400 m x 5",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 400 m x 6",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 400 m x 8",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 400 m x 10",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 400 m x 12",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 600 m x 3",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 600 m x 4",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 600 m x 5",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 600 m x 6",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 600 m x 8",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 600 m x 10",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 600 m x 12",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 800 m x 3",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 800 m x 4",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 800 m x 5",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 800 m x 6",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 800 m x 8",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 800 m x 10",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 800 m x 12",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1000 m x 3",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1000 m x 4",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1000 m x 5",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1000 m x 6",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1000 m x 8",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1000 m x 10",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1000 m x 12",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1200 m x 3",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1200 m x 4",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1200 m x 5",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1200 m x 6",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1200 m x 8",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1200 m x 10",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1200 m x 12",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1600 m x 3",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1600 m x 4",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1600 m x 5",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1600 m x 6",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1600 m x 8",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1600 m x 10",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 1600 m x 12",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 2000 m x 3",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 2000 m x 4",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 2000 m x 5",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 2000 m x 6",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 2000 m x 8",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 2000 m x 10",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 2000 m x 12",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 3000 m x 3",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 3000 m x 4",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 3000 m x 5",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 3000 m x 6",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 3000 m x 8",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 3000 m x 10",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 3000 m x 12",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 5000 m x 3",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 5000 m x 4",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 5000 m x 5",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 5000 m x 6",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 5000 m x 8",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 5000 m x 10",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Series 5000 m x 12",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera continua Z2 15 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "RPE 4-5, conversación posible.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Trote suave 15 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Rodaje regenerativo.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera en el sitio Z2 15 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Rodaje indoor sin desplazamiento.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera continua Z2 20 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "RPE 4-5, conversación posible.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Trote suave 20 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Rodaje regenerativo.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera en el sitio Z2 20 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Rodaje indoor sin desplazamiento.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera continua Z2 25 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "RPE 4-5, conversación posible.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Trote suave 25 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Rodaje regenerativo.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera en el sitio Z2 25 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Rodaje indoor sin desplazamiento.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera continua Z2 30 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "RPE 4-5, conversación posible.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Trote suave 30 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Rodaje regenerativo.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera en el sitio Z2 30 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Rodaje indoor sin desplazamiento.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera continua Z2 35 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "RPE 4-5, conversación posible.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Trote suave 35 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Rodaje regenerativo.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera en el sitio Z2 35 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Rodaje indoor sin desplazamiento.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera continua Z2 40 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "RPE 4-5, conversación posible.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Trote suave 40 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Rodaje regenerativo.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera en el sitio Z2 40 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Rodaje indoor sin desplazamiento.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera continua Z2 45 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "RPE 4-5, conversación posible.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Trote suave 45 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Rodaje regenerativo.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera en el sitio Z2 45 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Rodaje indoor sin desplazamiento.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera continua Z2 50 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "RPE 4-5, conversación posible.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Trote suave 50 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Rodaje regenerativo.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera en el sitio Z2 50 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Rodaje indoor sin desplazamiento.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera continua Z2 60 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "RPE 4-5, conversación posible.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Trote suave 60 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Rodaje regenerativo.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera en el sitio Z2 60 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Rodaje indoor sin desplazamiento.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera continua Z2 75 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "RPE 4-5, conversación posible.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Trote suave 75 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Rodaje regenerativo.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera en el sitio Z2 75 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Rodaje indoor sin desplazamiento.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera continua Z2 90 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "RPE 4-5, conversación posible.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Trote suave 90 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Rodaje regenerativo.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Carrera en el sitio Z2 90 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Rodaje indoor sin desplazamiento.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Fartlek 10 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Alternar Z2 y Z3 libremente.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Cambios de ritmo 10 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "2 min rápido / 2 min suave.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Tempo run 10 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral sostenido.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Fartlek 15 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Alternar Z2 y Z3 libremente.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Cambios de ritmo 15 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "2 min rápido / 2 min suave.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Tempo run 15 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral sostenido.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Fartlek 20 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Alternar Z2 y Z3 libremente.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Cambios de ritmo 20 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "2 min rápido / 2 min suave.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Tempo run 20 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral sostenido.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Fartlek 25 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Alternar Z2 y Z3 libremente.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Cambios de ritmo 25 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "2 min rápido / 2 min suave.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Tempo run 25 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral sostenido.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Fartlek 30 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Alternar Z2 y Z3 libremente.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Cambios de ritmo 30 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "2 min rápido / 2 min suave.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Tempo run 30 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo umbral sostenido.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Cuestas 6 x 100 m",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Cuesta 6-8 %",
+      "instrucciones_tecnicas": "Potencia resistida, bajada suave.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Cuestas 8 x 100 m",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Cuesta 6-8 %",
+      "instrucciones_tecnicas": "Potencia resistida, bajada suave.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Cuestas 10 x 100 m",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Cuesta 6-8 %",
+      "instrucciones_tecnicas": "Potencia resistida, bajada suave.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Cuestas 12 x 100 m",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Cuesta 6-8 %",
+      "instrucciones_tecnicas": "Potencia resistida, bajada suave.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Cuestas 15 x 100 m",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Cuesta 6-8 %",
+      "instrucciones_tecnicas": "Potencia resistida, bajada suave.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Test 1000 m",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo de prueba oficial oposición.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Test 1600 m",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo de prueba oficial oposición.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Test 2000 m",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo de prueba oficial oposición.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Test 3000 m",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo de prueba oficial oposición.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Test Cooper 12 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Ritmo de prueba oficial oposición.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "HIIT carrera 8 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "30 s fuerte / 30 s suave.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "HIIT 4x4 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "4 min al 95 % FCmáx, R 3 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "HIIT carrera 10 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "30 s fuerte / 30 s suave.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "HIIT carrera 12 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "30 s fuerte / 30 s suave.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "HIIT carrera 15 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "30 s fuerte / 30 s suave.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "HIIT carrera 20 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "30 s fuerte / 30 s suave.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Caminata rápida 30 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Exterior",
+      "instrucciones_tecnicas": "RPE 4-6, técnica activa.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Caminata rápida 45 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Exterior",
+      "instrucciones_tecnicas": "RPE 4-6, técnica activa.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Marcha nórdica 40 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Exterior",
+      "instrucciones_tecnicas": "RPE 4-6, técnica activa.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Escaleras 10 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Exterior",
+      "instrucciones_tecnicas": "RPE 4-6, técnica activa.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Escaleras 15 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Exterior",
+      "instrucciones_tecnicas": "RPE 4-6, técnica activa.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Escaleras 20 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Exterior",
+      "instrucciones_tecnicas": "RPE 4-6, técnica activa.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Bicicleta estática Z2 20 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Bici",
+      "instrucciones_tecnicas": "Cadencia 80-90 rpm.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Bicicleta estática Z2 30 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Bici",
+      "instrucciones_tecnicas": "Rodaje bajo impacto.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Bicicleta estática intervalos 25 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Bici",
+      "instrucciones_tecnicas": "1 min fuerte / 2 min suave.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Elíptica Z2 20 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Elíptica",
+      "instrucciones_tecnicas": "Recuperación activa.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Elíptica Z2 30 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Elíptica",
+      "instrucciones_tecnicas": "Sin agarrar apoyos.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Remo ergómetro 2000 m",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Remo",
+      "instrucciones_tecnicas": "Ritmo umbral.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Remo ergómetro 500 m x 4",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Remo",
+      "instrucciones_tecnicas": "RPE 8, R 3 min.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Assault bike 10 min Z2",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Bici assault",
+      "instrucciones_tecnicas": "Rodaje en box.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Assault bike 20 min intervalos",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Bici assault",
+      "instrucciones_tecnicas": "30:30 x 20.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Step mill 15 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Step",
+      "instrucciones_tecnicas": "Intensidad moderada-alta.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Step mill 25 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Step",
+      "instrucciones_tecnicas": "RPE 6-7.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Natación crol continua 20 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Piscina",
+      "instrucciones_tecnicas": "Ritmo cómodo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Natación crol continua 30 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Piscina",
+      "instrucciones_tecnicas": "Técnica y respiración bilateral.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Natación técnica 400 m",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Piscina",
+      "instrucciones_tecnicas": "Series 50 m técnica.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Natación técnica 800 m",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Piscina",
+      "instrucciones_tecnicas": "Drills: cucharada, un brazo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Natación 50 m series x 8",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Piscina",
+      "instrucciones_tecnicas": "Ritmo prueba oficial.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Natación 50 m series x 12",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Piscina",
+      "instrucciones_tecnicas": "Velocidad con descanso 45 s.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Natación 25 m sprint x 10",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Piscina",
+      "instrucciones_tecnicas": "Máxima velocidad.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Natación espalda 100 m x 4",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Piscina",
+      "instrucciones_tecnicas": "Técnica y alineación.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Aqua jogging 20 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Piscina",
+      "instrucciones_tecnicas": "Carrera en profundo con cinturón.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Battle ropes 30:30 x 10",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Cuerdas",
+      "instrucciones_tecnicas": "Onda alterna, core firme.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Battle ropes 40:20 x 12",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Cuerdas",
+      "instrucciones_tecnicas": "Intervalos de potencia.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Burpees AMRAP 8 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Ritmo sostenible.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Burpees AMRAP 12 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Técnica limpia.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Saltos a comba 5 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Comba",
+      "instrucciones_tecnicas": "Calentamiento dinámico.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Saltos a comba 10 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Comba",
+      "instrucciones_tecnicas": "Ritmo moderado.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Saltos a comba intervalos 15 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Comba",
+      "instrucciones_tecnicas": "1 min rápido / 30 s lento.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Kettlebell swing 4x20",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Kettlebell",
+      "instrucciones_tecnicas": "Impulso de cadera.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Kettlebell swing EMOM 12 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Kettlebell",
+      "instrucciones_tecnicas": "15 reps cada minuto.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Wall ball 4x15",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Balón 3-5 kg",
+      "instrucciones_tecnicas": "Sentadilla + lanzamiento.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Devil press 4x8",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Mancuernas",
+      "instrucciones_tecnicas": "Burpee + snatch overhead.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Thruster con mancuernas 4x12",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Mancuernas",
+      "instrucciones_tecnicas": "Sentadilla + press.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Circuito CrossFit 15 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Variable",
+      "instrucciones_tecnicas": "3-4 movimientos, AMRAP.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Circuito CrossFit 20 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Variable",
+      "instrucciones_tecnicas": "WOD oposición, técnica primero.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Rucking 45 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Mochila 10-15 kg",
+      "instrucciones_tecnicas": "Caminata con carga.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Rucking 60 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Cardio",
+      "equipamiento": "Mochila 10-15 kg",
+      "instrucciones_tecnicas": "Resistencia militar.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN"
+    },
+    {
+      "nombre": "Sprint 20 m x 4",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 20 m x 5",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 20 m x 6",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 20 m x 8",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 20 m x 10",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 30 m x 4",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 30 m x 5",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 30 m x 6",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 30 m x 8",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 30 m x 10",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 40 m x 4",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 40 m x 5",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 40 m x 6",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 40 m x 8",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 40 m x 10",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 50 m x 4",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 50 m x 5",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 50 m x 6",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 50 m x 8",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 50 m x 10",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 60 m x 4",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 60 m x 5",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 60 m x 6",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 60 m x 8",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 60 m x 10",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 80 m x 4",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 80 m x 5",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 80 m x 6",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 80 m x 8",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 80 m x 10",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 100 m x 4",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 100 m x 5",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 100 m x 6",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 100 m x 8",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint 100 m x 10",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Aceleración máxima, R 90 s-2 min.",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint con resistencia paracaídas 30 m",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista/paracaídas",
+      "instrucciones_tecnicas": "Técnica alta, 20-30 m.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint arranque acostado 20 m",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Salida explosiva.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint arranque de pie 30 m",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Primera zancada potente.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint con trineo ligero 20 m",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Trineo",
+      "instrucciones_tecnicas": "Resistencia específica.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Skipping A 3x20 m",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Rodillas altas.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Skipping B 3x20 m",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Talón al glúteo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Skipping C 3x20 m",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Pliometría",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Multisaltos.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Carioca 3x20 m",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Cadera baja.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Carioca 4x30 m",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Pies rápidos.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Conos en T 4 vueltas",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Agilidad",
+      "equipamiento": "Conos",
+      "instrucciones_tecnicas": "Cambios 90° y 180°.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Conos en zigzag 6x",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Agilidad",
+      "equipamiento": "Conos",
+      "instrucciones_tecnicas": "Cambios de dirección.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Conos 5-10-5 pro-agility",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Agilidad",
+      "equipamiento": "Conos",
+      "instrucciones_tecnicas": "Test agilidad estándar.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Circuito de agilidad cronometrado",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Agilidad",
+      "equipamiento": "Conos/vallas",
+      "instrucciones_tecnicas": "Ritmo prueba oficial.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Agilidad con conos caseros",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Agilidad",
+      "equipamiento": "Conos",
+      "instrucciones_tecnicas": "Botellas o conos improvisados.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Escalera de coordinación 5 min",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Agilidad",
+      "equipamiento": "Escalera",
+      "instrucciones_tecnicas": "Patrones variados.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Escalera lateral 4x",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Agilidad",
+      "equipamiento": "Escalera",
+      "instrucciones_tecnicas": "Pies rápidos sin mirar.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Vallas bajas 4x8",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Agilidad",
+      "equipamiento": "Vallas",
+      "instrucciones_tecnicas": "Ritmo de zancada constante.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Vallas altas 3x6",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Agilidad",
+      "equipamiento": "Vallas",
+      "instrucciones_tecnicas": "Técnica de paso.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Saltos al cajón 4x5",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Pliometría",
+      "equipamiento": "Cajón",
+      "instrucciones_tecnicas": "Aterrizaje suave.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Saltos al cajón 5x3",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Pliometría",
+      "equipamiento": "Cajón",
+      "instrucciones_tecnicas": "Altura máxima controlada.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Box jump step-down",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Pliometría",
+      "equipamiento": "Cajón",
+      "instrucciones_tecnicas": "Bajada controlada, sin rebote.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "CMJ 4x5",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Pliometría",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Countermovement jump máximo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "SJ 4x4",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Pliometría",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Squat jump sin contramovimiento.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Triple salto 3x3",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Contactos mínimos.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Drop jump 4x5",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Pliometría",
+      "equipamiento": "Cajón 30 cm",
+      "instrucciones_tecnicas": "Rebote inmediato.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Lanzamiento balón medicinal 4x6",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Balón 3-5 kg",
+      "instrucciones_tecnicas": "Explosivo desde pecho.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Lanzamiento balón medicinal rotacional",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Balón",
+      "instrucciones_tecnicas": "Rotación desde cadera.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Salto vertical máximo x 5",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Alcance máximo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Salto horizontal máximo x 5",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Distancia máxima.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Multisaltos 4x20 m",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Zancada rítmica.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint en el sitio 20 s x 8",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Rodillas altas máximas.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Reacción sprint 10 m x 6",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Salida a señal.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Cambio de dirección 90° x 8",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Agilidad",
+      "equipamiento": "Conos",
+      "instrucciones_tecnicas": "Frenada y aceleración.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "L drill agilidad",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Agilidad",
+      "equipamiento": "Conos",
+      "instrucciones_tecnicas": "Patrón en L cronometrado.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "T-test agilidad",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Agilidad",
+      "equipamiento": "Conos",
+      "instrucciones_tecnicas": "Test estándar oposición.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Salto lateral sobre valla x 10",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Valla baja",
+      "instrucciones_tecnicas": "Pliometría lateral.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Pogo jumps 3x15",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Tobillos rígidos, mínima flexión rodilla.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Broad jump 4x4",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Salto largo desde parado.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Sprint con cambio de ritmo 80 m",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "40 m aceleración + 40 m máximo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "AGILITY"
+    },
+    {
+      "nombre": "Movilidad cadera 8 min",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "90/90, frog stretch, activación glúteo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Movilidad cadera 12 min",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Rotaciones y estiramientos dinámicos.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Movilidad hombro 8 min",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Banda",
+      "instrucciones_tecnicas": "Dislocaciones, face pull ligero.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Movilidad hombro 12 min",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Banda",
+      "instrucciones_tecnicas": "Rotación interna/externa.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Movilidad tobillo 6 min",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Rodilla al muro, elevación talones.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Movilidad columna 8 min",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Gato-vaca, rotaciones torácicas.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "RAMP activación 10 min",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Raise-Activate-Mobilise-Potentiate.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "RAMP activación 15 min",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Preparación completa pre-entreno.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Estiramientos post-entreno 8 min",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Isquios, cuádriceps, dorsal.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Estiramientos post-entreno 15 min",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Vuelta a la calma global.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Foam rolling cuádriceps 3 min",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Foam roller",
+      "instrucciones_tecnicas": "Presión lenta, puntos trigger.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Foam rolling isquios 3 min",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Foam roller",
+      "instrucciones_tecnicas": "De glúteo a rodilla.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Foam rolling espalda 3 min",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Foam roller",
+      "instrucciones_tecnicas": "Dorsal y lumbar suave.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Yoga flow movilidad 10 min",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Flujo suave cadera y hombro.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Yoga flow movilidad 20 min",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Sesión completa recuperación.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "World greatest stretch 5/side",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Cadera, torácica y isquios.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Leg swings frontal 2x15",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Dinámico, controlado.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Leg swings lateral 2x15",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Apertura de cadera.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Arm circles 2x20",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Hombros progresivos.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Hip circles 2x10/dirección",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Cadera en cuadrupedia.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Thoracic rotation cuadrupedia 8/lado",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Mano detrás de cabeza.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Couch stretch 2 min/pierna",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Flexor de cadera.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Pigeon stretch 2 min/lado",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Glúteo y rotadores.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Hamstring stretch dinámico 10/lado",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Patada controlada.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Calf stretch pared 45 s/lado",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Pared",
+      "instrucciones_tecnicas": "Gastrocnemio y sóleo.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Shoulder dislocaciones con banda 15",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Banda",
+      "instrucciones_tecnicas": "Agarre ancho, controlado.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Band pull-aparts 3x20",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Banda",
+      "instrucciones_tecnicas": "Escápulas, deltoides posterior.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Cat-cow 2x10",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Movilidad espinal.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Deep squat hold 2 min",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Movilidad tobillo y cadera.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Ankle mobility knee to wall 10/lado",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Pared",
+      "instrucciones_tecnicas": "Dorsiflexión.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "T-spine extension en foam 10",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Foam roller",
+      "instrucciones_tecnicas": "Extensiones torácicas.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Hip flexor march con banda 12/lado",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Banda",
+      "instrucciones_tecnicas": "Activación glúteo medio.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Glute bridge march 16",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Activación pre-fuerza.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Clamshell con banda 15/lado",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Banda",
+      "instrucciones_tecnicas": "Glúteo medio.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Fire hydrant 12/lado",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Estabilidad cadera.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Inchworm 6 reps",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Cadena posterior dinámica.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Walkout to plank 8",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Core y hombros.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Lunge with twist 8/lado",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Movilidad cadera y torácica.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "High knees march 30 s",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Activación pre-carrera.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Butt kicks 30 s",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Suelo",
+      "instrucciones_tecnicas": "Activación isquios.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "A-skips 20 m x 3",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Técnica de carrera.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "B-skips 20 m x 3",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "Pista",
+      "instrucciones_tecnicas": "Técnica de zancada.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "MOBILITY"
+    },
+    {
+      "nombre": "Press pecho con banda",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Remo con banda sentado",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Sentadilla goblet con botella",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Zancada con mochila",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Elevación lateral con botellas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Curl con mochila",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Extensión tríceps con mochila overhead",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Hip thrust con mochila",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Good morning con mochila",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Peso muerto una pierna con mochila",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Flexiones con pies en silla",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Dips entre sillas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Plancha con mochila",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Step-up en escalera",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Calf raise en escalón",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Wall push-up 3x20",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Bear hold 45 s",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Superman pulse 15",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Prone Y raise 12",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Prone T raise 12",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Prone W raise 12",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Banded squat walk 10 pasos",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Banded lateral walk 10 pasos",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Banded monster walk 10 pasos",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Casa/banda",
+      "instrucciones_tecnicas": "Técnica controlada, carga moderada.",
+      "entornos": "CASA,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Cable kickback glúteo",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Polea",
+      "instrucciones_tecnicas": "Extensión cadera, pie flexionado.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Máquina aductor",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Máquina",
+      "instrucciones_tecnicas": "Aducción controlada.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Máquina abductor",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Máquina",
+      "instrucciones_tecnicas": "Abducción controlada.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    },
+    {
+      "nombre": "Leg press unilateral",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Máquina",
+      "instrucciones_tecnicas": "Corrección desequilibrios.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Smith machine squat",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Smith",
+      "instrucciones_tecnicas": "Trayectoria guiada.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT"
+    },
+    {
+      "nombre": "Smith machine incline press",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Smith",
+      "instrucciones_tecnicas": "Press inclinado guiado.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PUSH"
+    },
+    {
+      "nombre": "Pec deck",
+      "pilar": "FUERZA",
+      "grupo_muscular": "General",
+      "equipamiento": "Máquina",
+      "instrucciones_tecnicas": "Aperturas en máquina.",
+      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "GENERAL"
+    }
+  ]
+}

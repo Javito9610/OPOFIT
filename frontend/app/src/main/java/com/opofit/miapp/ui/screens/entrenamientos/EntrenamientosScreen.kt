@@ -56,12 +56,16 @@ import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.EjercicioRealizado
 import com.opofit.miapp.data.responsemodels.EjercicioPlan
 import com.opofit.miapp.gps.service.GpsLastResult
+import com.opofit.miapp.gps.service.ShareActivityContext
+import com.opofit.miapp.gps.service.buildPendingShareFromEntreno
 import com.opofit.miapp.gps.util.TcxExport
 import com.opofit.miapp.ui.components.EntrenoActiveStepCard
+import com.opofit.miapp.ui.components.EntrenoLiveMetricsBar
 import com.opofit.miapp.ui.components.ExerciseValueInput
 import com.opofit.miapp.ui.components.RecordCelebrationDialog
 import com.opofit.miapp.ui.components.RestTimerSheet
 import com.opofit.miapp.utils.EntrenoValidation
+import com.opofit.miapp.utils.TimeFormatUtil
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.HistorialViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasViewModel
@@ -87,7 +91,7 @@ private data class EjercicioEstado(
 fun EntrenamientosScreen(
     authViewModel: AuthViewModel,
     onNavigateBack: () -> Unit,
-    onEntrenamientoFinalizado: () -> Unit,
+    onEntrenamientoFinalizado: (offerShare: Boolean) -> Unit,
     onNavigateToGps: (distKm: Double?) -> Unit = {},
     initialEnfoque: String = "",
     initialPlanDiaId: Int? = null,
@@ -111,7 +115,7 @@ fun EntrenamientosScreen(
         }
     }
 
-    var segundos by remember { mutableStateOf(0) }
+    var elapsedMs by remember { mutableStateOf(0L) }
     var cronometroActivo by remember { mutableStateOf(false) }
     var cronometroIniciadoAlgunaVez by remember { mutableStateOf(false) }
 
@@ -168,7 +172,7 @@ fun EntrenamientosScreen(
         if (rutinasState.rutinaCompleta.isEmpty()) {
             ejerciciosEstado.clear()
             cronometroActivo = false
-            segundos = 0
+            elapsedMs = 0L
         }
     }
 
@@ -202,19 +206,13 @@ fun EntrenamientosScreen(
             }
         }
         cronometroActivo = false
-        segundos = 0
+        elapsedMs = 0L
         cronometroIniciadoAlgunaVez = false
         showObjetivoDialog = false
         objetivoEjercicioNombre = null
     }
 
-    fun formatTime(totalSeconds: Int): String {
-        val mm = totalSeconds / 60
-        val ss = totalSeconds % 60
-        return "%02d:%02d".format(mm, ss)
-    }
-
-    fun ritmoVelocidadTexto(tipo: String?, distText: String, secs: Int): Pair<String, String> {
+    fun ritmoVelocidadTexto(tipo: String?, distText: String, secs: Double): Pair<String, String> {
         val dist = distText.replace(",", ".").toDoubleOrNull() ?: return "-" to "-"
         if (dist <= 0.0 || secs <= 0) return "-" to "-"
         return when (tipo) {
@@ -251,11 +249,12 @@ fun EntrenamientosScreen(
 
     LaunchedEffect(cronometroActivo) {
         while (cronometroActivo) {
-            delay(1000L)
-            segundos++
+            delay(50L)
+            elapsedMs += 50L
+            val elapsedSec = (elapsedMs / 1000).toInt()
             val currentTimed = ejerciciosEstado.firstOrNull { !it.completado && it.objetivoSegundos != null }
             val obj = currentTimed?.objetivoSegundos
-            if (obj != null && segundos >= obj && cronometroActivo) {
+            if (obj != null && elapsedSec >= obj && cronometroActivo) {
                 cronometroActivo = false
                 objetivoEjercicioNombre = currentTimed.nombre
                 showObjetivoDialog = true
@@ -276,19 +275,35 @@ fun EntrenamientosScreen(
                 distancia = mostrado,
                 valorConseguido = km.toString()
             )
-            if (segundos < summary.durationSec) {
-                segundos = summary.durationSec
+            val gpsMs = summary.durationSec * 1000L
+            if (elapsedMs < gpsMs) {
+                elapsedMs = gpsMs
                 cronometroIniciadoAlgunaVez = true
             }
         }
         GpsLastResult.consume()
     }
 
+    fun prepararCompartirYFinalizar() {
+        cronometroActivo = false
+        val offerShare = historialState.ultimoEntreno?.let { entreno ->
+            ShareActivityContext.set(
+                buildPendingShareFromEntreno(
+                    titulo = entreno.titulo,
+                    idHistorial = entreno.idHistorial,
+                    duracionMin = entreno.duracionMin,
+                    ejerciciosCount = entreno.ejerciciosCount
+                )
+            )
+            true
+        } ?: false
+        historialViewModel.resetRegistrado()
+        onEntrenamientoFinalizado(offerShare)
+    }
+
     LaunchedEffect(historialState.registradoExitoso, historialState.recordsRotos) {
         if (historialState.registradoExitoso && historialState.recordsRotos.isEmpty()) {
-            cronometroActivo = false
-            historialViewModel.resetRegistrado()
-            onEntrenamientoFinalizado()
+            prepararCompartirYFinalizar()
         }
     }
 
@@ -296,10 +311,8 @@ fun EntrenamientosScreen(
         records = historialState.recordsRotos,
         onDismiss = {
             if (historialState.registradoExitoso) {
-                cronometroActivo = false
                 historialViewModel.clearRecordsCelebration()
-                historialViewModel.resetRegistrado()
-                onEntrenamientoFinalizado()
+                prepararCompartirYFinalizar()
             }
         }
     )
@@ -312,9 +325,7 @@ fun EntrenamientosScreen(
         onSkip = { showRestTimer = false }
     )
 
-    val minutos = segundos / 60
-    val segs = segundos % 60
-    val tiempoFormateado = "%02d:%02d".format(minutos, segs)
+    val tiempoFormateado = TimeFormatUtil.formatElapsedMs(elapsedMs)
 
     Scaffold(
         topBar = {
@@ -439,9 +450,9 @@ fun EntrenamientosScreen(
                             Text(if (cronometroActivo) "Pausar" else "Iniciar")
                         }
                         Button(
-                            onClick = { cronometroActivo = false; segundos = 0; cronometroIniciadoAlgunaVez = false },
+                            onClick = { cronometroActivo = false; elapsedMs = 0L; cronometroIniciadoAlgunaVez = false },
                             modifier = Modifier.weight(1f),
-                            enabled = segundos > 0
+                            enabled = elapsedMs > 0L
                         ) {
                             Text("Reiniciar")
                         }
@@ -519,10 +530,11 @@ fun EntrenamientosScreen(
             fun aplicarCronometro(idx: Int) {
                 val e = ejerciciosEstado.getOrNull(idx) ?: return
                 val unidadEff = EntrenoValidation.inferirUnidad(e.nombre, unidadEjercicio(idx))
+                val sec = TimeFormatUtil.secondsFromMs(elapsedMs)
                 val nuevoValor = when {
                     e.tipo != null -> e.valorConseguido
-                    unidadEff == "min" -> "%.2f".format(segundos / 60.0)
-                    unidadEff == "seg" -> segundos.toString()
+                    unidadEff == "min" -> "%.3f".format(sec / 60.0)
+                    unidadEff == "s" -> "%.3f".format(sec)
                     else -> e.valorConseguido
                 }
                 ejerciciosEstado[idx] = e.copy(valorConseguido = nuevoValor)
@@ -542,10 +554,25 @@ fun EntrenamientosScreen(
                 }
             }
 
+            if (cronometroActivo || cronometroIniciadoAlgunaVez) {
+                item {
+                    val distKm = activo?.distancia?.replace(",", ".")?.toDoubleOrNull()?.let { d ->
+                        if (unitDist == "mi" && activo?.tipo == "RUN") Units.miToKm(d) else d
+                    }
+                    EntrenoLiveMetricsBar(
+                        elapsedMs = elapsedMs,
+                        cronometroActivo = cronometroActivo || cronometroIniciadoAlgunaVez,
+                        distanciaKm = distKm,
+                        tipoCardio = activo?.tipo
+                    )
+                }
+            }
+
             if (activo != null) {
                 item {
                     val unidadEff = EntrenoValidation.inferirUnidad(activo.nombre, unidadEjercicio(pasoActualIdx))
-                    val secsCalc = activo.objetivoSegundos?.let { minOf(segundos, it) } ?: segundos
+                    val secsCalc = activo.objetivoSegundos?.let { minOf(TimeFormatUtil.secondsFromMs(elapsedMs), it.toDouble()) }
+                        ?: TimeFormatUtil.secondsFromMs(elapsedMs)
                     val (ritmoTxt, velTxt) = ritmoVelocidadTexto(activo.tipo, activo.distancia, secsCalc)
                     val labelDist = when (activo.tipo) {
                         "SWIM" -> if (unitDist == "mi") "Distancia (yd)" else "Distancia (m)"
@@ -561,7 +588,7 @@ fun EntrenamientosScreen(
                         unidad = unidadEff,
                         valor = activo.valorConseguido,
                         distancia = activo.distancia,
-                        segundosCronometro = segundos,
+                        elapsedMsCronometro = elapsedMs,
                         onValorChange = { v ->
                             ejerciciosEstado[pasoActualIdx] = activo.copy(valorConseguido = v)
                             val err = EntrenoValidation.validarValor(v, unidadEff)
@@ -581,13 +608,7 @@ fun EntrenamientosScreen(
                             }
                             ejerciciosEstado[pasoActualIdx] = activo.copy(distancia = v, valorConseguido = baseValue)
                         },
-                        onUsarCronometro = {
-                            if (activo.tipo != null && segundos > 0) {
-                                /* ritmo ya usa segundos; opcionalmente fijar tiempo en valor */
-                            } else {
-                                aplicarCronometro(pasoActualIdx)
-                            }
-                        },
+                        onUsarCronometro = { aplicarCronometro(pasoActualIdx) },
                         onCompletar = { marcarCompletado(pasoActualIdx) },
                         onGps = if (esEjercicioGps(activo.nombre, activo.tipo)) {
                             {
@@ -686,7 +707,7 @@ fun EntrenamientosScreen(
                         ) != null
                     }
                     val puedeFinalizar =
-                        hayEjerciciosCompletados && cronometroIniciadoAlgunaVez && segundos > 0 && !valoresInvalidos
+                        hayEjerciciosCompletados && cronometroIniciadoAlgunaVez && elapsedMs > 0L && !valoresInvalidos
                     if (ejerciciosEstado.isNotEmpty() && !hayEjerciciosCompletados) {
                         Text(
                             text = "Marca al menos un ejercicio como completado para finalizar.",
@@ -695,7 +716,7 @@ fun EntrenamientosScreen(
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
                     }
-                    if (!cronometroIniciadoAlgunaVez || segundos == 0) {
+                    if (!cronometroIniciadoAlgunaVez || elapsedMs == 0L) {
                         Text(
                             text = "Inicia el cronómetro para poder registrar el entrenamiento.",
                             style = MaterialTheme.typography.bodySmall,
@@ -721,13 +742,17 @@ fun EntrenamientosScreen(
                                 ?: rutinasState.planSemanal?.semana?.find { it.id_plan_dia == initialPlanDiaId }?.id_rutina_opo
                                 ?: rutinasState.rutinaCompleta.getOrNull(selectedRutinaIndex)?.id_rutina_opo
                                 ?: 1
+                            val tituloRutina = initialEnfoque.ifBlank {
+                                rutinasState.rutinaCompleta.getOrNull(selectedRutinaIndex)?.bloque ?: "Entrenamiento"
+                            }
                             historialViewModel.registrarEntrenamiento(
                                 userId = userId,
                                 tipoRutina = "OPO",
                                 idRutina = rutinaOpoId,
-                                duracion = (segundos / 60).coerceAtLeast(1), // Backend espera minutos
+                                duracion = ((elapsedMs / 60_000L).toInt()).coerceAtLeast(1), // Backend espera minutos
                                 ejercicios = realizados,
-                                gpsActividadUuid = gpsActividadUuid
+                                gpsActividadUuid = gpsActividadUuid,
+                                tituloRutina = tituloRutina
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),

@@ -102,6 +102,15 @@ object GpsTracker {
         val avgCadence = if (moving > 0 && totalSteps > 0) {
             (totalSteps * 60.0 / moving).toInt()
         } else null
+        val currentStride = GpsMetrics.estimateStrideM(
+            current.currentSpeedMps.toDouble(),
+            currentCadence
+        )
+        val avgStride = GpsMetrics.avgStrideFromPoints(current.points)
+        val currentIncline = GpsMetrics.avgInclinePct(
+            current.points.takeLast(8).takeIf { it.size >= 2 } ?: emptyList()
+        )
+        val avgIncline = GpsMetrics.avgInclinePct(current.points)
 
         _state.update {
             it.copy(
@@ -111,7 +120,11 @@ object GpsTracker {
                 avgPaceSecPerKm = avgPace,
                 kcal = kcal,
                 currentCadenceSpm = currentCadence,
-                avgCadenceSpm = avgCadence
+                avgCadenceSpm = avgCadence,
+                currentStrideM = currentStride,
+                avgStrideM = avgStride,
+                currentInclinePct = currentIncline,
+                avgInclinePct = avgIncline
             )
         }
     }
@@ -253,6 +266,8 @@ object GpsTracker {
         val avgHr = if (hrSamples.isNotEmpty()) hrSamples.average().toInt() else null
         val maxHr = hrSamples.maxOrNull()
         val minHr = hrSamples.minOrNull()
+        val avgStride = GpsMetrics.avgStrideFromPoints(s.points)
+        val avgIncline = GpsMetrics.avgInclinePct(s.points)
         val summary = ActivitySummary(
             id = sessionId.ifBlank { UUID.randomUUID().toString() },
             type = s.type,
@@ -272,6 +287,8 @@ object GpsTracker {
             elevationMaxM = s.elevationMaxM,
             avgCadenceSpm = avgCadenceDouble,
             maxCadenceSpm = maxCadence,
+            avgStrideM = avgStride,
+            avgInclinePct = avgIncline,
             avgHrBpm = avgHr,
             maxHrBpm = maxHr,
             minHrBpm = minHr,

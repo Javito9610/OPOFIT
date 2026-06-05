@@ -49,6 +49,8 @@ app.use('/api/logros', require('./src/routes/LogrosRoute'));
 app.use('/api/integraciones', require('./src/routes/IntegracionesRoute'));
 app.use('/api/amigos', require('./src/routes/AmigosRoute'));
 app.use('/api/comunidad', require('./src/routes/ComunidadRoute'));
+app.use('/api/posts', require('./src/routes/PostsRoute'));
+app.use('/api/segmentos', require('./src/routes/SegmentosRoute'));
 app.use('/api/premium', require('./src/routes/PremiumRoute'));
 app.use('/api/notifications', require('./src/routes/NotificationRoute'));
 app.use('/api/admin', require('./src/routes/AdminRoute'));

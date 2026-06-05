@@ -215,4 +215,18 @@ describe('PlanGeneradorService', () => {
     const n2 = r2.plan.semana[0].ejercicios.map((e) => e.nombre).join('|');
     expect(n1).not.toBe(n2);
   });
+
+  test('generarSemana con soloDiaId solo cambia un día', async () => {
+    db.query.mockResolvedValue([catalogoCasa]);
+    const { plan, sustituciones } = await PlanGeneradorService.generarSemana(
+      planBase,
+      1,
+      'CASA',
+      5,
+      { soloDiaId: 10 }
+    );
+    expect(sustituciones).toBeGreaterThan(0);
+    expect(plan.semana[0].ejercicios[0].nombre).not.toBe('Press banca con barra');
+    expect(plan.semana[1].ejercicios[0].nombre).toBe('Carrera continua Z2 30 min');
+  });
 });

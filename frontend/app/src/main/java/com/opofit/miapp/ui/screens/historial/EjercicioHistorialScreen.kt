@@ -173,7 +173,7 @@ private fun KpisGrid(h: HistorialEjercicio) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             MetricBadge(
                 if (h.menorEsMejor) "Mejor (menor)" else "Mejor",
-                "%.2f %s".format(h.mejor, unidadCorta(h.unidad)),
+                formatValorHistorial(h.mejor, h.unidad),
                 Modifier.weight(1f)
             )
             MetricBadge("Media", "%.2f".format(h.media), Modifier.weight(1f))
@@ -241,7 +241,7 @@ private fun SesionRow(
                 )
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        "%.2f %s".format(punto.valor, unidadCorta(h.unidad)),
+                        formatValorHistorial(punto.valor, h.unidad),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -318,10 +318,18 @@ private fun iconPilar(pilar: String?, nombre: String) = when {
     else -> Icons.Filled.FitnessCenter
 }
 
-private fun unidadCorta(u: String): String = when (u) {
+private fun unidadCorta(u: String): String = when (u.lowercase()) {
     "km" -> "km"
     "m" -> "m"
+    "s", "seg", "segundos" -> "s"
+    "min" -> "min"
     else -> "reps"
+}
+
+private fun formatValorHistorial(valor: Double, unidad: String): String = when (unidad.lowercase()) {
+    "s", "seg", "segundos" -> com.opofit.miapp.utils.TimeFormatUtil.formatSecondsValue(valor, showMs = true)
+    "min" -> "%.3f min".format(valor)
+    else -> "%.2f %s".format(valor, unidadCorta(unidad))
 }
 
 private fun fechaCorta(iso: String?): String {

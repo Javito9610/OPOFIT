@@ -122,7 +122,8 @@ class PlanGeneradorService {
     };
   }
 
-  static async generarSemana(planBase, userId, entorno, seed) {
+  static async generarSemana(planBase, userId, entorno, seed, opts = {}) {
+    const { soloDiaId } = opts;
     if (!entorno || entorno === 'MIXTO') {
       return { plan: planBase, sustituciones: 0 };
     }
@@ -133,6 +134,7 @@ class PlanGeneradorService {
     let idx = 0;
 
     const semana = (planBase.semana || []).map((dia) => {
+      if (soloDiaId != null && dia.id_plan_dia !== soloDiaId) return dia;
       const ejercicios = (dia.ejercicios || []).map((ej) => {
         idx += 1;
         const sust = PlanGeneradorService.buscarSustituto(
@@ -263,6 +265,75 @@ class PlanGeneradorService {
       resultado,
       coaching.texto
     );
+    return resultado;
+  }
+
+  static async regenerarDia(userId, idOposicion, idPlanDia, nivel, genero) {
+    const PlanesService = require('./PlanesService');
+    const prefs = await PlanGeneradorService.obtenerPrefsUsuario(userId);
+    if (!prefs.entorno) {
+      throw new Error('Configura primero dónde entrenas');
+    }
+
+    const planActual = await PlanesService.obtenerPlanSemanal(userId, idOposicion, nivel, genero);
+    const idDia = Number(idPlanDia);
+    const dia = planActual.semana?.find((d) => d.id_plan_dia === idDia);
+    if (!dia) throw new Error('Día no encontrado en el plan');
+    if (dia.completada) throw new Error('No puedes cambiar un día ya completado');
+
+    await db.query(
+      'UPDATE usuarios SET plan_variacion_seed = COALESCE(plan_variacion_seed, 0) + 1 WHERE id_usuario = ?',
+      [userId]
+    );
+    const { seed, entorno } = await PlanGeneradorService.obtenerPrefsUsuario(userId);
+    const daySeed = seed + idDia * 31;
+
+    const { plan: planParcial, sustituciones } = await PlanGeneradorService.generarSemana(
+      planActual,
+      userId,
+      entorno,
+      daySeed,
+      { soloDiaId: idDia }
+    );
+
+    const nuevoDia = planParcial.semana.find((d) => d.id_plan_dia === idDia);
+    if (!nuevoDia) throw new Error('No se pudo regenerar el día');
+
+    const semana = planActual.semana.map((d) =>
+      d.id_plan_dia === idDia ? { ...d, ejercicios: nuevoDia.ejercicios } : d
+    );
+    const hoy = planActual.dia_hoy;
+    const sesion_hoy = semana.find((s) => s.es_hoy) || null;
+    const proxima =
+      semana.find((s) => !s.completada && s.dia_semana >= hoy) ||
+      semana.find((s) => !s.completada) ||
+      null;
+
+    const resultado = {
+      ...planActual,
+      semana,
+      sesion_hoy,
+      proxima_sesion: proxima,
+      generacion: {
+        ...(planActual.generacion || {}),
+        variacion_seed: seed,
+        sustituciones_dia: sustituciones
+      }
+    };
+
+    if (resultado.personalizacion) {
+      resultado.personalizacion = {
+        ...resultado.personalizacion,
+        variacion_seed: seed,
+        sustituciones: (resultado.personalizacion.sustituciones || 0) + sustituciones
+      };
+    }
+
+    const yw = yearWeek();
+    const cache = await PlanGeneradorService.leerCache(userId, idOposicion, yw);
+    const explicacion = cache?.explicacion_ia || planActual.personalizacion?.explicacion_ia || null;
+    await PlanGeneradorService.guardarCache(userId, idOposicion, yw, entorno, seed, resultado, explicacion);
+
     return resultado;
   }
 

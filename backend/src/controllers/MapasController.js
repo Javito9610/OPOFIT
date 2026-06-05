@@ -28,8 +28,8 @@ const rutaSugerida = async (req, res) => {
 
 const rutaPersonalizada = async (req, res) => {
   try {
-    const { waypoints, nombre } = req.body || {};
-    const data = await MapasService.rutaEntreWaypoints(waypoints, nombre);
+    const { waypoints, nombre, actividad } = req.body || {};
+    const data = await MapasService.rutaEntreWaypoints(waypoints, nombre, actividad);
     res.json({ ok: true, data });
   } catch (e) {
     console.error('Mapas ruta personalizada:', e.message);

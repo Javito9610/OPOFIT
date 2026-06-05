@@ -74,8 +74,10 @@ import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.LugarEntreno
 import com.opofit.miapp.data.responsemodels.RutaEntreno
 import com.opofit.miapp.data.responsemodels.RoutePointDto
+import com.opofit.miapp.data.responsemodels.CrearSegmentoGeoRequest
 import com.opofit.miapp.data.responsemodels.RutaPersonalizadaBody
 import com.opofit.miapp.gps.service.EntrenoFlowContext
+import com.opofit.miapp.gps.service.GpsRecordingContext
 import com.opofit.miapp.gps.service.PlannedRoute
 import com.opofit.miapp.gps.service.RoutePoint
 import com.opofit.miapp.gps.service.RoutePreferences
@@ -91,6 +93,7 @@ import kotlinx.coroutines.tasks.await
 fun MapaEntrenoScreen(
     onNavigateBack: () -> Unit,
     onUsarRutaEnGps: () -> Unit,
+    onActividadLibre: () -> Unit,
     distanciaObjetivoKm: Double? = null,
     modoInicial: String = MapaEntrenoNav.MODO_RUTAS,
     tipoLugarInicial: String = "GYM",
@@ -131,10 +134,12 @@ fun MapaEntrenoScreen(
     } else {
         when {
             actividad == "BICI" || actividad == "BIKE" -> "Ruta de bici"
+            actividad == "CAMINAR" || actividad == "WALK" -> "Ruta a pie"
             else -> "Ruta de carrera"
         }
     }
     val esBici = actividad == "BICI" || actividad == "BIKE"
+    val esCaminar = actividad == "CAMINAR" || actividad == "WALK"
 
     val permLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -188,11 +193,12 @@ fun MapaEntrenoScreen(
                         auth(),
                         RutaPersonalizadaBody(
                             waypoints = waypoints.map { RoutePointDto(it.latitude, it.longitude) },
-                            nombre = "Mi ruta"
+                            nombre = "Mi ruta",
+                            actividad = actividad
                         )
                     )
                 } else {
-                    RetrofitClient.mapasApi.rutaSugerida(auth(), lat, lng, distKm, variacion)
+                    RetrofitClient.mapasApi.rutaSugerida(auth(), lat, lng, distKm, variacion, actividad, terreno)
                 }
                 ruta = resp.data
                 tab = 1
@@ -214,7 +220,16 @@ fun MapaEntrenoScreen(
             origen = r.origen
         )
         RoutePreferences.save(context, planned)
+        GpsRecordingContext.prepare(MapaEntrenoNav.tipoDesdeActividad(actividad), conRuta = true)
         onUsarRutaEnGps()
+    }
+
+    fun iniciarLibre() {
+        GpsRecordingContext.prepare(MapaEntrenoNav.tipoDesdeActividad(actividad), conRuta = false)
+        scope.launch {
+            RoutePreferences.clear(context)
+            onActividadLibre()
+        }
     }
 
     fun iniciarCarreraConRuta() {
@@ -424,6 +439,22 @@ fun MapaEntrenoScreen(
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf("CARRERA" to "Correr", "CAMINAR" to "Caminar", "BICI" to "Bici").forEach { (id, label) ->
+                                FilterChip(
+                                    selected = actividad == id,
+                                    onClick = {
+                                        if (actividad != id) {
+                                            actividad = id
+                                            waypoints.clear()
+                                            ruta = null
+                                            variacion = 0
+                                        }
+                                    },
+                                    label = { Text(label) }
+                                )
+                            }
+                        }
                         Text(
                             "${limites.etiqueta}: ${"%.1f".format(distKm)} km (máx. ${limites.maxKm.toInt()} km)",
                             fontWeight = FontWeight.Medium
@@ -441,8 +472,11 @@ fun MapaEntrenoScreen(
                             )
                         }
                         Text(
-                            if (esBici) "Ruta por carretera o camino (modo bici)"
-                            else "Ruta por calles y caminos reales (modo a pie)",
+                            when {
+                                esBici -> "Ruta por carretera o camino (modo bici)"
+                                esCaminar -> "Ruta a pie por calles y caminos"
+                                else -> "Ruta de carrera por calles y caminos reales"
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -486,6 +520,43 @@ fun MapaEntrenoScreen(
                                     Text("Limpiar puntos")
                                 }
                             }
+                            if (waypoints.size >= 2) {
+                                OutlinedButton(
+                                    onClick = {
+                                        scope.launch {
+                                            try {
+                                                val inicio = waypoints.first()
+                                                val fin = waypoints.last()
+                                                val resp = RetrofitClient.segmentosApi.crearGeografico(
+                                                    auth(),
+                                                    CrearSegmentoGeoRequest(
+                                                        nombre = "Mi tramo personalizado",
+                                                        latInicio = inicio.latitude,
+                                                        lngInicio = inicio.longitude,
+                                                        latFin = fin.latitude,
+                                                        lngFin = fin.longitude,
+                                                        categoria = when {
+                                                            esBici -> "BICI"
+                                                            esCaminar -> "CAMINATA"
+                                                            else -> "CARRERA"
+                                                        }
+                                                    )
+                                                )
+                                                snackbar.showSnackbar(
+                                                    if (resp.ok) "Segmento KOM guardado (inicio → fin)"
+                                                    else resp.msg ?: "No se pudo guardar el segmento"
+                                                )
+                                            } catch (e: Exception) {
+                                                snackbar.showSnackbar("Error: ${e.message}")
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    enabled = !loading
+                                ) {
+                                    Text("Guardar inicio→fin como segmento KOM")
+                                }
+                            }
                         }
                         ruta?.let { r ->
                             Text(
@@ -510,11 +581,22 @@ fun MapaEntrenoScreen(
                             Text(
                                 when {
                                     ruta != null && esBici -> "Iniciar bici con esta ruta"
+                                    ruta != null && esCaminar -> "Iniciar caminata con esta ruta"
                                     ruta != null -> "Iniciar carrera con esta ruta"
                                     esBici -> "Generar ruta e iniciar bici"
+                                    esCaminar -> "Generar ruta e iniciar caminata"
                                     else -> "Generar ruta e iniciar carrera"
                                 }
                             )
+                        }
+                        OutlinedButton(
+                            onClick = { iniciarLibre() },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !loading && ubicacionLista
+                        ) {
+                            Icon(Icons.Filled.Route, null, Modifier.size(18.dp))
+                            Spacer(Modifier.size(6.dp))
+                            Text("Actividad libre (sin seguir ruta)")
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedButton(

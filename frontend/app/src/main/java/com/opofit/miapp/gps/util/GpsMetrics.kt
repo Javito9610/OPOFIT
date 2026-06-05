@@ -191,6 +191,8 @@ object GpsMetrics {
 
     fun computeBestSegments(points: List<GpsPoint>, totalDistanceM: Double): List<BestSegment> {
         val out = mutableListOf<BestSegment>()
+        if (totalDistanceM >= 50) bestForDistance(points, 50.0, "Mejor 50 m")?.let { out += it }
+        if (totalDistanceM >= 100) bestForDistance(points, 100.0, "Mejor 100 m")?.let { out += it }
         if (totalDistanceM >= 1000) bestForDistance(points, 1000.0, "Mejor 1 km")?.let { out += it }
         if (totalDistanceM >= MI_M) bestForDistance(points, MI_M, "Mejor 1 milla")?.let { out += it }
         if (totalDistanceM >= 5000) bestForDistance(points, 5000.0, "Mejor 5K")?.let { out += it }
@@ -225,6 +227,49 @@ object GpsMetrics {
             if (d > 0) gain += d else loss += -d
         }
         return gain to loss
+    }
+
+    /** Zancada estimada (m) a partir de velocidad y cadencia. */
+    fun estimateStrideM(speedMps: Double, cadenceSpm: Int?): Double? {
+        if (cadenceSpm == null || cadenceSpm < 30 || speedMps < 0.3) return null
+        return speedMps * 60.0 / cadenceSpm
+    }
+
+    fun avgStrideFromPoints(points: List<GpsPoint>): Double? {
+        val strides = points.mapNotNull { p ->
+            val c = p.cadenceSpm ?: return@mapNotNull null
+            val s = p.speedMps?.toDouble() ?: return@mapNotNull null
+            estimateStrideM(s, c)
+        }
+        return strides.takeIf { it.isNotEmpty() }?.average()
+    }
+
+    /** Pendiente media (%) entre puntos consecutivos. */
+    fun avgInclinePct(points: List<GpsPoint>): Double? {
+        if (points.size < 2) return null
+        var sum = 0.0
+        var n = 0
+        for (i in 1 until points.size) {
+            val d = haversineMeters(points[i - 1], points[i])
+            if (d < 1.0) continue
+            val a0 = points[i - 1].altitude
+            val a1 = points[i].altitude
+            if (a0 != null && a1 != null) {
+                sum += ((a1 - a0) / d) * 100.0
+                n++
+            }
+        }
+        return if (n > 0) sum / n else null
+    }
+
+    fun formatStride(m: Double?): String {
+        if (m == null || !m.isFinite() || m <= 0) return "—"
+        return "%.2f m".format(m)
+    }
+
+    fun formatIncline(pct: Double?): String {
+        if (pct == null || !pct.isFinite()) return "—"
+        return "%+.1f %%".format(pct)
     }
 
     /**

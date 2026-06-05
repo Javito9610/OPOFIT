@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.opofit.miapp.utils.TimeFormatUtil
 
 @Composable
 fun EntrenoActiveStepCard(
@@ -36,7 +37,7 @@ fun EntrenoActiveStepCard(
     unidad: String?,
     valor: String,
     distancia: String,
-    segundosCronometro: Int,
+    elapsedMsCronometro: Long,
     onValorChange: (String) -> Unit,
     onDistanciaChange: (String) -> Unit,
     onUsarCronometro: () -> Unit,
@@ -76,7 +77,7 @@ fun EntrenoActiveStepCard(
                 OutlinedButton(onClick = onUsarCronometro, modifier = Modifier.fillMaxWidth()) {
                     Icon(Icons.Filled.Timer, null, Modifier.size(18.dp))
                     Spacer(Modifier.size(6.dp))
-                    Text("Usar tiempo del cronómetro (${formatMmSs(segundosCronometro)})")
+                    Text("Usar tiempo del cronómetro (${TimeFormatUtil.formatElapsedMs(elapsedMsCronometro)})")
                 }
                 androidx.compose.material3.OutlinedTextField(
                     value = distancia,
@@ -103,11 +104,11 @@ fun EntrenoActiveStepCard(
                     }
                 }
             } else {
-                if (unidad == "min" && segundosCronometro > 0) {
+                if (unidad == "min" && elapsedMsCronometro > 0) {
                     FilledTonalButton(onClick = onUsarCronometro, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Filled.Timer, null, Modifier.size(18.dp))
                         Spacer(Modifier.size(6.dp))
-                        Text("Aplicar ${formatMmSs(segundosCronometro)} del cronómetro")
+                        Text("Aplicar ${TimeFormatUtil.formatElapsedMs(elapsedMsCronometro)} del cronómetro")
                     }
                 }
                 ExerciseValueInput(
@@ -126,4 +127,5 @@ fun EntrenoActiveStepCard(
     }
 }
 
-private fun formatMmSs(total: Int): String = "%02d:%02d".format(total / 60, total % 60)
+private fun formatMmSs(totalSec: Int): String =
+    TimeFormatUtil.formatElapsedMs(totalSec * 1000L, showMs = false)

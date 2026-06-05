@@ -29,10 +29,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -113,6 +116,7 @@ fun HistorialScreen(
     val gpsHistory by gpsViewModel.history.collectAsState()
     val pagerState = rememberPagerState(initialPage = 0) { HistTab.entries.size }
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(authState.userId) {
         if (authState.userId != null) {
@@ -122,7 +126,15 @@ fun HistorialScreen(
         }
     }
 
+    LaunchedEffect(ui.syncMessage) {
+        ui.syncMessage?.let { msg ->
+            snackbarHostState.showSnackbar(msg)
+            historialAvanzadoViewModel.consumeSyncMessage()
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Tu actividad", fontWeight = FontWeight.Bold) },
@@ -139,7 +151,20 @@ fun HistorialScreen(
             )
         }
     ) { innerPadding ->
-        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+        PullToRefreshBox(
+            isRefreshing = ui.refreshing || gpsHistory.loading,
+            onRefresh = {
+                historialAvanzadoViewModel.refreshAll { gpsViewModel.loadHistory() }
+            },
+            modifier = Modifier.fillMaxSize().padding(innerPadding)
+        ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Text(
+                "Desliza abajo para sincronizar entrenos del reloj",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+            )
             PrimaryTabRow(selectedTabIndex = pagerState.currentPage) {
                 HistTab.entries.forEachIndexed { idx, tab ->
                     Tab(
@@ -171,6 +196,7 @@ fun HistorialScreen(
                     )
                 }
             }
+        }
         }
     }
 }

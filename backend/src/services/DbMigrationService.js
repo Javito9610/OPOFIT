@@ -398,6 +398,17 @@ class DbMigrationService {
         'external_id',
         'VARCHAR(64) NULL'
       );
+      await DbMigrationService.addColumnIfMissing('gps_actividades', 'desnivel_neg_m', 'DOUBLE NOT NULL DEFAULT 0');
+      await DbMigrationService.addColumnIfMissing('gps_actividades', 'ritmo_cardiaco_medio', 'INT NULL');
+      await DbMigrationService.addColumnIfMissing('gps_actividades', 'ritmo_cardiaco_max', 'INT NULL');
+      await DbMigrationService.addColumnIfMissing('gps_actividades', 'ritmo_cardiaco_min', 'INT NULL');
+      await DbMigrationService.addColumnIfMissing('gps_actividades', 'kcal', 'INT NULL');
+      await DbMigrationService.addColumnIfMissing('gps_actividades', 'cadencia_max_ppm', 'INT NULL');
+      await DbMigrationService.addColumnIfMissing('gps_actividades', 'zancada_media_m', 'DOUBLE NULL');
+      await DbMigrationService.addColumnIfMissing('gps_actividades', 'pendiente_media_pct', 'DOUBLE NULL');
+      await DbMigrationService.addColumnIfMissing('gps_actividades', 'splits_milla_json', 'TEXT NULL');
+      await DbMigrationService.addColumnIfMissing('gps_actividades', 'splits_tiempo_json', 'TEXT NULL');
+      await DbMigrationService.addColumnIfMissing('gps_actividades', 'mejores_segmentos_json', 'TEXT NULL');
 
       await DbMigrationService.addColumnIfMissing('usuarios', 'avatar_url', 'VARCHAR(512) NULL');
       if (!(await DbMigrationService.columnExists('usuarios', 'modo_uso'))) {
@@ -484,11 +495,114 @@ class DbMigrationService {
         console.log('[migrate] tabla quedadas creada');
       }
 
+      if (!(await DbMigrationService.tableExists('actividad_posts'))) {
+        await db.query(`
+          CREATE TABLE actividad_posts (
+            id_post INT NOT NULL AUTO_INCREMENT,
+            id_usuario INT NOT NULL,
+            titulo VARCHAR(120) NOT NULL,
+            texto VARCHAR(2000) NULL,
+            foto_url VARCHAR(512) NULL,
+            visibilidad ENUM('AMIGOS','PUBLICO') NOT NULL DEFAULT 'AMIGOS',
+            fuente ENUM('GPS','ENTRENO','SIMULACRO','MANUAL') NOT NULL DEFAULT 'MANUAL',
+            gps_uuid VARCHAR(64) NULL,
+            id_historial_sesion INT NULL,
+            id_simulacro INT NULL,
+            stats_json TEXT NULL,
+            creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_post),
+            INDEX idx_post_usuario (id_usuario),
+            INDEX idx_post_creado (creado_en),
+            CONSTRAINT fk_post_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario) ON DELETE CASCADE
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla actividad_posts creada');
+      }
+
+      if (!(await DbMigrationService.tableExists('post_likes'))) {
+        await db.query(`
+          CREATE TABLE post_likes (
+            id_like INT NOT NULL AUTO_INCREMENT,
+            id_post INT NOT NULL,
+            id_usuario INT NOT NULL,
+            creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_like),
+            UNIQUE KEY uk_post_like (id_post, id_usuario),
+            CONSTRAINT fk_pl_post FOREIGN KEY (id_post) REFERENCES actividad_posts (id_post) ON DELETE CASCADE,
+            CONSTRAINT fk_pl_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario) ON DELETE CASCADE
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla post_likes creada');
+      }
+
+      if (!(await DbMigrationService.tableExists('post_comentarios'))) {
+        await db.query(`
+          CREATE TABLE post_comentarios (
+            id_comentario INT NOT NULL AUTO_INCREMENT,
+            id_post INT NOT NULL,
+            id_usuario INT NOT NULL,
+            texto VARCHAR(500) NOT NULL,
+            creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_comentario),
+            INDEX idx_pc_post (id_post),
+            CONSTRAINT fk_pc_post FOREIGN KEY (id_post) REFERENCES actividad_posts (id_post) ON DELETE CASCADE,
+            CONSTRAINT fk_pc_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario) ON DELETE CASCADE
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla post_comentarios creada');
+      }
+
+      if (!(await DbMigrationService.tableExists('segmentos'))) {
+        await db.query(`
+          CREATE TABLE segmentos (
+            id_segmento INT NOT NULL AUTO_INCREMENT,
+            slug VARCHAR(32) NOT NULL,
+            nombre VARCHAR(120) NOT NULL,
+            tipo ENUM('VIRTUAL','GPS') NOT NULL DEFAULT 'VIRTUAL',
+            distancia_m DECIMAL(10,2) NOT NULL,
+            mejor_si_menor TINYINT(1) NOT NULL DEFAULT 1,
+            categoria VARCHAR(32) NOT NULL DEFAULT 'CARRERA',
+            lat_inicio DECIMAL(10,7) NULL,
+            lng_inicio DECIMAL(10,7) NULL,
+            lat_fin DECIMAL(10,7) NULL,
+            lng_fin DECIMAL(10,7) NULL,
+            activo TINYINT(1) NOT NULL DEFAULT 1,
+            PRIMARY KEY (id_segmento),
+            UNIQUE KEY uk_segmento_slug (slug)
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla segmentos creada');
+      }
+
+      if (!(await DbMigrationService.tableExists('segmento_esfuerzos'))) {
+        await db.query(`
+          CREATE TABLE segmento_esfuerzos (
+            id_esfuerzo INT NOT NULL AUTO_INCREMENT,
+            id_segmento INT NOT NULL,
+            id_usuario INT NOT NULL,
+            duracion_ms INT NOT NULL,
+            gps_uuid VARCHAR(64) NULL,
+            creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_esfuerzo),
+            INDEX idx_se_segmento (id_segmento),
+            INDEX idx_se_usuario (id_usuario),
+            CONSTRAINT fk_se_segmento FOREIGN KEY (id_segmento) REFERENCES segmentos (id_segmento) ON DELETE CASCADE,
+            CONSTRAINT fk_se_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario) ON DELETE CASCADE
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla segmento_esfuerzos creada');
+      }
+
+      const SegmentosService = require('./SegmentosService');
+      await SegmentosService.seedVirtuales();
+
       const EjerciciosCatalogoService = require('./EjerciciosCatalogoService');
       await EjerciciosCatalogoService.seedCatalogoAmpliado();
       const EjerciciosEntornoCatalogo = require('./EjerciciosEntornoCatalogo');
       await EjerciciosEntornoCatalogo.seedEjerciciosEntorno();
       await EjerciciosEntornoCatalogo.seedMetadatosExistentes();
+      const EjerciciosBanco500Service = require('./EjerciciosBanco500Service');
+      await EjerciciosBanco500Service.seedBanco500(false);
 
       const BancoPlanesImportService = require('./BancoPlanesImportService');
       const banco = await BancoPlanesImportService.importarBancoCompleto(false);

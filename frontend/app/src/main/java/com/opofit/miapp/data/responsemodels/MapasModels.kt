@@ -34,5 +34,6 @@ data class RutaEntrenoResponse(val ok: Boolean, val data: RutaEntreno?)
 
 data class RutaPersonalizadaBody(
     val waypoints: List<RoutePointDto>,
-    val nombre: String = "Ruta personalizada"
+    val nombre: String = "Ruta personalizada",
+    val actividad: String = "CARRERA"
 )

@@ -46,6 +46,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -66,6 +67,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.gps.model.ActivitySummary
 import com.opofit.miapp.gps.model.ActivityType
 import com.opofit.miapp.gps.service.EntrenoFlowContext
+import com.opofit.miapp.gps.service.GpsRecordingContext
 import com.opofit.miapp.gps.service.HrBleManager
 import com.opofit.miapp.gps.util.GpsMetrics
 import java.text.SimpleDateFormat
@@ -98,7 +100,10 @@ fun GpsHubScreen(
     ) { granted ->
         val ok = granted[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
             granted[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-        if (ok) onStartRecording() else showPermDialog = true
+        if (ok) {
+            GpsRecordingContext.prepare(selectedType, conRuta = false)
+            onStartRecording()
+        } else showPermDialog = true
     }
 
     val blePermLauncher = rememberLauncherForActivityResult(
@@ -116,6 +121,7 @@ fun GpsHubScreen(
     fun startWithPermission() {
         val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
         if (fine == PackageManager.PERMISSION_GRANTED) {
+            GpsRecordingContext.prepare(selectedType, conRuta = false)
             onStartRecording()
         } else {
             val perms = mutableListOf(
@@ -146,10 +152,10 @@ fun GpsHubScreen(
         }
     }
 
-    val gpxPicker = rememberLauncherForActivityResult(
+    val actividadPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
-        if (uri != null) viewModel.importGpx(uri)
+        if (uri != null) viewModel.importActividad(uri)
     }
 
     LaunchedEffect(Unit) { viewModel.loadHistory() }
@@ -215,8 +221,13 @@ fun GpsHubScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
+        PullToRefreshBox(
+            isRefreshing = history.loading,
+            onRefresh = { viewModel.syncDesdeReloj() },
+            modifier = Modifier.fillMaxSize().padding(innerPadding)
+        ) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
@@ -361,23 +372,27 @@ fun GpsHubScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Filled.UploadFile, null, tint = MaterialTheme.colorScheme.primary)
                             Text(
-                                "  Importar actividad (GPX)",
+                                "  Importar actividad (GPX / TCX)",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
                         Text(
-                            "¿Tienes actividades en Strava, Garmin o Wikiloc? Expórtalas como GPX " +
-                                "y impórtalas aquí sin necesitar API de pago.",
+                            "¿Entrenaste sin el móvil? Exporta desde Garmin, Polar, Suunto o Strava " +
+                                "como GPX/TCX, o desliza abajo para sincronizar Health Connect.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         OutlinedButton(
-                            onClick = { gpxPicker.launch(arrayOf("application/gpx+xml", "application/xml", "*/*")) },
+                            onClick = {
+                                actividadPicker.launch(
+                                    arrayOf("application/gpx+xml", "application/xml", "application/octet-stream", "*/*")
+                                )
+                            },
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(Icons.Filled.UploadFile, null, Modifier.size(18.dp))
-                            Text("  Elegir fichero .gpx")
+                            Text("  Elegir fichero .gpx o .tcx")
                         }
                     }
                 }
@@ -411,6 +426,7 @@ fun GpsHubScreen(
             }
 
             item { Spacer(Modifier.height(8.dp)) }
+        }
         }
     }
 }
