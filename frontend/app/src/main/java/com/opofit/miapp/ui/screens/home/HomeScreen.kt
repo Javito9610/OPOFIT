@@ -95,22 +95,28 @@ fun HomeScreen(
     onLogout: () -> Unit,
     userName: String? = null,
     oposicionId: Int = 1,
+    esFitness: Boolean = false,
     homeViewModel: HomeViewModel = viewModel()
 ) {
     val uiState by homeViewModel.uiState.collectAsState()
     val resumen = uiState.resumen
-    val displayName = userName?.trim().orEmpty().ifBlank { "Opositor" }
+    val displayName = userName?.trim().orEmpty().ifBlank { if (esFitness) "Atleta" else "Opositor" }
 
     LaunchedEffect(oposicionId) {
         homeViewModel.cargarResumen(oposicionId)
     }
 
-    val quickLinks = listOf(
-        QuickLink("Plan", "Entreno semanal", Icons.Filled.FitnessCenter, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary, onNavigateToRutinas),
-        QuickLink("Rutas GPS", "Carrera · Bici", Icons.Filled.Explore, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary, onNavigateToGps),
-        QuickLink("Simulacro", "Pruebas", Icons.Filled.Timer, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToSimulacro),
-        QuickLink("Dispositivos", "Reloj · banda", Icons.Filled.Watch, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, onNavigateToMisDispositivos)
-    )
+    val quickLinks = buildList {
+        add(QuickLink("Plan", "Entreno semanal", Icons.Filled.FitnessCenter, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary, onNavigateToRutinas))
+        add(QuickLink("Rutas GPS", "Carrera · Bici", Icons.Filled.Explore, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary, onNavigateToGps))
+        if (esFitness) {
+            add(QuickLink("Comunidad", "Grupos · Chat", Icons.Filled.Groups, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToComunidad))
+            add(QuickLink("Rutinas libres", "Crea la tuya", Icons.Filled.FitnessCenter, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, onNavigateToRutinasLibres))
+        } else {
+            add(QuickLink("Simulacro", "Pruebas", Icons.Filled.Timer, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToSimulacro))
+            add(QuickLink("Dispositivos", "Reloj · banda", Icons.Filled.Watch, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, onNavigateToMisDispositivos))
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -118,9 +124,10 @@ fun HomeScreen(
                 title = {
                     Column {
                         Text("OpoFit", fontWeight = FontWeight.ExtraBold)
-                        resumen?.oposicionNombre?.let {
-                            Text(it, style = MaterialTheme.typography.labelSmall)
-                        }
+                        Text(
+                            if (esFitness) "Modo fitness" else (resumen?.oposicionNombre ?: "Tu oposición"),
+                            style = MaterialTheme.typography.labelSmall
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -184,18 +191,24 @@ fun HomeScreen(
                                             fontWeight = FontWeight.Bold
                                         )
                                         Text(
-                                            resumen?.nivel?.let { nivelLabel(it) }
-                                                ?: "Completa tu perfil para calcular nivel",
+                                            if (esFitness) {
+                                                "Plan personalizado de fuerza y cardio"
+                                            } else {
+                                                resumen?.nivel?.let { nivelLabel(it) }
+                                                    ?: "Completa tu perfil para calcular nivel"
+                                            },
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                                         )
-                                        resumen?.notaMedia?.let { nota ->
-                                            Text(
-                                                "Nota media oficial: $nota / 10",
-                                                style = MaterialTheme.typography.labelLarge,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
+                                        if (!esFitness) {
+                                            resumen?.notaMedia?.let { nota ->
+                                                Text(
+                                                    "Nota media oficial: $nota / 10",
+                                                    style = MaterialTheme.typography.labelLarge,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -269,25 +282,27 @@ fun HomeScreen(
                             }
                         }
 
-                        item {
-                            Row(
-                                Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                StatCard(
-                                    label = "Ranking",
-                                    value = resumen?.rankingPosicion?.let { "#$it" } ?: "—",
-                                    supporting = resumen?.rankingTotal?.let { "de $it opositores" },
-                                    icon = Icons.Filled.Leaderboard,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                StatCard(
-                                    label = "Simulacro",
-                                    value = resumen?.ultimoSimulacro?.notaMedia?.let { "$it" } ?: "—",
-                                    supporting = "última nota /10",
-                                    icon = Icons.Filled.TrendingUp,
-                                    modifier = Modifier.weight(1f)
-                                )
+                        if (!esFitness) {
+                            item {
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    StatCard(
+                                        label = "Ranking",
+                                        value = resumen?.rankingPosicion?.let { "#$it" } ?: "—",
+                                        supporting = resumen?.rankingTotal?.let { "de $it opositores" },
+                                        icon = Icons.Filled.Leaderboard,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    StatCard(
+                                        label = "Simulacro",
+                                        value = resumen?.ultimoSimulacro?.notaMedia?.let { "$it" } ?: "—",
+                                        supporting = "última nota /10",
+                                        icon = Icons.Filled.TrendingUp,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
                             }
                         }
 
@@ -309,15 +324,28 @@ fun HomeScreen(
                                     Icon(Icons.Filled.PlayArrow, null, Modifier.size(20.dp))
                                     Text("Entrenar", modifier = Modifier.padding(start = 8.dp))
                                 }
-                                Button(
-                                    onClick = onNavigateToSimulacro,
-                                    modifier = Modifier.weight(1f),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondary
-                                    )
-                                ) {
-                                    Icon(Icons.Filled.Timer, null, Modifier.size(20.dp))
-                                    Text("Simulacro", modifier = Modifier.padding(start = 8.dp))
+                                if (esFitness) {
+                                    Button(
+                                        onClick = onNavigateToComunidad,
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.secondary
+                                        )
+                                    ) {
+                                        Icon(Icons.Filled.Groups, null, Modifier.size(20.dp))
+                                        Text("Comunidad", modifier = Modifier.padding(start = 8.dp))
+                                    }
+                                } else {
+                                    Button(
+                                        onClick = onNavigateToSimulacro,
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.secondary
+                                        )
+                                    ) {
+                                        Icon(Icons.Filled.Timer, null, Modifier.size(20.dp))
+                                        Text("Simulacro", modifier = Modifier.padding(start = 8.dp))
+                                    }
                                 }
                             }
                         }

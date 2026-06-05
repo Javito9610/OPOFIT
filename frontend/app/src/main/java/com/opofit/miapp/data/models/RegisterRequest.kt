@@ -7,6 +7,7 @@ data class RegisterRequest(
     val genero: String,
     val peso: Double,
     val altura: Double,
-    val oposiciones_id_oposicion: Int,
+    val oposiciones_id_oposicion: Int? = null,
+    val modo_uso: String = "OPOSITOR",
     val marcasIniciales: List<MarcaInicial> = emptyList()
 )

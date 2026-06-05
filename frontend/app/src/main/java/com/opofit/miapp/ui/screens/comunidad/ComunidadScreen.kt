@@ -18,9 +18,17 @@ import com.opofit.miapp.data.responsemodels.AmigoItem
 import com.opofit.miapp.data.responsemodels.FeedActividadItem
 import com.opofit.miapp.ui.components.EmptyState
 import com.opofit.miapp.ui.components.ProfileAvatar
+import com.opofit.miapp.data.responsemodels.CrearGrupoRequest
+import com.opofit.miapp.data.responsemodels.CrearQuedadaRequest
+import com.opofit.miapp.data.responsemodels.EnviarMensajeGrupoRequest
 import com.opofit.miapp.data.responsemodels.EnviarMensajeRequest
+import com.opofit.miapp.data.responsemodels.GrupoComunidad
+import com.opofit.miapp.data.responsemodels.MensajeGrupo
+import com.opofit.miapp.data.responsemodels.QuedadaGrupo
 import com.opofit.miapp.data.responsemodels.ResponderAmistadRequest
 import com.opofit.miapp.data.responsemodels.SolicitarAmistadRequest
+import com.opofit.miapp.data.responsemodels.UbicacionRequest
+import com.opofit.miapp.data.responsemodels.UsuarioCerca
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.utils.ApiErrorParser
 import com.opofit.miapp.utils.DateFormatUtil
@@ -50,6 +58,13 @@ fun ComunidadScreen(
     var msg by remember { mutableStateOf("") }
     var feed by remember { mutableStateOf<List<FeedActividadItem>>(emptyList()) }
     var loadingFeed by remember { mutableStateOf(false) }
+    var grupos by remember { mutableStateOf<List<GrupoComunidad>>(emptyList()) }
+    var grupoSel by remember { mutableStateOf<GrupoComunidad?>(null) }
+    var mensajesGrupo by remember { mutableStateOf<List<MensajeGrupo>>(emptyList()) }
+    var quedadas by remember { mutableStateOf<List<QuedadaGrupo>>(emptyList()) }
+    var cerca by remember { mutableStateOf<List<UsuarioCerca>>(emptyList()) }
+    var ubicacionVisible by remember { mutableStateOf(false) }
+    val esFitness = authState.modoUso?.equals("FITNESS", ignoreCase = true) == true
 
     fun cargarFeed() {
         scope.launch {
@@ -81,9 +96,25 @@ fun ComunidadScreen(
         }
     }
 
+    fun cargarGrupos() {
+        scope.launch {
+            try {
+                val token = tokenManager.getToken().first() ?: ""
+                val r = RetrofitClient.comunidadApi.listarGrupos(
+                    "Bearer $token",
+                    if (esFitness) null else oposicionId
+                )
+                grupos = if (r.ok) r.data.orEmpty() else emptyList()
+            } catch (e: Exception) {
+                msg = ApiErrorParser.message(e)
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         cargarAmigos()
         cargarFeed()
+        cargarGrupos()
     }
 
     // Limpiar mensaje de estado automaticamente tras 3s.
@@ -112,11 +143,13 @@ fun ComunidadScreen(
         }
     ) { padding ->
         Column(Modifier.padding(padding)) {
-            TabRow(selectedTabIndex = tab) {
+            ScrollableTabRow(selectedTabIndex = tab) {
                 Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text("Actividad") })
-                Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text("Amigos") })
-                Tab(selected = tab == 2, onClick = { tab = 2 }, text = { Text("Buscar") })
-                Tab(selected = tab == 3, onClick = { tab = 3 }, text = { Text("Chat") })
+                Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text("Grupos") })
+                Tab(selected = tab == 2, onClick = { tab = 2 }, text = { Text("Cerca") })
+                Tab(selected = tab == 3, onClick = { tab = 3 }, text = { Text("Amigos") })
+                Tab(selected = tab == 4, onClick = { tab = 4 }, text = { Text("Buscar") })
+                Tab(selected = tab == 5, onClick = { tab = 5 }, text = { Text("Chat") })
             }
             if (msg.isNotBlank()) {
                 Text(msg, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(12.dp))
@@ -175,7 +208,89 @@ fun ComunidadScreen(
                         }
                     }
                 }
-                1 -> LazyColumn(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                1 -> ComunidadGruposTab(
+                    grupos = grupos,
+                    grupoSel = grupoSel,
+                    mensajes = mensajesGrupo,
+                    quedadas = quedadas,
+                    oposicionId = oposicionId,
+                    esFitness = esFitness,
+                    onCrearGrupo = { nombre, desc ->
+                        scope.launch {
+                            val token = tokenManager.getToken().first() ?: ""
+                            RetrofitClient.comunidadApi.crearGrupo(
+                                "Bearer $token",
+                                CrearGrupoRequest(nombre, desc, if (esFitness) null else oposicionId)
+                            )
+                            cargarGrupos()
+                        }
+                    },
+                    onUnirse = { id ->
+                        scope.launch {
+                            val token = tokenManager.getToken().first() ?: ""
+                            RetrofitClient.comunidadApi.unirseGrupo("Bearer $token", id)
+                            cargarGrupos()
+                        }
+                    },
+                    onSeleccionar = { g ->
+                        grupoSel = g
+                        scope.launch {
+                            val token = tokenManager.getToken().first() ?: ""
+                            mensajesGrupo = RetrofitClient.comunidadApi.mensajesGrupo("Bearer $token", g.id_grupo).data.orEmpty()
+                            quedadas = RetrofitClient.comunidadApi.quedadasGrupo("Bearer $token", g.id_grupo).data.orEmpty()
+                        }
+                    },
+                    onEnviarMensaje = { id, texto ->
+                        scope.launch {
+                            val token = tokenManager.getToken().first() ?: ""
+                            RetrofitClient.comunidadApi.enviarMensajeGrupo(
+                                "Bearer $token", id, EnviarMensajeGrupoRequest(texto)
+                            )
+                            mensajesGrupo = RetrofitClient.comunidadApi.mensajesGrupo("Bearer $token", id).data.orEmpty()
+                        }
+                    },
+                    onCrearQuedada = { id, titulo, lugar ->
+                        scope.launch {
+                            val token = tokenManager.getToken().first() ?: ""
+                            RetrofitClient.comunidadApi.crearQuedada(
+                                "Bearer $token", id, CrearQuedadaRequest(titulo, lugar)
+                            )
+                            quedadas = RetrofitClient.comunidadApi.quedadasGrupo("Bearer $token", id).data.orEmpty()
+                        }
+                    }
+                )
+                2 -> ComunidadCercaTab(
+                    usuarios = cerca,
+                    visible = ubicacionVisible,
+                    onToggleVisible = { v ->
+                        ubicacionVisible = v
+                        scope.launch {
+                            val token = tokenManager.getToken().first() ?: ""
+                            RetrofitClient.usuarioApi.actualizarPerfil(
+                                "Bearer $token",
+                                com.opofit.miapp.data.responsemodels.ActualizarPerfilRequest(
+                                    userId = authState.userId ?: 0,
+                                    ubicacionVisible = v
+                                )
+                            )
+                        }
+                    },
+                    onBuscar = { lat, lng ->
+                        scope.launch {
+                            try {
+                                val token = tokenManager.getToken().first() ?: ""
+                                RetrofitClient.comunidadApi.actualizarUbicacion(
+                                    "Bearer $token",
+                                    UbicacionRequest(lat, lng, ubicacionVisible)
+                                )
+                                cerca = RetrofitClient.comunidadApi.listarCerca("Bearer $token", lat, lng).data.orEmpty()
+                            } catch (e: Exception) {
+                                msg = ApiErrorParser.message(e)
+                            }
+                        }
+                    }
+                )
+                3 -> LazyColumn(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (pendientes.isNotEmpty()) {
                         item { Text("Solicitudes pendientes", fontWeight = FontWeight.Bold) }
                         items(pendientes) { s ->
@@ -208,7 +323,7 @@ fun ComunidadScreen(
                             }
                         }
                     }
-                    item { Text("Tus amigos (misma oposición)", fontWeight = FontWeight.Bold) }
+                    item { Text("Tus amigos", fontWeight = FontWeight.Bold) }
                     if (amigos.isEmpty()) item { Text("Busca compañeros en la pestaña Buscar.") }
                     items(amigos) { a ->
                         Card(
@@ -228,7 +343,7 @@ fun ComunidadScreen(
                         }
                     }
                 }
-                2 -> Column(Modifier.padding(16.dp)) {
+                4 -> Column(Modifier.padding(16.dp)) {
                     OutlinedTextField(
                         value = busqueda,
                         onValueChange = { busqueda = it },
@@ -241,7 +356,11 @@ fun ComunidadScreen(
                             scope.launch {
                                 try {
                                     val token = tokenManager.getToken().first() ?: ""
-                                    val r = RetrofitClient.amigosApi.buscar("Bearer $token", busqueda, oposicionId)
+                                    val r = RetrofitClient.amigosApi.buscar(
+                                        "Bearer $token",
+                                        busqueda,
+                                        if (esFitness) null else oposicionId
+                                    )
                                     resultados = r.data.orEmpty()
                                 } catch (e: Exception) {
                                     msg = ApiErrorParser.message(e)
@@ -249,7 +368,7 @@ fun ComunidadScreen(
                             }
                         },
                         modifier = Modifier.fillMaxWidth()
-                    ) { Text("Buscar en mi oposición") }
+                    ) { Text(if (esFitness) "Buscar usuarios" else "Buscar en mi oposición") }
                     Spacer(Modifier.height(12.dp))
                     resultados.forEach { u ->
                         Card(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
@@ -270,7 +389,7 @@ fun ComunidadScreen(
                         }
                     }
                 }
-                3 -> Column(Modifier.padding(16.dp)) {
+                5 -> Column(Modifier.padding(16.dp)) {
                     if (chatCon == null) {
                         Text("Selecciona un amigo en la pestaña Amigos para chatear.")
                     } else {

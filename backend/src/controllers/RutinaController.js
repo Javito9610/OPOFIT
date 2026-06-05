@@ -2,17 +2,35 @@ const RutinaService = require('../services/RutinasService');
 const PlanesService = require('../services/PlanesService');
 const PremiumService = require('../services/PremiumService');
 const db = require('../config/db');
+const { isFitnessModo, planOposicionId } = require('../utils/FitnessMode');
 const getMiEntrenamiento = async (req, res) => {
   try {
     const {
       userId: _ignoredUserId,
-      idOposicion
+      idOposicion: idOposicionParam
     } = req.params;
     const userId = req.usuario?.id;
-    if (!userId || !idOposicion) {
+    if (!userId) {
       return res.status(400).json({
         ok: false,
-        msg: "Faltan datos obligatorios (userId o idOposicion)"
+        msg: "Faltan datos obligatorios (userId)"
+      });
+    }
+    const [[usuarioRow]] = await db.query(
+      'SELECT oposiciones_id_oposicion, modo_uso, genero FROM usuarios WHERE id_usuario = ?',
+      [userId]
+    );
+    if (!usuarioRow) {
+      return res.status(401).json({ ok: false, msg: 'Sesión inválida' });
+    }
+    const esFitness = isFitnessModo(usuarioRow.modo_uso);
+    const idOposicion = esFitness
+      ? planOposicionId(usuarioRow)
+      : Number(idOposicionParam || usuarioRow.oposiciones_id_oposicion);
+    if (!idOposicion) {
+      return res.status(400).json({
+        ok: false,
+        msg: "Faltan datos obligatorios (idOposicion)"
       });
     }
     const existeOpo = await PremiumService.puedeAccederOposicion(userId, idOposicion);
@@ -20,7 +38,16 @@ const getMiEntrenamiento = async (req, res) => {
       return res.status(404).json({ ok: false, msg: 'Oposición no encontrada' });
     }
     const premium = await PremiumService.getEstadoPremium(userId);
-    const resultadoCalculo = await RutinaService.calcularNotaYNivel(userId, idOposicion);
+    const resultadoCalculo = esFitness
+      ? {
+          notaMedia: null,
+          nivelSugerido: 'BASICO',
+          genero: usuarioRow.genero,
+          totalPruebas: 0,
+          pruebasCompletadas: 0,
+          pruebasFaltantes: 0
+        }
+      : await RutinaService.calcularNotaYNivel(userId, idOposicion);
     if (!resultadoCalculo) {
       return res.status(404).json({
         ok: false,
@@ -41,7 +68,7 @@ const getMiEntrenamiento = async (req, res) => {
       pruebasCompletadas,
       pruebasFaltantes
     } = resultadoCalculo;
-    if (pruebasFaltantes > 0) {
+    if (!esFitness && pruebasFaltantes > 0) {
       const n = pruebasFaltantes;
       const pruebaWord = n === 1 ? 'prueba oficial' : 'pruebas oficiales';
       return res.status(200).json({

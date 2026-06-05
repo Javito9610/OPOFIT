@@ -11,4 +11,5 @@ router.post('/google/registrar', authController.registrarConGoogle);
 router.post('/google_firebase', authController.loginConFirebase);
 router.post('/google_firebase/registrar', authController.registrarConFirebase);
 router.get('/me', validarToken, authController.me);
+router.post('/cambiar-password', validarToken, authController.cambiarPassword);
 module.exports = router;

@@ -5,6 +5,18 @@ const {
   OAuth2Client
 } = require('google-auth-library');
 class AuthService {
+  static async cambiarPassword(userId, actual, nueva) {
+    const nuevaLimpia = String(nueva || '');
+    if (nuevaLimpia.length < 6) throw new Error('PASSWORD_CORTA');
+    const [rows] = await db.query('SELECT password FROM usuarios WHERE id_usuario = ?', [userId]);
+    if (!rows?.length) throw new Error('USUARIO_NO_ENCONTRADO');
+    const esValida = await bcrypt.compare(String(actual || ''), rows[0].password);
+    if (!esValida) throw new Error('PASSWORD_ACTUAL_INCORRECTA');
+    const hashed = await bcrypt.hash(nuevaLimpia, 10);
+    await db.query('UPDATE usuarios SET password = ? WHERE id_usuario = ?', [hashed, userId]);
+    return { ok: true };
+  }
+
   static async registrar(userData) {
     const {
       nombre,
@@ -14,14 +26,22 @@ class AuthService {
       peso,
       altura,
       oposiciones_id_oposicion,
+      modo_uso,
       marcasIniciales
     } = userData;
     const normalizedEmail = String(email || '').trim().toLowerCase();
+    const modoUso = String(modo_uso || 'OPOSITOR').trim().toUpperCase() === 'FITNESS' ? 'FITNESS' : 'OPOSITOR';
+    let oposicionFinal = oposiciones_id_oposicion;
+    if (modoUso === 'FITNESS') {
+      oposicionFinal = null;
+    } else if (oposicionFinal == null) {
+      throw new Error('Oposición obligatoria');
+    }
     const connection = await db.getConnection();
     try {
       await connection.beginTransaction();
-      if (oposiciones_id_oposicion != null) {
-        const [op] = await connection.query('SELECT id_oposicion FROM oposiciones WHERE id_oposicion = ?', [oposiciones_id_oposicion]);
+      if (oposicionFinal != null) {
+        const [op] = await connection.query('SELECT id_oposicion FROM oposiciones WHERE id_oposicion = ?', [oposicionFinal]);
         if (!op || op.length === 0) {
           throw new Error('Oposición no válida');
         }
@@ -29,8 +49,8 @@ class AuthService {
       const hashedPassword = await bcrypt.hash(password, 10);
       const alturaMetros = altura / 100;
       const imc = (peso / (alturaMetros * alturaMetros)).toFixed(2);
-      const sqlUsuario = `INSERT INTO usuarios (nombre, email, password, genero, peso, altura, imc, fecha_registro, oposiciones_id_oposicion) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)`;
-      const [userResult] = await connection.query(sqlUsuario, [nombre, normalizedEmail, hashedPassword, genero, peso, altura, imc, oposiciones_id_oposicion]);
+      const sqlUsuario = `INSERT INTO usuarios (nombre, email, password, genero, peso, altura, imc, fecha_registro, oposiciones_id_oposicion, modo_uso) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?)`;
+      const [userResult] = await connection.query(sqlUsuario, [nombre, normalizedEmail, hashedPassword, genero, peso, altura, imc, oposicionFinal, modoUso]);
       const userId = userResult.insertId;
       await connection.query('INSERT INTO settings(unidad_peso, unidad_distancia, usuarios_id_usuario) VALUES(?, ?, ?)', ['kg', 'km', userId]);
       if (marcasIniciales && marcasIniciales.length > 0) {

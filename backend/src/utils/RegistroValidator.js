@@ -42,7 +42,18 @@ function validarRegistro(userData = {}) {
     return fail(`Altura fuera de rango (${LIMITES.alturaCm.min}-${LIMITES.alturaCm.max} cm)`);
   }
 
-  return { ok: true, datos: { nombre, email, genero, peso, altura } };
+  const modoUso = String(userData.modo_uso ?? 'OPOSITOR').trim().toUpperCase();
+  if (modoUso !== 'OPOSITOR' && modoUso !== 'FITNESS') {
+    return fail('Modo de uso no valido (OPOSITOR o FITNESS)');
+  }
+  if (modoUso === 'OPOSITOR') {
+    const opo = userData.oposiciones_id_oposicion;
+    if (opo == null || opo === '' || Number.isNaN(Number(opo))) {
+      return fail('La oposicion es obligatoria para modo OPOSITOR');
+    }
+  }
+
+  return { ok: true, datos: { nombre, email, genero, peso, altura, modo_uso: modoUso } };
 }
 
 function fail(msg) {

@@ -54,6 +54,7 @@ fun RegisterScreen(
     var altura by remember { mutableStateOf("") }
     var imc by remember { mutableStateOf("0.00") }
     var oposicionId by remember { mutableStateOf<Int?>(null) }
+    var soloFitness by remember { mutableStateOf(false) }
     var localError by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
@@ -313,6 +314,14 @@ fun RegisterScreen(
                     }
 
                     
+                    androidx.compose.material3.FilterChip(
+                        selected = soloFitness,
+                        onClick = { soloFitness = !soloFitness; if (soloFitness) oposicionId = null },
+                        label = { Text("Solo entrenar (sin oposición)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    if (!soloFitness) {
                     var expandedOpo by remember { mutableStateOf(false) }
                     ExposedDropdownMenuBox(
                         expanded = expandedOpo,
@@ -353,6 +362,7 @@ fun RegisterScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
                         )
+                    }
                     }
 
                     if (pendingFirebaseIdToken == null) {
@@ -444,7 +454,7 @@ fun RegisterScreen(
                                 genero.isBlank() -> "Debes seleccionar un género"
                                 peso.isBlank() || peso.toDoubleOrNull() == null -> "Introduce un peso válido (kg)"
                                 altura.isBlank() || altura.toDoubleOrNull() == null -> "Introduce una altura válida (cm)"
-                                oposicionId == null -> "Selecciona una oposición"
+                                !soloFitness && oposicionId == null -> "Selecciona una oposición"
                                 token == null && password.length < 6 -> "La contraseña debe tener al menos 6 caracteres"
                                 token == null && password != confirmPassword -> "Las contraseñas no coinciden"
                                 else -> ""
@@ -467,7 +477,8 @@ fun RegisterScreen(
                                         genero = genero,
                                         peso = peso.toDouble(),
                                         altura = altura.toDouble(),
-                                        oposiciones_id = oposicionId!!
+                                        oposiciones_id = if (soloFitness) null else oposicionId,
+                                        modoUso = if (soloFitness) "FITNESS" else "OPOSITOR"
                                     )
                                 }
                             }

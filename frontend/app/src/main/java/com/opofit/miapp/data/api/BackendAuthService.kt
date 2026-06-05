@@ -45,8 +45,9 @@ class BackendAuthService {
         genero: String,
         peso: Double,
         altura: Double,
-        oposiciones_id: Int,
-        marcas: List<MarcaInicial> = emptyList()
+        oposiciones_id: Int? = null,
+        marcas: List<MarcaInicial> = emptyList(),
+        modoUso: String = if (oposiciones_id == null) "FITNESS" else "OPOSITOR"
     ): Result<AuthResponse> {
         return try {
             val response = withContext(Dispatchers.IO) {
@@ -59,6 +60,7 @@ class BackendAuthService {
                         peso = peso,
                         altura = altura,
                         oposiciones_id_oposicion = oposiciones_id,
+                        modo_uso = modoUso,
                         marcasIniciales = marcas
                     )
                 )

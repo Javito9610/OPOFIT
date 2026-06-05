@@ -1,13 +1,58 @@
 const db = require('../config/db');
 const RutinaService = require('../services/RutinasService');
 const MarcaValidator = require('../utils/MarcaValidator');
+
+const obtenerPerfil = async (req, res) => {
+  try {
+    const userId = req.usuario?.id;
+    if (userId == null) {
+      return res.status(401).json({ ok: false, msg: 'Sesión no válida' });
+    }
+    const [rows] = await db.query(
+      `SELECT u.nombre, u.email, u.peso, u.altura, u.imc, u.avatar_url, u.modo_uso,
+              u.oposiciones_id_oposicion AS oposicionId, o.nombre AS oposicionNombre,
+              u.ubicacion_visible
+       FROM usuarios u
+       LEFT JOIN oposiciones o ON u.oposiciones_id_oposicion = o.id_oposicion
+       WHERE u.id_usuario = ?`,
+      [userId]
+    );
+    if (!rows?.length) {
+      return res.status(404).json({ ok: false, msg: 'Usuario no encontrado' });
+    }
+    const u = rows[0];
+    return res.status(200).json({
+      ok: true,
+      data: {
+        nombre: u.nombre,
+        email: u.email,
+        peso: u.peso,
+        altura: u.altura,
+        imc: u.imc,
+        avatarUrl: u.avatar_url,
+        modoUso: u.modo_uso || 'OPOSITOR',
+        oposicionId: u.oposicionId,
+        oposicionNombre: u.oposicionNombre,
+        ubicacionVisible: !!u.ubicacion_visible
+      }
+    });
+  } catch (error) {
+    console.error('Error en obtenerPerfil:', error.message);
+    return res.status(500).json({ ok: false, msg: 'Error al obtener el perfil' });
+  }
+};
+
 const actualizarPerfil = async (req, res) => {
   try {
     const {
       peso,
       altura,
       oposicionId,
-      nuevasMarcas
+      nuevasMarcas,
+      nombre,
+      avatarUrl,
+      modoUso,
+      ubicacionVisible
     } = req.body;
     const userId = req.usuario?.id;
     if (userId == null) {
@@ -25,10 +70,14 @@ const actualizarPerfil = async (req, res) => {
     const hasPeso = typeof peso === 'number' && Number.isFinite(peso) && peso > 0;
     const hasAltura = typeof altura === 'number' && Number.isFinite(altura) && altura > 0;
     const hasMarcas = Array.isArray(nuevasMarcas) && nuevasMarcas.length > 0;
-    if (!hasPeso && !hasAltura && !hasMarcas) {
+    const hasNombre = typeof nombre === 'string' && nombre.trim().length > 0;
+    const hasAvatar = avatarUrl !== undefined && avatarUrl !== null;
+    const hasModo = modoUso === 'OPOSITOR' || modoUso === 'FITNESS';
+    const hasUbicVisible = ubicacionVisible !== undefined && ubicacionVisible !== null;
+    if (!hasPeso && !hasAltura && !hasMarcas && !hasNombre && !hasAvatar && !hasModo && !hasUbicVisible) {
       return res.status(400).json({
         ok: false,
-        msg: "Debes enviar peso/altura válidos y/o al menos una marca para actualizar el perfil"
+        msg: 'Debes enviar al menos un campo para actualizar el perfil'
       });
     }
     const [userExists] = await db.query('SELECT id_usuario FROM usuarios WHERE id_usuario = ?', [userId]);
@@ -59,6 +108,22 @@ const actualizarPerfil = async (req, res) => {
       } else {
         await db.query('UPDATE usuarios SET altura = ? WHERE id_usuario = ?', [altura, userId]);
       }
+    }
+    if (hasNombre) {
+      await db.query('UPDATE usuarios SET nombre = ? WHERE id_usuario = ?', [nombre.trim().substring(0, 80), userId]);
+    }
+    if (hasAvatar) {
+      const url = String(avatarUrl || '').trim().substring(0, 512) || null;
+      await db.query('UPDATE usuarios SET avatar_url = ? WHERE id_usuario = ?', [url, userId]);
+    }
+    if (hasModo) {
+      await db.query('UPDATE usuarios SET modo_uso = ? WHERE id_usuario = ?', [modoUso, userId]);
+      if (modoUso === 'FITNESS') {
+        await db.query('UPDATE usuarios SET oposiciones_id_oposicion = NULL WHERE id_usuario = ?', [userId]);
+      }
+    }
+    if (hasUbicVisible) {
+      await db.query('UPDATE usuarios SET ubicacion_visible = ? WHERE id_usuario = ?', [ubicacionVisible ? 1 : 0, userId]);
     }
     if (hasMarcas) {
       // Coherencia: validamos TODAS las marcas antes de escribir ninguna,
@@ -104,16 +169,19 @@ const actualizarPerfil = async (req, res) => {
       }
     }
     const resolvedOposicionId = oposicionId ?? null;
+    if (!hasMarcas && !hasPeso && !hasAltura) {
+      return res.status(200).json({ ok: true, msg: 'Perfil actualizado' });
+    }
     const resultadoNivel = resolvedOposicionId ? await RutinaService.calcularNotaYNivel(userId, resolvedOposicionId) : null;
     if (!resultadoNivel) {
       return res.status(200).json({
         ok: true,
-        msg: "Perfil actualizado, pero no se pudo recalcular el nivel. Revisa tus marcas."
+        msg: 'Perfil actualizado, pero no se pudo recalcular el nivel. Revisa tus marcas.'
       });
     }
     res.status(200).json({
       ok: true,
-      msg: "Perfil actualizado",
+      msg: 'Perfil actualizado',
       nuevoNivel: resultadoNivel.nivelSugerido,
       nuevaNota: resultadoNivel.notaMedia
     });
@@ -222,6 +290,7 @@ const actualizarSettings = async (req, res) => {
   }
 };
 module.exports = {
+  obtenerPerfil,
   actualizarPerfil,
   actualizarSettings,
   eliminarCuenta

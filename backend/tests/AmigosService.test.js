@@ -22,15 +22,33 @@ describe('AmigosService', () => {
 
     test('DISTINTA_OPOSICION si oposiciones distintas', async () => {
       db.query
-        .mockResolvedValueOnce([[{ id_usuario: 2, oposiciones_id_oposicion: 2 }]])
-        .mockResolvedValueOnce([[{ oposiciones_id_oposicion: 1 }]]);
+        .mockResolvedValueOnce([[{ id_usuario: 2, oposiciones_id_oposicion: 2, modo_uso: 'OPOSITOR' }]])
+        .mockResolvedValueOnce([[{ oposiciones_id_oposicion: 1, modo_uso: 'OPOSITOR' }]]);
       await expect(AmigosService.enviarSolicitud(1, 2)).rejects.toThrow('DISTINTA_OPOSICION');
     });
 
     test('inserta cuando misma oposicion', async () => {
       db.query
-        .mockResolvedValueOnce([[{ id_usuario: 2, oposiciones_id_oposicion: 1 }]])
-        .mockResolvedValueOnce([[{ oposiciones_id_oposicion: 1 }]])
+        .mockResolvedValueOnce([[{ id_usuario: 2, oposiciones_id_oposicion: 1, modo_uso: 'OPOSITOR' }]])
+        .mockResolvedValueOnce([[{ oposiciones_id_oposicion: 1, modo_uso: 'OPOSITOR' }]])
+        .mockResolvedValueOnce([{ insertId: 1 }]);
+      const r = await AmigosService.enviarSolicitud(1, 2);
+      expect(r).toEqual({ ok: true });
+    });
+
+    test('permite amistad entre usuarios FITNESS', async () => {
+      db.query
+        .mockResolvedValueOnce([[{ id_usuario: 2, oposiciones_id_oposicion: null, modo_uso: 'FITNESS' }]])
+        .mockResolvedValueOnce([[{ oposiciones_id_oposicion: null, modo_uso: 'FITNESS' }]])
+        .mockResolvedValueOnce([{ insertId: 1 }]);
+      const r = await AmigosService.enviarSolicitud(1, 2);
+      expect(r).toEqual({ ok: true });
+    });
+
+    test('permite opositor con usuario FITNESS', async () => {
+      db.query
+        .mockResolvedValueOnce([[{ id_usuario: 2, oposiciones_id_oposicion: null, modo_uso: 'FITNESS' }]])
+        .mockResolvedValueOnce([[{ oposiciones_id_oposicion: 1, modo_uso: 'OPOSITOR' }]])
         .mockResolvedValueOnce([{ insertId: 1 }]);
       const r = await AmigosService.enviarSolicitud(1, 2);
       expect(r).toEqual({ ok: true });
@@ -88,6 +106,12 @@ describe('AmigosService', () => {
       db.query.mockResolvedValueOnce([[{ id_usuario: 5, nombre: 'Sara' }]]);
       const r = await AmigosService.buscarPorNombre(1, 'sa', 1);
       expect(r).toEqual([{ id_usuario: 5, nombre: 'Sara' }]);
+    });
+
+    test('busca usuarios FITNESS sin idOposicion', async () => {
+      db.query.mockResolvedValueOnce([[{ id_usuario: 8, nombre: 'Ana', modo_uso: 'FITNESS' }]]);
+      const r = await AmigosService.buscarPorNombre(1, 'an', null);
+      expect(r[0].modo_uso).toBe('FITNESS');
     });
   });
 

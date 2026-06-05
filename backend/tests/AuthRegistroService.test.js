@@ -25,18 +25,19 @@ describe('AuthService.registrar', () => {
     db.getConnection.mockResolvedValue(conn);
   });
 
-  test('crea usuario sin oposicion y calcula IMC', async () => {
+  test('crea usuario FITNESS sin oposicion y calcula IMC', async () => {
     conn.query
       .mockResolvedValueOnce([{ insertId: 50 }]) // INSERT usuarios
       .mockResolvedValueOnce([{ affectedRows: 1 }]); // INSERT settings
-    db.query.mockResolvedValueOnce([[{ id_usuario: 50, email: 'a@b.com' }]]);
+    db.query.mockResolvedValueOnce([[{ id_usuario: 50, email: 'a@b.com', modo_uso: 'FITNESS' }]]);
     const r = await AuthService.registrar({
       nombre: 'X',
       email: 'A@B.COM',
       password: 'secreto',
       genero: 'HOMBRE',
       peso: 70,
-      altura: 175
+      altura: 175,
+      modo_uso: 'FITNESS'
     });
     expect(r.userId).toBe(50);
     expect(r.user.password).toBeUndefined();
@@ -88,7 +89,11 @@ describe('AuthService.registrar', () => {
 });
 
 describe('AuthService.login', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    db.query.mockReset();
+    bcrypt.compare.mockReset();
+  });
 
   test('Usuario no encontrado si sin filas', async () => {
     db.query.mockResolvedValueOnce([[]]);

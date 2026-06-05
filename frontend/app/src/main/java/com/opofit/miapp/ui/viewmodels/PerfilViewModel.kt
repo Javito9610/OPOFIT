@@ -94,16 +94,26 @@ class PerfilViewModel(application: Application) : AndroidViewModel(application) 
 
     fun actualizarPerfil(
         userId: Int,
-        peso: Double,
-        altura: Double,
-        oposicionId: Int,
-        nuevasMarcas: List<MarcaActualizar>
+        peso: Double?,
+        altura: Double?,
+        oposicionId: Int?,
+        nuevasMarcas: List<MarcaActualizar>,
+        nombre: String? = null,
+        avatarUrl: String? = null
     ) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = "", guardadoExitoso = false) }
             try {
                 val token = tokenManager.getToken().first() ?: ""
-                val body = ActualizarPerfilRequest(userId, peso, altura, oposicionId, nuevasMarcas)
+                val body = ActualizarPerfilRequest(
+                    userId = userId,
+                    peso = peso,
+                    altura = altura,
+                    oposicionId = oposicionId,
+                    nuevasMarcas = nuevasMarcas,
+                    nombre = nombre,
+                    avatarUrl = avatarUrl
+                )
                 val response = RetrofitClient.usuarioApi.actualizarPerfil("Bearer $token", body)
                 if (response.ok) {
                     _uiState.update {

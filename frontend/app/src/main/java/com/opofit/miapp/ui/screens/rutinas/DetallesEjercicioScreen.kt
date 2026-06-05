@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 fun DetallesEjercicioScreen(
     ejercicioNombre: String,
     series: Int = 0,
-    repeticiones: Int = 0,
+    repeticiones: Double = 0.0,
     descanso: Int = 0,
     videoUrl: String? = null,
     onNavigateBack: () -> Unit
@@ -87,8 +87,13 @@ fun DetallesEjercicioScreen(
                         )
                     }
                     if (repeticiones > 0) {
+                        val repsText = if (repeticiones == repeticiones.toLong().toDouble()) {
+                            repeticiones.toLong().toString()
+                        } else {
+                            String.format("%.1f", repeticiones)
+                        }
                         Text(
-                            text = "Repeticiones: $repeticiones",
+                            text = "Repeticiones: $repsText",
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }

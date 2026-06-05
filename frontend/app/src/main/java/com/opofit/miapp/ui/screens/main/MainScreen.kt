@@ -64,6 +64,7 @@ import com.opofit.miapp.ui.screens.home.HomeScreen
 import com.opofit.miapp.ui.screens.perfil.PerfilScreen
 import com.opofit.miapp.ui.screens.rutinas.RutinasScreen
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
+import com.opofit.miapp.utils.FitnessMode
 import kotlinx.coroutines.launch
 
 private sealed class BottomTab(
@@ -106,6 +107,8 @@ fun MainScreen(
     val currentDestination = navBackStackEntry?.destination
 
     val authState by authViewModel.uiState.collectAsState()
+    val esFitness = FitnessMode.isFitness(authState.modoUso)
+    val planOposicionId = FitnessMode.planOposicionId(authState.oposicionId, authState.modoUso)
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -150,7 +153,7 @@ fun MainScreen(
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                "Cuenta OpoFit",
+                                if (esFitness) "Modo fitness" else "Cuenta OpoFit",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -210,29 +213,33 @@ fun MainScreen(
                         onClick = { runAndClose(onNavigateToGps) },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                     )
-                    NavigationDrawerItem(
-                        label = { Text("Simulacro") },
-                        icon = { Icon(Icons.Filled.Timer, null) },
-                        selected = false,
-                        onClick = { runAndClose(onNavigateToSimulacro) },
-                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                    )
+                    if (!esFitness) {
+                        NavigationDrawerItem(
+                            label = { Text("Simulacro") },
+                            icon = { Icon(Icons.Filled.Timer, null) },
+                            selected = false,
+                            onClick = { runAndClose(onNavigateToSimulacro) },
+                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        )
+                    }
 
-                    DrawerSectionLabel("Social y oposición")
-                    NavigationDrawerItem(
-                        label = { Text("Info oposición") },
-                        icon = { Icon(Icons.Filled.Info, null) },
-                        selected = false,
-                        onClick = { runAndClose(onNavigateToInfoOposicion) },
-                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                    )
-                    NavigationDrawerItem(
-                        label = { Text("Ranking") },
-                        icon = { Icon(Icons.Filled.Leaderboard, null) },
-                        selected = false,
-                        onClick = { runAndClose(onNavigateToRanking) },
-                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                    )
+                    DrawerSectionLabel(if (esFitness) "Social" else "Social y oposición")
+                    if (!esFitness) {
+                        NavigationDrawerItem(
+                            label = { Text("Info oposición") },
+                            icon = { Icon(Icons.Filled.Info, null) },
+                            selected = false,
+                            onClick = { runAndClose(onNavigateToInfoOposicion) },
+                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        )
+                        NavigationDrawerItem(
+                            label = { Text("Ranking") },
+                            icon = { Icon(Icons.Filled.Leaderboard, null) },
+                            selected = false,
+                            onClick = { runAndClose(onNavigateToRanking) },
+                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        )
+                    }
                     NavigationDrawerItem(
                         label = { Text("Comunidad") },
                         icon = { Icon(Icons.Filled.Groups, null) },
@@ -320,7 +327,8 @@ fun MainScreen(
                         onNavigateToMisDispositivos = onNavigateToMisDispositivos,
                         onLogout = onLogout,
                         userName = authState.userName,
-                        oposicionId = authState.oposicionId ?: 1
+                        oposicionId = planOposicionId,
+                        esFitness = esFitness
                     )
                 }
 
@@ -340,7 +348,9 @@ fun MainScreen(
                     PerfilScreen(
                         authViewModel = authViewModel,
                         onNavigateBack = { navigateToTab(BottomTab.Inicio.route) },
-                        onNavigateToEditarPerfil = onNavigateToEditarPerfil
+                        onNavigateToEditarPerfil = onNavigateToEditarPerfil,
+                        onNavigateToAjustes = onNavigateToAjustes,
+                        onNavigateToComunidad = onNavigateToComunidad
                     )
                 }
 

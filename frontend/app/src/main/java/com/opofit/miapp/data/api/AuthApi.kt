@@ -6,7 +6,9 @@ import com.opofit.miapp.data.models.GoogleLoginRequest
 import com.opofit.miapp.data.models.FirebaseLoginRequest
 import com.opofit.miapp.data.models.FirebaseRegisterRequest
 import com.opofit.miapp.data.responsemodels.AuthResponse
+import com.opofit.miapp.data.responsemodels.CambiarPasswordRequest
 import com.opofit.miapp.data.responsemodels.MeResponse
+import com.opofit.miapp.data.responsemodels.OkAuthResponse
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Body
@@ -34,4 +36,10 @@ interface AuthApi {
 
     @GET("/api/auth/me")
     suspend fun me(@Header("Authorization") token: String): MeResponse
+
+    @POST("/api/auth/cambiar-password")
+    suspend fun cambiarPassword(
+        @Header("Authorization") token: String,
+        @Body body: CambiarPasswordRequest
+    ): OkAuthResponse
 }

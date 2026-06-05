@@ -47,6 +47,7 @@ app.use('/api/analisis', require('./src/routes/AnalisisRoute'));
 app.use('/api/logros', require('./src/routes/LogrosRoute'));
 app.use('/api/integraciones', require('./src/routes/IntegracionesRoute'));
 app.use('/api/amigos', require('./src/routes/AmigosRoute'));
+app.use('/api/comunidad', require('./src/routes/ComunidadRoute'));
 app.use('/api/premium', require('./src/routes/PremiumRoute'));
 app.use('/api/notifications', require('./src/routes/NotificationRoute'));
 app.use('/api/admin', require('./src/routes/AdminRoute'));

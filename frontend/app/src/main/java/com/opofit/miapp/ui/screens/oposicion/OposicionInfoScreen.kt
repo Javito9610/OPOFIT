@@ -23,6 +23,7 @@ import com.opofit.miapp.data.responsemodels.Oposicion
 import com.opofit.miapp.data.responsemodels.PruebaOposicion
 import kotlinx.coroutines.flow.first
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
+import com.opofit.miapp.utils.FitnessMode
 import com.opofit.miapp.utils.UrlOpener
 import com.opofit.miapp.utils.Units
 import kotlinx.coroutines.flow.collectLatest
@@ -35,7 +36,8 @@ fun OposicionInfoScreen(
     onNavigatePremium: () -> Unit = {}
 ) {
     val authState by authViewModel.uiState.collectAsState()
-    val oposicionId = authState.oposicionId ?: 1
+    val esFitness = FitnessMode.isFitness(authState.modoUso)
+    val oposicionId = FitnessMode.planOposicionId(authState.oposicionId, authState.modoUso)
     val genero = authState.genero ?: "HOMBRE"
 
     val context = LocalContext.current
@@ -100,7 +102,7 @@ fun OposicionInfoScreen(
         }
     }
 
-    val nombreOposicion = oposicion?.nombre ?: "Info Oposición"
+    val nombreOposicion = if (esFitness) "Modo fitness" else (oposicion?.nombre ?: "Info Oposición")
 
     Scaffold(
         topBar = {
@@ -541,19 +543,37 @@ private fun NoticiasTab(
         }
 
         
-        if (noticiasRss.isEmpty()) {
-            item {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text("📰", style = MaterialTheme.typography.displayMedium)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "No hay noticias disponibles en este momento.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+    }
+}
+
+@Composable
+private fun FitnessInfoContent(modifier: Modifier = Modifier) {
+    LazyColumn(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            Text(
+                "Modo fitness",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                "Usas OpoFit como app de entrenamiento sin oposición. Tienes acceso al plan semanal, rutas GPS, rutinas libres, comunidad, grupos y gente cerca.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        item {
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("💪 Plan y entrenos", fontWeight = FontWeight.SemiBold)
+                    Text("Plan personalizado de fuerza, resistencia y velocidad sin pruebas oficiales.")
+                    Text("🏃 Rutas GPS", fontWeight = FontWeight.SemiBold)
+                    Text("Registra carreras y rutas con mapa y exportación.")
+                    Text("👥 Comunidad", fontWeight = FontWeight.SemiBold)
+                    Text("Grupos, chat, quedadas y buscar usuarios fitness cerca de ti.")
                 }
             }
         }

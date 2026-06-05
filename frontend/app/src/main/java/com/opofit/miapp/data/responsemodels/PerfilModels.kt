@@ -5,13 +5,43 @@ data class MarcaActualizar(
     val valor: Double
 )
 
+data class PerfilUsuarioData(
+    val nombre: String? = null,
+    val email: String? = null,
+    val peso: Double? = null,
+    val altura: Double? = null,
+    val imc: Double? = null,
+    val avatarUrl: String? = null,
+    val modoUso: String? = null,
+    val oposicionId: Int? = null,
+    val oposicionNombre: String? = null,
+    val ubicacionVisible: Boolean = false
+)
+
+data class PerfilUsuarioResponse(
+    val ok: Boolean,
+    val data: PerfilUsuarioData? = null,
+    val msg: String? = null
+)
+
 data class ActualizarPerfilRequest(
     val userId: Int,
-    val peso: Double,
-    val altura: Double,
-    val oposicionId: Int,
-    val nuevasMarcas: List<MarcaActualizar>
+    val peso: Double? = null,
+    val altura: Double? = null,
+    val oposicionId: Int? = null,
+    val nuevasMarcas: List<MarcaActualizar> = emptyList(),
+    val nombre: String? = null,
+    val avatarUrl: String? = null,
+    val modoUso: String? = null,
+    val ubicacionVisible: Boolean? = null
 )
+
+data class CambiarPasswordRequest(
+    val passwordActual: String,
+    val passwordNueva: String
+)
+
+data class OkAuthResponse(val ok: Boolean, val msg: String? = null)
 
 data class ActualizarPerfilResponse(
     val ok: Boolean,

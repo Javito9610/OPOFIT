@@ -13,9 +13,12 @@ const listar = async (req, res) => {
 const buscar = async (req, res) => {
   try {
     const nombre = (req.query.nombre || '').trim();
-    const idOposicion = Number(req.query.idOposicion);
-    if (!nombre || !idOposicion) {
-      return res.status(400).json({ ok: false, msg: 'Indica nombre e idOposicion' });
+    const idOposicionRaw = req.query.idOposicion;
+    const idOposicion = idOposicionRaw == null || idOposicionRaw === ''
+      ? null
+      : Number(idOposicionRaw);
+    if (!nombre) {
+      return res.status(400).json({ ok: false, msg: 'Indica nombre' });
     }
     const data = await AmigosService.buscarPorNombre(req.usuario.id, nombre, idOposicion);
     res.json({ ok: true, data });

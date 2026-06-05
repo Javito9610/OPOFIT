@@ -4,10 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import coil.compose.AsyncImage
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
@@ -108,13 +110,15 @@ fun StatCard(
 fun ProfileAvatar(
     name: String,
     modifier: Modifier = Modifier,
-    sizeDp: Int = 56
+    sizeDp: Int = 56,
+    avatarUrl: String? = null
 ) {
     val initials = name.trim().split(" ")
         .filter { it.isNotBlank() }
         .take(2)
         .joinToString("") { it.first().uppercaseChar().toString() }
         .ifBlank { "?" }
+    val url = avatarUrl?.trim()?.takeIf { it.startsWith("http") }
     Surface(
         modifier = modifier
             .size(sizeDp.dp)
@@ -122,12 +126,20 @@ fun ProfileAvatar(
         color = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = initials,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+            if (url != null) {
+                AsyncImage(
+                    model = url,
+                    contentDescription = "Foto de perfil",
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Text(
+                    text = initials,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }

@@ -6,7 +6,7 @@ data class EjercicioRutina(
     val video_url: String?,
     val unidad: String? = null,
     val series: Int,
-    val repeticiones: Int,
+    val repeticiones: Double,
     val descanso: Int
 )
 
@@ -27,11 +27,11 @@ data class EjercicioPlan(
     val categoria: String? = null,
     val pilar: String? = null,
     val series: Int,
-    val repeticiones: Int,
+    val repeticiones: Double,
     val descanso: Int,
     val unidad: String? = null,
     val series_base: Int? = null,
-    val repeticiones_base: Int? = null,
+    val repeticiones_base: Double? = null,
     val personalizado: Boolean = false,
     val motivo_ajuste: String? = null,
     val sustituido: Boolean = false,

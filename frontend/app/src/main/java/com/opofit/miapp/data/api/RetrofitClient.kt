@@ -47,4 +47,5 @@ object RetrofitClient {
     val historialAvanzadoApi: HistorialAvanzadoApi by lazy { retrofit.create(HistorialAvanzadoApi::class.java) }
     val integracionesApi: IntegracionesApi by lazy { retrofit.create(IntegracionesApi::class.java) }
     val mapasApi: MapasApi by lazy { retrofit.create(MapasApi::class.java) }
+    val comunidadApi: ComunidadApi by lazy { retrofit.create(ComunidadApi::class.java) }
 }

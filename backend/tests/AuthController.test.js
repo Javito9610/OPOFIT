@@ -46,7 +46,8 @@ describe('AuthController', () => {
         password: '123456',
         genero: 'HOMBRE',
         peso: 70,
-        altura: 175
+        altura: 175,
+        oposiciones_id_oposicion: 1
       };
       AuthService.registrar.mockResolvedValue({
         userId: 1
@@ -65,7 +66,8 @@ describe('AuthController', () => {
         password: '123456',
         genero: 'HOMBRE',
         peso: 70,
-        altura: 175
+        altura: 175,
+        oposiciones_id_oposicion: 1
       };
       AuthService.registrar.mockRejectedValue(new Error('Duplicate entry'));
       await registrar(req, res);
@@ -82,7 +84,8 @@ describe('AuthController', () => {
         password: '123456',
         genero: 'HOMBRE',
         peso: 70,
-        altura: 175
+        altura: 175,
+        oposiciones_id_oposicion: 1
       };
       AuthService.registrar.mockRejectedValue(new Error('Connection refused'));
       await registrar(req, res);

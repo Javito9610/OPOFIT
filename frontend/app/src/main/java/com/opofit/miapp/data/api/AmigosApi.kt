@@ -26,7 +26,7 @@ interface AmigosApi {
     suspend fun buscar(
         @Header("Authorization") token: String,
         @Query("nombre") nombre: String,
-        @Query("idOposicion") idOposicion: Int
+        @Query("idOposicion") idOposicion: Int? = null
     ): BuscarUsuariosResponse
 
     @POST("/api/amigos/solicitar")

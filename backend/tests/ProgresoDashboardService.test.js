@@ -144,4 +144,21 @@ describe('DashboardService.obtenerResumen', () => {
     expect(r.minutosSemana).toBe(60);
     expect(r.graficaSemanal).toHaveLength(7);
   });
+
+  test('modo fitness omite ranking y simulacro', async () => {
+    db.query
+      .mockResolvedValueOnce([[{ sesiones: 1, minutos: 30 }]])
+      .mockResolvedValueOnce([[{ sesiones: 5 }]])
+      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([[{ nombre: 'Opo 1' }]]);
+    db.query.mockResolvedValueOnce([[]]);
+    const r = await DashboardService.obtenerResumen(1, 1, { esFitness: true, genero: 'HOMBRE' });
+    expect(r.modoUso).toBe('FITNESS');
+    expect(r.oposicionNombre).toBe('Modo fitness');
+    expect(r.ultimoSimulacro).toBeNull();
+    expect(r.rankingPosicion).toBeNull();
+    expect(RutinaService.calcularNotaYNivel).not.toHaveBeenCalled();
+    expect(RankingService.posicionUsuario).not.toHaveBeenCalled();
+  });
 });

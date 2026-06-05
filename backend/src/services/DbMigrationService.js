@@ -399,6 +399,91 @@ class DbMigrationService {
         'VARCHAR(64) NULL'
       );
 
+      await DbMigrationService.addColumnIfMissing('usuarios', 'avatar_url', 'VARCHAR(512) NULL');
+      if (!(await DbMigrationService.columnExists('usuarios', 'modo_uso'))) {
+        await db.query(
+          `ALTER TABLE usuarios ADD COLUMN modo_uso ENUM('OPOSITOR','FITNESS') NOT NULL DEFAULT 'OPOSITOR'`
+        );
+        console.log('[migrate] usuarios.modo_uso añadida');
+      }
+      await DbMigrationService.addColumnIfMissing('usuarios', 'ubicacion_lat', 'DECIMAL(10,7) NULL');
+      await DbMigrationService.addColumnIfMissing('usuarios', 'ubicacion_lng', 'DECIMAL(10,7) NULL');
+      await DbMigrationService.addColumnIfMissing('usuarios', 'ubicacion_visible', 'TINYINT(1) NOT NULL DEFAULT 0');
+      await DbMigrationService.addColumnIfMissing('usuarios', 'ubicacion_actualizada', 'DATETIME NULL');
+
+      if (!(await DbMigrationService.tableExists('grupos_comunidad'))) {
+        await db.query(`
+          CREATE TABLE grupos_comunidad (
+            id_grupo INT NOT NULL AUTO_INCREMENT,
+            nombre VARCHAR(120) NOT NULL,
+            descripcion VARCHAR(500) NULL,
+            id_oposicion INT NULL,
+            creador_id INT NOT NULL,
+            creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_grupo),
+            INDEX idx_grupo_opo (id_oposicion),
+            CONSTRAINT fk_gc_opo FOREIGN KEY (id_oposicion) REFERENCES oposiciones (id_oposicion),
+            CONSTRAINT fk_gc_creador FOREIGN KEY (creador_id) REFERENCES usuarios (id_usuario)
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla grupos_comunidad creada');
+      }
+
+      if (!(await DbMigrationService.tableExists('grupo_miembros'))) {
+        await db.query(`
+          CREATE TABLE grupo_miembros (
+            id_miembro INT NOT NULL AUTO_INCREMENT,
+            id_grupo INT NOT NULL,
+            id_usuario INT NOT NULL,
+            rol ENUM('ADMIN','MIEMBRO') NOT NULL DEFAULT 'MIEMBRO',
+            unido_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_miembro),
+            UNIQUE KEY uk_grupo_usuario (id_grupo, id_usuario),
+            CONSTRAINT fk_gm_grupo FOREIGN KEY (id_grupo) REFERENCES grupos_comunidad (id_grupo) ON DELETE CASCADE,
+            CONSTRAINT fk_gm_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario)
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla grupo_miembros creada');
+      }
+
+      if (!(await DbMigrationService.tableExists('grupo_mensajes'))) {
+        await db.query(`
+          CREATE TABLE grupo_mensajes (
+            id_mensaje INT NOT NULL AUTO_INCREMENT,
+            id_grupo INT NOT NULL,
+            id_usuario INT NOT NULL,
+            texto VARCHAR(1000) NOT NULL,
+            enviado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_mensaje),
+            INDEX idx_gmsg_grupo (id_grupo),
+            CONSTRAINT fk_gmsg_grupo FOREIGN KEY (id_grupo) REFERENCES grupos_comunidad (id_grupo) ON DELETE CASCADE,
+            CONSTRAINT fk_gmsg_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario)
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla grupo_mensajes creada');
+      }
+
+      if (!(await DbMigrationService.tableExists('quedadas'))) {
+        await db.query(`
+          CREATE TABLE quedadas (
+            id_quedada INT NOT NULL AUTO_INCREMENT,
+            id_grupo INT NOT NULL,
+            creador_id INT NOT NULL,
+            titulo VARCHAR(120) NOT NULL,
+            descripcion VARCHAR(500) NULL,
+            fecha_hora DATETIME NOT NULL,
+            ubicacion_lat DECIMAL(10,7) NULL,
+            ubicacion_lng DECIMAL(10,7) NULL,
+            creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_quedada),
+            INDEX idx_quedada_grupo (id_grupo),
+            CONSTRAINT fk_q_grupo FOREIGN KEY (id_grupo) REFERENCES grupos_comunidad (id_grupo) ON DELETE CASCADE,
+            CONSTRAINT fk_q_creador FOREIGN KEY (creador_id) REFERENCES usuarios (id_usuario)
+          ) ENGINE=InnoDB
+        `);
+        console.log('[migrate] tabla quedadas creada');
+      }
+
       const EjerciciosCatalogoService = require('./EjerciciosCatalogoService');
       await EjerciciosCatalogoService.seedCatalogoAmpliado();
       const EjerciciosEntornoCatalogo = require('./EjerciciosEntornoCatalogo');

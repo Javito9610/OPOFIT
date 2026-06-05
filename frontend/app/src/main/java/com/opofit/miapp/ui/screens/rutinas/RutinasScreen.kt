@@ -62,7 +62,9 @@ import com.opofit.miapp.ui.components.SectionHeader
 import java.time.YearMonth
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasViewModel
+import com.opofit.miapp.utils.FitnessMode
 import com.opofit.miapp.utils.MapaEntrenoNav
+import com.opofit.miapp.utils.PrescripcionFormat
 import com.opofit.miapp.utils.Units
 import com.opofit.miapp.utils.UrlOpener
 import kotlinx.coroutines.flow.collectLatest
@@ -91,7 +93,8 @@ fun RutinasScreen(
     }
 
     val userId = authState.userId ?: 0
-    val oposicionId = authState.oposicionId ?: 1
+    val esFitness = FitnessMode.isFitness(authState.modoUso)
+    val oposicionId = FitnessMode.planOposicionId(authState.oposicionId, authState.modoUso)
 
     LaunchedEffect(userId) {
         if (userId > 0) {
@@ -477,7 +480,7 @@ fun RutinasScreen(
                                                             )
                                                             Column(Modifier.weight(1f)) {
                                                                 Text(
-                                                                    "${ej.series}×${ej.repeticiones} ${ej.nombre}$adj",
+                                                                    "${ej.series}×${PrescripcionFormat.formatRepeticiones(ej.repeticiones, ej.unidad, ej.nombre)} ${ej.nombre}$adj",
                                                                     style = MaterialTheme.typography.bodySmall,
                                                                     color = if (ej.personalizado || ej.sustituido)
                                                                         MaterialTheme.colorScheme.primary
@@ -613,7 +616,7 @@ fun RutinasScreen(
                                                             modifier = Modifier.weight(1f)
                                                         )
                                                         Text(
-                                                            text = "${ejercicio.series}x${ejercicio.repeticiones}",
+                                                            text = "${ejercicio.series}x${PrescripcionFormat.formatRepeticiones(ejercicio.repeticiones, ejercicio.unidad, ejercicio.nombre)}",
                                                             style = MaterialTheme.typography.bodyMedium,
                                                             color = MaterialTheme.colorScheme.secondary
                                                         )

@@ -61,30 +61,50 @@ describe('DashboardController', () => {
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
-  test('400 sin idOposicion ni opo en perfil', async () => {
-    db.query.mockResolvedValue([[{ oposiciones_id_oposicion: null }]]);
+  test('400 sin idOposicion ni opo en perfil (opositor)', async () => {
+    db.query.mockResolvedValue([[{ oposiciones_id_oposicion: null, modo_uso: 'OPOSITOR', genero: 'HOMBRE' }]]);
     const req = mockReq({ usuario: { id: 1 }, query: {} });
     const res = mockRes();
     await DashboardController.getResumen(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
+  test('200 modo FITNESS sin oposicion', async () => {
+    db.query.mockResolvedValue([[{ oposiciones_id_oposicion: null, modo_uso: 'FITNESS', genero: 'HOMBRE' }]]);
+    DashboardService.obtenerResumen.mockResolvedValue({ modoUso: 'FITNESS' });
+    const req = mockReq({ usuario: { id: 1 }, query: {} });
+    const res = mockRes();
+    await DashboardController.getResumen(req, res);
+    expect(res.json).toHaveBeenCalledWith({ ok: true, data: { modoUso: 'FITNESS' } });
+    expect(DashboardService.obtenerResumen).toHaveBeenCalledWith(1, 1, {
+      esFitness: true,
+      genero: 'HOMBRE'
+    });
+  });
+
   test('200 con datos usando opo del query', async () => {
+    db.query.mockResolvedValue([[{ oposiciones_id_oposicion: 1, modo_uso: 'OPOSITOR', genero: 'HOMBRE' }]]);
     DashboardService.obtenerResumen.mockResolvedValue({ rachaDias: 5 });
     const req = mockReq({ usuario: { id: 1 }, query: { idOposicion: '3' } });
     const res = mockRes();
     await DashboardController.getResumen(req, res);
     expect(res.json).toHaveBeenCalledWith({ ok: true, data: { rachaDias: 5 } });
-    expect(DashboardService.obtenerResumen).toHaveBeenCalledWith(1, 3);
+    expect(DashboardService.obtenerResumen).toHaveBeenCalledWith(1, 3, {
+      esFitness: false,
+      genero: 'HOMBRE'
+    });
   });
 
   test('200 con datos usando opo del perfil', async () => {
-    db.query.mockResolvedValue([[{ oposiciones_id_oposicion: 7 }]]);
+    db.query.mockResolvedValue([[{ oposiciones_id_oposicion: 7, modo_uso: 'OPOSITOR', genero: 'HOMBRE' }]]);
     DashboardService.obtenerResumen.mockResolvedValue({ ok: 1 });
     const req = mockReq({ usuario: { id: 1 }, query: {} });
     const res = mockRes();
     await DashboardController.getResumen(req, res);
-    expect(DashboardService.obtenerResumen).toHaveBeenCalledWith(1, 7);
+    expect(DashboardService.obtenerResumen).toHaveBeenCalledWith(1, 7, {
+      esFitness: false,
+      genero: 'HOMBRE'
+    });
   });
 
   test('500 si servicio falla', async () => {

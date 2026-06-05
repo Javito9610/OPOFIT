@@ -49,6 +49,7 @@ import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.MarcaActualizar
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.PerfilViewModel
+import com.opofit.miapp.utils.FitnessMode
 import com.opofit.miapp.utils.Units
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.pow
@@ -64,9 +65,12 @@ fun EditarPerfilScreen(
     val perfilState by perfilViewModel.uiState.collectAsState()
 
     val userId = authState.userId ?: 0
-    val oposicionId = authState.oposicionId ?: 1
+    val esFitness = FitnessMode.isFitness(authState.modoUso)
+    val oposicionId = FitnessMode.planOposicionId(authState.oposicionId, authState.modoUso)
     val genero = authState.genero ?: "HOMBRE"
 
+    var nombre by remember { mutableStateOf(authState.userName.orEmpty()) }
+    var avatarUrl by remember { mutableStateOf("") }
     var peso by remember { mutableStateOf("") }
     var altura by remember { mutableStateOf("") }
 
@@ -109,8 +113,8 @@ fun EditarPerfilScreen(
         } else "-"
     }
 
-    LaunchedEffect(oposicionId, genero) {
-        perfilViewModel.cargarInfoPruebas(oposicionId, genero)
+    LaunchedEffect(oposicionId, genero, esFitness) {
+        if (!esFitness) perfilViewModel.cargarInfoPruebas(oposicionId, genero)
     }
 
     LaunchedEffect(authState.peso, unitPeso) {
@@ -159,6 +163,28 @@ fun EditarPerfilScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
+                Text("Perfil público", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            }
+            item {
+                OutlinedTextField(
+                    value = nombre,
+                    onValueChange = { nombre = it },
+                    label = { Text("Nombre") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            }
+            item {
+                OutlinedTextField(
+                    value = avatarUrl,
+                    onValueChange = { avatarUrl = it },
+                    label = { Text("URL foto de perfil") },
+                    placeholder = { Text("https://…") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            }
+            item {
                 Text(
                     text = "Datos físicos",
                     style = MaterialTheme.typography.titleMedium,
@@ -204,6 +230,7 @@ fun EditarPerfilScreen(
                 }
             }
 
+            if (!esFitness) {
             item {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -281,8 +308,9 @@ fun EditarPerfilScreen(
                     Text("+ Añadir marca")
                 }
             }
+            }
 
-            if (perfilState.nuevoNivel != null || perfilState.nuevaNota != null) {
+            if (!esFitness && (perfilState.nuevoNivel != null || perfilState.nuevaNota != null)) {
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -324,7 +352,11 @@ fun EditarPerfilScreen(
                                 val v = row.valor.toDoubleOrNull() ?: return@mapNotNull null
                                 MarcaActualizar(id, v)
                             }
-                            perfilViewModel.actualizarPerfil(userId, p, a, oposicionId, nuevasMarcas)
+                            perfilViewModel.actualizarPerfil(
+                                userId, p, a, oposicionId, nuevasMarcas,
+                                nombre = nombre.trim().ifBlank { null },
+                                avatarUrl = avatarUrl.trim().ifBlank { null }
+                            )
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {

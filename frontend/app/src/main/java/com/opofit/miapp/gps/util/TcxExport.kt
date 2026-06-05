@@ -31,7 +31,7 @@ object TcxExport {
         val tipo: String,
         val durationSec: Int?,
         val distanceM: Int?,
-        val repeticiones: Int?,
+        val repeticiones: Double?,
         val descansoSec: Int
     )
 
@@ -40,13 +40,13 @@ object TcxExport {
             val tipo = detectarTipo(ej.nombre, ej.pilar)
             val unidad = ej.unidad?.lowercase()
             val durSec = when {
-                unidad == "min" -> ej.repeticiones * 60
-                unidad == "s" || unidad == "seg" -> ej.repeticiones
+                unidad == "min" -> (ej.repeticiones * 60).toInt()
+                unidad == "s" || unidad == "seg" -> ej.repeticiones.toInt()
                 else -> null
             }
             val distM = when {
-                unidad == "km" -> ej.repeticiones * 1000
-                unidad == "m" -> ej.repeticiones
+                unidad == "km" -> (ej.repeticiones * 1000).toInt()
+                unidad == "m" -> ej.repeticiones.toInt()
                 else -> null
             }
             WorkoutStep(

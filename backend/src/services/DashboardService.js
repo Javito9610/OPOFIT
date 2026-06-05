@@ -25,7 +25,8 @@ class DashboardService {
     return racha;
   }
 
-  static async obtenerResumen(userId, idOposicion) {
+  static async obtenerResumen(userId, idOposicion, opts = {}) {
+    const esFitness = !!opts.esFitness;
     const [[semana]] = await db.query(
       `SELECT COUNT(*) AS sesiones,
               COALESCE(SUM(duracion_oficial), 0) AS minutos
@@ -54,31 +55,45 @@ class DashboardService {
        LIMIT 1`,
       [userId]
     );
-    const [[ultimoSim]] = await db.query(
-      `SELECT nota_media, fecha
-       FROM simulacros
-       WHERE usuarios_id_usuario = ? AND oposiciones_id_oposicion = ?
-       ORDER BY fecha DESC
-       LIMIT 1`,
-      [userId, idOposicion]
-    );
+    let ultimoSim = null;
+    if (!esFitness) {
+      const [[simRow]] = await db.query(
+        `SELECT nota_media, fecha
+         FROM simulacros
+         WHERE usuarios_id_usuario = ? AND oposiciones_id_oposicion = ?
+         ORDER BY fecha DESC
+         LIMIT 1`,
+        [userId, idOposicion]
+      );
+      ultimoSim = simRow;
+    }
     const [[opo]] = await db.query(
       'SELECT nombre FROM oposiciones WHERE id_oposicion = ?',
       [idOposicion]
     );
-    const nivelInfo = await RutinaService.calcularNotaYNivel(userId, idOposicion);
-    const ranking = await RankingService.posicionUsuario(userId, idOposicion);
+    const nivelInfo = esFitness
+      ? {
+          notaMedia: null,
+          nivelSugerido: 'BASICO',
+          genero: opts.genero,
+          totalPruebas: 0,
+          pruebasCompletadas: 0,
+          pruebasFaltantes: 0
+        }
+      : await RutinaService.calcularNotaYNivel(userId, idOposicion);
+    const ranking = esFitness
+      ? { posicion: null, total: null, notaMedia: null }
+      : await RankingService.posicionUsuario(userId, idOposicion);
     const graficaSemanal = await DashboardService.obtenerGraficaSemanal(userId);
 
     let entrenoHoy = null;
-    if (
-      nivelInfo.nivelSugerido &&
-      (nivelInfo.pruebasFaltantes ?? 0) === 0 &&
-      nivelInfo.genero
-    ) {
+    const puedePlan =
+      esFitness || (nivelInfo.nivelSugerido && (nivelInfo.pruebasFaltantes ?? 0) === 0 && nivelInfo.genero);
+    if (puedePlan && nivelInfo.genero) {
       const premium = await PremiumService.getEstadoPremium(userId);
-      const nivelPlan =
-        !premium.esPremium && nivelInfo.nivelSugerido !== 'BASICO'
+      const nivelPlan = esFitness
+        ? 'BASICO'
+        : !premium.esPremium && nivelInfo.nivelSugerido !== 'BASICO'
           ? 'BASICO'
           : nivelInfo.nivelSugerido;
       let plan = null;
@@ -108,7 +123,8 @@ class DashboardService {
     }
 
     return {
-      oposicionNombre: opo?.nombre || null,
+      modoUso: esFitness ? 'FITNESS' : 'OPOSITOR',
+      oposicionNombre: esFitness ? 'Modo fitness' : (opo?.nombre || null),
       sesionesSemana: Number(semana?.sesiones || 0),
       minutosSemana: Number(semana?.minutos || 0),
       sesionesTotales: Number(total?.sesiones || 0),

@@ -53,8 +53,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.opofit.miapp.data.api.RetrofitClient
+import com.opofit.miapp.data.local.TokenManager
+import com.opofit.miapp.data.responsemodels.CambiarPasswordRequest
 import com.opofit.miapp.ui.viewmodels.AjustesViewModel
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,6 +85,12 @@ fun AjustesScreen(
     var recordatorioActivo by remember { mutableStateOf(true) }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val tokenManager = remember { TokenManager(context) }
+    val scope = rememberCoroutineScope()
+    var passActual by remember { mutableStateOf("") }
+    var passNueva by remember { mutableStateOf("") }
+    var passMsg by remember { mutableStateOf("") }
     var mostrarDialogoEliminar by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.unidadPeso, uiState.unidadDistancia) {
@@ -370,6 +383,49 @@ fun AjustesScreen(
                     ) {
                         Text("Gestionar dispositivos")
                     }
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Cambiar contraseña", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    OutlinedTextField(
+                        value = passActual,
+                        onValueChange = { passActual = it },
+                        label = { Text("Contraseña actual") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = passNueva,
+                        onValueChange = { passNueva = it },
+                        label = { Text("Nueva contraseña") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    if (passMsg.isNotBlank()) {
+                        Text(passMsg, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+                    }
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                try {
+                                    val token = tokenManager.getToken().first().orEmpty()
+                                    val r = RetrofitClient.retrofit.create(com.opofit.miapp.data.api.AuthApi::class.java)
+                                        .cambiarPassword("Bearer $token", CambiarPasswordRequest(passActual, passNueva))
+                                    passMsg = r.msg ?: if (r.ok) "Contraseña actualizada" else "Error"
+                                    if (r.ok) { passActual = ""; passNueva = "" }
+                                } catch (e: Exception) {
+                                    passMsg = e.message ?: "Error al cambiar contraseña"
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = passActual.length >= 4 && passNueva.length >= 6
+                    ) { Text("Actualizar contraseña") }
                 }
             }
 

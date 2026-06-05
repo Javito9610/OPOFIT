@@ -5,6 +5,14 @@ class AmigosService {
     return idA < idB ? [idA, idB] : [idB, idA];
   }
 
+  static puedenSerAmigos(usuarioA, usuarioB) {
+    const modoA = usuarioA?.modo_uso || 'OPOSITOR';
+    const modoB = usuarioB?.modo_uso || 'OPOSITOR';
+    if (modoA === 'FITNESS' && modoB === 'FITNESS') return true;
+    if (modoA === 'FITNESS' || modoB === 'FITNESS') return true;
+    return Number(usuarioA?.oposiciones_id_oposicion) === Number(usuarioB?.oposiciones_id_oposicion);
+  }
+
   static async listarAmigos(userId) {
     const [rows] = await db.query(
       `SELECT a.id_amistad, a.estado,
@@ -35,15 +43,15 @@ class AmigosService {
   static async enviarSolicitud(solicitanteId, receptorId) {
     if (solicitanteId === receptorId) throw new Error('NO_AUTO_AMISTAD');
     const [receptor] = await db.query(
-      'SELECT id_usuario, oposiciones_id_oposicion FROM usuarios WHERE id_usuario = ?',
+      'SELECT id_usuario, oposiciones_id_oposicion, modo_uso FROM usuarios WHERE id_usuario = ?',
       [receptorId]
     );
     if (!receptor?.length) throw new Error('USUARIO_NO_ENCONTRADO');
     const [yo] = await db.query(
-      'SELECT oposiciones_id_oposicion FROM usuarios WHERE id_usuario = ?',
+      'SELECT oposiciones_id_oposicion, modo_uso FROM usuarios WHERE id_usuario = ?',
       [solicitanteId]
     );
-    if (Number(yo[0].oposiciones_id_oposicion) !== Number(receptor[0].oposiciones_id_oposicion)) {
+    if (!AmigosService.puedenSerAmigos(yo[0], receptor[0])) {
       throw new Error('DISTINTA_OPOSICION');
     }
     const [a, b] = AmigosService.ordenPar(solicitanteId, receptorId);
@@ -71,14 +79,27 @@ class AmigosService {
   }
 
   static async buscarPorNombre(userId, nombre, idOposicion, limite = 20) {
+    const term = `%${nombre}%`;
+    if (!idOposicion) {
+      const [rows] = await db.query(
+        `SELECT u.id_usuario, u.nombre, u.perfil_publico, u.modo_uso
+         FROM usuarios u
+         WHERE u.modo_uso = 'FITNESS'
+           AND u.id_usuario != ?
+           AND u.nombre LIKE ?
+         LIMIT ?`,
+        [userId, term, limite]
+      );
+      return rows || [];
+    }
     const [rows] = await db.query(
-      `SELECT u.id_usuario, u.nombre, u.perfil_publico
+      `SELECT u.id_usuario, u.nombre, u.perfil_publico, u.modo_uso
        FROM usuarios u
        WHERE u.oposiciones_id_oposicion = ?
          AND u.id_usuario != ?
          AND u.nombre LIKE ?
        LIMIT ?`,
-      [idOposicion, userId, `%${nombre}%`, limite]
+      [idOposicion, userId, term, limite]
     );
     return rows || [];
   }

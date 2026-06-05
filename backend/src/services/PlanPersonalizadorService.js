@@ -301,6 +301,8 @@ module.exports = {
   ajustarEjercicio,
   construirResumen,
   personalizarPlan,
+  clampReps,
+  clampSeries,
   FACTOR_NIVEL,
   UMBRAL_DEBIL,
   UMBRAL_FUERTE

@@ -9,7 +9,8 @@ const base = {
   password: 'cualquiera',
   genero: 'MUJER',
   peso: 62,
-  altura: 168
+  altura: 168,
+  oposiciones_id_oposicion: 1
 };
 
 describe('RegistroValidator.validarRegistro: casos validos', () => {
@@ -25,6 +26,11 @@ describe('RegistroValidator.validarRegistro: casos validos', () => {
   test('limites de peso/altura incluidos', () => {
     expect(validarRegistro({ ...base, peso: 25, altura: 100 }).ok).toBe(true);
     expect(validarRegistro({ ...base, peso: 350, altura: 260 }).ok).toBe(true);
+  });
+  test('modo FITNESS no exige oposicion', () => {
+    const r = validarRegistro({ ...base, modo_uso: 'FITNESS' });
+    expect(r.ok).toBe(true);
+    expect(r.datos.modo_uso).toBe('FITNESS');
   });
 });
 
@@ -51,5 +57,12 @@ describe('RegistroValidator.validarRegistro: rechazos', () => {
     expect(validarRegistro({ ...base, altura: 30 }).ok).toBe(false);
     expect(validarRegistro({ ...base, altura: 300 }).ok).toBe(false);
     expect(validarRegistro({ ...base, altura: NaN }).ok).toBe(false);
+  });
+  test('OPOSITOR sin oposicion rechazado', () => {
+    const { oposiciones_id_oposicion, ...sinOpo } = base;
+    expect(validarRegistro({ ...sinOpo, modo_uso: 'OPOSITOR' }).ok).toBe(false);
+  });
+  test('modo_uso invalido rechazado', () => {
+    expect(validarRegistro({ ...base, modo_uso: 'OTRO' }).ok).toBe(false);
   });
 });

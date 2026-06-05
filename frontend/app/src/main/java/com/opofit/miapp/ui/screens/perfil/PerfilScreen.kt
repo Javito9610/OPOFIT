@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -41,13 +42,19 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.ui.components.ProfileAvatar
 import com.opofit.miapp.ui.components.StatCard
+import com.opofit.miapp.data.api.RetrofitClient
+import com.opofit.miapp.data.responsemodels.PerfilUsuarioData
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.PerfilViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasViewModel
 import com.opofit.miapp.data.local.TokenManager
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.ui.platform.LocalContext
 import com.opofit.miapp.utils.Units
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlin.math.pow
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,6 +63,8 @@ fun PerfilScreen(
     authViewModel: AuthViewModel,
     onNavigateBack: () -> Unit,
     onNavigateToEditarPerfil: () -> Unit,
+    onNavigateToAjustes: () -> Unit = {},
+    onNavigateToComunidad: () -> Unit = {},
     perfilViewModel: PerfilViewModel = viewModel(),
     rutinasViewModel: RutinasViewModel = viewModel()
 ) {
@@ -79,13 +88,23 @@ fun PerfilScreen(
     }
 
     val userId = authState.userId ?: 0
-    val oposicionId = authState.oposicionId ?: 1
+    val oposicionId = authState.oposicionId
     val genero = authState.genero ?: "HOMBRE"
+    var perfilData by remember { mutableStateOf<PerfilUsuarioData?>(null) }
+    val esFitness = perfilData?.modoUso?.equals("FITNESS", true) == true
 
     LaunchedEffect(userId) {
         if (userId > 0) {
-            perfilViewModel.cargarMarcasUsuario(userId, oposicionId)
-            rutinasViewModel.cargarRutina(userId, oposicionId)
+            if (oposicionId != null) {
+                perfilViewModel.cargarMarcasUsuario(userId, oposicionId)
+                rutinasViewModel.cargarRutina(userId, oposicionId)
+            }
+            try {
+                val token = tokenManager.getToken().first().orEmpty()
+                if (token.isNotBlank()) {
+                    perfilData = RetrofitClient.usuarioApi.obtenerPerfil("Bearer $token").data
+                }
+            } catch (_: Exception) { }
         }
     }
 
@@ -137,20 +156,44 @@ fun PerfilScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(14.dp)
                             ) {
-                                ProfileAvatar(authState.userName ?: "Usuario", sizeDp = 56)
+                                ProfileAvatar(
+                                    perfilData?.nombre ?: authState.userName ?: "Usuario",
+                                    sizeDp = 64,
+                                    avatarUrl = perfilData?.avatarUrl
+                                )
                                 Column {
                                     Text(
-                                        text = authState.userName ?: "Usuario",
+                                        text = perfilData?.nombre ?: authState.userName ?: "Usuario",
                                         style = MaterialTheme.typography.headlineSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
                                     Text(
-                                        text = authState.userEmail ?: "",
+                                        text = perfilData?.email ?: authState.userEmail ?: "",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                                     )
+                                    AssistChip(
+                                        onClick = {},
+                                        label = {
+                                            Text(
+                                                if (esFitness) "Modo fitness" else (perfilData?.oposicionNombre ?: "Opositor")
+                                            )
+                                        }
+                                    )
                                 }
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedButton(onClick = onNavigateToEditarPerfil, modifier = Modifier.weight(1f)) {
+                                    Icon(Icons.Filled.Edit, null, Modifier.size(16.dp))
+                                    Text(" Editar", maxLines = 1)
+                                }
+                                OutlinedButton(onClick = onNavigateToAjustes, modifier = Modifier.weight(1f)) {
+                                    Text("Ajustes", maxLines = 1)
+                                }
+                            }
+                            OutlinedButton(onClick = onNavigateToComunidad, modifier = Modifier.fillMaxWidth()) {
+                                Text("Comunidad y grupos")
                             }
 
                             val peso = authState.peso
@@ -195,7 +238,7 @@ fun PerfilScreen(
                     }
                 }
 
-                if (rutinasState.notaActual.isNotEmpty()) {
+                if (!esFitness && rutinasState.notaActual.isNotEmpty()) {
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -267,7 +310,8 @@ fun PerfilScreen(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                Text("✏️ Editar Perfil")
+                Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                Text("  Editar perfil completo", maxLines = 1)
             }
             }
         }

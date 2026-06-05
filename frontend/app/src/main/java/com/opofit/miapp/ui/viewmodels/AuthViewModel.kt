@@ -38,7 +38,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         val oposicionId: Int? = null,
         val peso: Double? = null,
         val altura: Double? = null,
-        val imc: Double? = null
+        val imc: Double? = null,
+        val modoUso: String? = null,
+        val avatarUrl: String? = null
     )
 
     private val backendService = BackendAuthService()
@@ -77,10 +79,17 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private fun resolveModoUso(user: com.opofit.miapp.data.responsemodels.UsuarioData?): String? {
+        val explicit = user?.modo_uso?.trim()
+        if (!explicit.isNullOrBlank()) return explicit.uppercase()
+        return if (user?.oposiciones_id_oposicion == null) "FITNESS" else "OPOSITOR"
+    }
+
     private fun applyCachedSession(
         session: UserSession,
         inferredUserId: Int?
     ) {
+        val opoId = session.oposicionId.toIntOrNull()
         _uiState.update { state ->
             state.copy(
                 isLoggedIn = session.isLoggedIn,
@@ -89,7 +98,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 userEmail = session.email,
                 userName = session.userName,
                 genero = session.genero.ifEmpty { null },
-                oposicionId = session.oposicionId.toIntOrNull(),
+                oposicionId = opoId,
+                modoUso = if (opoId == null) "FITNESS" else "OPOSITOR",
                 peso = session.peso.toDoubleOrNull(),
                 altura = session.altura.toDoubleOrNull(),
                 imc = session.imc.toDoubleOrNull()
@@ -124,6 +134,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             userName = user.nombre,
                             genero = user.genero,
                             oposicionId = user.oposiciones_id_oposicion,
+                            modoUso = resolveModoUso(user),
+                            avatarUrl = user.avatar_url,
                             peso = user.peso,
                             altura = user.altura,
                             imc = user.imc
@@ -209,6 +221,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             userName = response.user?.nombre,
                             genero = response.user?.genero,
                             oposicionId = response.user?.oposiciones_id_oposicion,
+                            modoUso = resolveModoUso(response.user),
+                            avatarUrl = response.user?.avatar_url,
                             peso = response.user?.peso,
                             altura = response.user?.altura,
                             imc = response.user?.imc
@@ -240,7 +254,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         genero: String,
         peso: Double,
         altura: Double,
-        oposiciones_id: Int
+        oposiciones_id: Int? = null,
+        modoUso: String = if (oposiciones_id == null) "FITNESS" else "OPOSITOR"
     ) {
         val validationError = ValidationUtils.validateCredentials(email, password)
 
@@ -257,7 +272,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 val result = backendService.register(
-                    nombre, email, password, genero, peso, altura, oposiciones_id
+                    nombre, email, password, genero, peso, altura, oposiciones_id, modoUso = modoUso
                 )
 
                 result.fold(
@@ -283,6 +298,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             userName = response.user?.nombre ?: nombre,
                             genero = response.user?.genero ?: genero,
                             oposicionId = response.user?.oposiciones_id_oposicion ?: oposiciones_id,
+                            modoUso = resolveModoUso(response.user) ?: modoUso,
+                            avatarUrl = response.user?.avatar_url,
                             peso = response.user?.peso ?: peso,
                             altura = response.user?.altura ?: altura,
                             imc = response.user?.imc
@@ -440,6 +457,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                                 userName = user.nombre,
                                 genero = user.genero,
                                 oposicionId = user.oposiciones_id_oposicion,
+                                modoUso = resolveModoUso(user),
+                                avatarUrl = user.avatar_url,
                                 peso = user.peso,
                                 altura = user.altura,
                                 imc = user.imc

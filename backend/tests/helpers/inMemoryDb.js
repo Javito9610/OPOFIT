@@ -29,6 +29,10 @@ const state = {
   simulacro_pruebas: [],
   amistades: [],
   mensajes_chat: [],
+  grupos_comunidad: [],
+  grupo_miembros: [],
+  grupo_mensajes: [],
+  quedadas: [],
   gps_actividades: [],
   notif_tokens: [],
   rutinas_compartidas: [],
@@ -57,6 +61,10 @@ let nextId = {
   simulacro_pruebas: 1,
   amistades: 1,
   mensajes_chat: 1,
+  grupos_comunidad: 1,
+  grupo_miembros: 1,
+  grupo_mensajes: 1,
+  quedadas: 1,
   gps_actividades: 1,
   baremos_puntuacion: 1
 };
@@ -86,6 +94,12 @@ function makeUser(overrides = {}) {
     recordatorio_entreno_activo: 0,
     entorno_entreno: null,
     plan_variacion_seed: 0,
+    avatar_url: null,
+    modo_uso: 'OPOSITOR',
+    ubicacion_lat: null,
+    ubicacion_lng: null,
+    ubicacion_visible: 0,
+    ubicacion_actualizada: null,
     ...overrides
   };
   state.usuarios.push(u);
@@ -166,8 +180,138 @@ function query(sql, params = []) {
     const u = state.usuarios.find((x) => x.id_usuario === Number(params[0]));
     return Promise.resolve([u ? [{ nombre: u.nombre, perfil_publico: u.perfil_publico, oposiciones_id_oposicion: u.oposiciones_id_oposicion }] : [], []]);
   }
+  if (s.startsWith('select password from usuarios where id_usuario')) {
+    const u = state.usuarios.find((x) => x.id_usuario === Number(params[0]));
+    return Promise.resolve([u ? [{ password: u.password }] : [], []]);
+  }
+  if (s.startsWith('update usuarios set password = ?')) {
+    const u = state.usuarios.find((x) => x.id_usuario === Number(params[1]));
+    if (u) u.password = params[0];
+    return Promise.resolve([{ affectedRows: u ? 1 : 0 }, []]);
+  }
+  if (s.startsWith('select u.nombre, u.email, u.peso, u.altura, u.imc, u.avatar_url, u.modo_uso')) {
+    const u = state.usuarios.find((x) => x.id_usuario === Number(params[0]));
+    if (!u) return Promise.resolve([[], []]);
+    const o = state.oposiciones.find((x) => x.id_oposicion === u.oposiciones_id_oposicion);
+    return Promise.resolve([[{
+      nombre: u.nombre,
+      email: u.email,
+      peso: u.peso,
+      altura: u.altura,
+      imc: u.imc,
+      avatar_url: u.avatar_url,
+      modo_uso: u.modo_uso,
+      oposicionId: u.oposiciones_id_oposicion,
+      oposicionNombre: o?.nombre || null,
+      ubicacion_visible: u.ubicacion_visible
+    }], []]);
+  }
+  if (s.startsWith('update usuarios set nombre = ?')) {
+    const u = state.usuarios.find((x) => x.id_usuario === Number(params[1]));
+    if (u) u.nombre = params[0];
+    return Promise.resolve([{ affectedRows: u ? 1 : 0 }, []]);
+  }
+  if (s.startsWith('update usuarios set avatar_url = ?')) {
+    const u = state.usuarios.find((x) => x.id_usuario === Number(params[1]));
+    if (u) u.avatar_url = params[0];
+    return Promise.resolve([{ affectedRows: u ? 1 : 0 }, []]);
+  }
+  if (s.startsWith('update usuarios set modo_uso = ?')) {
+    const u = state.usuarios.find((x) => x.id_usuario === Number(params[1]));
+    if (u) u.modo_uso = params[0];
+    return Promise.resolve([{ affectedRows: u ? 1 : 0 }, []]);
+  }
+  if (s.startsWith('update usuarios set oposiciones_id_oposicion = null')) {
+    const u = state.usuarios.find((x) => x.id_usuario === Number(params[0]));
+    if (u) u.oposiciones_id_oposicion = null;
+    return Promise.resolve([{ affectedRows: u ? 1 : 0 }, []]);
+  }
+  if (s.startsWith('update usuarios set ubicacion_visible = ?')) {
+    const u = state.usuarios.find((x) => x.id_usuario === Number(params[1]));
+    if (u) u.ubicacion_visible = Number(params[0]);
+    return Promise.resolve([{ affectedRows: u ? 1 : 0 }, []]);
+  }
+  if (s.startsWith('update usuarios set ubicacion_lat = ?')) {
+    const u = state.usuarios.find((x) => x.id_usuario === Number(params[3]));
+    if (u) {
+      u.ubicacion_lat = Number(params[0]);
+      u.ubicacion_lng = Number(params[1]);
+      u.ubicacion_visible = Number(params[2]);
+      u.ubicacion_actualizada = new Date();
+    }
+    return Promise.resolve([{ affectedRows: u ? 1 : 0 }, []]);
+  }
+  if (s.includes('select u.id_usuario, u.nombre, u.modo_uso, u.avatar_url') && s.includes('distanciam')) {
+    const latN = Number(params[0]);
+    const lngN = Number(params[1]);
+    const userId = Number(params[3]);
+    const radioM = Number(params[4]);
+    const dist = (a, b, c, d) => {
+      const R = 6371000;
+      const toRad = (x) => (x * Math.PI) / 180;
+      const dLat = toRad(c - a);
+      const dLng = toRad(d - b);
+      const h = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a)) * Math.cos(toRad(c)) * Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+    };
+    const rows = state.usuarios
+      .filter((u) =>
+        u.id_usuario !== userId &&
+        u.ubicacion_visible === 1 &&
+        u.ubicacion_lat != null &&
+        u.ubicacion_lng != null
+      )
+      .map((u) => {
+        const d = dist(latN, lngN, Number(u.ubicacion_lat), Number(u.ubicacion_lng));
+        const o = state.oposiciones.find((x) => x.id_oposicion === u.oposiciones_id_oposicion);
+        return {
+          id_usuario: u.id_usuario,
+          nombre: u.nombre,
+          modo_uso: u.modo_uso,
+          avatar_url: u.avatar_url,
+          ubicacion_lat: u.ubicacion_lat,
+          ubicacion_lng: u.ubicacion_lng,
+          oposicion_nombre: o?.nombre || null,
+          distanciaM: d
+        };
+      })
+      .filter((r) => r.distanciaM <= radioM)
+      .sort((a, b) => a.distanciaM - b.distanciaM)
+      .slice(0, 50);
+    return Promise.resolve([rows, []]);
+  }
+  if (s.startsWith('select oposiciones_id_oposicion, modo_uso, genero from usuarios')) {
+    const u = state.usuarios.find((x) => x.id_usuario === Number(params[0]));
+    return Promise.resolve([
+      u
+        ? [{
+            oposiciones_id_oposicion: u.oposiciones_id_oposicion,
+            modo_uso: u.modo_uso,
+            genero: u.genero
+          }]
+        : [],
+      []
+    ]);
+  }
+  if (s.startsWith('select id_usuario, oposiciones_id_oposicion, modo_uso from usuarios')) {
+    const u = state.usuarios.find((x) => x.id_usuario === Number(params[0]));
+    return Promise.resolve([u ? [{ id_usuario: u.id_usuario, oposiciones_id_oposicion: u.oposiciones_id_oposicion, modo_uso: u.modo_uso }] : [], []]);
+  }
+  if (s.startsWith('select oposiciones_id_oposicion, modo_uso from usuarios')) {
+    const u = state.usuarios.find((x) => x.id_usuario === Number(params[0]));
+    return Promise.resolve([u ? [{ oposiciones_id_oposicion: u.oposiciones_id_oposicion, modo_uso: u.modo_uso }] : [], []]);
+  }
   if (s.startsWith('insert into usuarios')) {
-    const [nombre, email, password, genero, peso, altura, imc, opo] = params;
+    const hasModo = params.length >= 9;
+    const nombre = params[0];
+    const email = params[1];
+    const password = params[2];
+    const genero = params[3];
+    const peso = params[4];
+    const altura = params[5];
+    const imc = params[6];
+    const opo = params[7];
+    const modo = hasModo ? params[8] : 'OPOSITOR';
     // Enforzamos UNIQUE en email (igual que la BBDD real).
     if (state.usuarios.some((u) => u.email && String(u.email).toLowerCase().trim() === String(email).toLowerCase().trim())) {
       const err = new Error("ER_DUP_ENTRY: Duplicate entry '" + email + "' for key 'email'");
@@ -186,9 +330,15 @@ function query(sql, params = []) {
       imc: Number(imc || 0),
       fecha_registro: new Date(),
       oposiciones_id_oposicion: opo == null ? null : Number(opo),
+      modo_uso: hasModo ? (modo || 'OPOSITOR') : 'OPOSITOR',
       es_premium: 0,
       premium_hasta: null,
-      perfil_publico: 1
+      perfil_publico: 1,
+      avatar_url: null,
+      ubicacion_lat: null,
+      ubicacion_lng: null,
+      ubicacion_visible: 0,
+      ubicacion_actualizada: null
     });
     return Promise.resolve([{ insertId: id, affectedRows: 1 }, []]);
   }
@@ -792,6 +942,129 @@ function query(sql, params = []) {
     return Promise.resolve([arr.map((s) => ({ nota_media: s.nota_media, fecha: s.fecha })), []]);
   }
 
+  // ---------- GRUPOS COMUNIDAD ----------
+  if (s.startsWith('select rol from grupo_miembros where id_grupo')) {
+    const m = state.grupo_miembros.find(
+      (x) => x.id_grupo === Number(params[0]) && x.id_usuario === Number(params[1])
+    );
+    return Promise.resolve([m ? [{ rol: m.rol }] : [], []]);
+  }
+  if (s.startsWith('select g.id_grupo, g.nombre, g.descripcion, g.id_oposicion')) {
+    const userId = Number(params[0]);
+    const fitness = s.includes('g.id_oposicion is null');
+    const idOpo = fitness ? null : Number(params[1]);
+    const grupos = state.grupos_comunidad.filter((g) =>
+      fitness ? g.id_oposicion == null : g.id_oposicion === idOpo
+    );
+    const rows = grupos.map((g) => {
+      const miembros = state.grupo_miembros.filter((m) => m.id_grupo === g.id_grupo);
+      const self = miembros.find((m) => m.id_usuario === userId);
+      return {
+        id_grupo: g.id_grupo,
+        nombre: g.nombre,
+        descripcion: g.descripcion,
+        id_oposicion: g.id_oposicion,
+        creador_id: g.creador_id,
+        creado_en: g.creado_en,
+        num_miembros: miembros.length,
+        mi_rol: self?.rol || null
+      };
+    }).sort((a, b) => new Date(b.creado_en) - new Date(a.creado_en));
+    return Promise.resolve([rows, []]);
+  }
+  if (s.startsWith('select id_grupo from grupos_comunidad where id_grupo')) {
+    const g = state.grupos_comunidad.find((x) => x.id_grupo === Number(params[0]));
+    return Promise.resolve([g ? [{ id_grupo: g.id_grupo }] : [], []]);
+  }
+  if (s.startsWith('insert into grupos_comunidad')) {
+    const id = nextId.grupos_comunidad++;
+    state.grupos_comunidad.push({
+      id_grupo: id,
+      nombre: params[0],
+      descripcion: params[1],
+      id_oposicion: params[2] == null ? null : Number(params[2]),
+      creador_id: Number(params[3]),
+      creado_en: new Date()
+    });
+    return Promise.resolve([{ insertId: id, affectedRows: 1 }, []]);
+  }
+  if (s.startsWith('insert into grupo_miembros')) {
+    const id = nextId.grupo_miembros++;
+    const rolLiteral = sql.match(/'ADMIN'|'MIEMBRO'/i);
+    state.grupo_miembros.push({
+      id_miembro: id,
+      id_grupo: Number(params[0]),
+      id_usuario: Number(params[1]),
+      rol: params[2] || (rolLiteral ? rolLiteral[0].replace(/'/g, '') : 'MIEMBRO'),
+      unido_en: new Date()
+    });
+    return Promise.resolve([{ insertId: id, affectedRows: 1 }, []]);
+  }
+  if (s.startsWith('delete from grupo_miembros where id_grupo')) {
+    const before = state.grupo_miembros.length;
+    state.grupo_miembros = state.grupo_miembros.filter(
+      (m) => !(m.id_grupo === Number(params[0]) && m.id_usuario === Number(params[1]))
+    );
+    return Promise.resolve([{ affectedRows: before - state.grupo_miembros.length }, []]);
+  }
+  if (s.startsWith('select m.id_mensaje, m.id_usuario, u.nombre as usuario_nombre')) {
+    const rows = state.grupo_mensajes
+      .filter((m) => m.id_grupo === Number(params[0]))
+      .sort((a, b) => new Date(a.enviado_en) - new Date(b.enviado_en))
+      .slice(0, Number(params[1]))
+      .map((m) => ({
+        id_mensaje: m.id_mensaje,
+        id_usuario: m.id_usuario,
+        usuario_nombre: state.usuarios.find((u) => u.id_usuario === m.id_usuario)?.nombre,
+        texto: m.texto,
+        enviado_en: m.enviado_en
+      }));
+    return Promise.resolve([rows, []]);
+  }
+  if (s.startsWith('insert into grupo_mensajes')) {
+    const id = nextId.grupo_mensajes++;
+    state.grupo_mensajes.push({
+      id_mensaje: id,
+      id_grupo: Number(params[0]),
+      id_usuario: Number(params[1]),
+      texto: params[2],
+      enviado_en: new Date()
+    });
+    return Promise.resolve([{ insertId: id, affectedRows: 1 }, []]);
+  }
+  if (s.startsWith('insert into quedadas')) {
+    const id = nextId.quedadas++;
+    state.quedadas.push({
+      id_quedada: id,
+      id_grupo: Number(params[0]),
+      creador_id: Number(params[1]),
+      titulo: params[2],
+      descripcion: params[3],
+      fecha_hora: params[4],
+      ubicacion_lat: params[5],
+      ubicacion_lng: params[6],
+      creado_en: new Date()
+    });
+    return Promise.resolve([{ insertId: id, affectedRows: 1 }, []]);
+  }
+  if (s.startsWith('select q.id_quedada, q.titulo, q.descripcion, q.fecha_hora')) {
+    const rows = state.quedadas
+      .filter((q) => q.id_grupo === Number(params[0]))
+      .sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora))
+      .map((q) => ({
+        id_quedada: q.id_quedada,
+        titulo: q.titulo,
+        descripcion: q.descripcion,
+        fecha_hora: q.fecha_hora,
+        ubicacion_lat: q.ubicacion_lat,
+        ubicacion_lng: q.ubicacion_lng,
+        creador_id: q.creador_id,
+        creador_nombre: state.usuarios.find((u) => u.id_usuario === q.creador_id)?.nombre,
+        creado_en: q.creado_en
+      }));
+    return Promise.resolve([rows, []]);
+  }
+
   // ---------- AMISTADES ----------
   if (s.startsWith('select a.id_amistad, a.estado')) {
     const userId = Number(params[0]);
@@ -835,6 +1108,47 @@ function query(sql, params = []) {
       solicitante_id: Number(params[2])
     });
     return Promise.resolve([{ insertId: id, affectedRows: 1 }, []]);
+  }
+  if (s.includes('select u.id_usuario, u.nombre, u.perfil_publico, u.modo_uso') && s.includes("u.modo_uso = 'fitness'")) {
+    const userId = Number(params[0]);
+    const term = String(params[1] || '').replace(/%/g, '').toLowerCase();
+    const limite = Number(params[2] || 20);
+    const rows = state.usuarios
+      .filter(
+        (u) =>
+          u.modo_uso === 'FITNESS' &&
+          u.id_usuario !== userId &&
+          String(u.nombre || '').toLowerCase().includes(term)
+      )
+      .slice(0, limite)
+      .map((u) => ({
+        id_usuario: u.id_usuario,
+        nombre: u.nombre,
+        perfil_publico: u.perfil_publico,
+        modo_uso: u.modo_uso
+      }));
+    return Promise.resolve([rows, []]);
+  }
+  if (s.includes('select u.id_usuario, u.nombre, u.perfil_publico, u.modo_uso') && s.includes('u.oposiciones_id_oposicion = ?')) {
+    const idOpo = Number(params[0]);
+    const userId = Number(params[1]);
+    const term = String(params[2] || '').replace(/%/g, '').toLowerCase();
+    const limite = Number(params[3] || 20);
+    const rows = state.usuarios
+      .filter(
+        (u) =>
+          u.oposiciones_id_oposicion === idOpo &&
+          u.id_usuario !== userId &&
+          String(u.nombre || '').toLowerCase().includes(term)
+      )
+      .slice(0, limite)
+      .map((u) => ({
+        id_usuario: u.id_usuario,
+        nombre: u.nombre,
+        perfil_publico: u.perfil_publico,
+        modo_uso: u.modo_uso
+      }));
+    return Promise.resolve([rows, []]);
   }
 
   // ---------- GPS ----------

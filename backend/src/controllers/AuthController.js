@@ -316,6 +316,25 @@ const me = async (req, res) => {
     });
   }
 };
+const cambiarPassword = async (req, res) => {
+  try {
+    const { actual, nueva } = req.body || {};
+    if (!actual || !nueva) {
+      return res.status(400).json({ ok: false, msg: 'Indica la contraseña actual y la nueva' });
+    }
+    await AuthService.cambiarPassword(req.usuario.id, actual, nueva);
+    return res.status(200).json({ ok: true, msg: 'Contraseña actualizada' });
+  } catch (error) {
+    const code = error.message;
+    const status =
+      code === 'PASSWORD_ACTUAL_INCORRECTA' ? 401
+        : code === 'PASSWORD_CORTA' ? 400
+          : code === 'USUARIO_NO_ENCONTRADO' ? 404
+            : 500;
+    return res.status(status).json({ ok: false, msg: error.message });
+  }
+};
+
 module.exports = {
   registrar,
   login,
@@ -323,5 +342,6 @@ module.exports = {
   registrarConGoogle,
   loginConFirebase,
   registrarConFirebase,
-  me
+  me,
+  cambiarPassword
 };
