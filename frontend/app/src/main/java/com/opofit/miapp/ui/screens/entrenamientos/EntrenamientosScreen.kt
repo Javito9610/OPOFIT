@@ -698,7 +698,7 @@ fun EntrenamientosScreen(
                                 userId = userId,
                                 tipoRutina = "OPO",
                                 idRutina = rutinaOpoId,
-                                duracion = segundos,
+                                duracion = (segundos / 60).coerceAtLeast(1), // Backend espera minutos
                                 ejercicios = realizados,
                                 gpsActividadUuid = gpsActividadUuid
                             )

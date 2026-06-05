@@ -84,13 +84,15 @@ class AmigosService {
   }
 
   static async enviarMensaje(remitenteId, destinatarioId, texto) {
+    const limpio = String(texto || '').trim();
+    if (!limpio) throw new Error('MENSAJE_VACIO');
     const amigos = await AmigosService.listarAmigos(remitenteId);
     if (!amigos.some((a) => a.amigo_id === destinatarioId)) {
       throw new Error('NO_SOIS_AMIGOS');
     }
     const [ins] = await db.query(
       'INSERT INTO mensajes_chat (id_remitente, id_destinatario, texto) VALUES (?, ?, ?)',
-      [remitenteId, destinatarioId, texto.substring(0, 1000)]
+      [remitenteId, destinatarioId, limpio.substring(0, 1000)]
     );
     return { idMensaje: ins.insertId };
   }

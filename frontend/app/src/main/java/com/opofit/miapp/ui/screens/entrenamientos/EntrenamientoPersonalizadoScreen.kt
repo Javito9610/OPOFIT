@@ -460,7 +460,7 @@ fun EntrenamientoPersonalizadoScreen(
                                             userId = userId,
                                             tipoRutina = "PERS",
                                             idRutina = rutinaId,
-                                            duracion = tiempoSegundos,
+                                            duracion = (tiempoSegundos / 60).coerceAtLeast(1), // Backend espera minutos
                                             ejercicios = ejercicios,
                                             gpsActividadUuid = gpsActividadUuid
                                         )

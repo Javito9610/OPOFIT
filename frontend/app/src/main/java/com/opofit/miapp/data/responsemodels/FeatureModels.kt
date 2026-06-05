@@ -135,7 +135,9 @@ data class RankingDetalleResponse(
 
 data class MiPosicionResponse(
     val posicion: Int?,
-    val total: Int
+    val total: Int,
+    // El backend envia notaMedia: el modelo del front lo ignoraba y no se mostraba en la UI.
+    val notaMedia: Double? = null
 )
 
 data class TogglePerfilPublicoRequest(val publico: Boolean)

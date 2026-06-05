@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
@@ -81,6 +83,12 @@ fun AjustesScreen(
     LaunchedEffect(uiState.unidadPeso, uiState.unidadDistancia) {
         unidadPeso = uiState.unidadPeso
         unidadDistancia = uiState.unidadDistancia
+    }
+
+    // Sincronizamos el estado local con el del backend para no sobrescribirlo al guardar.
+    LaunchedEffect(uiState.horaRecordatorio, uiState.recordatorioActivo) {
+        horaRecordatorio = uiState.horaRecordatorio
+        recordatorioActivo = uiState.recordatorioActivo
     }
 
     LaunchedEffect(uiState.guardadoExitoso) {
@@ -174,10 +182,13 @@ fun AjustesScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
+        // Sin verticalScroll los ultimos cards (eliminar cuenta, cerrar sesion, info)
+        // quedaban fuera de la pantalla y eran inalcanzables en moviles pequenos.
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {

@@ -31,13 +31,16 @@ fun WeekActivityChart(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                "Actividad últimos 7 días",
+                "Actividad ultimos 7 dias",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
-            if (dias.isEmpty()) {
+            // El backend rellena siempre 7 dias con 0 si no hubo entreno;
+            // por eso no basta con isEmpty(): hay que ver si TODOS los dias tienen 0.
+            val sinActividad = dias.isEmpty() || dias.all { it.sesiones == 0 }
+            if (sinActividad) {
                 Text(
-                    "Sin entrenos esta semana — ¡empieza hoy!",
+                    "Sin entrenos esta semana - empieza hoy!",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

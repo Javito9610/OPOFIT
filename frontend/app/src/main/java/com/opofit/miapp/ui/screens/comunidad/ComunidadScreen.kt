@@ -86,6 +86,14 @@ fun ComunidadScreen(
         cargarFeed()
     }
 
+    // Limpiar mensaje de estado automaticamente tras 3s.
+    LaunchedEffect(msg) {
+        if (msg.isNotBlank()) {
+            kotlinx.coroutines.delay(3000)
+            msg = ""
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -272,7 +280,7 @@ fun ComunidadScreen(
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             items(mensajes) { m ->
-                                val esMio = m.id_remitente != chatCon!!.amigo_id
+                                val esMio = m.id_remitente == (authState.userId ?: -1)
                                 Card(
                                     colors = CardDefaults.cardColors(
                                         containerColor = if (esMio) MaterialTheme.colorScheme.primaryContainer
@@ -296,18 +304,27 @@ fun ComunidadScreen(
                                 modifier = Modifier.weight(1f),
                                 placeholder = { Text("Mensaje…") }
                             )
-                            Button(onClick = {
-                                scope.launch {
-                                    val token = tokenManager.getToken().first() ?: ""
-                                    RetrofitClient.amigosApi.enviarMensaje(
-                                        "Bearer $token",
-                                        EnviarMensajeRequest(chatCon!!.amigo_id, textoMsg)
-                                    )
-                                    textoMsg = ""
-                                    val c = RetrofitClient.amigosApi.chat("Bearer $token", chatCon!!.amigo_id)
-                                    mensajes = c.data.orEmpty()
+                            Button(
+                                enabled = textoMsg.trim().isNotEmpty(),
+                                onClick = {
+                                    val texto = textoMsg.trim()
+                                    if (texto.isEmpty()) return@Button
+                                    scope.launch {
+                                        try {
+                                            val token = tokenManager.getToken().first() ?: ""
+                                            RetrofitClient.amigosApi.enviarMensaje(
+                                                "Bearer $token",
+                                                EnviarMensajeRequest(chatCon!!.amigo_id, texto)
+                                            )
+                                            textoMsg = ""
+                                            val c = RetrofitClient.amigosApi.chat("Bearer $token", chatCon!!.amigo_id)
+                                            mensajes = c.data.orEmpty()
+                                        } catch (e: Exception) {
+                                            msg = ApiErrorParser.message(e)
+                                        }
+                                    }
                                 }
-                            }) { Text("Enviar") }
+                            ) { Text("Enviar") }
                         }
                     }
                 }

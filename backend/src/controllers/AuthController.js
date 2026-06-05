@@ -80,10 +80,10 @@ const login = async (req, res) => {
       token: token
     });
   } catch (error) {
-    const msg = error.message === 'Usuario no encontrado' ? 'Usuario no encontrado' : error.message === 'Contraseña incorrecta' ? 'Contraseña incorrecta' : "Credenciales incorrectas";
+    // Mensaje genérico para evitar enumeración de usuarios (no diferenciar email vs password).
     res.status(401).json({
       ok: false,
-      msg
+      msg: 'Credenciales incorrectas'
     });
   }
 };

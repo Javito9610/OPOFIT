@@ -301,19 +301,35 @@ fun CrearRutinaScreen(
                         CircularProgressIndicator()
                     }
                 } else {
+                    val itemsValidos = ejercicios.mapNotNull { row ->
+                        val id = row.idEjercicio ?: return@mapNotNull null
+                        val s = row.series.toIntOrNull()?.takeIf { it > 0 } ?: 1
+                        val r = row.repeticiones.toIntOrNull()?.takeIf { it > 0 } ?: return@mapNotNull null
+                        EjercicioLibreItem(id, s, r)
+                    }
+                    val puedeGuardar = nombreRutina.trim().isNotEmpty() && itemsValidos.isNotEmpty()
                     Button(
+                        enabled = puedeGuardar,
                         onClick = {
-                            val items = ejercicios.mapNotNull { row ->
-                                val id = row.idEjercicio ?: return@mapNotNull null
-                                val s = row.series.toIntOrNull() ?: 1
-                                val r = row.repeticiones.toIntOrNull() ?: 1
-                                EjercicioLibreItem(id, s, r)
-                            }
-                            rutinasLibresViewModel.crearRutina(userId, nombreRutina, items)
+                            rutinasLibresViewModel.crearRutina(
+                                userId,
+                                nombreRutina.trim(),
+                                itemsValidos
+                            )
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Guardar Rutina")
+                    }
+                    if (!puedeGuardar) {
+                        Text(
+                            text = when {
+                                nombreRutina.trim().isEmpty() -> "Ponle un nombre a tu rutina."
+                                else -> "Anade al menos un ejercicio con repeticiones validas."
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedButton(
