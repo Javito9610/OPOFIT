@@ -141,10 +141,20 @@ fun MapaEntrenoScreen(
         if (!ubicacionLista) return
         scope.launch {
             loading = true
+            lugares = emptyList()
             try {
                 val resp = RetrofitClient.mapasApi.lugares(auth(), lat, lng, tipoLugar)
                 lugares = resp.data ?: emptyList()
+                if (lugares.isEmpty()) {
+                    val msg = when (tipoLugar) {
+                        "CALISTENIA" -> "No hay parques de calistenia cerca. Prueba PARQUE o amplía el radio."
+                        "PISTA" -> "No hay pistas cerca. Prueba otro filtro o cambia de zona."
+                        else -> "No hay lugares de este tipo cerca."
+                    }
+                    snackbar.showSnackbar(msg)
+                }
             } catch (e: Exception) {
+                lugares = emptyList()
                 snackbar.showSnackbar("No se pudieron cargar lugares: ${e.message}")
             } finally {
                 loading = false
@@ -330,7 +340,13 @@ fun MapaEntrenoScreen(
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (tab == 0 || esModoLugares) {
                         Text(
-                            "Gyms, CrossFit y parques cerca de ti",
+                            when (tipoLugar) {
+                                "CALISTENIA" -> "Parques y zonas de barras / street workout"
+                                "PISTA" -> "Pistas de atletismo y estadios"
+                                "CROSSFIT" -> "Boxes y centros CrossFit"
+                                "PARQUE" -> "Parques para entrenar al aire libre"
+                                else -> "Gimnasios y centros deportivos"
+                            },
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -338,10 +354,29 @@ fun MapaEntrenoScreen(
                             items(listOf("GYM", "CROSSFIT", "PISTA", "CALISTENIA", "PARQUE")) { t ->
                                 FilterChip(
                                     selected = tipoLugar == t,
-                                    onClick = { tipoLugar = t },
+                                    onClick = {
+                                        if (tipoLugar != t) {
+                                            tipoLugar = t
+                                            lugares = emptyList()
+                                        }
+                                    },
                                     label = { Text(t) }
                                 )
                             }
+                        }
+                        if (ubicacionLista && !loading && lugares.isEmpty()) {
+                            Text(
+                                when (tipoLugar) {
+                                    "CALISTENIA" ->
+                                        "No hay parques de calistenia cerca. Prueba PARQUE o mueve el mapa a otra zona."
+                                    "PISTA" ->
+                                        "No hay pistas cerca en esta zona."
+                                    else ->
+                                        "No hay lugares de este tipo cerca. Prueba otro filtro."
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                         if (lugares.isNotEmpty()) {
                             Text("${lugares.size} lugares cerca", style = MaterialTheme.typography.labelMedium)

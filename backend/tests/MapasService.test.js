@@ -46,4 +46,12 @@ describe('MapasService', () => {
     expect(lugares.length).toBeGreaterThan(0);
     expect(lugares[0].demo).toBe(true);
   });
+
+  test('lugaresFallback distingue calistenia y pista', () => {
+    const calistenia = MapasService.lugaresFallback(40.4, -3.7, 'CALISTENIA');
+    const pista = MapasService.lugaresFallback(40.4, -3.7, 'PISTA');
+    expect(calistenia[0].nombre).not.toBe(pista[0].nombre);
+    expect(calistenia[0].tipo).toBe('CALISTENIA');
+    expect(pista[0].tipo).toBe('PISTA');
+  });
 });

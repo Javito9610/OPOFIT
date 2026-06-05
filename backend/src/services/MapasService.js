@@ -7,8 +7,19 @@ const crypto = require('crypto');
 const TIPOS_LUGAR = {
   GYM: { placeType: 'gym', keyword: null, etiqueta: 'Gimnasio' },
   CROSSFIT: { placeType: 'gym', keyword: 'crossfit', etiqueta: 'CrossFit / Box' },
-  PISTA: { placeType: 'stadium', keyword: 'pista atletismo', etiqueta: 'Pista / Estadio' },
-  CALISTENIA: { placeType: 'park', keyword: 'calistenia barra', etiqueta: 'Parque / Calistenia' },
+  PISTA: {
+    placeType: 'stadium',
+    keyword: 'pista atletismo',
+    keywordsAlt: ['athletic track', 'running track', 'estadio'],
+    etiqueta: 'Pista / Estadio'
+  },
+  CALISTENIA: {
+    placeType: 'park',
+    keyword: 'calisthenics',
+    keywordsAlt: ['street workout', 'outdoor gym', 'calistenia', 'pull up bar park', 'parque calistenia'],
+    textQueries: ['calisthenics park', 'street workout park', 'outdoor fitness park'],
+    etiqueta: 'Parque / Calistenia'
+  },
   PARQUE: { placeType: 'park', keyword: null, etiqueta: 'Parque' }
 };
 
@@ -49,42 +60,109 @@ class MapasService {
       throw new Error('Coordenadas inválidas');
     }
     const meta = TIPOS_LUGAR[tipo] || TIPOS_LUGAR.GYM;
+    const radio = Math.min(15000, Math.max(500, Number(radioM) || 5000));
 
     if (!key) {
       return MapasService.lugaresFallback(latN, lngN, tipo);
     }
 
-    let url =
-      `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latN},${lngN}` +
-      `&radius=${Math.min(15000, Math.max(500, Number(radioM) || 5000))}&type=${meta.placeType}&key=${key}`;
-    if (meta.keyword) url += `&keyword=${encodeURIComponent(meta.keyword)}`;
+    const vistos = new Set();
+    const acumulado = [];
 
+    const agregar = (results) => {
+      for (const p of results || []) {
+        if (!p?.place_id || vistos.has(p.place_id)) continue;
+        vistos.add(p.place_id);
+        acumulado.push({
+          id: p.place_id,
+          nombre: p.name,
+          direccion: p.vicinity || p.formatted_address || '',
+          lat: p.geometry?.location?.lat,
+          lng: p.geometry?.location?.lng,
+          rating: p.rating ?? null,
+          abierto: p.opening_hours?.open_now ?? null,
+          tipo,
+          distanciaM: distanciaM(latN, lngN, p.geometry?.location?.lat, p.geometry?.location?.lng)
+        });
+      }
+    };
+
+    const keywords = [
+      meta.keyword,
+      ...(meta.keywordsAlt || [])
+    ].filter(Boolean);
+
+    for (const kw of keywords) {
+      if (acumulado.length >= 20) break;
+      const data = await MapasService.nearbySearch(latN, lngN, radio, meta.placeType, kw, key);
+      agregar(data.results);
+    }
+
+    if (acumulado.length === 0 && meta.keyword == null && meta.placeType) {
+      const data = await MapasService.nearbySearch(latN, lngN, radio, meta.placeType, null, key);
+      agregar(data.results);
+    }
+
+    for (const query of meta.textQueries || []) {
+      if (acumulado.length >= 20) break;
+      const data = await MapasService.textSearch(latN, lngN, radio, query, key);
+      agregar(data.results);
+    }
+
+    return acumulado
+      .sort((a, b) => a.distanciaM - b.distanciaM)
+      .slice(0, 20);
+  }
+
+  static async nearbySearch(lat, lng, radio, placeType, keyword, key) {
+    let url =
+      `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}` +
+      `&radius=${radio}&type=${placeType}&key=${key}`;
+    if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
     const data = await fetchJson(url);
     if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
       throw new Error(data.error_message || `Places: ${data.status}`);
     }
+    return data;
+  }
 
-    return (data.results || []).slice(0, 20).map((p) => ({
-      id: p.place_id,
-      nombre: p.name,
-      direccion: p.vicinity || p.formatted_address || '',
-      lat: p.geometry?.location?.lat,
-      lng: p.geometry?.location?.lng,
-      rating: p.rating ?? null,
-      abierto: p.opening_hours?.open_now ?? null,
-      tipo,
-      distanciaM: distanciaM(latN, lngN, p.geometry?.location?.lat, p.geometry?.location?.lng)
-    }));
+  static async textSearch(lat, lng, radio, query, key) {
+    const url =
+      `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}` +
+      `&location=${lat},${lng}&radius=${radio}&key=${key}`;
+    const data = await fetchJson(url);
+    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+      throw new Error(data.error_message || `Places text: ${data.status}`);
+    }
+    return data;
   }
 
   /** Fallback sin API key: puntos orientativos OSM-style simulados */
   static lugaresFallback(lat, lng, tipo) {
-    const offsets = [
-      [0.008, 0.005, 'Parque municipal'],
-      [-0.006, 0.012, 'Polideportivo municipal'],
-      [0.012, -0.004, 'Gimnasio local'],
-      [-0.01, -0.008, 'Pista de atletismo']
-    ];
+    const porTipo = {
+      GYM: [
+        [0.012, -0.004, 'Gimnasio local'],
+        [-0.006, 0.012, 'Centro deportivo']
+      ],
+      CROSSFIT: [
+        [0.01, 0.006, 'Box CrossFit demo'],
+        [-0.008, 0.01, 'CrossFit local']
+      ],
+      PISTA: [
+        [-0.01, -0.008, 'Pista de atletismo'],
+        [0.014, 0.002, 'Estadio municipal']
+      ],
+      CALISTENIA: [
+        [0.008, 0.005, 'Parque de calistenia'],
+        [0.005, -0.009, 'Zona de barras al aire libre'],
+        [-0.007, 0.006, 'Street workout park']
+      ],
+      PARQUE: [
+        [0.008, 0.005, 'Parque municipal'],
+        [-0.005, -0.007, 'Parque urbano']
+      ]
+    };
+    const offsets = porTipo[tipo] || porTipo.PARQUE;
     return offsets.map(([dLat, dLng, nombre], i) => ({
       id: `fb_${tipo}_${i}`,
       nombre: `${nombre} (demo)`,
