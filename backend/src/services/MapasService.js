@@ -100,33 +100,41 @@ class MapasService {
   }
 
   /** Genera ruta circular sugerida (sin coste Directions API). */
-  static generarRutaSugerida(lat, lng, distKm = 5) {
+  static generarRutaSugerida(lat, lng, distKm = 5, variacion = 0) {
     const latN = Number(lat);
     const lngN = Number(lng);
     const km = Math.min(21, Math.max(1, Number(distKm) || 5));
-    const puntos = MapasService.puntosCircuito(latN, lngN, km);
+    const seed = Math.max(0, Number(variacion) || 0);
+    const puntos = MapasService.puntosCircuito(latN, lngN, km, seed);
     const distanciaTotalM = MapasService.longitudPolyline(puntos);
+    const etiqueta = seed > 0 ? ` (opción ${(seed % 8) + 1})` : '';
     return {
       id: crypto.randomBytes(8).toString('hex'),
-      nombre: `Rodaje ${km} km`,
+      nombre: `Rodaje ${km} km${etiqueta}`,
       distanciaKm: Number((distanciaTotalM / 1000).toFixed(2)),
       distanciaObjetivoKm: km,
+      variacion: seed,
       puntos,
       origen: 'sugerida'
     };
   }
 
-  static puntosCircuito(lat, lng, distKm) {
+  /** Circuito con desplazamiento y giro según variacion → otra propuesta distinta. */
+  static puntosCircuito(lat, lng, distKm, variacion = 0) {
     const n = 32;
+    const seed = Math.max(0, Number(variacion) || 0);
     const radioM = (distKm * 1000) / (2 * Math.PI);
     const mPorGradoLat = 111320;
     const mPorGradoLng = 111320 * Math.cos((lat * Math.PI) / 180);
+    const anguloBase = (seed % 16) * (Math.PI / 8);
+    const centroLat = lat + Math.sin(seed * 0.61) * 0.004;
+    const centroLng = lng + Math.cos(seed * 0.43) * 0.004;
     const pts = [];
     for (let i = 0; i <= n; i++) {
-      const ang = (2 * Math.PI * i) / n;
+      const ang = (2 * Math.PI * i) / n + anguloBase;
       const dLat = (radioM * Math.sin(ang)) / mPorGradoLat;
       const dLng = (radioM * Math.cos(ang)) / mPorGradoLng;
-      pts.push({ lat: lat + dLat, lng: lng + dLng });
+      pts.push({ lat: centroLat + dLat, lng: centroLng + dLng });
     }
     return pts;
   }

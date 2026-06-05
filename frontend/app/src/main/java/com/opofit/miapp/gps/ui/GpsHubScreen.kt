@@ -65,6 +65,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.gps.model.ActivitySummary
 import com.opofit.miapp.gps.model.ActivityType
+import com.opofit.miapp.gps.service.EntrenoFlowContext
 import com.opofit.miapp.gps.service.HrBleManager
 import com.opofit.miapp.gps.util.GpsMetrics
 import java.text.SimpleDateFormat
@@ -85,6 +86,7 @@ fun GpsHubScreen(
     val tracking by viewModel.tracking.collectAsState()
     val hrState by viewModel.hrState.collectAsState()
     val importMsg by viewModel.importMessage.collectAsState()
+    val flowCtx by EntrenoFlowContext.state.collectAsState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -218,6 +220,41 @@ fun GpsHubScreen(
             contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            flowCtx?.returnRoute?.let { _ ->
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                        )
+                    ) {
+                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                "Entrenamiento en curso",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            flowCtx?.tituloSesion?.let { t ->
+                                Text("Sesión: $t", style = MaterialTheme.typography.bodySmall)
+                            }
+                            Text(
+                                "Al guardar la carrera volverás al registro del entreno con la distancia rellenada.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f)
+                            )
+                            OutlinedButton(
+                                onClick = onOpenMapa,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Filled.Explore, null, Modifier.size(18.dp))
+                                Spacer(Modifier.size(6.dp))
+                                Text("Ver o cambiar ruta sugerida")
+                            }
+                        }
+                    }
+                }
+            }
+
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -306,7 +343,7 @@ fun GpsHubScreen(
                         ) {
                             Icon(Icons.Filled.Explore, null, Modifier.size(18.dp))
                             Spacer(Modifier.size(6.dp))
-                            Text("Lugares y rutas cerca")
+                            Text("Preparar ruta de carrera")
                         }
                     }
                 }

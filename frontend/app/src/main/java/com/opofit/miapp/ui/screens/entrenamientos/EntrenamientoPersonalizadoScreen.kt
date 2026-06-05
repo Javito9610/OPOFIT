@@ -52,6 +52,7 @@ import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.EjercicioRealizado
 import com.opofit.miapp.data.responsemodels.RegistrarHistorialRequest
 import com.opofit.miapp.gps.service.GpsLastResult
+import com.opofit.miapp.utils.MapaEntrenoNav
 import com.opofit.miapp.ui.components.ExerciseValueInput
 import com.opofit.miapp.utils.EntrenoValidation
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
@@ -70,7 +71,7 @@ fun EntrenamientoPersonalizadoScreen(
     authViewModel: AuthViewModel,
     onNavigateBack: () -> Unit,
     onEntrenamientoFinalizado: () -> Unit,
-    onNavigateToGps: () -> Unit = {},
+    onNavigateToGps: (distKm: Double?) -> Unit = {},
     rutinasLibresViewModel: RutinasLibresViewModel = viewModel()
 ) {
     val authState by authViewModel.uiState.collectAsState()
@@ -404,12 +405,17 @@ fun EntrenamientoPersonalizadoScreen(
                                         }
                                         if (esEjercicioGps(ej.nombre, ej.tipo)) {
                                             OutlinedButton(
-                                                onClick = onNavigateToGps,
+                                                onClick = {
+                                                    val kmPlan = MapaEntrenoNav.distanciaKmDesdeTexto(ej.nombre)
+                                                        ?: ej.distancia.replace(",", ".").toDoubleOrNull()
+                                                        ?: MapaEntrenoNav.distanciaKmDesdeTexto(ej.valor)
+                                                    onNavigateToGps(kmPlan)
+                                                },
                                                 modifier = Modifier.fillMaxWidth()
                                             ) {
                                                 Icon(Icons.Filled.Explore, null, Modifier.size(18.dp))
                                                 Spacer(Modifier.size(6.dp))
-                                                Text("Registrar con GPS")
+                                                Text("Ruta e iniciar carrera")
                                             }
                                         }
                                     } else {

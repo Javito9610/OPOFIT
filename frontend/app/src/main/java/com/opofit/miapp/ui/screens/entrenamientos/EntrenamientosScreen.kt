@@ -65,6 +65,7 @@ import com.opofit.miapp.utils.EntrenoValidation
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.HistorialViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasViewModel
+import com.opofit.miapp.utils.MapaEntrenoNav
 import com.opofit.miapp.utils.Units
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -87,7 +88,7 @@ fun EntrenamientosScreen(
     authViewModel: AuthViewModel,
     onNavigateBack: () -> Unit,
     onEntrenamientoFinalizado: () -> Unit,
-    onNavigateToGps: () -> Unit = {},
+    onNavigateToGps: (distKm: Double?) -> Unit = {},
     initialEnfoque: String = "",
     initialPlanDiaId: Int? = null,
     initialRutinaOpoId: Int? = null,
@@ -588,7 +589,14 @@ fun EntrenamientosScreen(
                             }
                         },
                         onCompletar = { marcarCompletado(pasoActualIdx) },
-                        onGps = if (esEjercicioGps(activo.nombre, activo.tipo)) onNavigateToGps else null,
+                        onGps = if (esEjercicioGps(activo.nombre, activo.tipo)) {
+                            {
+                                val kmPlan = MapaEntrenoNav.distanciaKmDesdeTexto(activo.nombre)
+                                    ?: activo.distancia.replace(",", ".").toDoubleOrNull()
+                                    ?: MapaEntrenoNav.distanciaKmDesdeTexto(activo.valorConseguido)
+                                onNavigateToGps(kmPlan)
+                            }
+                        } else null,
                         errorValor = erroresValor[pasoActualIdx],
                         ritmoTexto = ritmoTxt,
                         velocidadTexto = velTxt,

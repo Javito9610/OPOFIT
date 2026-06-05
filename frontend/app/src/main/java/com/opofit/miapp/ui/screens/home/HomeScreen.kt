@@ -63,6 +63,7 @@ import com.opofit.miapp.ui.components.StatCard
 import com.opofit.miapp.ui.components.WeekActivityChart
 import androidx.compose.material3.TextButton
 import com.opofit.miapp.ui.viewmodels.HomeViewModel
+import com.opofit.miapp.utils.MapaEntrenoNav
 
 private data class QuickLink(
     val title: String,
@@ -89,6 +90,7 @@ fun HomeScreen(
     onNavigateToComunidad: () -> Unit = {},
     onNavigateToPremium: () -> Unit = {},
     onNavigateToGps: () -> Unit = {},
+    onNavigateToMapaRuta: (distKm: Double?, titulo: String?, enfoque: String?) -> Unit = { _, _, _ -> },
     onNavigateToMisDispositivos: () -> Unit = {},
     onLogout: () -> Unit,
     userName: String? = null,
@@ -212,6 +214,16 @@ fun HomeScreen(
                                                 hoy.enfoque,
                                                 hoy.id_plan_dia,
                                                 hoy.id_rutina_opo
+                                            )
+                                        },
+                                        onPrepararRuta = {
+                                            val km = MapaEntrenoNav.distanciaKmDesdeTexto(
+                                                "${hoy.titulo.orEmpty()} ${hoy.descripcion.orEmpty()}"
+                                            )
+                                            onNavigateToMapaRuta(
+                                                km,
+                                                hoy.titulo ?: hoy.nombreDia,
+                                                hoy.enfoque
                                             )
                                         }
                                     )

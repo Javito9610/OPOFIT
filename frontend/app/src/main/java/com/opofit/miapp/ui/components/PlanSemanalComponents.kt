@@ -209,6 +209,7 @@ fun EntrenoHoyHeroCard(
     subtitulo: String,
     enfoque: String,
     onEmpezar: () -> Unit,
+    onPrepararRuta: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -243,6 +244,17 @@ fun EntrenoHoyHeroCard(
                 Icon(Icons.Filled.PlayArrow, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text("Empezar ahora", fontWeight = FontWeight.Bold)
+            }
+            if (onPrepararRuta != null && enfoque.equals("RESISTENCIA", ignoreCase = true)) {
+                androidx.compose.material3.OutlinedButton(
+                    onClick = onPrepararRuta,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    Text("Preparar ruta de carrera")
+                }
             }
         }
     }

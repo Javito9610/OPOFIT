@@ -62,6 +62,7 @@ import com.opofit.miapp.ui.components.SectionHeader
 import java.time.YearMonth
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasViewModel
+import com.opofit.miapp.utils.MapaEntrenoNav
 import com.opofit.miapp.utils.Units
 import com.opofit.miapp.utils.UrlOpener
 import kotlinx.coroutines.flow.collectLatest
@@ -75,6 +76,7 @@ fun RutinasScreen(
     onNavigateToRutinasLibres: () -> Unit,
     onNavigateToEditarPerfil: () -> Unit,
     onNavigateToPlanHistorial: (Int) -> Unit = {},
+    onNavigateToLugaresEntreno: (tipo: String) -> Unit = {},
     rutinasViewModel: RutinasViewModel = viewModel()
 ) {
     val authState by authViewModel.uiState.collectAsState()
@@ -436,6 +438,18 @@ fun RutinasScreen(
                                                     } else {
                                                         Text("Generar otra semana")
                                                     }
+                                                }
+                                            }
+                                            if (!uiState.entornoEntreno.isNullOrBlank()) {
+                                                OutlinedButton(
+                                                    onClick = {
+                                                        onNavigateToLugaresEntreno(
+                                                            MapaEntrenoNav.entornoATipoLugar(uiState.entornoEntreno)
+                                                        )
+                                                    },
+                                                    modifier = Modifier.fillMaxWidth()
+                                                ) {
+                                                    Text("Ver lugares cerca (${uiState.entornoEntreno})")
                                                 }
                                             }
                                         }

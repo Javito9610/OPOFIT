@@ -99,7 +99,7 @@ fun EntrenoActiveStepCard(
                     OutlinedButton(onClick = gps, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Filled.Explore, null, Modifier.size(18.dp))
                         Spacer(Modifier.size(6.dp))
-                        Text("Registrar con GPS")
+                        Text("Ruta e iniciar carrera")
                     }
                 }
             } else {

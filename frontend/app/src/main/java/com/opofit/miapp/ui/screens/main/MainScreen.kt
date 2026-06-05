@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
@@ -92,6 +93,8 @@ fun MainScreen(
     onNavigateToComunidad: () -> Unit,
     onNavigateToPremium: () -> Unit,
     onNavigateToGps: () -> Unit,
+    onNavigateToMapaRuta: (distKm: Double?, titulo: String?, enfoque: String?) -> Unit = { _, _, _ -> },
+    onNavigateToLugaresEntreno: (tipo: String) -> Unit = {},
     onNavigateToSesionDetalle: (Int) -> Unit,
     onNavigateToEjercicioHistorial: (Int) -> Unit,
     onNavigateToPlanHistorial: (Int) -> Unit,
@@ -168,6 +171,13 @@ fun MainScreen(
                         icon = { Icon(Icons.Filled.FitnessCenter, null) },
                         selected = false,
                         onClick = { navigateToTab(BottomTab.Rutinas.route) },
+                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                    )
+                    NavigationDrawerItem(
+                        label = { Text("Dónde entrenar") },
+                        icon = { Icon(Icons.Filled.Explore, null) },
+                        selected = false,
+                        onClick = { runAndClose { onNavigateToLugaresEntreno("GYM") } },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                     )
                     NavigationDrawerItem(
@@ -306,6 +316,7 @@ fun MainScreen(
                         onNavigateToComunidad = onNavigateToComunidad,
                         onNavigateToPremium = onNavigateToPremium,
                         onNavigateToGps = onNavigateToGps,
+                        onNavigateToMapaRuta = onNavigateToMapaRuta,
                         onNavigateToMisDispositivos = onNavigateToMisDispositivos,
                         onLogout = onLogout,
                         userName = authState.userName,
@@ -320,7 +331,8 @@ fun MainScreen(
                         onNavigateToEntrenamientos = { e, p, r -> onNavigateToEntrenamientos(e, p, r) },
                         onNavigateToRutinasLibres = onNavigateToRutinasLibres,
                         onNavigateToEditarPerfil = onNavigateToEditarPerfil,
-                        onNavigateToPlanHistorial = onNavigateToPlanHistorial
+                        onNavigateToPlanHistorial = onNavigateToPlanHistorial,
+                        onNavigateToLugaresEntreno = onNavigateToLugaresEntreno
                     )
                 }
 

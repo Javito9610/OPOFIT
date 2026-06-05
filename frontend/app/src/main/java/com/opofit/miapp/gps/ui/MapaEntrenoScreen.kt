@@ -7,12 +7,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
@@ -22,7 +20,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Route
+import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -43,6 +43,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -74,10 +75,13 @@ import com.opofit.miapp.data.responsemodels.LugarEntreno
 import com.opofit.miapp.data.responsemodels.RutaEntreno
 import com.opofit.miapp.data.responsemodels.RoutePointDto
 import com.opofit.miapp.data.responsemodels.RutaPersonalizadaBody
+import com.opofit.miapp.gps.service.EntrenoFlowContext
 import com.opofit.miapp.gps.service.PlannedRoute
 import com.opofit.miapp.gps.service.RoutePoint
 import com.opofit.miapp.gps.service.RoutePreferences
 import com.opofit.miapp.gps.util.RouteGpxExport
+import com.opofit.miapp.utils.MapaEntrenoNav
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -87,34 +91,44 @@ import kotlinx.coroutines.tasks.await
 fun MapaEntrenoScreen(
     onNavigateBack: () -> Unit,
     onUsarRutaEnGps: () -> Unit,
-    distanciaObjetivoKm: Double? = null
+    distanciaObjetivoKm: Double? = null,
+    modoInicial: String = MapaEntrenoNav.MODO_RUTAS,
+    tipoLugarInicial: String = "GYM"
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
     val tokenManager = remember { TokenManager(context) }
-    var tab by remember { mutableIntStateOf(0) }
+    val esModoLugares = modoInicial == MapaEntrenoNav.MODO_LUGARES
+    var tab by remember { mutableIntStateOf(if (esModoLugares) 0 else 1) }
     var lat by remember { mutableDoubleStateOf(40.4168) }
     var lng by remember { mutableDoubleStateOf(-3.7038) }
-    var tipoLugar by remember { mutableStateOf("GYM") }
+    var ubicacionLista by remember { mutableStateOf(false) }
+    var tipoLugar by remember { mutableStateOf(tipoLugarInicial) }
     var lugares by remember { mutableStateOf<List<LugarEntreno>>(emptyList()) }
     var ruta by remember { mutableStateOf<RutaEntreno?>(null) }
     var distKm by remember { mutableDoubleStateOf(distanciaObjetivoKm ?: 5.0) }
+    var variacion by remember { mutableIntStateOf(0) }
     var loading by remember { mutableStateOf(false) }
+    val flowCtx by EntrenoFlowContext.state.collectAsState()
     var modoPersonalizado by remember { mutableStateOf(false) }
     val waypoints = remember { mutableStateListOf<LatLng>() }
     val camera = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(lat, lng), 14f)
     }
 
+    val titulo = if (esModoLugares) "Dónde entrenar" else "Ruta de carrera"
+
     val permLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { granted ->
         if (granted.values.any { it }) {
-            scope.launch { cargarUbicacion(context) { la, ln ->
-                lat = la; lng = ln
-                camera.position = CameraPosition.fromLatLngZoom(LatLng(la, ln), 14f)
-            } }
+            scope.launch {
+                cargarUbicacion(context) { la, ln ->
+                    lat = la; lng = ln; ubicacionLista = true
+                    camera.position = CameraPosition.fromLatLngZoom(LatLng(la, ln), 14f)
+                }
+            }
         }
     }
 
@@ -124,6 +138,7 @@ fun MapaEntrenoScreen(
     }
 
     fun cargarLugares() {
+        if (!ubicacionLista) return
         scope.launch {
             loading = true
             try {
@@ -137,7 +152,7 @@ fun MapaEntrenoScreen(
         }
     }
 
-    fun generarRuta() {
+    fun generarRuta(onListo: (() -> Unit)? = null) {
         scope.launch {
             loading = true
             try {
@@ -150,10 +165,11 @@ fun MapaEntrenoScreen(
                         )
                     )
                 } else {
-                    RetrofitClient.mapasApi.rutaSugerida(auth(), lat, lng, distKm)
+                    RetrofitClient.mapasApi.rutaSugerida(auth(), lat, lng, distKm, variacion)
                 }
                 ruta = resp.data
                 tab = 1
+                onListo?.invoke()
             } catch (e: Exception) {
                 snackbar.showSnackbar("Error generando ruta: ${e.message}")
             } finally {
@@ -162,11 +178,47 @@ fun MapaEntrenoScreen(
         }
     }
 
+    suspend fun guardarEIniciar(r: RutaEntreno) {
+        val planned = PlannedRoute(
+            id = r.id,
+            nombre = r.nombre,
+            distanciaKm = r.distanciaKm,
+            puntos = r.puntos.map { RoutePoint(it.lat, it.lng) },
+            origen = r.origen
+        )
+        RoutePreferences.save(context, planned)
+        onUsarRutaEnGps()
+    }
+
+    fun iniciarCarreraConRuta() {
+        scope.launch {
+            val actual = ruta
+            if (actual != null && actual.puntos.size >= 2) {
+                guardarEIniciar(actual)
+            } else {
+                loading = true
+                try {
+                    val resp = RetrofitClient.mapasApi.rutaSugerida(auth(), lat, lng, distKm, variacion)
+                    val generada = resp.data
+                    if (generada != null && generada.puntos.size >= 2) {
+                        ruta = generada
+                        tab = 1
+                        guardarEIniciar(generada)
+                    }
+                } catch (e: Exception) {
+                    snackbar.showSnackbar("Error: ${e.message}")
+                } finally {
+                    loading = false
+                }
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
         if (fine == PackageManager.PERMISSION_GRANTED) {
             cargarUbicacion(context) { la, ln ->
-                lat = la; lng = ln
+                lat = la; lng = ln; ubicacionLista = true
                 camera.position = CameraPosition.fromLatLngZoom(LatLng(la, ln), 14f)
             }
         } else {
@@ -174,16 +226,39 @@ fun MapaEntrenoScreen(
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
             )
         }
-        cargarLugares()
     }
 
-    LaunchedEffect(tipoLugar) { cargarLugares() }
+    LaunchedEffect(flowCtx?.distKmObjetivo, distanciaObjetivoKm) {
+        val km = distanciaObjetivoKm ?: flowCtx?.distKmObjetivo
+        if (km != null && km > 0) distKm = km
+    }
+
+    LaunchedEffect(ubicacionLista, esModoLugares) {
+        if (ubicacionLista && esModoLugares) cargarLugares()
+    }
+
+    LaunchedEffect(ubicacionLista, tipoLugar) {
+        if (ubicacionLista && tab == 0) cargarLugares()
+    }
+
+    /** Al cambiar km, regenera la ruta sugerida y la dibuja en el mapa. */
+    LaunchedEffect(ubicacionLista, distKm, tab, modoPersonalizado, esModoLugares) {
+        if (!ubicacionLista || esModoLugares || tab != 1 || modoPersonalizado) return@LaunchedEffect
+        variacion = 0
+        delay(350)
+        generarRuta()
+    }
+
+    fun otraPropuesta() {
+        variacion++
+        generarRuta()
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
-                title = { Text("Mapa de entreno") },
+                title = { Text(titulo) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver")
@@ -193,7 +268,7 @@ fun MapaEntrenoScreen(
                     IconButton(onClick = {
                         scope.launch {
                             cargarUbicacion(context) { la, ln ->
-                                lat = la; lng = ln
+                                lat = la; lng = ln; ubicacionLista = true
                                 camera.position = CameraPosition.fromLatLngZoom(LatLng(la, ln), 14f)
                             }
                         }
@@ -211,9 +286,11 @@ fun MapaEntrenoScreen(
         }
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad)) {
-            TabRow(selectedTabIndex = tab) {
-                Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text("Lugares") })
-                Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text("Rutas") })
+            if (!esModoLugares) {
+                TabRow(selectedTabIndex = tab) {
+                    Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text("Ruta sugerida") })
+                    Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text("Lugares") })
+                }
             }
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 GoogleMap(
@@ -222,13 +299,11 @@ fun MapaEntrenoScreen(
                     properties = MapProperties(isMyLocationEnabled = true),
                     uiSettings = MapUiSettings(myLocationButtonEnabled = false),
                     onMapClick = { click ->
-                        if (tab == 1 && modoPersonalizado) {
-                            waypoints.add(click)
-                        }
+                        if (tab == 1 && modoPersonalizado) waypoints.add(click)
                     }
                 ) {
                     Marker(state = MarkerState(LatLng(lat, lng)), title = "Tú")
-                    if (tab == 0) {
+                    if (tab == 0 || esModoLugares) {
                         lugares.forEach { l ->
                             Marker(
                                 state = MarkerState(LatLng(l.lat, l.lng)),
@@ -237,9 +312,11 @@ fun MapaEntrenoScreen(
                             )
                         }
                     }
-                    ruta?.puntos?.takeIf { it.size >= 2 }?.let { pts ->
-                        val latLngs = pts.map { LatLng(it.lat, it.lng) }
-                        Polyline(points = latLngs, color = Color(0xFF2E7D32), width = 10f)
+                    if (tab == 1 || !esModoLugares) {
+                        ruta?.puntos?.takeIf { it.size >= 2 }?.let { pts ->
+                            val latLngs = pts.map { LatLng(it.lat, it.lng) }
+                            Polyline(points = latLngs, color = Color(0xFF2E7D32), width = 10f)
+                        }
                     }
                     waypoints.forEachIndexed { i, p ->
                         Marker(state = MarkerState(p), title = "Punto ${i + 1}")
@@ -251,7 +328,12 @@ fun MapaEntrenoScreen(
             }
             Card(Modifier.fillMaxWidth().padding(12.dp)) {
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (tab == 0) {
+                    if (tab == 0 || esModoLugares) {
+                        Text(
+                            "Gyms, CrossFit y parques cerca de ti",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             items(listOf("GYM", "CROSSFIT", "PISTA", "CALISTENIA", "PARQUE")) { t ->
                                 FilterChip(
@@ -262,25 +344,42 @@ fun MapaEntrenoScreen(
                             }
                         }
                         if (lugares.isNotEmpty()) {
-                            Text(
-                                "${lugares.size} lugares cerca",
-                                style = MaterialTheme.typography.labelMedium
-                            )
+                            Text("${lugares.size} lugares cerca", style = MaterialTheme.typography.labelMedium)
                             lugares.take(3).forEach { l ->
                                 Text(
-                                    "• ${l.nombre} (${(l.distanciaM / 1000).let { "%.1f".format(it) }} km)",
+                                    "• ${l.nombre} (${"%.1f".format(l.distanciaM / 1000)} km)",
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
                         }
                     } else {
-                        Text("Distancia objetivo: ${"%.1f".format(distKm)} km", fontWeight = FontWeight.Bold)
+                        flowCtx?.tituloSesion?.let { t ->
+                            Text(
+                                "Sesión: $t",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (distanciaObjetivoKm != null) {
+                            Text(
+                                "Del plan de hoy: ${"%.1f".format(distanciaObjetivoKm)} km",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Text("Distancia: ${"%.1f".format(distKm)} km", fontWeight = FontWeight.Medium)
+                        Text(
+                            "La ruta en verde se actualiza al mover la distancia",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         Slider(
                             value = distKm.toFloat(),
                             onValueChange = { distKm = it.toDouble() },
                             valueRange = 1f..15f,
                             steps = 13,
-                            enabled = !modoPersonalizado
+                            enabled = !modoPersonalizado && !loading
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             FilterChip(
@@ -296,69 +395,77 @@ fun MapaEntrenoScreen(
                         }
                         if (modoPersonalizado) {
                             Text(
-                                "Toca el mapa para añadir puntos (${waypoints.size})",
+                                "Toca el mapa para trazar tu ruta (${waypoints.size} puntos)",
                                 style = MaterialTheme.typography.bodySmall
                             )
+                            if (waypoints.size >= 2) {
+                                OutlinedButton(
+                                    onClick = { generarRuta() },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    enabled = !loading
+                                ) {
+                                    Icon(Icons.Filled.TouchApp, null, Modifier.size(16.dp))
+                                    Spacer(Modifier.size(4.dp))
+                                    Text("Crear mi ruta")
+                                }
+                            }
                             if (waypoints.isNotEmpty()) {
-                                OutlinedButton(onClick = { waypoints.clear() }, modifier = Modifier.fillMaxWidth()) {
+                                OutlinedButton(onClick = { waypoints.clear(); ruta = null }, modifier = Modifier.fillMaxWidth()) {
                                     Text("Limpiar puntos")
                                 }
                             }
-                        }
-                        OutlinedButton(onClick = { generarRuta() }, modifier = Modifier.fillMaxWidth()) {
-                            Icon(Icons.Filled.Route, null, Modifier.size(18.dp))
-                            Spacer(Modifier.size(6.dp))
-                            Text(if (modoPersonalizado) "Crear ruta" else "Generar ruta sugerida")
                         }
                         ruta?.let { r ->
                             Text(
                                 "${r.nombre} · ${"%.2f".format(r.distanciaKm)} km",
                                 fontWeight = FontWeight.Medium
                             )
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(
-                                    onClick = {
-                                        val planned = PlannedRoute(
-                                            id = r.id,
-                                            nombre = r.nombre,
-                                            distanciaKm = r.distanciaKm,
-                                            puntos = r.puntos.map { RoutePoint(it.lat, it.lng) },
-                                            origen = r.origen
+                        }
+                        Button(
+                            onClick = { iniciarCarreraConRuta() },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !loading && (ubicacionLista || ruta != null)
+                        ) {
+                            Icon(Icons.Filled.PlayArrow, null, Modifier.size(20.dp))
+                            Spacer(Modifier.size(8.dp))
+                            Text(
+                                if (ruta != null) "Iniciar carrera con esta ruta"
+                                else "Generar ruta e iniciar carrera"
+                            )
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(
+                                onClick = { otraPropuesta() },
+                                modifier = Modifier.weight(1f),
+                                enabled = !loading && !modoPersonalizado
+                            ) {
+                                Icon(Icons.Filled.Refresh, null, Modifier.size(16.dp))
+                                Spacer(Modifier.size(4.dp))
+                                Text("Otra propuesta")
+                            }
+                            OutlinedButton(
+                                onClick = {
+                                    val r = ruta ?: return@OutlinedButton
+                                    val planned = PlannedRoute(
+                                        id = r.id,
+                                        nombre = r.nombre,
+                                        distanciaKm = r.distanciaKm,
+                                        puntos = r.puntos.map { RoutePoint(it.lat, it.lng) },
+                                        origen = r.origen
+                                    )
+                                    val intent = RouteGpxExport.shareIntent(context, planned)
+                                    if (intent != null) {
+                                        context.startActivity(
+                                            android.content.Intent.createChooser(intent, "Exportar GPX")
                                         )
-                                        val intent = RouteGpxExport.shareIntent(context, planned)
-                                        if (intent != null) {
-                                            context.startActivity(
-                                                android.content.Intent.createChooser(intent, "Exportar GPX al reloj")
-                                            )
-                                        }
-                                    },
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(Icons.Filled.Download, null, Modifier.size(16.dp))
-                                    Spacer(Modifier.size(4.dp))
-                                    Text("GPX")
-                                }
-                                Button(
-                                    onClick = {
-                                        scope.launch {
-                                            val planned = PlannedRoute(
-                                                id = r.id,
-                                                nombre = r.nombre,
-                                                distanciaKm = r.distanciaKm,
-                                                puntos = r.puntos.map { RoutePoint(it.lat, it.lng) },
-                                                origen = r.origen
-                                            )
-                                            RoutePreferences.save(context, planned)
-                                            snackbar.showSnackbar("Ruta lista para GPS")
-                                            onUsarRutaEnGps()
-                                        }
-                                    },
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(Icons.Filled.PlayArrow, null, Modifier.size(16.dp))
-                                    Spacer(Modifier.size(4.dp))
-                                    Text("Usar en GPS")
-                                }
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                enabled = ruta != null
+                            ) {
+                                Icon(Icons.Filled.Download, null, Modifier.size(16.dp))
+                                Spacer(Modifier.size(4.dp))
+                                Text("GPX")
                             }
                         }
                     }
@@ -376,5 +483,5 @@ private suspend fun cargarUbicacion(
         val fused = LocationServices.getFusedLocationProviderClient(context)
         val loc = fused.lastLocation.await()
         if (loc != null) onResult(loc.latitude, loc.longitude)
-    } catch (_: Exception) { /* ubicación por defecto Madrid */ }
+    } catch (_: Exception) { /* ubicación por defecto */ }
 }

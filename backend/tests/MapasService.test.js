@@ -14,6 +14,13 @@ describe('MapasService', () => {
     expect(ruta.distanciaKm).toBeLessThan(7);
   });
 
+  test('variacion genera otra propuesta distinta', () => {
+    const a = MapasService.generarRutaSugerida(40.4168, -3.7038, 5, 0);
+    const b = MapasService.generarRutaSugerida(40.4168, -3.7038, 5, 3);
+    expect(a.puntos[0].lat).not.toBe(b.puntos[0].lat);
+    expect(b.variacion).toBe(3);
+  });
+
   test('rutaEntreWaypoints calcula distancia', () => {
     const ruta = MapasService.rutaEntreWaypoints(
       [

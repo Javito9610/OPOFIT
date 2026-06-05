@@ -32,6 +32,8 @@ import com.opofit.miapp.ui.screens.comunidad.ComunidadScreen
 import com.opofit.miapp.ui.screens.ranking.RankingScreen
 import com.opofit.miapp.ui.screens.premium.PremiumScreen
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
+import com.opofit.miapp.gps.service.EntrenoFlowContext
+import com.opofit.miapp.utils.MapaEntrenoNav
 
 @Composable
 fun AppNavigation(
@@ -115,6 +117,13 @@ fun AppNavigation(
                 onNavigateToGps = {
                     navController.navigate(NavDestinations.GPS_HUB)
                 },
+                onNavigateToMapaRuta = { distKm, titulo, enfoque ->
+                    EntrenoFlowContext.vincularDesdePlan(titulo, distKm, enfoque)
+                    navController.navigate(MapaEntrenoNav.rutaMapa(distKm = distKm, modo = MapaEntrenoNav.MODO_RUTAS))
+                },
+                onNavigateToLugaresEntreno = { tipo ->
+                    navController.navigate(MapaEntrenoNav.rutaMapa(modo = MapaEntrenoNav.MODO_LUGARES, tipoLugar = tipo))
+                },
                 onNavigateToSesionDetalle = { id ->
                     navController.navigate("historial_sesion/$id")
                 },
@@ -186,7 +195,15 @@ fun AppNavigation(
                 authViewModel = authViewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onEntrenamientoFinalizado = { navController.popBackStack() },
-                onNavigateToGps = { navController.navigate(NavDestinations.GPS_HUB) }
+                onNavigateToGps = { distKm ->
+                    EntrenoFlowContext.vincularEntrenamiento(
+                        returnRoute = MapaEntrenoNav.rutaEntrenamientoPers(rutinaId),
+                        titulo = "Rutina personalizada",
+                        distKm = distKm,
+                        enfoque = null
+                    )
+                    navController.navigate(MapaEntrenoNav.rutaMapa(distKm = distKm, modo = MapaEntrenoNav.MODO_RUTAS))
+                }
             )
         }
 
@@ -207,7 +224,15 @@ fun AppNavigation(
                 onEntrenamientoFinalizado = {
                     navController.popBackStack()
                 },
-                onNavigateToGps = { navController.navigate("mapa_entreno?distKm=0") },
+                onNavigateToGps = { distKm ->
+                    EntrenoFlowContext.vincularEntrenamiento(
+                        returnRoute = MapaEntrenoNav.rutaEntrenamiento(enfoque, idPlanDia, idRutinaOpo),
+                        titulo = enfoque.ifBlank { "Entrenamiento" },
+                        distKm = distKm,
+                        enfoque = enfoque
+                    )
+                    navController.navigate(MapaEntrenoNav.rutaMapa(distKm = distKm, modo = MapaEntrenoNav.MODO_RUTAS))
+                },
                 initialEnfoque = enfoque,
                 initialPlanDiaId = idPlanDia.takeIf { it > 0 },
                 initialRutinaOpoId = idRutinaOpo.takeIf { it > 0 }
@@ -295,28 +320,49 @@ fun AppNavigation(
             GpsHubScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onStartRecording = { navController.navigate(NavDestinations.GPS_RECORDING) },
-                onOpenMapa = { navController.navigate("mapa_entreno?distKm=0") },
+                onOpenMapa = {
+                    val km = EntrenoFlowContext.state.value?.distKmObjetivo
+                    navController.navigate(
+                        MapaEntrenoNav.rutaMapa(distKm = km, modo = MapaEntrenoNav.MODO_RUTAS)
+                    )
+                },
                 onOpenActivity = { id -> navController.navigate("gps_activity/$id") }
             )
         }
 
         composable(
             route = NavDestinations.MAPA_ENTRENO,
-            arguments = listOf(navArgument("distKm") { type = NavType.FloatType; defaultValue = 0f })
+            arguments = listOf(
+                navArgument("distKm") { type = NavType.FloatType; defaultValue = 0f },
+                navArgument("modo") { type = NavType.StringType; defaultValue = MapaEntrenoNav.MODO_RUTAS },
+                navArgument("tipo") { type = NavType.StringType; defaultValue = "GYM" }
+            )
         ) { backStackEntry ->
             val distKm = backStackEntry.arguments?.getFloat("distKm")?.toDouble()?.takeIf { it > 0 }
+            val modo = backStackEntry.arguments?.getString("modo") ?: MapaEntrenoNav.MODO_RUTAS
+            val tipo = backStackEntry.arguments?.getString("tipo") ?: "GYM"
             MapaEntrenoScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onUsarRutaEnGps = { navController.navigate(NavDestinations.GPS_RECORDING) },
-                distanciaObjetivoKm = distKm
+                distanciaObjetivoKm = distKm,
+                modoInicial = modo,
+                tipoLugarInicial = tipo
             )
         }
 
         composable(NavDestinations.GPS_RECORDING) {
             GpsRecordingScreen(
                 onFinishSaved = { id ->
-                    navController.navigate("gps_activity/$id") {
-                        popUpTo(NavDestinations.GPS_HUB) { inclusive = false }
+                    val volverEntreno = EntrenoFlowContext.consumeReturnRoute()
+                    if (volverEntreno != null) {
+                        navController.navigate(volverEntreno) {
+                            popUpTo(NavDestinations.MAIN) { saveState = true }
+                            launchSingleTop = true
+                        }
+                    } else {
+                        navController.navigate("gps_activity/$id") {
+                            popUpTo(NavDestinations.GPS_HUB) { inclusive = false }
+                        }
                     }
                 },
                 onDiscarded = { navController.popBackStack() }

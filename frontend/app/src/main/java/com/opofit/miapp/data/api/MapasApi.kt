@@ -30,7 +30,8 @@ interface MapasApi {
         @Header("Authorization") token: String,
         @Query("lat") lat: Double,
         @Query("lng") lng: Double,
-        @Query("distKm") distKm: Double
+        @Query("distKm") distKm: Double,
+        @Query("variacion") variacion: Int = 0
     ): RutaEntrenoResponse
 
     @POST("api/mapas/rutas/personalizada")
