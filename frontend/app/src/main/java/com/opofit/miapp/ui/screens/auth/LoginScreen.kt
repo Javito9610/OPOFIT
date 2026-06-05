@@ -6,8 +6,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import com.opofit.miapp.ui.components.OpoFitLogo
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -128,15 +128,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(48.dp))
 
             
-            Box(
-                modifier = Modifier
-                    .size(88.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("🏋️", fontSize = 44.sp)
-            }
+            OpoFitLogo(size = 96.dp, cornerRadius = 22.dp)
 
             Spacer(modifier = Modifier.height(20.dp))
 

@@ -58,6 +58,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.opofit.miapp.ui.components.OpoFitLogo
 import com.opofit.miapp.ui.components.ProfileAvatar
 import com.opofit.miapp.ui.screens.historial.HistorialScreen
 import com.opofit.miapp.ui.screens.home.HomeScreen
@@ -142,7 +143,24 @@ fun MainScreen(
                     Row(
                         Modifier
                             .fillMaxWidth()
-                            .padding(20.dp),
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OpoFitLogo(size = 44.dp, cornerRadius = 10.dp)
+                        Column {
+                            Text("OpoFit", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "Entrena. Supera. Consigue.",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {

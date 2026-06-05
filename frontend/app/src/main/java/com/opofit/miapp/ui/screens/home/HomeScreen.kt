@@ -55,6 +55,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.ui.components.EntrenoHoyHeroCard
+import com.opofit.miapp.ui.components.OpoFitLogo
 import com.opofit.miapp.ui.components.ErrorState
 import com.opofit.miapp.ui.components.ProfileAvatar
 import com.opofit.miapp.ui.components.SectionHeader
@@ -122,12 +123,18 @@ fun HomeScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Text("OpoFit", fontWeight = FontWeight.ExtraBold)
-                        Text(
-                            if (esFitness) "Modo fitness" else (resumen?.oposicionNombre ?: "Tu oposición"),
-                            style = MaterialTheme.typography.labelSmall
-                        )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OpoFitLogo(size = 36.dp, cornerRadius = 8.dp)
+                        Column {
+                            Text("OpoFit", fontWeight = FontWeight.ExtraBold)
+                            Text(
+                                if (esFitness) "Modo fitness" else (resumen?.oposicionNombre ?: "Tu oposición"),
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
