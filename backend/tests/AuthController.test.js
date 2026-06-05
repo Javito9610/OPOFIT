@@ -41,8 +41,12 @@ describe('AuthController', () => {
     });
     test('debería devolver 201 si el registro es exitoso', async () => {
       req.body = {
+        nombre: 'Test',
         email: 'test@test.com',
-        password: '123456'
+        password: '123456',
+        genero: 'HOMBRE',
+        peso: 70,
+        altura: 175
       };
       AuthService.registrar.mockResolvedValue({
         userId: 1
@@ -56,8 +60,12 @@ describe('AuthController', () => {
     });
     test('debería devolver 409 si el email ya está registrado', async () => {
       req.body = {
+        nombre: 'Test',
         email: 'test@test.com',
-        password: '123456'
+        password: '123456',
+        genero: 'HOMBRE',
+        peso: 70,
+        altura: 175
       };
       AuthService.registrar.mockRejectedValue(new Error('Duplicate entry'));
       await registrar(req, res);
@@ -69,8 +77,12 @@ describe('AuthController', () => {
     });
     test('debería devolver 500 sin detalles del error interno', async () => {
       req.body = {
+        nombre: 'Test',
         email: 'test@test.com',
-        password: '123456'
+        password: '123456',
+        genero: 'HOMBRE',
+        peso: 70,
+        altura: 175
       };
       AuthService.registrar.mockRejectedValue(new Error('Connection refused'));
       await registrar(req, res);

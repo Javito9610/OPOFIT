@@ -33,6 +33,38 @@ beforeAll(async () => {
 
 const auth = () => ({ Authorization: `Bearer ${token}` });
 
+describe('Registro: rechaza datos imposibles', () => {
+  const valido = {
+    nombre: 'Persona Valida', password: 'Pwd!valido1',
+    genero: 'HOMBRE', peso: 75, altura: 180, oposiciones_id_oposicion: 1
+  };
+  test('peso negativo -> 400', async () => {
+    const r = await request(app).post('/api/auth/registrar')
+      .send({ ...valido, email: 'pesoneg@opofit.test', peso: -20 });
+    expect(r.status).toBe(400);
+  });
+  test('altura imposible (300 cm) -> 400', async () => {
+    const r = await request(app).post('/api/auth/registrar')
+      .send({ ...valido, email: 'altura@opofit.test', altura: 300 });
+    expect(r.status).toBe(400);
+  });
+  test('genero invalido -> 400', async () => {
+    const r = await request(app).post('/api/auth/registrar')
+      .send({ ...valido, email: 'genero@opofit.test', genero: 'OTRO' });
+    expect(r.status).toBe(400);
+  });
+  test('email mal formado -> 400', async () => {
+    const r = await request(app).post('/api/auth/registrar')
+      .send({ ...valido, email: 'no-es-un-email' });
+    expect(r.status).toBe(400);
+  });
+  test('datos coherentes -> 201', async () => {
+    const r = await request(app).post('/api/auth/registrar')
+      .send({ ...valido, email: 'coherente-ok@opofit.test' });
+    expect(r.status).toBe(201);
+  });
+});
+
 describe('Simulacro: rechaza valores imposibles', () => {
   test('100m en segundos negativos -> 400', async () => {
     const r = await request(app).post('/api/simulacros/guardar').set(auth())

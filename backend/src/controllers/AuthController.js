@@ -1,15 +1,21 @@
 const AuthService = require('../services/AuthService');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
+const RegistroValidator = require('../utils/RegistroValidator');
 const registrar = async (req, res) => {
   try {
-    const userData = req.body;
+    const userData = req.body || {};
     userData.email = String(userData.email || '').trim().toLowerCase();
     if (!userData.email || !userData.password) {
       return res.status(400).json({
         ok: false,
         msg: 'Faltan campos obligatorios (email o contraseña)'
       });
+    }
+    // Coherencia: rechazamos datos imposibles (peso/altura, genero, email).
+    const validacion = RegistroValidator.validarRegistro(userData);
+    if (!validacion.ok) {
+      return res.status(400).json({ ok: false, msg: validacion.msg });
     }
     const resultado = await AuthService.registrar(userData);
     if (!process.env.JWT_SECRET) {
