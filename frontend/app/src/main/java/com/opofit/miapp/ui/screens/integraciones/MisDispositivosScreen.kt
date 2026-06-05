@@ -26,9 +26,11 @@ import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -149,7 +151,21 @@ fun MisDispositivosScreen(
         }
     }
 
-    fun requestGoogleFitPermissions() {
+    fun openOauthUrl(url: String) {
+        scope.launch {
+            val token = tokenManager.getToken().first().orEmpty()
+            val withToken = "$url?token=${Uri.encode(token)}"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(withToken))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            runCatching { startActivity(context, intent, null) }
+        }
+    }
+
+    val proveedores = state.estado.proveedores.associateBy { it.provider }
+    var showAvanzado by remember { mutableStateOf(false) }
+    var showGoogleFitAviso by remember { mutableStateOf(false) }
+
+    fun lanzarGoogleFitOAuth() {
         val mainActivity = activity as? MainActivity ?: return
         scope.launch {
             gfManager.trySilentSignIn()
@@ -182,18 +198,13 @@ fun MisDispositivosScreen(
         }
     }
 
-    fun openOauthUrl(url: String) {
-        scope.launch {
-            val token = tokenManager.getToken().first().orEmpty()
-            val withToken = "$url?token=${Uri.encode(token)}"
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(withToken))
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            runCatching { startActivity(context, intent, null) }
+    fun requestGoogleFitPermissions() {
+        if (gfManager.hasPermissions()) {
+            viewModel.syncGoogleFit()
+            return
         }
+        showGoogleFitAviso = true
     }
-
-    val proveedores = state.estado.proveedores.associateBy { it.provider }
-    var showAvanzado by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -213,6 +224,38 @@ fun MisDispositivosScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
+        if (showGoogleFitAviso) {
+            AlertDialog(
+                onDismissRequest = { showGoogleFitAviso = false },
+                title = { Text("Aviso de Google (normal en desarrollo)") },
+                text = {
+                    Text(
+                        "Google Fit pide permisos sensibles y muestra que la app «no está verificada». " +
+                            "Es normal mientras OpoFit está en pruebas — no es un virus.\n\n" +
+                            "Si sale la pantalla roja de Google:\n" +
+                            "1. NO pulses «Back to safety» / «Volver a un lugar seguro».\n" +
+                            "2. Abajo, pulsa «Advanced» / «Avanzado».\n" +
+                            "3. Pulsa «Go to project… (unsafe)» / «Ir al proyecto…».\n" +
+                            "4. Elige tu cuenta Google y acepta TODOS los permisos de actividad.\n\n" +
+                            "Si tu correo no está en usuarios de prueba del proyecto Google Cloud, " +
+                            "añádelo en la consola OAuth (miapp-opofit-7088e)."
+                    )
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        showGoogleFitAviso = false
+                        lanzarGoogleFitOAuth()
+                    }) {
+                        Text("Continuar con Google")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showGoogleFitAviso = false }) {
+                        Text("Cancelar")
+                    }
+                }
+            )
+        }
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
             contentPadding = PaddingValues(16.dp),
@@ -654,11 +697,12 @@ private fun GoogleFitCard(
     ) {
         Text(
             "Pasos para conectar tu reloj:\n\n" +
-                "Cuando funcione verás «Conectado» arriba a la derecha.\n\n" +
-                "1. Instala Google Fit y la app de tu reloj.\n" +
-                "2. En la app del reloj activa «Sincronizar con Google Fit».\n" +
-                "3. Pulsa «Conceder permisos» — saldrá la ventana de Google (como en Health Connect).\n" +
-                "4. Si es la primera vez, elige tu cuenta Google y marca TODOS los datos de actividad.",
+                "1. Instala Google Fit y activa sync en la app de tu reloj.\n" +
+                "2. Pulsa «Conceder permisos».\n" +
+                "3. Google puede avisar «app no verificada» — es normal en desarrollo.\n" +
+                "   Pulsa Avanzado → Ir al proyecto → Aceptar permisos.\n" +
+                "4. Si no deja entrar, el desarrollador debe añadir tu Gmail como " +
+                "«usuario de prueba» en Google Cloud Console.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
