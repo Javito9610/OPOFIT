@@ -51,6 +51,29 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
                 if (!u.isNullOrBlank()) _uiState.update { it.copy(unidadDistancia = u) }
             }
         }
+        // Carga remota: unidades + hora del recordatorio + activo. Antes faltaba esto y
+        // los toggles del recordatorio salían siempre con defaults aunque el usuario los
+        // hubiera cambiado. Por eso parecía que "el recordatorio no hacía nada".
+        cargarAjustesRemotos()
+    }
+
+    private fun cargarAjustesRemotos() {
+        viewModelScope.launch {
+            try {
+                val token = tokenManager.getToken().first().orEmpty()
+                if (token.isBlank()) return@launch
+                val resp = RetrofitClient.usuarioApi.obtenerAjustes("Bearer $token")
+                val d = resp.data ?: return@launch
+                _uiState.update {
+                    it.copy(
+                        unidadPeso = d.unidadPeso,
+                        unidadDistancia = d.unidadDistancia,
+                        horaRecordatorio = d.horaRecordatorio,
+                        recordatorioActivo = d.recordatorioActivo
+                    )
+                }
+            } catch (_: Exception) { /* silencioso: defaults siguen siendo válidos */ }
+        }
     }
 
     fun setDarkMode(enabled: Boolean) {

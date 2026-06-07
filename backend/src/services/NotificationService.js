@@ -31,7 +31,15 @@ class NotificationService {
   }
 
   static async enviarRecordatorioEntreno() {
-    const horaActual = new Date().getHours();
+    // Bug previo: `new Date().getHours()` devuelve la hora del SERVIDOR.
+    // En Railway corre en UTC → un usuario que pidió recordatorio a las 18:00 (Madrid)
+    // recibía el push a las 18:00 UTC (20:00 Madrid en verano). Calculamos la hora
+    // en la zona horaria de España. (Override con TZ_USUARIOS si los usuarios están en otra zona).
+    const tz = process.env.TZ_USUARIOS || 'Europe/Madrid';
+    const horaActual = parseInt(
+      new Intl.DateTimeFormat('es-ES', { timeZone: tz, hour: '2-digit', hour12: false }).format(new Date()),
+      10
+    );
     const [usuarios] = await db.query(
       `SELECT id_usuario, fcm_token, nombre, oposiciones_id_oposicion,
               COALESCE(hora_recordatorio_entreno, '18:00:00') AS hora_rec,

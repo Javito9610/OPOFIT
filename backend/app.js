@@ -8,17 +8,32 @@ const port = process.env.PORT || 3000;
 // Railway (y otros proxies) envían X-Forwarded-For; express-rate-limit lo exige con trust proxy.
 app.set('trust proxy', 1);
 
+// Antes: 100 req / 15 min (≈7/min). La app real hace muchas más:
+// home + feed + notifs + ranking + dashboard → bloqueaba con uso normal y
+// el snackbar "demasiadas peticiones" saltaba a cada toque.
+// Nuevo: 1200/15min ≈ 80/min, suficiente para uso intensivo de un usuario,
+// y ALTOS_CODIGOS_HTTP (400/401/...) ya no cuentan contra el límite — solo
+// las peticiones exitosas (skipSuccessfulRequests=false significa que sí cuentan;
+// usamos skipFailedRequests=true para no penalizar fallos del servidor).
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: Number(process.env.RATE_LIMIT_GLOBAL || 1200),
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipFailedRequests: true,
   message: {
     ok: false,
     msg: 'Demasiadas peticiones. Inténtalo de nuevo más tarde.'
   }
 });
+// Auth: 30 intentos / 15 min (login + register + refresh).
+// Antes 10 era demasiado bajo si el usuario se equivoca varias veces.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: Number(process.env.RATE_LIMIT_AUTH || 30),
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
   message: {
     ok: false,
     msg: 'Demasiados intentos de autenticación. Espera unos minutos.'

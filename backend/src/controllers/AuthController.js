@@ -28,7 +28,7 @@ const registrar = async (req, res) => {
       id: resultado.userId,
       email: userData.email
     }, process.env.JWT_SECRET, {
-      expiresIn: '24h'
+      expiresIn: process.env.JWT_EXPIRES_IN || '30d'
     });
     res.status(201).json({
       ok: true,
@@ -78,7 +78,7 @@ const login = async (req, res) => {
       id: usuario.id_usuario,
       email: usuario.email
     }, process.env.JWT_SECRET, {
-      expiresIn: '24h'
+      expiresIn: process.env.JWT_EXPIRES_IN || '30d'
     });
     res.status(200).json({
       ok: true,
@@ -117,7 +117,7 @@ const loginConGoogle = async (req, res) => {
       id: usuario.id_usuario,
       email: usuario.email
     }, process.env.JWT_SECRET, {
-      expiresIn: '24h'
+      expiresIn: process.env.JWT_EXPIRES_IN || '30d'
     });
     res.status(200).json({
       ok: true,
@@ -157,7 +157,7 @@ const registrarConGoogle = async (req, res) => {
       id: usuario.id_usuario,
       email: usuario.email
     }, process.env.JWT_SECRET, {
-      expiresIn: '24h'
+      expiresIn: process.env.JWT_EXPIRES_IN || '30d'
     });
     res.status(200).json({
       ok: true,
@@ -195,7 +195,7 @@ const loginConFirebase = async (req, res) => {
       id: usuario.id_usuario,
       email: usuario.email
     }, process.env.JWT_SECRET, {
-      expiresIn: '24h'
+      expiresIn: process.env.JWT_EXPIRES_IN || '30d'
     });
     return res.status(200).json({
       ok: true,
@@ -252,7 +252,7 @@ const registrarConFirebase = async (req, res) => {
       id: usuario.id_usuario,
       email: usuario.email
     }, process.env.JWT_SECRET, {
-      expiresIn: '24h'
+      expiresIn: process.env.JWT_EXPIRES_IN || '30d'
     });
     return res.status(201).json({
       ok: true,

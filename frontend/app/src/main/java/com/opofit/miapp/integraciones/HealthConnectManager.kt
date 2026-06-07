@@ -12,12 +12,17 @@ import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.SpeedRecord
 import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.metadata.Metadata
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
+import androidx.health.connect.client.units.Energy
+import androidx.health.connect.client.units.Length
 import com.opofit.miapp.gps.data.GpsRepository
 import com.opofit.miapp.gps.model.ActivitySummary
 import com.opofit.miapp.gps.model.ActivityType
 import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 
 /**
@@ -36,7 +41,13 @@ class HealthConnectManager(private val context: Context) {
         HealthPermission.getReadPermission(SpeedRecord::class),
         HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class),
         HealthPermission.getReadPermission(ElevationGainedRecord::class),
-        HealthPermission.getReadPermission(StepsRecord::class)
+        HealthPermission.getReadPermission(StepsRecord::class),
+        // Write: permite empujar entrenamientos hechos en la app hacia el reloj
+        // (sync app → reloj vía Samsung Health / Mi Fitness / Zepp / Google Fit).
+        HealthPermission.getWritePermission(ExerciseSessionRecord::class),
+        HealthPermission.getWritePermission(DistanceRecord::class),
+        HealthPermission.getWritePermission(ActiveCaloriesBurnedRecord::class),
+        HealthPermission.getWritePermission(ElevationGainedRecord::class)
     )
 
     fun availability(): Availability {
@@ -152,6 +163,95 @@ class HealthConnectManager(private val context: Context) {
     }
 
     data class SyncResult(val importadas: Int, val saltadas: Int, val error: String?)
+
+    data class PushResult(val enviadas: Int, val saltadas: Int, val error: String?)
+
+    /**
+     * Empuja una actividad GPS al reloj/wearable vía Health Connect.
+     * El reloj la verá en Samsung Health / Mi Fitness / Zepp / Google Fit cuando
+     * abra la app de salud correspondiente.
+     */
+    suspend fun pushActivity(summary: ActivitySummary): PushResult {
+        val client = clientOrNull() ?: return PushResult(0, 0, "Health Connect no disponible")
+        if (!hasAllPermissions()) return PushResult(0, 0, "Faltan permisos de Health Connect (incluye escritura)")
+        return runCatching {
+            val start = Instant.ofEpochMilli(summary.startedAtMs)
+            val end = Instant.ofEpochMilli(summary.endedAtMs)
+            val zone = ZoneId.systemDefault().rules.getOffset(start)
+            val records = buildList<androidx.health.connect.client.records.Record> {
+                add(
+                    ExerciseSessionRecord(
+                        startTime = start,
+                        startZoneOffset = zone,
+                        endTime = end,
+                        endZoneOffset = zone,
+                        exerciseType = mapActivityType(summary.type),
+                        title = "OpoFit · ${summary.type.display}",
+                        notes = null
+                    )
+                )
+                if (summary.distanceM > 0) {
+                    add(
+                        DistanceRecord(
+                            startTime = start,
+                            startZoneOffset = zone,
+                            endTime = end,
+                            endZoneOffset = zone,
+                            distance = Length.meters(summary.distanceM)
+                        )
+                    )
+                }
+                summary.kcal?.takeIf { it > 0 }?.let { kcal ->
+                    add(
+                        ActiveCaloriesBurnedRecord(
+                            startTime = start,
+                            startZoneOffset = zone,
+                            endTime = end,
+                            endZoneOffset = zone,
+                            energy = Energy.kilocalories(kcal.toDouble())
+                        )
+                    )
+                }
+                if (summary.elevationGainM > 0) {
+                    add(
+                        ElevationGainedRecord(
+                            startTime = start,
+                            startZoneOffset = zone,
+                            endTime = end,
+                            endZoneOffset = zone,
+                            elevation = Length.meters(summary.elevationGainM)
+                        )
+                    )
+                }
+            }
+            client.insertRecords(records)
+            PushResult(records.size, 0, null)
+        }.getOrElse { e -> PushResult(0, 0, e.message ?: "Error al sincronizar al reloj") }
+    }
+
+    /** Sincroniza al reloj las últimas N actividades locales que no fueron previamente importadas desde HC. */
+    suspend fun pushUltimasActividades(limite: Int = 10): PushResult {
+        val client = clientOrNull() ?: return PushResult(0, 0, "Health Connect no disponible")
+        if (!hasAllPermissions()) return PushResult(0, 0, "Faltan permisos de Health Connect (incluye escritura)")
+        val repo = GpsRepository.get(context)
+        val locales = repo.listAll()
+            .filter { !it.id.startsWith("hc_") } // no re-empujar las que vinieron del reloj
+            .sortedByDescending { it.startedAtMs }
+            .take(limite)
+        var enviadas = 0
+        var fallos = 0
+        for (a in locales) {
+            val r = pushActivity(a)
+            if (r.error == null) enviadas += r.enviadas else fallos += 1
+        }
+        return PushResult(enviadas, fallos, if (fallos > 0) "$fallos fallos al empujar" else null)
+    }
+
+    private fun mapActivityType(type: ActivityType): Int = when (type) {
+        ActivityType.RUN -> ExerciseSessionRecord.EXERCISE_TYPE_RUNNING
+        ActivityType.WALK -> ExerciseSessionRecord.EXERCISE_TYPE_WALKING
+        ActivityType.BIKE -> ExerciseSessionRecord.EXERCISE_TYPE_BIKING
+    }
 
     /** Abre la pantalla de permisos de OpoFit dentro de Health Connect. */
     fun openManagePermissions(context: Context): Boolean {

@@ -57,14 +57,10 @@ class GpsTrackingService : Service() {
         super.onCreate()
         fused = LocationServices.getFusedLocationProviderClient(this)
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as? SensorManager
-        hrBle = HrBleManager.get(this).also { manager ->
-            manager.setListeners(
-                onHr = { bpm -> GpsTracker.onHrSample(bpm) },
-                onConnection = { name, connected -> GpsTracker.onHrDeviceChanged(name, connected) }
-            )
-            // Re-connect automatically to the last paired HR device.
-            manager.autoConnectSavedDevice()
-        }
+        // El puente HrBleManager → GpsTracker lo establece OpoFitApp via Flows.
+        // Aquí solo nos aseguramos de reintentar la auto-reconexión por si la sesión
+        // se inicia con el reloj recién encendido.
+        hrBle = HrBleManager.get(this).also { it.autoConnectSavedDevice() }
         ensureChannel()
     }
 

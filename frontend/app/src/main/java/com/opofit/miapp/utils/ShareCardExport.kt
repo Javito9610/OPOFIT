@@ -1,37 +1,91 @@
 package com.opofit.miapp.utils
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.graphics.Bitmap
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.foundation.layout.fillMaxWidth
+import android.view.ViewTreeObserver
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.FileProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.coroutines.resume
 
 object ShareCardExport {
 
-    fun renderBitmap(context: Context, width: Int = 1080, height: Int = 1920, content: @Composable () -> Unit): Bitmap {
-        val composeView = ComposeView(context).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setContent { MaterialTheme { content() } }
-            layoutParams = ViewGroup.LayoutParams(width, height)
+    private fun Context.findActivity(): Activity? {
+        var ctx: Context? = this
+        while (ctx is ContextWrapper) {
+            if (ctx is Activity) return ctx
+            ctx = ctx.baseContext
         }
-        composeView.measure(
-            View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
-            View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY)
-        )
-        composeView.layout(0, 0, width, height)
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        val canvas = android.graphics.Canvas(bitmap)
-        composeView.draw(canvas)
-        return bitmap
+        return null
+    }
+
+    /**
+     * Renderiza un Composable a Bitmap. Requiere Dispatchers.Main: Compose monta y dibuja
+     * la jerarquía solo desde el main thread. El ComposeView se adjunta al decorView de la
+     * Activity para que tenga un Recomposer asociado y se elimine cuando termina.
+     *
+     * Bug previo: el ComposeView se creaba sin attach → Compose lanzaba
+     * "Cannot locate windowRecomposer; View is not attached to a window".
+     */
+    suspend fun renderBitmap(
+        context: Context,
+        width: Int = 1080,
+        height: Int = 1920,
+        content: @Composable () -> Unit
+    ): Bitmap = withContext(Dispatchers.Main) {
+        val activity = context.findActivity()
+            ?: error("renderBitmap requiere un Context de Activity")
+        val root = activity.findViewById<ViewGroup>(android.R.id.content)
+            ?: error("No se pudo localizar android.R.id.content")
+
+        val composeView = ComposeView(activity).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
+            // Offscreen pero adjunto: alpha 0 + posición fuera de pantalla para no parpadear.
+            alpha = 0f
+            layoutParams = ViewGroup.LayoutParams(width, height)
+            translationX = -width.toFloat() * 2f
+            setContent { MaterialTheme { content() } }
+        }
+        root.addView(composeView)
+
+        try {
+            // Esperar a que el árbol esté compuesto + medido. onPreDraw se dispara
+            // al primer frame de dibujo después de la composición inicial.
+            suspendCancellableCoroutine<Unit> { cont ->
+                val listener = object : ViewTreeObserver.OnPreDrawListener {
+                    override fun onPreDraw(): Boolean {
+                        composeView.viewTreeObserver.removeOnPreDrawListener(this)
+                        if (cont.isActive) cont.resume(Unit)
+                        return true
+                    }
+                }
+                composeView.viewTreeObserver.addOnPreDrawListener(listener)
+                cont.invokeOnCancellation {
+                    try { composeView.viewTreeObserver.removeOnPreDrawListener(listener) } catch (_: Exception) {}
+                }
+            }
+
+            val w = if (composeView.width > 0) composeView.width else width
+            val h = if (composeView.height > 0) composeView.height else height
+            val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            val canvas = android.graphics.Canvas(bitmap)
+            composeView.draw(canvas)
+            bitmap
+        } finally {
+            try { root.removeView(composeView) } catch (_: Exception) {}
+        }
     }
 
     private fun saveBitmap(context: Context, bitmap: Bitmap): android.net.Uri {

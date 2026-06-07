@@ -67,6 +67,11 @@ class HrBleManager(private val context: Context) {
     private var connectTimeout: Runnable? = null
     private var pendingConnectedDevice: FoundDevice? = null
 
+    @Deprecated(
+        "Causa que múltiples llamadas se sobrescriban porque HrBleManager es singleton. " +
+        "Observa los Flows `heartRate` y `state` desde donde necesites las muestras o eventos.",
+        level = DeprecationLevel.WARNING
+    )
     fun setListeners(
         onHr: (Int) -> Unit,
         onConnection: (String?, Boolean) -> Unit

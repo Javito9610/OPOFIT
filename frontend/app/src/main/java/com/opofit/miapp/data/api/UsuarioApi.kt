@@ -20,6 +20,11 @@ interface UsuarioApi {
         @Header("Authorization") token: String
     ): PerfilUsuarioResponse
 
+    @GET("/api/user/ajustes")
+    suspend fun obtenerAjustes(
+        @Header("Authorization") token: String
+    ): com.opofit.miapp.data.responsemodels.AjustesResponse
+
     @PUT("/api/user/perfil")
     suspend fun actualizarPerfil(
         @Header("Authorization") token: String,

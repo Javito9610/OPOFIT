@@ -64,10 +64,9 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         loadHistory()
-        hrBle.setListeners(
-            onHr = { bpm -> GpsTracker.onHrSample(bpm) },
-            onConnection = { name, connected -> GpsTracker.onHrDeviceChanged(name, connected) }
-        )
+        // El bridge HR↔GpsTracker lo gestiona OpoFitApp via Flows (ver OpoFitApp.onCreate).
+        // No se debe llamar setListeners aquí porque sobrescribiría el listener compartido
+        // y los datos solo llegarían al último consumidor que llamase.
     }
 
     fun selectType(t: ActivityType) {

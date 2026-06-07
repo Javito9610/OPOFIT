@@ -189,18 +189,16 @@ fun CompartirActividadScreen(
                         scope.launch {
                             sharing = true
                             try {
-                                val bitmap = withContext(Dispatchers.Default) {
-                                    ShareCardExport.renderBitmap(context) {
-                                        ShareCardPreview(
-                                            titulo = titulo,
-                                            stats = pending.stats,
-                                            fotoFondoUri = fotoUri,
-                                            fotoFondoBitmap = fotoBitmap,
-                                            usarFoto = usarFoto,
-                                            routePoints = pending.routePoints,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-                                    }
+                                val bitmap = ShareCardExport.renderBitmap(context) {
+                                    ShareCardPreview(
+                                        titulo = titulo,
+                                        stats = pending.stats,
+                                        fotoFondoUri = fotoUri,
+                                        fotoFondoBitmap = fotoBitmap,
+                                        usarFoto = usarFoto,
+                                        routePoints = pending.routePoints,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
                                 }
                                 withContext(Dispatchers.Main) {
                                     if (!ShareCardExport.shareInstagramStory(context, bitmap)) {
@@ -219,18 +217,16 @@ fun CompartirActividadScreen(
                         scope.launch {
                             sharing = true
                             try {
-                                val bitmap = withContext(Dispatchers.Default) {
-                                    ShareCardExport.renderBitmap(context) {
-                                        ShareCardPreview(
-                                            titulo = titulo,
-                                            stats = pending.stats,
-                                            fotoFondoUri = fotoUri,
-                                            fotoFondoBitmap = fotoBitmap,
-                                            usarFoto = usarFoto,
-                                            routePoints = pending.routePoints,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-                                    }
+                                val bitmap = ShareCardExport.renderBitmap(context) {
+                                    ShareCardPreview(
+                                        titulo = titulo,
+                                        stats = pending.stats,
+                                        fotoFondoUri = fotoUri,
+                                        fotoFondoBitmap = fotoBitmap,
+                                        usarFoto = usarFoto,
+                                        routePoints = pending.routePoints,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
                                 }
                                 withContext(Dispatchers.Main) {
                                     if (!ShareCardExport.shareWhatsApp(context, bitmap, titulo)) {
@@ -249,18 +245,16 @@ fun CompartirActividadScreen(
                         scope.launch {
                             sharing = true
                             try {
-                                val bitmap = withContext(Dispatchers.Default) {
-                                    ShareCardExport.renderBitmap(context) {
-                                        ShareCardPreview(
-                                            titulo = titulo,
-                                            stats = pending.stats,
-                                            fotoFondoUri = fotoUri,
-                                            fotoFondoBitmap = fotoBitmap,
-                                            usarFoto = usarFoto,
-                                            routePoints = pending.routePoints,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-                                    }
+                                val bitmap = ShareCardExport.renderBitmap(context) {
+                                    ShareCardPreview(
+                                        titulo = titulo,
+                                        stats = pending.stats,
+                                        fotoFondoUri = fotoUri,
+                                        fotoFondoBitmap = fotoBitmap,
+                                        usarFoto = usarFoto,
+                                        routePoints = pending.routePoints,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
                                 }
                                 withContext(Dispatchers.Main) {
                                     ShareCardExport.shareGeneric(context, bitmap, titulo)

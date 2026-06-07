@@ -68,3 +68,16 @@ data class ActualizarAjustesResponse(
     val msg: String? = null,
     val message: String? = null
 )
+
+data class AjustesData(
+    val unidadPeso: String = "kg",
+    val unidadDistancia: String = "km",
+    val horaRecordatorio: Int = 18,
+    val recordatorioActivo: Boolean = true
+)
+
+data class AjustesResponse(
+    val ok: Boolean,
+    val msg: String? = null,
+    val data: AjustesData? = null
+)

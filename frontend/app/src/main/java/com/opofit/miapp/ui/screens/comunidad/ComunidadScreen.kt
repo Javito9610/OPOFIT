@@ -342,7 +342,9 @@ fun ComunidadScreen(
                                 .fillMaxWidth()
                                 .clickable {
                                     chatCon = a
-                                    tab = 3
+                                    // Bug previo: tab = 3 dejaba al usuario en la pestaña
+                                    // "Amigos" en vez de saltar a la pestaña Chat (5).
+                                    tab = 5
                                     scope.launch {
                                         val token = tokenManager.getToken().first() ?: ""
                                         val c = RetrofitClient.amigosApi.chat("Bearer $token", a.amigo_id)

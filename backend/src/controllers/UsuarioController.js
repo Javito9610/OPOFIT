@@ -243,6 +243,39 @@ const eliminarCuenta = async (req, res) => {
     connection.release();
   }
 };
+const obtenerAjustes = async (req, res) => {
+  try {
+    const userId = req.usuario?.id;
+    if (!userId) return res.status(401).json({ ok: false, msg: 'Sesión no válida' });
+    const [[u]] = await db.query(
+      `SELECT COALESCE(s.unidad_peso, 'kg') AS unidadPeso,
+              COALESCE(s.unidad_distancia, 'km') AS unidadDistancia,
+              COALESCE(u.hora_recordatorio_entreno, '18:00:00') AS horaRecordatorio,
+              COALESCE(u.recordatorio_entreno_activo, 1) AS recordatorioActivo
+         FROM usuarios u
+         LEFT JOIN settings s ON s.usuarios_id_usuario = u.id_usuario
+        WHERE u.id_usuario = ?
+        LIMIT 1`,
+      [userId]
+    );
+    if (!u) return res.status(404).json({ ok: false, msg: 'Usuario no encontrado' });
+    // Extract just the hour as integer for UI (the column stores TIME 'HH:MM:SS')
+    const horaInt = parseInt(String(u.horaRecordatorio).split(':')[0], 10) || 18;
+    return res.status(200).json({
+      ok: true,
+      data: {
+        unidadPeso: u.unidadPeso,
+        unidadDistancia: u.unidadDistancia,
+        horaRecordatorio: horaInt,
+        recordatorioActivo: Number(u.recordatorioActivo) === 1
+      }
+    });
+  } catch (e) {
+    console.error('obtenerAjustes:', e.message);
+    return res.status(500).json({ ok: false, msg: 'Error al cargar ajustes' });
+  }
+};
+
 const actualizarSettings = async (req, res) => {
   try {
     const {
@@ -308,6 +341,7 @@ const subirAvatar = async (req, res) => {
 
 module.exports = {
   obtenerPerfil,
+  obtenerAjustes,
   actualizarPerfil,
   actualizarSettings,
   eliminarCuenta,
