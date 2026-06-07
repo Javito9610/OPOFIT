@@ -39,6 +39,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -600,11 +601,41 @@ private fun HrConnectDialog(
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
-                    is HrBleManager.State.Error -> Text(
-                        st.message,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    is HrBleManager.State.Error -> {
+                        // El servicio puede prefijar con USE_HEALTH_CONNECT|... cuando
+                        // detecta que el dispositivo es un wearable propietario que
+                        // no admite conexión directa. En ese caso destacamos el botón.
+                        val needsHC = st.message.startsWith("USE_HEALTH_CONNECT|")
+                        val cleanMsg = st.message.removePrefix("USE_HEALTH_CONNECT|")
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.medium,
+                            color = MaterialTheme.colorScheme.errorContainer
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    cleanMsg,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                if (needsHC) {
+                                    Button(
+                                        onClick = {
+                                            onDismiss()
+                                            onOpenHealthConnect()
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.primary
+                                        )
+                                    ) { Text("Abrir Health Connect") }
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // SECCIÓN 1: emparejados (aquí va a estar SU Amazfit aunque no aparezca en escaneo).

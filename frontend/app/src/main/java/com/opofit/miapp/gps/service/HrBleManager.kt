@@ -232,9 +232,8 @@ class HrBleManager(private val context: Context) {
             }
         }
         scanTimeoutRunnable = r
-        // 45s: Amazfit/Mi Band pueden anunciar cada 30-40s para ahorrar batería.
-        // Antes 20s cortaba antes de que el reloj llegara a emitir su advertisement.
-        mainHandler.postDelayed(r, 45_000L)
+        // 30s: tiempo razonable para que el wearable se anuncie incluso si ahorra batería.
+        mainHandler.postDelayed(r, 30_000L)
     }
     private fun cancelScanTimeout() {
         scanTimeoutRunnable?.let { mainHandler.removeCallbacks(it) }
@@ -254,6 +253,25 @@ class HrBleManager(private val context: Context) {
         if (_state.value is State.Scanning) _state.value = State.Idle
     }
 
+    /**
+     * Detecta por el nombre si es un wearable propietario (Amazfit, Mi Band, Garmin,
+     * Fitbit, Galaxy Watch, Huawei). Estos relojes están emparejados a su app oficial
+     * y NO admiten una segunda conexión GATT desde otra app. Intentarlo es perder 20s
+     * esperando a un timeout. Mejor fallamos rápido con un mensaje útil.
+     */
+    fun isProprietaryWearable(name: String?): Boolean {
+        val n = (name ?: "").lowercase()
+        if (n.isBlank()) return false
+        return listOf(
+            "amazfit", "t-rex", "gtr", "gts", "bip", "cheetah", "falcon",
+            "mi band", "mi smart band", "mi watch", "redmi watch", "xiaomi smart band",
+            "garmin", "forerunner", "fenix", "venu", "vivoactive", "instinct",
+            "fitbit", "versa", "sense", "charge", "luxe", "inspire",
+            "galaxy watch", "galaxy fit", "samsung gear",
+            "huawei watch", "huawei band", "honor band", "honor watch"
+        ).any { n.contains(it) }
+    }
+
     fun connect(device: FoundDevice) {
         if (!hasPermissions()) {
             _state.value = State.Error("Faltan permisos de Bluetooth")
@@ -263,6 +281,9 @@ class HrBleManager(private val context: Context) {
             _state.value = State.Error("Activa el Bluetooth en el sistema")
             return
         }
+        // SIN bloqueo por nombre: si el usuario tiene Broadcast HR activo en su
+        // wearable, la conexión SÍ funciona. Dejamos que el GATT real lo decida.
+        // Solo si timeout o error sugerimos Health Connect como alternativa.
         stopScan()
         closeGatt()
         val remote = adapter?.getRemoteDevice(device.address) ?: run {
@@ -270,7 +291,7 @@ class HrBleManager(private val context: Context) {
             return
         }
         _state.value = State.Connecting(device)
-        scheduleConnectTimeout()
+        scheduleConnectTimeout(device)
         gatt = openGatt(remote)
         if (gatt == null) {
             cancelConnectTimeout()
@@ -302,19 +323,33 @@ class HrBleManager(private val context: Context) {
         }
     }
 
-    private fun scheduleConnectTimeout() {
+    private fun scheduleConnectTimeout(device: FoundDevice? = null) {
         cancelConnectTimeout()
         val timeout = Runnable {
             if (_state.value is State.Connecting) {
                 closeGatt()
-                _state.value = State.Error(
+                val isWearable = isProprietaryWearable(device?.name)
+                val msg = if (isWearable) {
+                    // Para wearables tipo Amazfit/Mi Band/Garmin: la causa más común
+                    // del timeout es que la app de pulso del reloj no esté activa.
+                    // Damos pasos concretos + Health Connect como plan B.
+                    "USE_HEALTH_CONNECT|No se pudo conectar a ${device?.name ?: "el reloj"}.\n\n" +
+                        "Para que funcione la conexión directa, en tu reloj:\n" +
+                        "1) Abre la app «Frecuencia cardíaca» y déjala midiendo (verás los LED verdes encendidos detrás)\n" +
+                        "2) Comprueba que «Broadcast HR / Compartir FC» esté activo\n" +
+                        "3) Vuelve aquí y pulsa Conectar otra vez\n\n" +
+                        "Si sigue fallando, lo más fácil es Health Connect: el pulso llega vía la app del reloj."
+                } else {
                     "Tiempo de conexión agotado. Acerca el reloj, actívalo y vuelve a pulsar Conectar."
-                )
+                }
+                _state.value = State.Error(msg)
                 onConnectionChanged?.invoke(null, false)
             }
         }
         connectTimeout = timeout
-        mainHandler.postDelayed(timeout, 20_000L)
+        // 12s: si en 12s no hay onServicesDiscovered (lo normal son 2-4s), no va a venir.
+        // Antes 20s era esperar de más.
+        mainHandler.postDelayed(timeout, 12_000L)
     }
 
     private fun cancelConnectTimeout() {
@@ -377,10 +412,18 @@ class HrBleManager(private val context: Context) {
                     return@post
                 }
                 val service = g.getService(HR_SERVICE) ?: run {
-                    failConnection(
-                        g,
-                        "Este dispositivo no expone pulso BLE. En Amazfit activa «Broadcast HR» en Zepp."
-                    )
+                    val name = try { g.device.name } catch (_: SecurityException) { null }
+                    val isWearable = isProprietaryWearable(name)
+                    val msg = if (isWearable) {
+                        "USE_HEALTH_CONNECT|Conectado a ${name ?: "el reloj"} pero NO emite el servicio de pulso BLE.\n\n" +
+                            "Aunque tengas «Broadcast HR / Compartir FC» activado en Zepp, " +
+                            "algunos relojes solo emiten el pulso mientras la app de FC esté abierta y midiendo en el reloj " +
+                            "(LEDs verdes detrás encendidos). Asegúrate de eso y vuelve a pulsar Conectar.\n\n" +
+                            "Si sigue sin funcionar, usa Health Connect: la solución más fiable para este tipo de relojes."
+                    } else {
+                        "Este dispositivo no expone pulso BLE. Activa el broadcast de pulso en la app del reloj."
+                    }
+                    failConnection(g, msg)
                     return@post
                 }
                 val ch = service.getCharacteristic(HR_MEASUREMENT) ?: run {
