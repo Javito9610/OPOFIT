@@ -205,6 +205,22 @@ fun GpsHubScreen(
             onDismiss = {
                 showHrDialog = false
                 viewModel.stopHrScan()
+            },
+            onOpenHealthConnect = {
+                // Abre directamente la pantalla de permisos de Health Connect.
+                // Si HC no está instalado, abre Play Store.
+                val hc = com.opofit.miapp.integraciones.HealthConnectManager.get(context)
+                if (!hc.openHealthConnect(context)) {
+                    try {
+                        val storeIntent = android.content.Intent(
+                            android.content.Intent.ACTION_VIEW,
+                            android.net.Uri.parse(
+                                "https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata"
+                            )
+                        ).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(storeIntent)
+                    } catch (_: Exception) { /* sin Play Store */ }
+                }
             }
         )
     }
@@ -522,7 +538,8 @@ private fun ActivityRow(activity: ActivitySummary, onClick: () -> Unit) {
 private fun HrConnectDialog(
     viewModel: GpsViewModel,
     hrState: HrBleManager.State,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onOpenHealthConnect: () -> Unit = {}
 ) {
     val found by viewModel.hrFound.collectAsState()
     val liveHr by viewModel.hrManager().heartRate.collectAsState()
@@ -692,6 +709,45 @@ private fun HrConnectDialog(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
+                // Aviso explícito para usuarios con Amazfit/Mi Band/Garmin emparejados a su app:
+                // estos relojes están conectados a su app vía BT Classic y NO aparecen en escaneos
+                // BLE aunque "estén conectados". Hay que activar Broadcast HR o usar Health Connect.
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                    tonalElevation = 1.dp
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            "¿No aparece tu reloj aunque esté conectado?",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                        Text(
+                            "Si tu reloj está emparejado con Zepp/Mi Fitness/Garmin Connect, " +
+                                "Android lo oculta del escaneo Bluetooth de otras apps. Necesitas:\n\n" +
+                                "1) Activar Broadcast HR en la app del reloj (no todos lo permiten), o\n" +
+                                "2) Usar Health Connect: el pulso llega a OpoFit a través de la app del reloj. " +
+                                "Es la opción recomendada para Amazfit, Mi Band y similares.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                        Button(
+                            onClick = {
+                                onDismiss()
+                                onOpenHealthConnect()
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text("Conectar con Health Connect") }
+                    }
+                }
+
                 if (hrState is HrBleManager.State.Connected) {
                     OutlinedButton(
                         onClick = { viewModel.disconnectHr() },

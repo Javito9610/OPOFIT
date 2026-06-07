@@ -101,39 +101,31 @@ class HrBleManager(private val context: Context) {
         return loc
     }
 
-    /** Servicios de localización del sistema activos (no permiso, sino el toggle global).
-     *  BLE scan devuelve cero resultados si está apagado en Android <12. En 12+ no hace falta
-     *  si declaras BLUETOOTH_SCAN con neverForLocation (ya lo hacemos), pero algunos OEM (Xiaomi,
-     *  Huawei) siguen exigiéndolo de facto. Por eso lo comprobamos en cualquier caso. */
+    /** Servicios de localización del sistema activos.
+     *  En Android <12 BLE scan exige tenerla encendida. En 12+ con BLUETOOTH_SCAN+neverForLocation
+     *  (lo que hacemos) ya no hace falta, así que solo lo chequeamos en API <31 para no bloquear
+     *  a usuarios con Android 12+ que tengan el GPS apagado pero quieran usar el pulso. */
     fun hasLocationServices(): Boolean {
         val lm = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return false
         return LocationManagerCompat.isLocationEnabled(lm)
     }
 
-    /** Heurística para detectar emulador (Android Studio AVD, Genymotion).
-     *  Los emuladores normales NO tienen Bluetooth real funcional. */
+    /** Emulador AVD estricto: solo bloquea si es CLARAMENTE un emulador, no por "generic" suelto.
+     *  Combinación de hardware goldfish/ranchu + product sdk_* + fingerprint generic es la huella
+     *  del emulador. Los móviles reales nunca cumplen todas a la vez. */
     fun isProbablyEmulator(): Boolean {
-        val fingerprint = Build.FINGERPRINT.lowercase()
-        val model = Build.MODEL.lowercase()
-        val device = Build.DEVICE.lowercase()
-        return fingerprint.contains("generic") ||
-            fingerprint.contains("emulator") ||
-            fingerprint.contains("sdk_") ||
-            model.contains("emulator") ||
-            model.contains("android sdk") ||
-            device.contains("generic") ||
-            Build.HARDWARE.contains("goldfish") ||
-            Build.HARDWARE.contains("ranchu")
+        val hw = Build.HARDWARE.lowercase()
+        val product = Build.PRODUCT.lowercase()
+        val fingerprintBlatant = Build.FINGERPRINT.lowercase().let {
+            it.startsWith("generic/") || it.contains("/sdk_") || it.contains("emulator")
+        }
+        val hwBlatant = hw == "goldfish" || hw == "ranchu" || hw.contains("ttvm")
+        val productBlatant = product.startsWith("sdk_") || product.startsWith("vbox86p") || product == "google_sdk"
+        // Requiere al menos 2 señales fuertes a la vez → cero falsos positivos en móviles reales.
+        return listOf(fingerprintBlatant, hwBlatant, productBlatant).count { it } >= 2
     }
 
     fun startScan(broad: Boolean = false) {
-        if (isProbablyEmulator()) {
-            _state.value = State.Error(
-                "Estás en el emulador. Los emuladores no tienen Bluetooth real, así que no aparecerán dispositivos. " +
-                    "Prueba la app en un móvil físico."
-            )
-            return
-        }
         if (!hasBluetooth()) {
             _state.value = State.Error("Activa el Bluetooth en el sistema")
             return
@@ -142,12 +134,18 @@ class HrBleManager(private val context: Context) {
             _state.value = State.Error("Faltan permisos de Bluetooth")
             return
         }
-        if (!hasLocationServices()) {
+        // Solo exigir Location services en Android <12 (en 12+ con neverForLocation ya no aplica).
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && !hasLocationServices()) {
             _state.value = State.Error(
-                "Activa la ubicación del sistema. Android exige tenerla encendida para escanear Bluetooth, " +
-                    "aunque OpoFit no la use para localizarte."
+                "Activa la ubicación del sistema. Android exige tenerla encendida para escanear Bluetooth."
             )
             return
+        }
+        // El warning de emulador NO bloquea, solo avisa por log y deja seguir escaneando
+        // (algunos emuladores con sensor BLE virtual sí funcionan, y los falsos positivos en móviles
+        // reales serían fatales — la bloqueaban entera).
+        if (isProbablyEmulator()) {
+            android.util.Log.w("HrBle", "Posible emulador: el escaneo BLE puede no funcionar")
         }
         stopScan()
         _found.value = emptyList()
@@ -198,13 +196,16 @@ class HrBleManager(private val context: Context) {
                 stopScan()
                 if (_found.value.isEmpty()) {
                     val msg = if (broad) {
-                        "No se encontró ningún dispositivo Bluetooth cerca. " +
-                            "Comprueba que el reloj/banda esté encendido, emparejado en Ajustes → Bluetooth " +
-                            "y a menos de 1 metro."
+                        "No apareció ningún dispositivo Bluetooth nuevo. " +
+                            "Importante: si tu reloj ya está conectado a Zepp/Mi Fitness/Garmin Connect, " +
+                            "Android lo OCULTA del escaneo de otras apps. No es un fallo. " +
+                            "Pulsa abajo «Conectar con Health Connect» para enlazarlo de la forma correcta."
                     } else {
-                        "No se encontró ninguna banda/reloj emitiendo pulso. " +
-                            "Si tienes Mi Band/Amazfit, activa «Broadcast HR» en Zepp. " +
-                            "Si no, prueba «Búsqueda amplia»."
+                        "Ninguna banda/reloj emite pulso por BLE estándar ahora mismo.\n\n" +
+                            "Tu Amazfit/Mi Band/Garmin no aparecerá aquí aunque esté conectado a su app " +
+                            "(Zepp, etc.). Para usar su pulso en OpoFit:\n\n" +
+                            "• Bandas de pecho (Polar/Wahoo): aparecen solas al encenderlas.\n" +
+                            "• Amazfit/Mi Band: activa Broadcast HR en Zepp o usa Health Connect (abajo)."
                     }
                     _state.value = State.Error(msg)
                 } else {
@@ -213,7 +214,9 @@ class HrBleManager(private val context: Context) {
             }
         }
         scanTimeoutRunnable = r
-        mainHandler.postDelayed(r, 20_000L)
+        // 45s: Amazfit/Mi Band pueden anunciar cada 30-40s para ahorrar batería.
+        // Antes 20s cortaba antes de que el reloj llegara a emitir su advertisement.
+        mainHandler.postDelayed(r, 45_000L)
     }
     private fun cancelScanTimeout() {
         scanTimeoutRunnable?.let { mainHandler.removeCallbacks(it) }
