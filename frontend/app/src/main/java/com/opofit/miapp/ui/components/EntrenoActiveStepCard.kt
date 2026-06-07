@@ -48,6 +48,7 @@ fun EntrenoActiveStepCard(
     ritmoTexto: String = "-",
     velocidadTexto: String = "-",
     labelDistancia: String = "Distancia",
+    onInfoClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     ElevatedCard(
@@ -59,12 +60,22 @@ fun EntrenoActiveStepCard(
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Text(
-                nombre,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    nombre,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+                onInfoClick?.let { info ->
+                    ExerciseInfoButton(onClick = info, size = 40.dp)
+                }
+            }
             if (objetivoSegundos != null && tipoCardio != null) {
                 Text(
                     "Objetivo: ${formatMmSs(objetivoSegundos)}",
@@ -116,7 +127,7 @@ fun EntrenoActiveStepCard(
                     OutlinedButton(onClick = gps, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Filled.Explore, null, Modifier.size(18.dp))
                         Spacer(Modifier.size(6.dp))
-                        Text("Ruta e iniciar carrera")
+                        Text("Iniciar carrera con GPS")
                     }
                 }
             } else {

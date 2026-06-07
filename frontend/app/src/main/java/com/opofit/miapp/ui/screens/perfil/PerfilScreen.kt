@@ -45,7 +45,14 @@ import com.opofit.miapp.ui.components.ProfileAvatar
 import com.opofit.miapp.ui.components.StatCard
 import com.opofit.miapp.data.responsemodels.ActividadPost
 import com.opofit.miapp.data.api.RetrofitClient
+import com.opofit.miapp.data.responsemodels.LogrosData
 import com.opofit.miapp.data.responsemodels.PerfilUsuarioData
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.material.icons.automirrored.filled.DirectionsRun
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Terrain
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.PerfilViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasViewModel
@@ -59,7 +66,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlin.math.pow
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun PerfilScreen(
     authViewModel: AuthViewModel,
@@ -75,6 +82,7 @@ fun PerfilScreen(
     val perfilState by perfilViewModel.uiState.collectAsState()
     val rutinasState by rutinasViewModel.uiState.collectAsState()
     var misPosts by remember { mutableStateOf<List<ActividadPost>>(emptyList()) }
+    var logros by remember { mutableStateOf<LogrosData?>(null) }
 
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
@@ -109,6 +117,8 @@ fun PerfilScreen(
                     perfilData = RetrofitClient.usuarioApi.obtenerPerfil("Bearer $token").data
                     val posts = RetrofitClient.postsApi.porUsuario("Bearer $token", userId)
                     misPosts = if (posts.ok) posts.data.orEmpty() else emptyList()
+                    val lr = RetrofitClient.logrosApi.misLogros("Bearer $token")
+                    logros = if (lr.ok) lr.data else null
                 }
             } catch (_: Exception) { }
         }
@@ -257,6 +267,81 @@ fun PerfilScreen(
                                 supporting = "rutina asignada",
                                 modifier = Modifier.weight(1f)
                             )
+                        }
+                    }
+                }
+
+                logros?.stats?.let { stats ->
+                    item {
+                        SectionHeader(title = "Tu actividad", subtitle = "Estilo Strava — totales")
+                        Spacer(Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            StatCard(
+                                label = "Sesiones",
+                                value = "${stats.sesiones}",
+                                supporting = "totales",
+                                icon = Icons.AutoMirrored.Filled.DirectionsRun,
+                                modifier = Modifier.weight(1f)
+                            )
+                            StatCard(
+                                label = "Distancia",
+                                value = String.format("%.1f", stats.distanciaKm),
+                                supporting = if (unitDist == "mi") "mi equiv." else "km GPS",
+                                icon = Icons.Filled.Terrain,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            StatCard(
+                                label = "Racha máx.",
+                                value = "${logros?.rachas?.maxima ?: 0}",
+                                supporting = "días seguidos",
+                                icon = Icons.Filled.LocalFireDepartment,
+                                modifier = Modifier.weight(1f)
+                            )
+                            StatCard(
+                                label = "Desnivel",
+                                value = "${stats.desnivelM.toInt()}",
+                                supporting = "metros",
+                                icon = Icons.Filled.EmojiEvents,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+
+                logros?.medallas?.takeIf { it.isNotEmpty() }?.let { medallas ->
+                    item {
+                        SectionHeader(
+                            title = "Logros",
+                            subtitle = "${logros?.medallasDesbloqueadas ?: 0} de ${logros?.medallasTotales ?: medallas.size} desbloqueados"
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            medallas.filter { it.desbloqueada }.take(8).forEach { m ->
+                                AssistChip(
+                                    onClick = {},
+                                    label = { Text(m.nombre) },
+                                    enabled = false
+                                )
+                            }
+                            if (medallas.none { it.desbloqueada }) {
+                                Text(
+                                    "Entrena y comparte actividades para desbloquear medallas.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }

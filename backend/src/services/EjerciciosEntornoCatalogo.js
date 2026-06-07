@@ -54,7 +54,30 @@ const EJERCICIOS_ENTORNO = [
   ['Pistol squat asistido', 'FUERZA', 'Pierna', 'Barra fija', 'Agarre barra para equilibrio.', 'CALISTENIA,GYM,MIXTO', 'SQUAT'],
   ['Curl con botellas de agua', 'FUERZA', 'Bíceps', 'Mochila', 'Peso improvisado, sin balanceo.', 'CASA,MIXTO', 'GENERAL'],
   ['Extensiones tríceps con banda', 'FUERZA', 'Tríceps', 'Banda', 'Codos fijos, extensión completa.', 'CASA,MIXTO', 'PUSH'],
-  ['Yoga flow movilidad 10 min', 'MOVILIDAD', 'Movilidad', 'Suelo', 'Flujo suave cadera y hombro.', 'CASA,CALISTENIA,MIXTO', 'MOBILITY']
+  ['Yoga flow movilidad 10 min', 'MOVILIDAD', 'Movilidad', 'Suelo', 'Flujo suave cadera y hombro.', 'CASA,CALISTENIA,MIXTO', 'MOBILITY'],
+  ['Press banca con mancuernas', 'FUERZA', 'Pecho', 'Mancuernas', 'Banco plano, codos 45°, control en el descenso.', 'GYM,CASA,MIXTO', 'PUSH'],
+  ['Remo con mancuerna unilateral', 'FUERZA', 'Espalda', 'Mancuerna', 'Apoyo en banco, tirón al cadera.', 'GYM,CASA,MIXTO', 'PULL'],
+  ['Prensa de piernas', 'FUERZA', 'Pierna', 'Máquina', 'Pies media anchura, profundidad sin despegar lumbar.', 'GYM,MIXTO', 'SQUAT'],
+  ['Jalón al pecho', 'FUERZA', 'Espalda', 'Polea', 'Tirón al esternón, escápulas abajo.', 'GYM,MIXTO', 'PULL'],
+  ['Elevaciones laterales', 'FUERZA', 'Hombros', 'Mancuernas', 'Codos ligeramente flexionados, sin balanceo.', 'GYM,CASA,MIXTO', 'PUSH'],
+  ['Curl martillo', 'FUERZA', 'Bíceps', 'Mancuernas', 'Palmas neutras, subida controlada.', 'GYM,CASA,MIXTO', 'GENERAL'],
+  ['Patada de tríceps en polea', 'FUERZA', 'Tríceps', 'Polea', 'Codos pegados, extensión completa.', 'GYM,MIXTO', 'PUSH'],
+  ['Hip thrust en banco', 'FUERZA', 'Glúteo', 'Banco', 'Espalda alta en banco, empuje de cadera.', 'GYM,CASA,MIXTO', 'SQUAT'],
+  ['Caminata en cinta 25 min', 'RESISTENCIA', 'Cardio', 'Cinta', 'RPE 4-5, postura erguida.', 'GYM,CASA,MIXTO', 'RUN'],
+  ['Bici estática 30 min Z2', 'RESISTENCIA', 'Cardio', 'Bici', 'Cadencia 80-90 rpm, conversación posible.', 'GYM,CASA,MIXTO', 'RUN'],
+  ['Elíptica 20 min', 'RESISTENCIA', 'Cardio', 'Elíptica', 'Brazos y piernas coordinados, ritmo constante.', 'GYM,MIXTO', 'RUN'],
+  ['Natación técnica 800 m', 'RESISTENCIA', 'Cardio', 'Piscina', 'Series de 100 m con descanso 20 s.', 'GYM,PISTA,MIXTO', 'RUN'],
+  ['Drill skipping A/B 6 x 30 m', 'VELOCIDAD', 'Velocidad', 'Pista', 'Rodillas altas y talones al glúteo alternados.', 'PISTA,MIXTO', 'AGILITY'],
+  ['Vallas bajas 5 x 6', 'VELOCIDAD', 'Agilidad', 'Vallas', 'Ritmo fluido, sin frenar entre vallas.', 'PISTA,MIXTO', 'AGILITY'],
+  ['Propiocepción unipodal 3 x 45 s', 'VELOCIDAD', 'Agilidad', 'Suelo', 'Equilibrio sobre una pierna, rodilla blanda.', 'CASA,PISTA,MIXTO', 'AGILITY'],
+  ['Thruster con mancuernas', 'FUERZA', 'Cuerpo completo', 'Mancuernas', 'Sentadilla frontal + press overhead.', 'CROSSFIT,GYM,CASA,MIXTO', 'GENERAL'],
+  ['Swing con kettlebell', 'FUERZA', 'Cadena posterior', 'Kettlebell', 'Bisagra explosiva, brazos relajados.', 'CROSSFIT,GYM,CASA,MIXTO', 'SQUAT'],
+  ['Battle rope 8 x 30 s', 'RESISTENCIA', 'Cardio', 'Cuerda', 'Ondas alternas, core activo.', 'CROSSFIT,GYM,MIXTO', 'RUN'],
+  ['Sled push 4 x 20 m', 'VELOCIDAD', 'Pliometría', 'Trineo', 'Empuje bajo, pasos cortos y potentes.', 'CROSSFIT,GYM,MIXTO', 'AGILITY'],
+  ['Dominadas asistidas con banda', 'FUERZA', 'Espalda', 'Banda', 'Banda bajo rodillas o pies, pecho a la barra.', 'GYM,CALISTENIA,MIXTO', 'PULL'],
+  ['Face pull con banda', 'FUERZA', 'Hombros', 'Banda', 'Tirón a la cara, rotación externa.', 'CASA,GYM,MIXTO', 'PULL'],
+  ['Estiramiento isquios 2 x 45 s', 'MOVILIDAD', 'Movilidad', 'Suelo', 'Sin rebotes, respiración lenta.', 'CASA,GYM,PISTA,MIXTO', 'MOBILITY'],
+  ['Foam roller cuádriceps 2 min', 'MOVILIDAD', 'Movilidad', 'Rodillo', 'Presión moderada, pausas en puntos tensos.', 'GYM,CASA,MIXTO', 'MOBILITY']
 ];
 
 class EjerciciosEntornoCatalogo {

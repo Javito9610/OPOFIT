@@ -324,6 +324,7 @@ class HrBleManager(private val context: Context) {
                 pendingConnectedDevice = null
                 cancelConnectTimeout()
                 _state.value = State.Connected(device)
+                saveLastDevice(device.address)
                 onConnectionChanged?.invoke(device.name, true)
             }
         }
@@ -351,6 +352,7 @@ class HrBleManager(private val context: Context) {
         pendingConnectedDevice = null
         cancelConnectTimeout()
         _state.value = State.Connected(device)
+        saveLastDevice(device.address)
         onConnectionChanged?.invoke(device.name, true)
     }
 
@@ -370,10 +372,39 @@ class HrBleManager(private val context: Context) {
         }
     }
 
+    private fun saveLastDevice(address: String) {
+        context.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE)
+            .edit().putString(KEY_LAST_ADDRESS, address).apply()
+    }
+
+    fun clearLastDevice() {
+        context.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE)
+            .edit().remove(KEY_LAST_ADDRESS).apply()
+    }
+
+    fun savedDeviceAddress(): String? =
+        context.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE)
+            .getString(KEY_LAST_ADDRESS, null)
+
+    /**
+     * Reconnects to the last paired device without scanning.
+     * Call this from GpsTrackingService.onCreate() to restore connection automatically.
+     */
+    fun autoConnectSavedDevice() {
+        val address = savedDeviceAddress() ?: return
+        if (_state.value is State.Connected || _state.value is State.Connecting) return
+        if (!hasPermissions() || !hasBluetooth()) return
+        val device = FoundDevice(address, null, 0)
+        connect(device)
+    }
+
     companion object {
         val HR_SERVICE: UUID = UUID.fromString("0000180D-0000-1000-8000-00805F9B34FB")
         val HR_MEASUREMENT: UUID = UUID.fromString("00002A37-0000-1000-8000-00805F9B34FB")
         val CCC_DESCRIPTOR: UUID = UUID.fromString("00002902-0000-1000-8000-00805F9B34FB")
+
+        private const val PREFS_FILE = "hr_ble_prefs"
+        private const val KEY_LAST_ADDRESS = "last_device_address"
 
         @Volatile
         private var INSTANCE: HrBleManager? = null

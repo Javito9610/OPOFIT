@@ -1,4 +1,5 @@
 const PostsService = require('../services/PostsService');
+const PostsModerService = require('../services/PostsModerService');
 
 const crear = async (req, res) => {
   try {
@@ -72,4 +73,52 @@ const comentar = async (req, res) => {
   }
 };
 
-module.exports = { crear, feed, porUsuario, detalle, toggleLike, comentar };
+const reportarPost = async (req, res) => {
+  try {
+    const userId = req.usuario.id;
+    const { motivo, detalle } = req.body || {};
+    const r = await PostsModerService.reportarPost(userId, Number(req.params.idPost), motivo, detalle);
+    res.status(201).json({ ok: true, data: r });
+  } catch (e) {
+    const code = e.message === 'POST_NO_ENCONTRADO' ? 404
+      : e.message === 'NO_PUEDES_REPORTAR_TU_POST' ? 400 : 500;
+    res.status(code).json({ ok: false, msg: e.message });
+  }
+};
+
+const reportarComentario = async (req, res) => {
+  try {
+    const userId = req.usuario.id;
+    const { motivo, detalle } = req.body || {};
+    const r = await PostsModerService.reportarComentario(userId, Number(req.params.idComentario), motivo, detalle);
+    res.status(201).json({ ok: true, data: r });
+  } catch (e) {
+    const code = e.message === 'COMENTARIO_NO_ENCONTRADO' ? 404
+      : e.message === 'NO_PUEDES_REPORTAR_TU_COMENTARIO' ? 400 : 500;
+    res.status(code).json({ ok: false, msg: e.message });
+  }
+};
+
+const listarReportesPendientes = async (req, res) => {
+  try {
+    const limite = Number(req.query.limite) || 50;
+    const data = await PostsModerService.listarPendientes({ limite });
+    res.json({ ok: true, data });
+  } catch (e) {
+    res.status(500).json({ ok: false, msg: e.message });
+  }
+};
+
+const resolverReporte = async (req, res) => {
+  try {
+    const r = await PostsModerService.resolver(Number(req.params.idReporte), req.body?.accion);
+    res.json({ ok: true, data: r });
+  } catch (e) {
+    res.status(400).json({ ok: false, msg: e.message });
+  }
+};
+
+module.exports = {
+  crear, feed, porUsuario, detalle, toggleLike, comentar,
+  reportarPost, reportarComentario, listarReportesPendientes, resolverReporte
+};

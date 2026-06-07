@@ -122,6 +122,10 @@ fun AppNavigation(
                 onNavigateToGps = {
                     navController.navigate(NavDestinations.GPS_HUB)
                 },
+                onNavigateToGpsQuickStart = {
+                    GpsRecordingContext.prepare(ActivityType.RUN, conRuta = false)
+                    navController.navigate(NavDestinations.GPS_RECORDING)
+                },
                 onNavigateToMapaRuta = { distKm, titulo, enfoque ->
                     EntrenoFlowContext.vincularDesdePlan(titulo, distKm, enfoque)
                     navController.navigate(MapaEntrenoNav.rutaMapa(distKm = distKm, modo = MapaEntrenoNav.MODO_RUTAS))

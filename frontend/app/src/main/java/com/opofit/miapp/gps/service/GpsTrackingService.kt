@@ -62,6 +62,8 @@ class GpsTrackingService : Service() {
                 onHr = { bpm -> GpsTracker.onHrSample(bpm) },
                 onConnection = { name, connected -> GpsTracker.onHrDeviceChanged(name, connected) }
             )
+            // Re-connect automatically to the last paired HR device.
+            manager.autoConnectSavedDevice()
         }
         ensureChannel()
     }

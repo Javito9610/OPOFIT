@@ -453,7 +453,19 @@ private fun HrChartCard(activity: ActivitySummary) {
 
 @Composable
 private fun PaceChartCard(activity: ActivitySummary) {
-    val paceValues = activity.splits.filter { it.paceSecPerKm > 0 }.map { it.paceSecPerKm }
+    val paceValues = remember(activity.id, activity.splits, activity.points) {
+        val fromSplits = activity.splits.filter { it.paceSecPerKm > 0 }.map { it.paceSecPerKm }
+        val flat = fromSplits.size >= 2 && fromSplits.distinct().size <= 1
+        when {
+            fromSplits.size >= 2 && !flat -> fromSplits
+            activity.points.size >= 4 -> {
+                GpsMetrics.computeSplits(activity.points)
+                    .map { it.paceSecPerKm }
+                    .filter { it > 0 }
+            }
+            else -> fromSplits
+        }
+    }
     if (paceValues.size >= 2) {
         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(14.dp)) {
@@ -469,7 +481,7 @@ private fun PaceChartCard(activity: ActivitySummary) {
                     fillBottom = Color(0xFF6A1B9A).copy(alpha = 0.0f),
                     invertY = true,
                     yFormatter = { GpsMetrics.formatPace(it) },
-                    xLabels = activity.splits.map { "km${it.km}" }
+                    xLabels = paceValues.indices.map { idx -> "km${idx + 1}" }
                 )
             }
         }

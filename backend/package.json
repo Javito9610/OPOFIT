@@ -6,7 +6,10 @@
   "scripts": {
     "test": "jest --verbose --forceExit",
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "micro:noticias": "node microservicios/run.js noticias",
+    "micro:baremos": "node microservicios/run.js baremos",
+    "micro:all": "node microservicios/run.js all"
   },
   "keywords": [],
   "author": "",

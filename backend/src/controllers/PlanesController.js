@@ -135,11 +135,48 @@ const postRegenerarPlan = async (req, res) => {
   }
 };
 
+const postDisenarSesionIA = async (req, res) => {
+  try {
+    const userId = req.usuario?.id;
+    const { idOposicion, idPlanDia } = req.params;
+    if (!userId || !idOposicion || !idPlanDia) {
+      return res.status(400).json({ ok: false, msg: 'Parámetros inválidos' });
+    }
+    const { bloqueado, calc, nivel } = await resolverNivel(userId, idOposicion);
+    if (bloqueado) {
+      return res.status(400).json({ ok: false, msg: 'Completa las marcas del perfil primero' });
+    }
+    // Requiere premium: la IA diseña es valor añadido.
+    const premium = await PremiumService.getEstadoPremium(userId);
+    if (!premium.esPremium) {
+      return res
+        .status(402)
+        .json({ ok: false, msg: 'La IA que diseña tu plan está en Premium', premium_required: true });
+    }
+    const plan = await PlanGeneradorService.disenarSesionIA(
+      userId,
+      idOposicion,
+      idPlanDia,
+      nivel,
+      calc.genero
+    );
+    return res.status(200).json({
+      ok: true,
+      msg: 'Sesión diseñada por IA',
+      data: plan
+    });
+  } catch (e) {
+    console.error('postDisenarSesionIA:', e.message);
+    return res.status(400).json({ ok: false, msg: e.message });
+  }
+};
+
 module.exports = {
   getCalendario,
   getEntornos,
   getEntornoUsuario,
   putEntornoUsuario,
   postRegenerarPlan,
-  postRegenerarDia
+  postRegenerarDia,
+  postDisenarSesionIA
 };

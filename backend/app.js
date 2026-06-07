@@ -53,6 +53,7 @@ app.use('/api/posts', require('./src/routes/PostsRoute'));
 app.use('/api/segmentos', require('./src/routes/SegmentosRoute'));
 app.use('/api/premium', require('./src/routes/PremiumRoute'));
 app.use('/api/notifications', require('./src/routes/NotificationRoute'));
+app.use('/api/notif-app', require('./src/routes/InAppNotifRoute'));
 app.use('/api/admin', require('./src/routes/AdminRoute'));
 
 if (process.env.NOTIFICATIONS_CRON === 'true') {
@@ -63,14 +64,24 @@ if (process.env.NOTIFICATIONS_CRON === 'true') {
       .then((r) => console.log('[cron] Recordatorios:', r))
       .catch((e) => console.error('[cron] Error:', e.message));
   });
-  const RssService = require('./src/services/RssService');
-  cron.schedule('0 */6 * * *', () => {
-    RssService.pollYNotificarAlertas()
-      .then((r) => console.log('[cron] Alertas RSS:', r))
-      .catch((e) => console.error('[cron] RSS:', e.message));
+
+  // Microservicios (modulares, reusables vía CLI desde microservicios/run.js).
+  const NoticiasMicro = require('./microservicios/noticias-micro');
+  const BaremoCheckMicro = require('./microservicios/baremo-check-micro');
+
+  const cronNoticias = process.env.NOTICIAS_CRON || '0 */6 * * *';
+  cron.schedule(cronNoticias, () => {
+    NoticiasMicro.ejecutar().catch((e) => console.error('[cron noticias]', e.message));
   });
+
+  const cronBaremos = process.env.BAREMO_CHECK_CRON || '0 4 * * *';
+  cron.schedule(cronBaremos, () => {
+    BaremoCheckMicro.ejecutar().catch((e) => console.error('[cron baremos]', e.message));
+  });
+
   console.log('Cron de recordatorios activo (cada hora, hora preferida del usuario)');
-  console.log('Cron alertas RSS activo (cada 6 horas)');
+  console.log(`Cron noticias activo (${cronNoticias})`);
+  console.log(`Cron baremo-check activo (${cronBaremos})`);
 }
 
 const DbMigrationService = require('./src/services/DbMigrationService');

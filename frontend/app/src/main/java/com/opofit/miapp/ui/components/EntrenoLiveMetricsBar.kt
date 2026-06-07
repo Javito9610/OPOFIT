@@ -14,10 +14,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.opofit.miapp.gps.model.GpsTrackingState
 import com.opofit.miapp.gps.service.GpsTracker
+import com.opofit.miapp.gps.service.HrBleManager
 import com.opofit.miapp.gps.util.GpsMetrics
 import com.opofit.miapp.utils.TimeFormatUtil
 
@@ -30,15 +32,19 @@ fun EntrenoLiveMetricsBar(
     modifier: Modifier = Modifier,
     gpsState: GpsTrackingState? = null
 ) {
+    val context = LocalContext.current
     val gps by GpsTracker.state.collectAsState()
+    val liveHr by HrBleManager.get(context).heartRate.collectAsState()
     val g = gpsState ?: gps
     val gpsActivo = g.active && !g.paused
+    val esCardio = tipoCardio != null || gpsActivo
     val distM = if (gpsActivo) g.distanceM else (distanciaKm?.times(1000.0) ?: 0.0)
     val durSec = if (gpsActivo) g.durationSec else TimeFormatUtil.secondsFromMs(elapsedMs).toInt()
     val pace = if (gpsActivo && g.avgPaceSecPerKm > 0) g.avgPaceSecPerKm
     else GpsMetrics.paceSecPerKm(distM, durSec.coerceAtLeast(1))
     val velKmh = if (gpsActivo) g.currentSpeedMps * 3.6
     else if (distM > 0 && durSec > 0) (distM / durSec) * 3.6 else 0.0
+    val displayHr = g.currentHrBpm ?: liveHr
 
     if (!cronometroActivo && !gpsActivo) return
 
@@ -56,20 +62,24 @@ fun EntrenoLiveMetricsBar(
                 MetricChip("Tiempo", TimeFormatUtil.formatElapsedMs(
                     if (gpsActivo) durSec * 1000L else elapsedMs
                 ))
-                MetricChip("Distancia", if (distM > 0) GpsMetrics.formatDistance(distM) else "—")
-                MetricChip("Ritmo", pace?.let { "${GpsMetrics.formatPace(it)}/km" } ?: "—")
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                MetricChip("Velocidad", if (velKmh > 0.1) "%.1f km/h".format(velKmh) else "—")
-                MetricChip("Desnivel +", if (gpsActivo) "${g.elevationGainM.toInt()} m" else "—")
                 MetricChip(
                     "♥ Pulso",
-                    g.currentHrBpm?.let { "$it bpm" }
+                    displayHr?.let { "$it bpm" }
                         ?: g.avgHrBpm?.let { "ø $it" }
                         ?: if (g.hrDeviceConnected) "…" else "—"
                 )
+                if (esCardio) {
+                    MetricChip("Distancia", if (distM > 0) GpsMetrics.formatDistance(distM) else "—")
+                }
             }
-            if (tipoCardio != null && g.avgCadenceSpm != null) {
+            if (esCardio) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    MetricChip("Ritmo", pace?.let { "${GpsMetrics.formatPace(it)}/km" } ?: "—")
+                    MetricChip("Velocidad", if (velKmh > 0.1) "%.1f km/h".format(velKmh) else "—")
+                    MetricChip("Desnivel +", if (gpsActivo) "${g.elevationGainM.toInt()} m" else "—")
+                }
+            }
+            if (esCardio && g.avgCadenceSpm != null) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     MetricChip("Cadencia", "${g.avgCadenceSpm} ppm")
                     g.currentStrideM?.let { MetricChip("Zancada", GpsMetrics.formatStride(it)) }
@@ -83,7 +93,7 @@ fun EntrenoLiveMetricsBar(
 @Composable
 private fun MetricChip(label: String, value: String) {
     Column {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.75f))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
     }
 }

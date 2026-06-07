@@ -85,6 +85,24 @@ const FEEDS_GENERICOS_FILTRAR = new Set([
 /** Títulos ya notificados por push (persistencia ligera en memoria + hash) */
 const _alertasEnviadas = new Set();
 
+/** In-memory news cache with 30-minute TTL per oposicion ID. */
+const _newsCache = new Map();
+const CACHE_TTL_MS = 30 * 60 * 1000;
+
+function getCached(id) {
+  const entry = _newsCache.get(id);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > CACHE_TTL_MS) {
+    _newsCache.delete(id);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCache(id, data) {
+  _newsCache.set(id, { ts: Date.now(), data });
+}
+
 const PATRONES_CATEGORIA = {
   convocatoria: [
     'convocatoria',
@@ -277,8 +295,15 @@ class RssService {
     );
   }
 
+  static invalidarCache(idOposicion) {
+    if (idOposicion) _newsCache.delete(Number(idOposicion));
+    else _newsCache.clear();
+  }
+
   static async obtenerNoticiasRss(idOposicion) {
     const id = Number(idOposicion) || 1;
+    const cached = getCached(id);
+    if (cached) return cached;
     const curadas = await RssService.obtenerNoticiasCuradas(id);
     const feeds = RSS_FEEDS[id] || RSS_FEEDS[1];
     const todasNoticias = [...curadas];
@@ -329,7 +354,9 @@ class RssService {
       return db - da;
     });
 
-    return todasNoticias.slice(0, MAX_TOTAL_NEWS);
+    const result = todasNoticias.slice(0, MAX_TOTAL_NEWS);
+    setCache(id, result);
+    return result;
   }
 
   /** Envía push por nuevas convocatorias/plazos (cron cada 6 h). */
@@ -338,6 +365,8 @@ class RssService {
     let enviados = 0;
     for (const id of ids) {
       try {
+        // Invalidate cache so the cron always fetches fresh news.
+        RssService.invalidarCache(id);
         const noticias = await RssService.obtenerNoticiasRss(id);
         const urgentes = noticias.filter((n) => n.urgente && n.relevancia === 'alta').slice(0, 3);
         for (const n of urgentes) {

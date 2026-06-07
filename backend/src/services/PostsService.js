@@ -1,6 +1,7 @@
 const db = require('../config/db');
 const AmigosService = require('./AmigosService');
 const { guardarFotoPost } = require('./PostMediaService');
+const InAppNotifService = require('./InAppNotifService');
 
 class PostsService {
   static async idsAmigos(userId) {
@@ -96,9 +97,10 @@ class PostsService {
               EXISTS(SELECT 1 FROM post_likes pl2 WHERE pl2.id_post = p.id_post AND pl2.id_usuario = ?) AS yo_like
        FROM actividad_posts p
        JOIN usuarios u ON p.id_usuario = u.id_usuario
-       WHERE p.id_usuario = ?
-          OR p.visibilidad = 'PUBLICO'
-          OR (p.visibilidad = 'AMIGOS' AND p.id_usuario IN (${placeholders}))
+       WHERE p.oculto = 0
+         AND (p.id_usuario = ?
+              OR p.visibilidad = 'PUBLICO'
+              OR (p.visibilidad = 'AMIGOS' AND p.id_usuario IN (${placeholders})))
        ORDER BY p.creado_en DESC
        LIMIT ?`,
       [userId, userId, ...idsAmigosArr, Number(limite)]
@@ -121,10 +123,10 @@ class PostsService {
               EXISTS(SELECT 1 FROM post_likes pl2 WHERE pl2.id_post = p.id_post AND pl2.id_usuario = ?) AS yo_like
        FROM actividad_posts p
        JOIN usuarios u ON p.id_usuario = u.id_usuario
-       WHERE p.id_usuario = ?
+       WHERE p.id_usuario = ? AND (p.oculto = 0 OR p.id_usuario = ?)
        ORDER BY p.creado_en DESC
        LIMIT ?`,
-      [viewerId, target, Number(limite)]
+      [viewerId, target, viewerId, Number(limite)]
     );
 
     return (rows || [])
@@ -147,6 +149,11 @@ class PostsService {
     );
     if (!r) throw new Error('POST_NO_ENCONTRADO');
 
+    // Post auto-ocultado por moderación: solo el autor puede verlo
+    if (r.oculto && Number(r.id_usuario) !== Number(viewerId)) {
+      throw new Error('POST_NO_ENCONTRADO');
+    }
+
     const amigosIds = await PostsService.idsAmigos(viewerId);
     if (!PostsService.puedeVerPost(viewerId, r, amigosIds)) {
       throw new Error('SIN_PERMISO');
@@ -156,10 +163,10 @@ class PostsService {
       `SELECT c.id_comentario, c.id_usuario, c.texto, c.creado_en, u.nombre AS usuario_nombre, u.avatar_url
        FROM post_comentarios c
        JOIN usuarios u ON c.id_usuario = u.id_usuario
-       WHERE c.id_post = ?
+       WHERE c.id_post = ? AND (c.oculto = 0 OR c.id_usuario = ?)
        ORDER BY c.creado_en ASC
        LIMIT 100`,
-      [idPost]
+      [idPost, viewerId]
     );
 
     return PostsService.mapPostRow(r, {
@@ -188,6 +195,21 @@ class PostsService {
       return { liked: false };
     }
     await db.query('INSERT INTO post_likes (id_post, id_usuario) VALUES (?, ?)', [idPost, userId]);
+    // Notificación al autor del post
+    const [[autor]] = await db.query(
+      'SELECT id_usuario FROM actividad_posts WHERE id_post = ?',
+      [idPost]
+    );
+    if (autor) {
+      await InAppNotifService.crear({
+        idUsuario: autor.id_usuario,
+        tipo: 'LIKE',
+        titulo: 'Nuevo like en tu publicación',
+        cuerpo: null,
+        refId: idPost,
+        actorId: userId
+      });
+    }
     return { liked: true };
   }
 
@@ -199,6 +221,20 @@ class PostsService {
       'INSERT INTO post_comentarios (id_post, id_usuario, texto) VALUES (?, ?, ?)',
       [idPost, userId, limpio]
     );
+    const [[autor]] = await db.query(
+      'SELECT id_usuario FROM actividad_posts WHERE id_post = ?',
+      [idPost]
+    );
+    if (autor) {
+      await InAppNotifService.crear({
+        idUsuario: autor.id_usuario,
+        tipo: 'COMENTARIO',
+        titulo: 'Nuevo comentario en tu publicación',
+        cuerpo: limpio.slice(0, 200),
+        refId: idPost,
+        actorId: userId
+      });
+    }
     return {
       idComentario: ins.insertId,
       texto: limpio

@@ -54,11 +54,16 @@ class MarcasPerfilService {
       }
     }
     let suma = 0;
+    let count = 0;
     for (const [idPrueba, val] of valores) {
       const nota = await BaremoService.calcularNotaPrueba(idPrueba, genero, val);
-      suma += nota ?? 0;
+      if (nota != null) {
+        suma += nota;
+        count++;
+      }
     }
-    const notaMedia = valores.size > 0 ? suma / valores.size : 0;
+    // Same denominator as SimulacroService and RutinaService: only pruebas with baremo data.
+    const notaMedia = count > 0 ? suma / count : 0;
     let nivel = 'BASICO';
     if (notaMedia >= 5 && notaMedia < 8) nivel = 'INTERMEDIO';
     else if (notaMedia >= 8) nivel = 'AVANZADO';

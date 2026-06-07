@@ -30,6 +30,18 @@ class PlanGeneradorService {
     };
   }
 
+  static async obtenerUltimasSesiones(userId, limite = 3) {
+    const [rows] = await db.query(
+      `SELECT DATE(fecha_entreno) AS fecha, tipo_rutina, duracion_oficial
+       FROM historial_sesiones
+       WHERE usuarios_id_usuario = ?
+       ORDER BY fecha_entreno DESC
+       LIMIT ?`,
+      [userId, limite]
+    );
+    return rows || [];
+  }
+
   static async guardarEntorno(userId, entorno) {
     const ent = EntornoEntreno.normalizarEntorno(entorno);
     if (!ent) throw new Error('Entorno no válido');
@@ -303,11 +315,17 @@ class PlanGeneradorService {
     }
 
     const { plan, sustituciones } = await PlanGeneradorService.generarSemana(planBase, userId, entorno, seed);
+    const ultimasSesiones = await PlanGeneradorService.obtenerUltimasSesiones(userId, 3);
     const coaching = await PlanIaService.generarCoaching({
       entorno,
       resumen: plan.personalizacion?.resumen,
       pilaresDebiles: plan.personalizacion?.pilares_debiles,
-      dias: plan.semana
+      pilaresFuertes: plan.personalizacion?.pilares_fuertes,
+      dias: plan.semana,
+      rachaDias: plan.personalizacion?.racha_dias,
+      sesionesSemana: plan.personalizacion?.sesiones_semana,
+      nivel: plan.personalizacion?.nivel_usado,
+      ultimasSesiones
     });
 
     const generacion = {
@@ -435,6 +453,90 @@ class PlanGeneradorService {
       id,
       ...EntornoEntreno.ENTORNO_META[id]
     }));
+  }
+
+  /**
+   * Modo "IA diseña sesión" (item 22).
+   * Recibe un día del plan y lo redibuja con `PlanIaService.disenarSesion`.
+   * El resultado se mapea/normaliza con el mismo pipeline que el resto del plan.
+   */
+  static async disenarSesionIA(userId, idOposicion, idPlanDia, nivel, genero) {
+    const PlanesService = require('./PlanesService');
+    const { entorno, seed } = await PlanGeneradorService.obtenerPrefsUsuario(userId);
+    if (!entorno) throw new Error('Configura primero dónde entrenas');
+
+    const planActual = await PlanesService.obtenerPlanSemanal(userId, idOposicion, nivel, genero);
+    const idDia = Number(idPlanDia);
+    const dia = planActual.semana?.find((d) => d.id_plan_dia === idDia);
+    if (!dia) throw new Error('Día no encontrado en el plan');
+    if (dia.completada) throw new Error('No puedes cambiar un día ya completado');
+
+    const catalogo = await PlanGeneradorService.cargarCatalogo(entorno);
+    if (catalogo.length < 8) throw new Error('Catálogo insuficiente para diseñar la sesión');
+
+    const { sesion, fuente } = await PlanIaService.disenarSesion({
+      enfoque: dia.enfoque,
+      nivel: nivel || 'INTERMEDIO',
+      entorno,
+      catalogo,
+      pilaresDebiles: planActual.personalizacion?.pilares_debiles || [],
+      pilaresFuertes: planActual.personalizacion?.pilares_fuertes || [],
+      seed: seed + idDia,
+      usarIA: true
+    });
+
+    // Aplicar pipeline de enriquecimiento/inteligencia a cada ejercicio diseñado.
+    const ejerciciosFinales = sesion.ejercicios.map((ej, idx) => {
+      const enriquecido = EjercicioMetadataService.enriquecerEjercicio({
+        ...ej,
+        orden: idx + 1,
+        sustituido: true,
+        ia_diseno: true,
+        ia_origen: ej.ia_origen || fuente,
+        entorno_aplicado: entorno
+      });
+      return EjercicioInteligenteService.aplicarInteligencia(enriquecido, {
+        seed: idx + 1,
+        respetarSeriesReps: true
+      });
+    });
+
+    const semana = planActual.semana.map((d) =>
+      d.id_plan_dia === idDia
+        ? {
+            ...d,
+            ejercicios: ejerciciosFinales,
+            titulo: PlanGeneradorService.resumenDiaDesdeEjercicios(d, ejerciciosFinales).titulo,
+            descripcion: PlanGeneradorService.resumenDiaDesdeEjercicios(d, ejerciciosFinales).descripcion
+          }
+        : d
+    );
+
+    const hoy = planActual.dia_hoy;
+    const sesion_hoy = semana.find((s) => s.es_hoy) || null;
+    const proxima =
+      semana.find((s) => !s.completada && s.dia_semana >= hoy) ||
+      semana.find((s) => !s.completada) ||
+      null;
+
+    const resultado = {
+      ...planActual,
+      semana,
+      sesion_hoy,
+      proxima_sesion: proxima,
+      generacion: {
+        ...(planActual.generacion || {}),
+        ia_diseno_dia: idDia,
+        ia_diseno_fuente: fuente
+      }
+    };
+
+    const sanitizado = PlanesService.sanitizarPlan(resultado);
+    const yw = yearWeek();
+    const cache = await PlanGeneradorService.leerCache(userId, idOposicion, yw);
+    const explicacion = cache?.explicacion_ia || planActual.personalizacion?.explicacion_ia || null;
+    await PlanGeneradorService.guardarCache(userId, idOposicion, yw, entorno, seed, sanitizado, explicacion);
+    return sanitizado;
   }
 }
 

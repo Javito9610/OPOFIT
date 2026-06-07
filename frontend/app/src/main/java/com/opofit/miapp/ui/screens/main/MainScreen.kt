@@ -97,6 +97,7 @@ fun MainScreen(
     onNavigateToComunidad: () -> Unit,
     onNavigateToPremium: () -> Unit,
     onNavigateToGps: () -> Unit,
+    onNavigateToGpsQuickStart: () -> Unit = onNavigateToGps,
     onNavigateToMapaRuta: (distKm: Double?, titulo: String?, enfoque: String?) -> Unit = { _, _, _ -> },
     onNavigateToLugaresEntreno: (tipo: String) -> Unit = {},
     onNavigateToSesionDetalle: (Int) -> Unit,
@@ -234,15 +235,6 @@ fun MainScreen(
                         onClick = { runAndClose(onNavigateToGps) },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                     )
-                    if (!esFitness) {
-                        NavigationDrawerItem(
-                            label = { Text("Simulacro") },
-                            icon = { Icon(Icons.Filled.Timer, null) },
-                            selected = false,
-                            onClick = { runAndClose(onNavigateToSimulacro) },
-                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                        )
-                    }
 
                     DrawerSectionLabel(if (esFitness) "Social" else "Social y oposición")
                     if (!esFitness) {
@@ -251,6 +243,13 @@ fun MainScreen(
                             icon = { Icon(Icons.Filled.Info, null) },
                             selected = false,
                             onClick = { runAndClose(onNavigateToInfoOposicion) },
+                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        )
+                        NavigationDrawerItem(
+                            label = { Text("Simulacro") },
+                            icon = { Icon(Icons.Filled.Timer, null) },
+                            selected = false,
+                            onClick = { runAndClose(onNavigateToSimulacro) },
                             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                         )
                         NavigationDrawerItem(
@@ -271,7 +270,7 @@ fun MainScreen(
 
                     DrawerSectionLabel("Conexión")
                     NavigationDrawerItem(
-                        label = { Text("Mis dispositivos") },
+                        label = { Text("Conexiones y reloj") },
                         icon = { Icon(Icons.Filled.Watch, null) },
                         selected = false,
                         onClick = { runAndClose(onNavigateToMisDispositivos) },
@@ -348,7 +347,7 @@ fun MainScreen(
                         onNavigateToRanking = onNavigateToRanking,
                         onNavigateToComunidad = onNavigateToComunidad,
                         onNavigateToPremium = onNavigateToPremium,
-                        onNavigateToGps = onNavigateToGps,
+                        onNavigateToGps = onNavigateToGpsQuickStart,
                         onNavigateToMapaRuta = onNavigateToMapaRuta,
                         onNavigateToMisDispositivos = onNavigateToMisDispositivos,
                         onLogout = onLogout,

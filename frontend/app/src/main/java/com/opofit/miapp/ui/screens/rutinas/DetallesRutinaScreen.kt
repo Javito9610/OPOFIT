@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.opofit.miapp.ui.utils.isCompactScreen
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasLibresViewModel
 
@@ -52,6 +53,8 @@ fun DetallesRutinaScreen(
     val uiState by rutinasLibresViewModel.uiState.collectAsState()
 
     val userId = authState.userId ?: 0
+    val compact = isCompactScreen()
+    val padH = if (compact) 12.dp else 16.dp
 
     LaunchedEffect(userId) {
         if (userId > 0 && uiState.rutinas.isEmpty()) {
@@ -121,7 +124,7 @@ fun DetallesRutinaScreen(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp),
+                            .padding(padH),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         item {
@@ -131,6 +134,13 @@ fun DetallesRutinaScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground
                             )
+                            rutina.entorno_entreno?.let { ent ->
+                                Text(
+                                    text = "Entorno: ${ent.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                             Spacer(modifier = Modifier.height(8.dp))
                         }
 
@@ -171,6 +181,13 @@ fun DetallesRutinaScreen(
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
+                                                ej.descanso?.takeIf { it > 0 }?.let { d ->
+                                                    Text(
+                                                        text = "Descanso: ${d}s",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.secondary
+                                                    )
+                                                }
                                                 Spacer(modifier = Modifier.height(10.dp))
                                             }
                                         }

@@ -22,11 +22,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.TouchApp
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -87,6 +89,7 @@ import com.opofit.miapp.data.responsemodels.CrearSegmentoGeoRequest
 import com.opofit.miapp.data.responsemodels.RutaPersonalizadaBody
 import com.opofit.miapp.gps.service.EntrenoFlowContext
 import com.opofit.miapp.gps.service.GpsRecordingContext
+import com.opofit.miapp.gps.service.HrBleManager
 import com.opofit.miapp.gps.service.PlannedRoute
 import com.opofit.miapp.gps.service.RoutePoint
 import com.opofit.miapp.gps.service.RoutePreferences
@@ -146,6 +149,21 @@ fun MapaEntrenoScreen(
     val waypoints = remember { mutableStateListOf<LatLng>() }
     val camera = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(lat, lng), 14f)
+    }
+
+    val hrManager = remember { HrBleManager.get(context) }
+    val hrState by hrManager.state.collectAsState()
+    val liveHr by hrManager.heartRate.collectAsState()
+    val hrConnected = hrState is HrBleManager.State.Connected
+    val hrLabel = when {
+        liveHr != null -> "♥ $liveHr bpm"
+        hrConnected -> "♥ Conectado"
+        hrManager.savedDeviceAddress() != null -> "♥ Reconectando…"
+        else -> "♥ Sin reloj"
+    }
+
+    LaunchedEffect(Unit) {
+        hrManager.autoConnectSavedDevice()
     }
 
     val titulo = if (esModoLugares) {
@@ -214,18 +232,27 @@ fun MapaEntrenoScreen(
             lugares = emptyList()
             try {
                 val radio = when (tipoLugar) {
-                    "CALISTENIA" -> 15000
-                    "PISTA" -> 12000
-                    "PARQUE" -> 10000
-                    else -> 8000
+                    "CALISTENIA" -> 20000
+                    "PISTA" -> 18000
+                    "PARQUE" -> 15000
+                    "CROSSFIT" -> 15000
+                    else -> 12000
                 }
-                val resp = RetrofitClient.mapasApi.lugares(auth(), lat, lng, tipoLugar, radio)
-                lugares = resp.data ?: emptyList()
+                suspend fun buscar(tipo: String, r: Int) =
+                    RetrofitClient.mapasApi.lugares(auth(), lat, lng, tipo, r).data.orEmpty()
+
+                lugares = buscar(tipoLugar, radio)
+                if (lugares.isEmpty() && tipoLugar == "CALISTENIA") {
+                    lugares = buscar("PARQUE", radio)
+                }
+                if (lugares.isEmpty() && tipoLugar != "GYM") {
+                    lugares = buscar("GYM", radio)
+                }
                 if (lugares.isEmpty()) {
                     val msg = when (tipoLugar) {
-                        "CALISTENIA" -> "No hay parques de calistenia cerca. Prueba PARQUE o amplía el radio."
-                        "PISTA" -> "No hay pistas cerca. Prueba otro filtro o cambia de zona."
-                        else -> "No hay lugares de este tipo cerca."
+                        "CALISTENIA" -> "No hay parques de calistenia cerca. Prueba Calistenia → Parque o activa el GPS."
+                        "PISTA" -> "No hay pistas cerca. Prueba otro filtro o desplázate a una zona deportiva."
+                        else -> "No hay lugares de este tipo cerca. Comprueba que el GPS esté activo."
                     }
                     snackbar.showSnackbar(msg)
                 }
@@ -316,10 +343,6 @@ fun MapaEntrenoScreen(
     LaunchedEffect(flowCtx?.distKmObjetivo, distanciaObjetivoKm) {
         val km = distanciaObjetivoKm ?: flowCtx?.distKmObjetivo
         if (km != null && km > 0) distKm = km
-    }
-
-    LaunchedEffect(ubicacionLista, esModoLugares) {
-        if (ubicacionLista && esModoLugares) cargarLugares()
     }
 
     LaunchedEffect(ubicacionLista, tipoLugar, tab) {
@@ -526,16 +549,22 @@ fun MapaEntrenoScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(listOf("GYM", "CROSSFIT", "PISTA", "CALISTENIA", "PARQUE")) { t ->
+                            items(listOf(
+                                "GYM" to "Gym",
+                                "CROSSFIT" to "CrossFit",
+                                "PISTA" to "Pista",
+                                "CALISTENIA" to "Calistenia",
+                                "PARQUE" to "Parque"
+                            )) { (id, label) ->
                                 FilterChip(
-                                    selected = tipoLugar == t,
+                                    selected = tipoLugar == id,
                                     onClick = {
-                                        if (tipoLugar != t) {
-                                            tipoLugar = t
+                                        if (tipoLugar != id) {
+                                            tipoLugar = id
                                             lugares = emptyList()
                                         }
                                     },
-                                    label = { Text(t) }
+                                    label = { Text(label, maxLines = 1) }
                                 )
                             }
                         }
@@ -549,9 +578,11 @@ fun MapaEntrenoScreen(
                             Text(
                                 when (tipoLugar) {
                                     "CALISTENIA" ->
-                                        "No hay parques de calistenia cerca. Prueba PARQUE o mueve el mapa a otra zona."
+                                        "No hay parques de calistenia cerca. Prueba Parque o mueve el mapa a otra zona."
                                     "PISTA" ->
-                                        "No hay pistas cerca en esta zona."
+                                        "No hay pistas de atletismo cerca en esta zona."
+                                    "CROSSFIT" ->
+                                        "No hay boxes de CrossFit cerca. Prueba Gym."
                                     else ->
                                         "No hay lugares de este tipo cerca. Prueba otro filtro."
                                 },
@@ -560,7 +591,11 @@ fun MapaEntrenoScreen(
                             )
                         }
                         if (lugares.isNotEmpty()) {
-                            Text("${lugares.size} lugares cerca", style = MaterialTheme.typography.labelMedium)
+                            val hayDemo = lugares.any { it.demo == true }
+                            Text(
+                                if (hayDemo) "${lugares.size} lugares (aproximados)" else "${lugares.size} lugares cerca",
+                                style = MaterialTheme.typography.labelMedium
+                            )
                             lugares.take(5).forEach { l ->
                                 Text(
                                     "• ${l.nombre} (${"%.1f".format(l.distanciaM / 1000)} km)",
@@ -593,6 +628,26 @@ fun MapaEntrenoScreen(
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        AssistChip(
+                            onClick = { onNavigateBack() },
+                            label = { Text(hrLabel, maxLines = 1) },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Filled.Favorite,
+                                    null,
+                                    Modifier.size(18.dp),
+                                    tint = if (hrConnected || liveHr != null) MaterialTheme.colorScheme.error
+                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        )
+                        if (!hrConnected && liveHr == null) {
+                            Text(
+                                "Pulso en vivo: conéctalo en Rutas GPS → Conectar pulso (opcional).",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -813,7 +868,7 @@ fun MapaEntrenoScreen(
                                     val intent = RouteGpxExport.shareIntent(context, planned)
                                     if (intent != null) {
                                         context.startActivity(
-                                            android.content.Intent.createChooser(intent, "Exportar GPX")
+                                            android.content.Intent.createChooser(intent, "Compartir ruta")
                                         )
                                     }
                                 },
@@ -822,7 +877,7 @@ fun MapaEntrenoScreen(
                             ) {
                                 Icon(Icons.Filled.Download, null, Modifier.size(16.dp))
                                 Spacer(Modifier.size(4.dp))
-                                Text("Exportar GPX")
+                                Text("Compartir ruta con el reloj")
                             }
                         } else {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -848,7 +903,7 @@ fun MapaEntrenoScreen(
                                         val intent = RouteGpxExport.shareIntent(context, planned)
                                         if (intent != null) {
                                             context.startActivity(
-                                                android.content.Intent.createChooser(intent, "Exportar GPX")
+                                                android.content.Intent.createChooser(intent, "Compartir ruta")
                                             )
                                         }
                                     },
@@ -857,7 +912,7 @@ fun MapaEntrenoScreen(
                                 ) {
                                     Icon(Icons.Filled.Download, null, Modifier.size(16.dp))
                                     Spacer(Modifier.size(4.dp))
-                                    Text("GPX")
+                                    Text("Compartir")
                                 }
                             }
                         }

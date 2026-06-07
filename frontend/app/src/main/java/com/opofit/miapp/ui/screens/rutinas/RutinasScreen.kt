@@ -62,15 +62,17 @@ import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.EjercicioPlan
 import com.opofit.miapp.ui.components.EntornoEntrenoSheet
 import com.opofit.miapp.ui.components.ExerciseDetailSheet
-import com.opofit.miapp.ui.components.ExerciseInfoButton
 import com.opofit.miapp.ui.components.PlanCalendarioMes
+import com.opofit.miapp.ui.components.EntrenoHoyHeroCard
 import com.opofit.miapp.ui.components.PlanDiaCard
+import com.opofit.miapp.ui.components.PlanEjercicioRow
 import com.opofit.miapp.ui.components.PlanPersonalizacionCard
+import com.opofit.miapp.ui.components.PlanSemanaResumenRow
 import com.opofit.miapp.ui.components.SectionHeader
+import com.opofit.miapp.ui.components.enfoqueLabel
 import java.time.YearMonth
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasViewModel
-import com.opofit.miapp.utils.EntrenoExerciseUtil
 import com.opofit.miapp.utils.FitnessMode
 import com.opofit.miapp.utils.MapaEntrenoNav
 import com.opofit.miapp.utils.PrescripcionFormat
@@ -429,6 +431,36 @@ fun RutinasScreen(
                                     }
                                 }
                                 if (vistaPlan == 0) {
+                                    plan.sesion_hoy?.let { hoy ->
+                                        if (!hoy.completada) {
+                                            item {
+                                                EntrenoHoyHeroCard(
+                                                    titulo = hoy.nombre_dia,
+                                                    subtitulo = hoy.titulo,
+                                                    enfoque = hoy.enfoque,
+                                                    onEmpezar = {
+                                                        onNavigateToEntrenamientos(
+                                                            hoy.enfoque,
+                                                            hoy.id_plan_dia,
+                                                            hoy.id_rutina_opo
+                                                        )
+                                                    },
+                                                    onPrepararRuta = if (hoy.enfoque.equals("RESISTENCIA", ignoreCase = true)) {
+                                                        {
+                                                            onNavigateToEntrenamientos(
+                                                                hoy.enfoque,
+                                                                hoy.id_plan_dia,
+                                                                hoy.id_rutina_opo
+                                                            )
+                                                        }
+                                                    } else null
+                                                )
+                                            }
+                                        }
+                                    }
+                                    item {
+                                        PlanSemanaResumenRow(dias = plan.semana)
+                                    }
                                     plan.personalizacion?.let { perso ->
                                         item { PlanPersonalizacionCard(personalizacion = perso) }
                                     }
@@ -460,7 +492,7 @@ fun RutinasScreen(
                                             }
                                         }
                                         Text(
-                                            "Sustituye todos los días de la semana por otra combinación de ejercicios (mismo nivel). Para cambiar solo un día usa «Otra opción» en cada tarjeta.",
+                                            "«Generar otra semana» cambia todos los días. «Otra variante» solo en un día.",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.padding(top = 2.dp)
@@ -489,66 +521,42 @@ fun RutinasScreen(
                                         }
                                     ) { i ->
                                         val dia = plan.semana[i]
-                                        ElevatedCard(Modifier.fillMaxWidth()) {
-                                            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                PlanDiaCard(
-                                                    dia = dia,
-                                                    onEntrenar = onNavigateToEntrenamientos,
-                                                    expanded = !dia.es_hoy,
-                                                    onOtraOpcion = if (!dia.completada && !uiState.entornoEntreno.isNullOrBlank()) {
-                                                        { rutinasViewModel.regenerarDia(userId, oposicionId, dia.id_plan_dia) }
-                                                    } else null,
-                                                    regenerando = uiState.regenerandoDiaId == dia.id_plan_dia
-                                                )
-                                                dia.ejercicios.take(4).forEach { ej ->
-                                                    val adj = if (ej.personalizado && ej.series_base != null && ej.series_base != ej.series) {
-                                                        " (de ${ej.series_base} a ${ej.series} series)"
-                                                    } else ""
-                                                    val prescripcion = "${ej.series}×${PrescripcionFormat.formatRepeticiones(ej.repeticiones, ej.unidad, ej.nombre)}"
-                                                    Row(
-                                                        Modifier.fillMaxWidth(),
-                                                        verticalAlignment = Alignment.CenterVertically,
-                                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                            PlanDiaCard(
+                                                dia = dia,
+                                                onEntrenar = onNavigateToEntrenamientos,
+                                                expanded = !dia.es_hoy,
+                                                onOtraOpcion = if (!dia.completada && !uiState.entornoEntreno.isNullOrBlank()) {
+                                                    { rutinasViewModel.regenerarDia(userId, oposicionId, dia.id_plan_dia) }
+                                                } else null,
+                                                regenerando = uiState.regenerandoDiaId == dia.id_plan_dia
+                                            )
+                                            if (dia.ejercicios.isNotEmpty()) {
+                                                ElevatedCard(Modifier.fillMaxWidth()) {
+                                                    Column(
+                                                        Modifier.padding(12.dp),
+                                                        verticalArrangement = Arrangement.spacedBy(8.dp)
                                                     ) {
-                                                        ExerciseInfoButton(
-                                                            onClick = {
-                                                                ejercicioDetalle = ej
-                                                                prescripcionDetalle = prescripcion
-                                                            }
-                                                        )
-                                                        Column(
-                                                            Modifier
-                                                                .weight(1f)
-                                                                .clickable {
+                                                        dia.ejercicios.take(4).forEach { ej ->
+                                                            val prescripcion = "${ej.series}×${PrescripcionFormat.formatRepeticiones(ej.repeticiones, ej.unidad, ej.nombre)}"
+                                                            PlanEjercicioRow(
+                                                                prescripcion = prescripcion,
+                                                                nombre = ej.nombre,
+                                                                destacado = ej.personalizado || ej.sustituido,
+                                                                onInfoClick = {
                                                                     ejercicioDetalle = ej
                                                                     prescripcionDetalle = prescripcion
                                                                 }
-                                                        ) {
-                                                            Text(
-                                                                "$prescripcion ${ej.nombre}$adj",
-                                                                style = MaterialTheme.typography.bodySmall,
-                                                                color = if (ej.personalizado || ej.sustituido)
-                                                                    MaterialTheme.colorScheme.primary
-                                                                else MaterialTheme.colorScheme.onSurfaceVariant
                                                             )
-                                                            EntrenoExerciseUtil.deduplicarInstrucciones(ej.instrucciones_tecnicas)
-                                                                ?.takeIf { it.isNotBlank() }?.let { tip ->
-                                                                Text(
-                                                                    tip,
-                                                                    style = MaterialTheme.typography.labelSmall,
-                                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                                    maxLines = 2
-                                                                )
-                                                            }
+                                                        }
+                                                        if (dia.ejercicios.size > 4) {
+                                                            Text(
+                                                                "+${dia.ejercicios.size - 4} más",
+                                                                style = MaterialTheme.typography.labelSmall,
+                                                                color = MaterialTheme.colorScheme.primary
+                                                            )
                                                         }
                                                     }
-                                                }
-                                                if (dia.ejercicios.size > 4) {
-                                                    Text(
-                                                        "+${dia.ejercicios.size - 4} ejercicios más",
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        color = MaterialTheme.colorScheme.primary
-                                                    )
                                                 }
                                             }
                                         }
@@ -559,21 +567,6 @@ fun RutinasScreen(
                                         modifier = Modifier.fillMaxWidth(),
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        val hoy = plan.sesion_hoy
-                                        if (hoy != null && !hoy.completada) {
-                                            Button(
-                                                onClick = {
-                                                    onNavigateToEntrenamientos(
-                                                        hoy.enfoque,
-                                                        hoy.id_plan_dia,
-                                                        hoy.id_rutina_opo
-                                                    )
-                                                },
-                                                modifier = Modifier.fillMaxWidth()
-                                            ) {
-                                                Text("Empezar ${hoy.nombre_dia.lowercase()}")
-                                            }
-                                        }
                                         OutlinedButton(
                                             onClick = onNavigateToRutinasLibres,
                                             modifier = Modifier.fillMaxWidth()

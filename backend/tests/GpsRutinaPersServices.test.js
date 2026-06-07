@@ -81,11 +81,15 @@ describe('RutinaPersService', () => {
   });
 
   test('crearRutinaPropia inserta detalle ejercicios', async () => {
+    // El servicio hace SELECT ejercicios + INSERT detalle por cada ejercicio
+    // (para aplicar la inteligencia de prescripción al fallback).
     conn.query
-      .mockResolvedValueOnce([[]]) // no existe
-      .mockResolvedValueOnce([{ insertId: 99 }]) // insert rutina
-      .mockResolvedValueOnce([{ affectedRows: 1 }]) // ejercicio 1
-      .mockResolvedValueOnce([{ affectedRows: 1 }]); // ejercicio 2
+      .mockResolvedValueOnce([[]]) // SELECT existente: no existe
+      .mockResolvedValueOnce([{ insertId: 99 }]) // INSERT rutina
+      .mockResolvedValueOnce([[{ id_ejercicio: 1, nombre: 'Sentadilla', pilar: 'FUERZA' }]]) // SELECT ej1
+      .mockResolvedValueOnce([{ affectedRows: 1 }]) // INSERT detalle ej1
+      .mockResolvedValueOnce([[{ id_ejercicio: 2, nombre: 'Press banca', pilar: 'FUERZA' }]]) // SELECT ej2
+      .mockResolvedValueOnce([{ affectedRows: 1 }]); // INSERT detalle ej2
     const id = await RutinaPersService.crearRutinaPropia(1, 'Rutina X', [
       { id_ejercicio: 1, series: 3, repeticiones: 10 },
       { id_ejercicio: 2, series: 4, repeticiones: 8 }

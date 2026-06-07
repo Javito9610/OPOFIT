@@ -7,6 +7,7 @@ import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.DashboardResumen
 import com.opofit.miapp.data.responsemodels.FeedActividadItem
+import com.opofit.miapp.data.responsemodels.NoticiaRss
 import com.opofit.miapp.utils.ApiErrorParser
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,7 +24,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val loading: Boolean = true,
         val error: String = "",
         val resumen: DashboardResumen? = null,
-        val feedAmigos: List<FeedActividadItem> = emptyList()
+        val feedAmigos: List<FeedActividadItem> = emptyList(),
+        val noticiasRss: List<NoticiaRss> = emptyList()
     )
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -42,11 +44,25 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 val resp = RetrofitClient.dashboardApi.resumen("Bearer $token", oposicionId)
                 if (resp.ok && resp.data != null) {
                     var feed = emptyList<FeedActividadItem>()
+                    var noticias = emptyList<NoticiaRss>()
                     try {
                         val fr = RetrofitClient.amigosApi.feed("Bearer $token")
                         if (fr.ok) feed = fr.data.orEmpty().take(5)
                     } catch (_: Exception) { }
-                    _uiState.update { it.copy(loading = false, resumen = resp.data, feedAmigos = feed) }
+                    try {
+                        val rss = RetrofitClient.oposicionesApi.getNoticiasRss("Bearer $token", oposicionId)
+                        if (rss.ok) {
+                            noticias = rss.data.orEmpty()
+                                .sortedWith(
+                                    compareByDescending<NoticiaRss> { it.urgente }
+                                        .thenByDescending { it.relevancia == "alta" }
+                                )
+                                .take(3)
+                        }
+                    } catch (_: Exception) { }
+                    _uiState.update {
+                        it.copy(loading = false, resumen = resp.data, feedAmigos = feed, noticiasRss = noticias)
+                    }
                 } else {
                     _uiState.update {
                         it.copy(loading = false, error = resp.msg ?: "No se pudo cargar el resumen")

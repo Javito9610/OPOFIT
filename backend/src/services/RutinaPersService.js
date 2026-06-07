@@ -1,6 +1,9 @@
 const db = require("../config/db");
+const EjercicioInteligenteService = require("./EjercicioInteligenteService");
+const EntornoEntreno = require("../utils/EntornoEntreno");
+
 class RutinaPersService {
-  static async crearRutinaPropia(userId, nombre, ejercicios) {
+  static async crearRutinaPropia(userId, nombre, ejercicios, entorno = null) {
     const connection = await db.getConnection();
     try {
       const sqlCheck = 'SELECT id_rutina_pers FROM rutinas_pers WHERE usuarios_id_usuario = ? AND nombre_personalizado = ?';
@@ -9,12 +12,32 @@ class RutinaPersService {
         throw new Error("Ya tienes una rutina con este nombre. ¡Prueba uno diferente!");
       }
       await connection.beginTransaction();
-      const sqlRutina = `INSERT INTO rutinas_pers (nombre_personalizado, usuarios_id_usuario) VALUES (?, ?)`;
-      const [resRutina] = await connection.query(sqlRutina, [nombre, userId]);
+      const entornoNorm = EntornoEntreno.normalizarEntorno(entorno);
+      const sqlRutina = entornoNorm
+        ? `INSERT INTO rutinas_pers (nombre_personalizado, usuarios_id_usuario, entorno_entreno) VALUES (?, ?, ?)`
+        : `INSERT INTO rutinas_pers (nombre_personalizado, usuarios_id_usuario) VALUES (?, ?)`;
+      const rutinaParams = entornoNorm ? [nombre, userId, entornoNorm] : [nombre, userId];
+      const [resRutina] = await connection.query(sqlRutina, rutinaParams);
       const idRutinaPers = resRutina.insertId;
-      const sqlDetalleEjercicios = `INSERT INTO detalle_rutina_pers (rutinas_pers_id_rutina_pers, ejercicios_id_ejercicio, series, repeticiones) VALUES (?,?,?,?)`;
+      const sqlDetalleEjercicios = `INSERT INTO detalle_rutina_pers (rutinas_pers_id_rutina_pers, ejercicios_id_ejercicio, series, repeticiones, descanso) VALUES (?,?,?,?,?)`;
       for (const ej of ejercicios) {
-        await connection.query(sqlDetalleEjercicios, [idRutinaPers, ej.id_ejercicio, ej.series, ej.repeticiones]);
+        const [ejRows] = await connection.query(
+          `SELECT id_ejercicio, nombre, pilar, categoria, grupo_muscular, equipamiento, instrucciones_tecnicas
+           FROM ejercicios WHERE id_ejercicio = ?`,
+          [ej.id_ejercicio]
+        );
+        const ejData = ejRows[0] || { nombre: '', id_ejercicio: ej.id_ejercicio };
+        const inteligente = EjercicioInteligenteService.aplicarInteligencia(ejData, {
+          seed: ej.id_ejercicio,
+          entorno: entornoNorm
+        });
+        const series = Number(ej.series) > 0 ? Number(ej.series) : inteligente.series;
+        const repeticiones = Number(ej.repeticiones) > 0 ? Number(ej.repeticiones) : inteligente.repeticiones;
+        const descanso =
+          ej.descanso != null && Number(ej.descanso) >= 0
+            ? Number(ej.descanso)
+            : (inteligente.descanso ?? 90);
+        await connection.query(sqlDetalleEjercicios, [idRutinaPers, ej.id_ejercicio, series, repeticiones, descanso]);
       }
       await connection.commit();
       return idRutinaPers;
@@ -28,7 +51,7 @@ class RutinaPersService {
   static async listarMisRutinas(userId) {
     const connection = await db.getConnection();
     try {
-      const sqlListar = `SELECT r.id_rutina_pers, r.nombre_personalizado, d.ejercicios_id_ejercicio, e.nombre AS nombre_ejercicio, d.series, d.repeticiones, d.descanso
+      const sqlListar = `SELECT r.id_rutina_pers, r.nombre_personalizado, r.entorno_entreno, d.ejercicios_id_ejercicio, e.nombre AS nombre_ejercicio, d.series, d.repeticiones, d.descanso
                 FROM rutinas_pers r
                 LEFT JOIN detalle_rutina_pers d ON r.id_rutina_pers = d.rutinas_pers_id_rutina_pers
                 LEFT JOIN ejercicios e ON d.ejercicios_id_ejercicio = e.id_ejercicio

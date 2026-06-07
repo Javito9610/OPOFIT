@@ -68,6 +68,7 @@ import com.opofit.miapp.data.local.TokenManager
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.opofit.miapp.integraciones.GoogleFitManager
 import com.opofit.miapp.integraciones.HealthConnectManager
+import com.opofit.miapp.gps.ui.GpsViewModel
 import com.opofit.miapp.integraciones.IntegracionesViewModel
 import com.opofit.miapp.ui.MainActivity
 import kotlinx.coroutines.flow.first
@@ -78,9 +79,11 @@ import kotlinx.coroutines.launch
 fun MisDispositivosScreen(
     onNavigateBack: () -> Unit,
     onNavigateToGpsHub: () -> Unit = {},
-    viewModel: IntegracionesViewModel = viewModel()
+    viewModel: IntegracionesViewModel = viewModel(),
+    gpsViewModel: GpsViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+    val importMsg by gpsViewModel.importMessage.collectAsState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -93,6 +96,19 @@ fun MisDispositivosScreen(
             snackbarHostState.showSnackbar(it)
             viewModel.consumeMessage()
         }
+    }
+
+    LaunchedEffect(importMsg) {
+        importMsg?.let {
+            snackbarHostState.showSnackbar(it)
+            gpsViewModel.consumeImportMessage()
+        }
+    }
+
+    val archivoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) gpsViewModel.importActividad(uri)
     }
 
     val hcManager = remember { HealthConnectManager.get(context) }
@@ -210,7 +226,7 @@ fun MisDispositivosScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mis dispositivos", fontWeight = FontWeight.Bold) },
+                title = { Text("Conexiones y reloj", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver")
@@ -228,18 +244,15 @@ fun MisDispositivosScreen(
         if (showGoogleFitAviso) {
             AlertDialog(
                 onDismissRequest = { showGoogleFitAviso = false },
-                title = { Text("Aviso de Google (normal en desarrollo)") },
+                title = { Text("Permisos de Google Fit") },
                 text = {
                     Text(
-                        "Google Fit pide permisos sensibles y muestra que la app «no está verificada». " +
-                            "Es normal mientras OpoFit está en pruebas — no es un virus.\n\n" +
-                            "Si sale la pantalla roja de Google:\n" +
-                            "1. NO pulses «Back to safety» / «Volver a un lugar seguro».\n" +
-                            "2. Abajo, pulsa «Advanced» / «Avanzado».\n" +
-                            "3. Pulsa «Go to project… (unsafe)» / «Ir al proyecto…».\n" +
-                            "4. Elige tu cuenta Google y acepta TODOS los permisos de actividad.\n\n" +
-                            "Si tu correo no está en usuarios de prueba del proyecto Google Cloud, " +
-                            "añádelo en la consola OAuth (miapp-opofit-7088e)."
+                        "Google puede mostrar que la app «no está verificada». Es normal en esta fase.\n\n" +
+                            "Si aparece una advertencia:\n" +
+                            "1. Pulsa «Avanzado» (no «Volver»).\n" +
+                            "2. Pulsa «Ir al proyecto» o «Continuar».\n" +
+                            "3. Elige tu cuenta y acepta los permisos de actividad.\n\n" +
+                            "Si no puedes continuar, usa Health Connect como alternativa principal."
                     )
                 },
                 confirmButton = {
@@ -263,34 +276,24 @@ fun MisDispositivosScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
-                            "Conecta tu reloj sin APIs de pago",
+                            "Sincroniza tu reloj con OpoFit",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
-                            "Funciona con Garmin, Polar, Samsung, Fitbit, Mi Band, Amazfit, Suunto, Coros y más.\n\n" +
-                                "Recomendado:\n" +
-                                "1. Health Connect — sincronización automática (Android 9+ con HC).\n" +
-                                "2. Google Fit — alternativa si tu móvil no tiene Health Connect.\n" +
-                                "3. Importar GPX — exporta desde Strava/Garmin/Wikiloc e impórtalo en Rutas GPS.\n" +
-                                "4. Banda BLE — pulso en vivo durante una actividad GPS.",
+                            "Compatible con Garmin, Polar, Samsung, Fitbit, Mi Band, Amazfit, Suunto y Coros.\n\n" +
+                                "• Automático: Health Connect (recomendado) o Google Fit.\n" +
+                                "• Manual: sube un archivo exportado desde tu app del reloj.\n" +
+                                "• Pulso en vivo: opcional durante una carrera GPS.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }
-            }
-            item {
-                ImportGpxCard(onOpenGpsHub = onNavigateToGpsHub)
-            }
-            item {
-                RelojesGuiaCard()
             }
             item {
                 HealthConnectCard(
@@ -330,7 +333,20 @@ fun MisDispositivosScreen(
                 )
             }
             item {
-                BleDirectoCard()
+                ManualImportCard(
+                    onPickFile = {
+                        archivoPicker.launch(
+                            arrayOf("application/gpx+xml", "application/xml", "application/octet-stream", "*/*")
+                        )
+                    },
+                    onOpenHistorial = onNavigateToGpsHub
+                )
+            }
+            item {
+                BleDirectoCard(onOpenGps = onNavigateToGpsHub)
+            }
+            item {
+                RelojesGuiaCard()
             }
             item {
                 ElevatedCard(
@@ -344,12 +360,12 @@ fun MisDispositivosScreen(
                     ) {
                         Column(Modifier.weight(1f)) {
                             Text(
-                                "Conexiones opcionales (avanzado)",
+                                "Más opciones",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                "Strava / Polar — requieren configuración del servidor",
+                                "Strava, Polar y Apple Watch",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -362,6 +378,9 @@ fun MisDispositivosScreen(
                 }
             }
             if (showAvanzado) {
+                item {
+                    AppleWatchCard()
+                }
                 item {
                     StravaCard(
                         estado = proveedores["STRAVA"],
@@ -382,30 +401,18 @@ fun MisDispositivosScreen(
                 }
             }
             item {
-                AppleWatchCard()
-            }
-            item {
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Filled.UploadFile,
-                                null,
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
-                            Text(
-                                "  Enviar entrenamientos al reloj",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
-                        }
                         Text(
-                            "Desde el plan o el detalle de una sesión, pulsa \"Enviar al reloj\": OpoFit genera un fichero TCX estándar que tu app del reloj (Garmin Connect, Polar Flow, Zepp, etc.) importa con un toque.",
+                            "Enviar plan al reloj",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            "Durante un entrenamiento del plan, pulsa «Enviar plan al reloj». " +
+                                "Tu app del reloj (Garmin Connect, Polar Flow, Zepp…) lo importará y podrás seguir la sesión desde la muñeca.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -466,8 +473,8 @@ private fun RelojesGuiaCard() {
                 fontWeight = FontWeight.Bold
             )
             Text(
-                "OpoFit no empareja el reloj por Bluetooth como un auricular. " +
-                    "Tu reloj envía los entrenos a Health Connect o Google Fit y OpoFit los lee desde ahí.",
+                "OpoFit no empareja el reloj como un auricular. Tus entrenos llegan vía Health Connect " +
+                    "o Google Fit, o puedes subir un archivo exportado manualmente.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -510,23 +517,17 @@ private fun HealthConnectCard(
         else -> "Sin permisos"
     }
     ProviderCard(
-        title = "Health Connect (recomendado)",
-        subtitle = "Garmin, Samsung, Fitbit, Mi Band, Amazfit, Whoop, Oura...",
+        title = "Sincronización automática",
+        subtitle = "Health Connect · Garmin, Samsung, Fitbit, Mi Band, Amazfit…",
         icon = Icons.Filled.Cloud,
         estado = estadoTxt,
         estadoOk = connected
     ) {
         Text(
-            "Pasos para conectar tu reloj:",
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold
-        )
-        Text(
-            "Cuando funcione verás «Conectado» arriba a la derecha.\n\n" +
-                "1. Instala Health Connect si no lo tienes.\n" +
-                "2. En la app de tu reloj activa «Compartir con Health Connect».\n" +
-                "3. Pulsa «Conceder permisos» y marca TODOS los datos que pide OpoFit.\n" +
-                "4. Si no sale el diálogo, pulsa «Abrir Health Connect» → Permisos de aplicaciones → OpoFit → Permitir todo.",
+            "1. Instala Health Connect si tu móvil no lo tiene.\n" +
+                "2. En la app de tu reloj, activa «Compartir con Health Connect».\n" +
+                "3. Pulsa «Conceder permisos» y acepta todos los datos de actividad.\n" +
+                "4. Pulsa «Sincronizar» para traer tus entrenos recientes.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -586,8 +587,7 @@ private fun StravaCard(
     ) {
         if (!configurado) {
             Text(
-                "Strava exige suscripción de desarrollador para nuevas apps. " +
-                    "No es necesario para usar OpoFit: usa Health Connect o importa GPX desde Rutas GPS.",
+                "Opcional. Para la mayoría de usuarios basta con Health Connect o subir un archivo manualmente.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -630,8 +630,7 @@ private fun PolarCard(
     ) {
         if (!configurado) {
             Text(
-                "Requiere credenciales Polar en el servidor (POLAR_CLIENT_ID/SECRET). " +
-                    "Alternativa: Health Connect o importar GPX desde Rutas GPS.",
+                "Conexión directa con Polar Flow. Si no está disponible, usa Health Connect.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -652,22 +651,26 @@ private fun PolarCard(
 }
 
 @Composable
-private fun ImportGpxCard(onOpenGpsHub: () -> Unit) {
+private fun ManualImportCard(
+    onPickFile: () -> Unit,
+    onOpenHistorial: () -> Unit
+) {
     ProviderCard(
-        title = "Importar desde Strava / Garmin / Wikiloc",
-        subtitle = "Sin API de pago — exporta GPX e impórtalo en OpoFit",
+        title = "Subir actividad manualmente",
+        subtitle = "Garmin, Polar, Strava, Wikiloc…",
         icon = Icons.Filled.UploadFile,
-        estado = "Recomendado",
+        estado = "Manual",
         estadoOk = true
     ) {
         Text(
-            "En Strava: actividad → ⋮ → Exportar GPX. En Garmin/Wikiloc: exportar ruta como .gpx. " +
-                "Luego en Rutas GPS pulsa \"Elegir fichero .gpx\".",
+            "Si entrenaste sin sincronización automática, exporta la actividad desde la app de tu reloj " +
+                "y súbela aquí. OpoFit la añadirá a tu historial GPS.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Button(onClick = onOpenGpsHub) {
-            Text("Ir a Rutas GPS e importar")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = onPickFile) { Text("Elegir archivo") }
+            OutlinedButton(onClick = onOpenHistorial) { Text("Ver historial GPS") }
         }
     }
 }
@@ -681,20 +684,16 @@ private fun GoogleFitCard(
     onOpenGoogleFit: () -> Unit
 ) {
     ProviderCard(
-        title = "Google Fit (alternativa)",
-        subtitle = "Para móviles sin Health Connect · Wear OS, Xiaomi, apps con sync a Fit",
+        title = "Alternativa: Google Fit",
+        subtitle = "Si tu móvil no tiene Health Connect",
         icon = Icons.Filled.Cloud,
         estado = if (connected) "Conectado" else "Sin permisos",
         estadoOk = connected
     ) {
         Text(
-            "Pasos para conectar tu reloj:\n\n" +
-                "1. Instala Google Fit y activa sync en la app de tu reloj.\n" +
-                "2. Pulsa «Conceder permisos».\n" +
-                "3. Google puede avisar «app no verificada» — es normal en desarrollo.\n" +
-                "   Pulsa Avanzado → Ir al proyecto → Aceptar permisos.\n" +
-                "4. Si no deja entrar, el desarrollador debe añadir tu Gmail como " +
-                "«usuario de prueba» en Google Cloud Console.",
+            "1. Instala Google Fit y activa la sincronización en la app de tu reloj.\n" +
+                "2. Pulsa «Conceder permisos» y acepta los permisos de actividad.\n" +
+                "3. Si Google muestra una advertencia, pulsa Avanzado y continúa.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -718,19 +717,21 @@ private fun GoogleFitCard(
 }
 
 @Composable
-private fun BleDirectoCard() {
+private fun BleDirectoCard(onOpenGps: () -> Unit) {
     ProviderCard(
-        title = "Banda BLE directa",
-        subtitle = "Pulso en vivo: Polar H10/H9, Wahoo TICKR, chest straps genéricos, Garmin (broadcast HR)",
+        title = "Pulso en vivo (opcional)",
+        subtitle = "Banda de pecho o reloj con pulso por Bluetooth",
         icon = Icons.Filled.Bluetooth,
-        estado = "Activable en GPS",
+        estado = "Durante carrera",
         estadoOk = true
     ) {
         Text(
-            "Desde el Hub de Rutas GPS pulsa \"Conectar reloj/banda\" y vincula tu dispositivo. El pulso se mostrará en tiempo real durante la actividad.",
+            "Conecta tu banda o reloj antes de empezar una carrera GPS. Verás el pulso en tiempo real " +
+                "mientras grabas la actividad.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        OutlinedButton(onClick = onOpenGps) { Text("Ir a Rutas GPS") }
     }
 }
 

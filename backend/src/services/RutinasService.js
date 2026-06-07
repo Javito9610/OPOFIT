@@ -44,15 +44,20 @@ class RutinaService {
       };
     }
     let sumaNotas = 0;
+    let countNotas = 0;
     for (const m of marcas) {
       const nota = await BaremoService.calcularNotaPrueba(
         m.id_pruebas_oficiales,
         generoDB,
         m.valord_record
       );
-      sumaNotas += nota ?? 0;
+      if (nota != null) {
+        sumaNotas += nota;
+        countNotas++;
+      }
     }
-    const notaMedia = marcas.length > 0 ? sumaNotas / marcas.length : 0;
+    // Denominator uses only pruebas with real baremo data, matching SimulacroService.
+    const notaMedia = countNotas > 0 ? sumaNotas / countNotas : 0;
     let nivelSugerido = 'BASICO';
     if (notaMedia >= 5 && notaMedia < 8) nivelSugerido = 'INTERMEDIO';
     else if (notaMedia >= 8) nivelSugerido = 'AVANZADO';

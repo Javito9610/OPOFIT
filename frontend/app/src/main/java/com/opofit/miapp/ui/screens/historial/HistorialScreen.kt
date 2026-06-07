@@ -18,8 +18,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.DirectionsBike
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.Pool
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.SelfImprovement
 import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -382,8 +388,19 @@ private fun SesionCard(
     onOpenPlan: (Int) -> Unit
 ) {
     val icon = when {
-        sesion.gpsActividadUuid != null -> Icons.AutoMirrored.Filled.DirectionsRun
+        sesion.gpsActividadUuid != null -> when (sesion.enfoque?.uppercase()) {
+            "BICI", "CICLISMO" -> Icons.Filled.DirectionsBike
+            "MARCHA", "CAMINAR", "SENDERISMO" -> Icons.Filled.DirectionsWalk
+            else -> Icons.AutoMirrored.Filled.DirectionsRun
+        }
         sesion.tipoRutina == "PERS" -> Icons.Filled.Bolt
+        sesion.enfoque?.uppercase() == "RESISTENCIA" -> Icons.AutoMirrored.Filled.DirectionsRun
+        sesion.enfoque?.uppercase() == "VELOCIDAD" -> Icons.Filled.Speed
+        sesion.enfoque?.uppercase() == "FUERZA" -> Icons.Filled.FitnessCenter
+        sesion.enfoque?.uppercase() == "NATACION" || sesion.enfoque?.uppercase() == "NATACIÓN" -> Icons.Filled.Pool
+        sesion.enfoque?.uppercase() == "BICI" || sesion.enfoque?.uppercase() == "CICLISMO" -> Icons.Filled.DirectionsBike
+        sesion.enfoque?.uppercase() == "FLEXIBILIDAD" || sesion.enfoque?.uppercase() == "MOVILIDAD" -> Icons.Filled.SelfImprovement
+        sesion.tipoRutina == "OPO" -> Icons.Filled.EmojiEvents
         else -> Icons.Filled.FitnessCenter
     }
     ElevatedCard(

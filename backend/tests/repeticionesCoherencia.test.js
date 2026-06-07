@@ -13,7 +13,10 @@ function esperadoM(reps) {
   return Math.min(10000, Math.max(50, Math.round(reps)));
 }
 function esperadoReps(reps) {
-  return Math.min(40, Math.max(1, Math.round(reps)));
+  // clampReps cap por defecto: 25 reps (límite "realista" en fuerza/calistenia).
+  // Si reps >= 90 entra en esPrescripcionMaxima y devuelve 99 (AMRAP).
+  if (reps >= 90) return 99;
+  return Math.min(25, Math.max(1, Math.round(reps)));
 }
 
 const casosMin = [];

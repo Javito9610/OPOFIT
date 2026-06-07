@@ -4,7 +4,8 @@ const nuevaRutinaPersonalizada = async (req, res) => {
     const {
       userId,
       nombre,
-      ejercicios
+      ejercicios,
+      entorno
     } = req.body;
     if (!userId || !nombre || !ejercicios || ejercicios.length === 0) {
       return res.status(400).json({
@@ -18,7 +19,7 @@ const nuevaRutinaPersonalizada = async (req, res) => {
         msg: "No tienes permiso para crear rutinas para otro usuario"
       });
     }
-    const id = await rutinaPersService.crearRutinaPropia(userId, nombre, ejercicios);
+    const id = await rutinaPersService.crearRutinaPropia(userId, nombre, ejercicios, entorno);
     res.status(201).json({
       ok: true,
       msg: "Rutina creada con exito",
@@ -70,6 +71,7 @@ const misRutinas = async (req, res) => {
         grouped.set(row.id_rutina_pers, {
           id_rutina_pers: row.id_rutina_pers,
           nombre_personalizado: row.nombre_personalizado,
+          entorno_entreno: row.entorno_entreno || null,
           ejercicios: []
         });
       }

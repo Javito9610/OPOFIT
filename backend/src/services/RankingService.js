@@ -23,11 +23,12 @@ class RankingService {
         genero,
         m.valord_record
       );
+      if (nota == null) continue; // skip pruebas without baremo data
       detalle.push({
         idPrueba: m.id_pruebas_oficiales,
         nombrePrueba: m.nombre_prueba,
         valor: Number(m.valord_record),
-        nota: nota ?? 0,
+        nota,
         unidad: UnidadPruebaHelper.resolver(m, genero),
         fechaLogro: m.fecha_logro
       });
@@ -46,7 +47,8 @@ class RankingService {
     const filas = [];
     for (const u of usuarios || []) {
       const detalle = await RankingService.notasUsuarioEnOposicion(u.id_usuario, idOposicion);
-      if (detalle.length === 0) continue;
+      // Misma regla que el perfil oficial: solo rankea con todas las pruebas completas.
+      if (detalle.length === 0 || (totalOficial > 0 && detalle.length < totalOficial)) continue;
       const suma = detalle.reduce((s, d) => s + d.nota, 0);
       const divisor = detalle.length;
       const notaMedia = Number((suma / divisor).toFixed(2));

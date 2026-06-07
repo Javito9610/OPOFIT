@@ -53,13 +53,13 @@ describe('BaremoService.calcularNotaPrueba', () => {
       expect(await BaremoService.calcularNotaPrueba(1, 'HOMBRE', 12.0)).toBe(10);
     });
 
-    test('valor intermedio: 13.5 obtiene la nota del primer baremo >= valor', async () => {
+    test('valor intermedio: 13.5 obtiene la nota de la primera franja alcanzada', async () => {
       setupTiempo();
-      // valor=13.5 -> elegida sera la fila con marca_valor=14.0 (primera >= 13.5)
-      // y luego sigue pasando hasta encontrar la ultima que cumpla; pero como pasa de 14 a 15 sale
-      // El algoritmo guarda elegida = f.nota mientras v <= f.marca_valor
-      // v=13.5: 12.0(F:no), 13.0(F:no), 14.0(T:elegida=6), 15.0(T:elegida=4), 16.0(T:elegida=2)
-      expect(await BaremoService.calcularNotaPrueba(1, 'HOMBRE', 13.5)).toBe(2);
+      // En pruebas de tiempo (menor=mejor), filas ordenadas ASC por marca_valor:
+      // marca 12.0→10, 13.0→8, 14.0→6, 15.0→4, 16.0→2
+      // v=13.5 → primera fila con v <= marca_valor es 14.0 → nota 6.
+      // Si el bucle siguiera, devolvería la peor nota (2). Por eso hay `break`.
+      expect(await BaremoService.calcularNotaPrueba(1, 'HOMBRE', 13.5)).toBe(6);
     });
   });
 

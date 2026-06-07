@@ -32,6 +32,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.ui.components.MetricBadge
+import com.opofit.miapp.ui.components.enfoqueEmoji
+import com.opofit.miapp.ui.components.enfoqueLabel
+import androidx.compose.material3.AssistChip
 import com.opofit.miapp.ui.viewmodels.HistorialAvanzadoViewModel
 import com.opofit.miapp.utils.DateFormatUtil
 
@@ -123,19 +126,29 @@ fun PlanHistorialScreen(
                                     fontWeight = FontWeight.SemiBold,
                                     maxLines = 2
                                 )
-                                val mins = (s.duracionSeg ?: 0) / 60
-                                Text(
-                                    buildString {
-                                        s.diaSemana?.let {
-                                            append(NOMBRES_DIA.getOrNull(it) ?: "")
-                                            append(" · ")
-                                        }
-                                        s.enfoque?.let { append(it).append(" · ") }
-                                        append("$mins min")
-                                    },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    s.enfoque?.let { enf ->
+                                        AssistChip(
+                                            onClick = {},
+                                            label = { Text("${enfoqueEmoji(enf)} ${enfoqueLabel(enf)}") }
+                                        )
+                                    }
+                                    val mins = (s.duracionSeg ?: 0) / 60
+                                    Text(
+                                        buildString {
+                                            s.diaSemana?.let {
+                                                append(NOMBRES_DIA.getOrNull(it) ?: "")
+                                                append(" · ")
+                                            }
+                                            append("$mins min")
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
                         }
                     }

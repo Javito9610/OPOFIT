@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const InAppNotifService = require('./InAppNotifService');
 
 class AmigosService {
   static ordenPar(idA, idB) {
@@ -61,6 +62,13 @@ class AmigosService {
        ON DUPLICATE KEY UPDATE estado = IF(estado = 'RECHAZADA', 'PENDIENTE', estado), solicitante_id = VALUES(solicitante_id)`,
       [a, b, solicitanteId]
     );
+    await InAppNotifService.crear({
+      idUsuario: receptorId,
+      tipo: 'SOLICITUD_AMISTAD',
+      titulo: 'Tienes una nueva solicitud de amistad',
+      cuerpo: null,
+      actorId: solicitanteId
+    });
     return { ok: true };
   }
 
@@ -75,6 +83,15 @@ class AmigosService {
       aceptar ? 'ACEPTADA' : 'RECHAZADA',
       idAmistad
     ]);
+    if (aceptar) {
+      await InAppNotifService.crear({
+        idUsuario: row[0].solicitante_id,
+        tipo: 'AMISTAD_ACEPTADA',
+        titulo: 'Han aceptado tu solicitud de amistad',
+        cuerpo: null,
+        actorId: userId
+      });
+    }
     return { ok: true };
   }
 

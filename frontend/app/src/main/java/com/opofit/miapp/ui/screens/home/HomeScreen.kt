@@ -31,6 +31,8 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -75,6 +77,7 @@ import com.opofit.miapp.ui.components.StatCard
 import com.opofit.miapp.ui.components.WeekActivityChart
 import androidx.compose.material3.TextButton
 import com.opofit.miapp.ui.viewmodels.HomeViewModel
+import com.opofit.miapp.utils.AppEvents
 import com.opofit.miapp.utils.MapaEntrenoNav
 
 private data class QuickLink(
@@ -120,15 +123,21 @@ fun HomeScreen(
         homeViewModel.cargarResumen(oposicionId)
     }
 
+    LaunchedEffect(Unit) {
+        AppEvents.homeRefresh.collect {
+            homeViewModel.refresh(oposicionId)
+        }
+    }
+
     val quickLinks = buildList {
         add(QuickLink("Plan", "Entreno semanal", Icons.Filled.FitnessCenter, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary, onNavigateToRutinas))
-        add(QuickLink("Rutas GPS", "Carrera · Bici", Icons.Filled.Explore, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary, onNavigateToGps))
+        add(QuickLink("Empezar carrera", "GPS al aire libre", Icons.Filled.Explore, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary, onNavigateToGps))
         if (esFitness) {
             add(QuickLink("Comunidad", "Grupos · Chat", Icons.Filled.Groups, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToComunidad))
             add(QuickLink("Rutinas libres", "Crea la tuya", Icons.Filled.FitnessCenter, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, onNavigateToRutinasLibres))
         } else {
-            add(QuickLink("Simulacro", "Pruebas", Icons.Filled.Timer, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToSimulacro))
-            add(QuickLink("Dispositivos", "Reloj · banda", Icons.Filled.Watch, AccentSlate, Color.White, onNavigateToMisDispositivos))
+            add(QuickLink("Historial", "Tu actividad", Icons.Filled.BarChart, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToHistorial))
+            add(QuickLink("Conexiones", "Reloj · sync", Icons.Filled.Watch, AccentSlate, Color.White, onNavigateToMisDispositivos))
         }
     }
 
@@ -395,11 +404,78 @@ fun HomeScreen(
                                     StatCard(
                                         label = "Simulacro",
                                         value = resumen?.ultimoSimulacro?.notaMedia?.let { "$it" } ?: "—",
-                                        supporting = "última nota /10",
+                                        supporting = "toca para repetir",
                                         icon = Icons.Filled.TrendingUp,
                                         accentColor = MaterialTheme.colorScheme.secondary,
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier.weight(1f),
+                                        onClick = onNavigateToSimulacro
                                     )
+                                }
+                            }
+
+                            if (uiState.noticiasRss.isNotEmpty()) {
+                                item {
+                                    ElevatedCard(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable(onClick = onNavigateToInfoOposicion)
+                                    ) {
+                                        Column(
+                                            Modifier.padding(16.dp),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Row(
+                                                Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Row(
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Icon(
+                                                        Icons.Filled.Info,
+                                                        null,
+                                                        tint = MaterialTheme.colorScheme.primary
+                                                    )
+                                                    Text(
+                                                        "Tu oposición",
+                                                        style = MaterialTheme.typography.titleSmall,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+                                                TextButton(onClick = onNavigateToInfoOposicion) {
+                                                    Text("Ver todo")
+                                                }
+                                            }
+                                            uiState.noticiasRss.forEach { noticia ->
+                                                Row(
+                                                    verticalAlignment = Alignment.Top,
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                ) {
+                                                    if (noticia.urgente) {
+                                                        AssistChip(
+                                                            onClick = {},
+                                                            label = { Text("Urgente", style = MaterialTheme.typography.labelSmall) },
+                                                            enabled = false
+                                                        )
+                                                    }
+                                                    Text(
+                                                        noticia.titulo,
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        maxLines = 2,
+                                                        overflow = TextOverflow.Ellipsis,
+                                                        modifier = Modifier.weight(1f)
+                                                    )
+                                                }
+                                            }
+                                            Text(
+                                                "Noticias oficiales y baremos de prueba",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -435,14 +511,14 @@ fun HomeScreen(
                                     }
                                 } else {
                                     Button(
-                                        onClick = onNavigateToSimulacro,
+                                        onClick = onNavigateToRanking,
                                         modifier = Modifier.weight(1f),
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = MaterialTheme.colorScheme.secondary
                                         )
                                     ) {
-                                        Icon(Icons.Filled.Timer, null, Modifier.size(20.dp))
-                                        Text("Simulacro", modifier = Modifier.padding(start = 8.dp))
+                                        Icon(Icons.Filled.Leaderboard, null, Modifier.size(20.dp))
+                                        Text("Ranking", modifier = Modifier.padding(start = 8.dp))
                                     }
                                 }
                             }

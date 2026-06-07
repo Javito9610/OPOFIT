@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.data.local.TokenManager
+import com.opofit.miapp.ui.utils.isCompactScreen
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasLibresViewModel
 import com.opofit.miapp.utils.Units
@@ -75,6 +76,8 @@ fun RutinasLibresScreen(
     }
 
     val userId = authState.userId ?: 0
+    val compact = isCompactScreen()
+    val padH = if (compact) 12.dp else 16.dp
     var rutinaAEliminar by remember { mutableStateOf<Pair<Int, String>?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -168,7 +171,7 @@ fun RutinasLibresScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp)
+                            .padding(padH)
                     ) {
                     if (uiState.isLoading) {
                         CircularProgressIndicator(
@@ -202,19 +205,20 @@ fun RutinasLibresScreen(
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.SemiBold
                                         )
-                                        if (firstEj?.nombre_ejercicio != null) {
-                                            Text(
-                                                text = "${Units.nombreConEquivalenciaDistancia(firstEj.nombre_ejercicio, unitDist)} • ${rutina.ejercicios.size} ejercicios",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        } else {
-                                            Text(
-                                                text = "${rutina.ejercicios.size} ejercicios",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
+                                        val subtitulo = buildString {
+                                            rutina.entorno_entreno?.let { append("$it • ") }
+                                            if (firstEj?.nombre_ejercicio != null) {
+                                                append(Units.nombreConEquivalenciaDistancia(firstEj.nombre_ejercicio, unitDist))
+                                                append(" • ")
+                                            }
+                                            append("${rutina.ejercicios.size} ejercicios")
                                         }
+                                        Text(
+                                            text = subtitulo,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = if (compact) 2 else 1
+                                        )
                                     }
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         IconButton(

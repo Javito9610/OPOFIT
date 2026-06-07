@@ -50,4 +50,5 @@ object RetrofitClient {
     val comunidadApi: ComunidadApi by lazy { retrofit.create(ComunidadApi::class.java) }
     val postsApi: PostsApi by lazy { retrofit.create(PostsApi::class.java) }
     val segmentosApi: SegmentosApi by lazy { retrofit.create(SegmentosApi::class.java) }
+    val logrosApi: LogrosApi by lazy { retrofit.create(LogrosApi::class.java) }
 }

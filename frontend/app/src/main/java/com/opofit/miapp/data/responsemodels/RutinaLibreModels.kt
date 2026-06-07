@@ -3,13 +3,15 @@ package com.opofit.miapp.data.responsemodels
 data class EjercicioLibreItem(
     val id_ejercicio: Int,
     val series: Int,
-    val repeticiones: Int
+    val repeticiones: Int,
+    val descanso: Int? = null
 )
 
 data class CrearRutinaLibreRequest(
     val userId: Int,
     val nombre: String,
-    val ejercicios: List<EjercicioLibreItem>
+    val ejercicios: List<EjercicioLibreItem>,
+    val entorno: String? = null
 )
 
 data class CrearRutinaLibreResponse(
@@ -29,6 +31,7 @@ data class RutinaLibreEjercicio(
 data class RutinaLibre(
     val id_rutina_pers: Int,
     val nombre_personalizado: String,
+    val entorno_entreno: String? = null,
     val ejercicios: List<RutinaLibreEjercicio> = emptyList()
 )
 

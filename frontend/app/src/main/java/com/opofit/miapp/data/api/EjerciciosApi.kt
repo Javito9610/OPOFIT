@@ -11,6 +11,8 @@ interface EjerciciosApi {
         @Header("Authorization") token: String,
         @Query("busqueda") busqueda: String? = null,
         @Query("pilar") pilar: String? = null,
-        @Query("categoria") categoria: String? = null
+        @Query("categoria") categoria: String? = null,
+        @Query("entorno") entorno: String? = null,
+        @Query("grupo_muscular") grupoMuscular: String? = null
     ): EjerciciosListResponse
 }

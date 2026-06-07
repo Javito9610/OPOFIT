@@ -263,6 +263,11 @@ class DbMigrationService {
       await DbMigrationService.addColumnIfMissing('ejercicios', 'grupo_muscular', 'VARCHAR(80) NULL');
       await DbMigrationService.addColumnIfMissing('ejercicios', 'equipamiento', 'VARCHAR(120) NULL');
       await DbMigrationService.addColumnIfMissing('ejercicios', 'entornos', 'VARCHAR(200) NULL');
+      await DbMigrationService.addColumnIfMissing(
+        'rutinas_pers',
+        'entorno_entreno',
+        "VARCHAR(20) NULL"
+      );
       await DbMigrationService.addColumnIfMissing('ejercicios', 'tipo_ilustracion', 'VARCHAR(24) NULL');
       await DbMigrationService.addColumnIfMissing('ejercicios', 'animacion_url', 'VARCHAR(500) NULL');
 
@@ -568,6 +573,66 @@ class DbMigrationService {
         `);
         console.log('[migrate] tabla post_comentarios creada');
       }
+
+      // Item 25: notificaciones in-app (centro de notificaciones para social/comunidad)
+      if (!(await DbMigrationService.tableExists('notificaciones_app'))) {
+        await db.query(`
+          CREATE TABLE notificaciones_app (
+            id_notificacion INT NOT NULL AUTO_INCREMENT,
+            id_usuario INT NOT NULL,
+            tipo ENUM('LIKE','COMENTARIO','SOLICITUD_AMISTAD','AMISTAD_ACEPTADA','POST_REPORTE','SISTEMA') NOT NULL,
+            titulo VARCHAR(160) NOT NULL,
+            cuerpo VARCHAR(400) NULL,
+            ref_id INT NULL,
+            actor_id INT NULL,
+            leida TINYINT(1) NOT NULL DEFAULT 0,
+            creada_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_notificacion),
+            INDEX idx_notif_usuario (id_usuario, leida),
+            INDEX idx_notif_creada (creada_en),
+            CONSTRAINT fk_notif_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario) ON DELETE CASCADE,
+            CONSTRAINT fk_notif_actor FOREIGN KEY (actor_id) REFERENCES usuarios (id_usuario) ON DELETE SET NULL
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+        console.log('[migrate] tabla notificaciones_app creada');
+      }
+
+      // Item 25: moderación de posts y comentarios reportados
+      if (!(await DbMigrationService.tableExists('post_reportes'))) {
+        await db.query(`
+          CREATE TABLE post_reportes (
+            id_reporte INT NOT NULL AUTO_INCREMENT,
+            id_post INT NULL,
+            id_comentario INT NULL,
+            id_usuario_reporta INT NOT NULL,
+            motivo ENUM('SPAM','OFENSIVO','VIOLENCIA','FALSA_INFO','OTRO') NOT NULL DEFAULT 'OTRO',
+            detalle VARCHAR(400) NULL,
+            estado ENUM('PENDIENTE','REVISADO','OCULTADO','DESESTIMADO') NOT NULL DEFAULT 'PENDIENTE',
+            creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            revisado_en DATETIME NULL,
+            PRIMARY KEY (id_reporte),
+            INDEX idx_rep_post (id_post),
+            INDEX idx_rep_comentario (id_comentario),
+            INDEX idx_rep_estado (estado),
+            CONSTRAINT fk_rep_post FOREIGN KEY (id_post) REFERENCES actividad_posts (id_post) ON DELETE CASCADE,
+            CONSTRAINT fk_rep_comentario FOREIGN KEY (id_comentario) REFERENCES post_comentarios (id_comentario) ON DELETE CASCADE,
+            CONSTRAINT fk_rep_user FOREIGN KEY (id_usuario_reporta) REFERENCES usuarios (id_usuario) ON DELETE CASCADE
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+        console.log('[migrate] tabla post_reportes creada');
+      }
+
+      // Columna para ocultar posts/comentarios moderados sin borrar histórico
+      await DbMigrationService.addColumnIfMissing(
+        'actividad_posts',
+        'oculto',
+        'TINYINT(1) NOT NULL DEFAULT 0'
+      );
+      await DbMigrationService.addColumnIfMissing(
+        'post_comentarios',
+        'oculto',
+        'TINYINT(1) NOT NULL DEFAULT 0'
+      );
 
       if (!(await DbMigrationService.tableExists('segmentos'))) {
         await db.query(`

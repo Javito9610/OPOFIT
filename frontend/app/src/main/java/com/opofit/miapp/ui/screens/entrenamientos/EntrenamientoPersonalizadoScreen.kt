@@ -41,6 +41,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import com.opofit.miapp.ui.components.RestTimerSheet
+import com.opofit.miapp.ui.utils.isCompactScreen
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,13 +57,18 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.layout.size
 import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
+import com.opofit.miapp.data.responsemodels.Ejercicio
+import com.opofit.miapp.data.responsemodels.EjercicioPlan
 import com.opofit.miapp.data.responsemodels.EjercicioRealizado
 import com.opofit.miapp.data.responsemodels.RegistrarHistorialRequest
+import com.opofit.miapp.data.responsemodels.toEjercicioPlan
 import com.opofit.miapp.gps.service.GpsLastResult
 import com.opofit.miapp.gps.service.ShareActivityContext
 import com.opofit.miapp.gps.service.buildPendingShareFromEntreno
 import com.opofit.miapp.utils.MapaEntrenoNav
 import com.opofit.miapp.ui.components.EntrenoLiveMetricsBar
+import com.opofit.miapp.ui.components.ExerciseDetailSheet
+import com.opofit.miapp.ui.components.ExerciseInfoButton
 import com.opofit.miapp.ui.components.ExerciseValueInput
 import com.opofit.miapp.utils.EntrenoExerciseUtil
 import com.opofit.miapp.utils.EntrenoRelojImport
@@ -117,6 +124,26 @@ fun EntrenamientoPersonalizadoScreen(
     var sessionStartMs by remember { mutableStateOf<Long?>(null) }
     var importingReloj by remember { mutableStateOf(false) }
     var gpsActividadUuid by remember { mutableStateOf<String?>(null) }
+    var showRestTimer by remember { mutableStateOf(false) }
+    var restTimerSecs by remember { mutableIntStateOf(90) }
+    var nextEjercicioNombre by remember { mutableStateOf<String?>(null) }
+    var ejerciciosCatalogo by remember { mutableStateOf<Map<Int, Ejercicio>>(emptyMap()) }
+    var ejercicioDetalle by remember { mutableStateOf<EjercicioPlan?>(null) }
+    var prescripcionDetalle by remember { mutableStateOf("") }
+    val compact = isCompactScreen()
+    val padH = if (compact) 12.dp else 16.dp
+
+    LaunchedEffect(userId) {
+        if (userId <= 0) return@LaunchedEffect
+        try {
+            val token = tokenManager.getToken().first().orEmpty()
+            if (token.isBlank()) return@LaunchedEffect
+            val resp = RetrofitClient.ejerciciosApi.listarEjercicios("Bearer $token")
+            if (resp.ok && resp.data != null) {
+                ejerciciosCatalogo = resp.data.associateBy { it.id_ejercicio }
+            }
+        } catch (_: Exception) { }
+    }
 
     fun objetivoSegundosDesdeNombre(nombre: String): Int? {
         val regex = Regex("(\\d+)\\s*min\\b", RegexOption.IGNORE_CASE)
@@ -172,7 +199,10 @@ fun EntrenamientoPersonalizadoScreen(
         val objetivoSegundos: Int? = null,
         val tipo: String? = null,
         val distancia: String = "",
-        val pilar: String? = null
+        val pilar: String? = null,
+        val descansoSeg: Int = 90,
+        val series: Int? = null,
+        val repeticiones: Int? = null
     )
     val ejerciciosUi = remember(rutinaId, rutina?.ejercicios) {
         mutableStateListOf<EjUi>().apply {
@@ -189,11 +219,30 @@ fun EntrenamientoPersonalizadoScreen(
                         checked = false,
                         objetivoSegundos = objetivo,
                         tipo = tipo,
-                        pilar = null
+                        pilar = null,
+                        descansoSeg = ej.descanso?.takeIf { it > 0 } ?: 90,
+                        series = ej.series,
+                        repeticiones = ej.repeticiones
                     )
                 )
             }
         }
+    }
+
+    fun mostrarDetalleEjercicio(ej: EjUi) {
+        val cat = ejerciciosCatalogo[ej.id]
+        val prescripcion = if (ej.series != null && ej.repeticiones != null) {
+            "${ej.series}×${ej.repeticiones}"
+        } else ""
+        prescripcionDetalle = prescripcion
+        ejercicioDetalle = cat?.toEjercicioPlan(prescripcion) ?: EjercicioPlan(
+            id_ejercicio = ej.id,
+            nombre = ej.nombre,
+            pilar = ej.pilar,
+            series = ej.series ?: 3,
+            repeticiones = ej.repeticiones?.toDouble() ?: 10.0,
+            descanso = ej.descansoSeg
+        )
     }
 
     fun slotsParaImport(): List<EntrenoRelojImport.Slot> =
@@ -320,10 +369,26 @@ fun EntrenamientoPersonalizadoScreen(
 
     var guardando by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
+    var errorEjIndices by remember { mutableStateOf<Set<Int>>(emptySet()) }
 
     val alMenosUnoMarcado = ejerciciosUi.any { it.checked }
     val puedeFinalizar = cronometroIniciadoAlgunaVez && elapsedMs > 0L && alMenosUnoMarcado && !guardando
 
+
+    ExerciseDetailSheet(
+        ejercicio = ejercicioDetalle,
+        prescripcion = prescripcionDetalle,
+        visible = ejercicioDetalle != null,
+        onDismiss = { ejercicioDetalle = null }
+    )
+
+    RestTimerSheet(
+        visible = showRestTimer,
+        ejercicioNombre = nextEjercicioNombre.orEmpty(),
+        initialSeconds = restTimerSecs,
+        onDismiss = { showRestTimer = false },
+        onSkip = { showRestTimer = false }
+    )
 
     Scaffold(
         topBar = {
@@ -373,7 +438,7 @@ fun EntrenamientoPersonalizadoScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp)
+                .padding(padH)
         ) {
             when {
                 uiState.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -467,7 +532,7 @@ fun EntrenamientoPersonalizadoScreen(
                                                 val since = sessionStartMs?.minus(15 * 60_000L)
                                                 val activity = EntrenoRelojImport.findRecentActivity(context, since)
                                                 if (activity == null) {
-                                                    avisoMsg = "No hay actividades recientes del reloj. Conecta Health Connect o importa un fichero TCX."
+                                                    avisoMsg = "No hay actividades recientes. Conecta tu reloj en Menú → Conexiones y reloj, o sube un archivo."
                                                 } else {
                                                     importarActividadReloj(activity)
                                                 }
@@ -487,7 +552,7 @@ fun EntrenamientoPersonalizadoScreen(
                                         Icon(Icons.Filled.Sync, null, Modifier.size(18.dp))
                                     }
                                     Spacer(Modifier.size(6.dp))
-                                    Text("Importar del reloj")
+                                    Text("Sincronizar reloj")
                                 }
                                 OutlinedButton(
                                     onClick = { importFileLauncher.launch("*/*") },
@@ -496,11 +561,11 @@ fun EntrenamientoPersonalizadoScreen(
                                 ) {
                                     Icon(Icons.Filled.UploadFile, null, Modifier.size(18.dp))
                                     Spacer(Modifier.size(6.dp))
-                                    Text("TCX/GPX")
+                                    Text("Subir archivo")
                                 }
                             }
                             Text(
-                                "Tras entrenar en el reloj, importa aquí los valores reales y luego finaliza para guardar el seguimiento.",
+                                "Trae los datos reales del reloj y luego finaliza para guardar el entrenamiento.",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -517,15 +582,43 @@ fun EntrenamientoPersonalizadoScreen(
                         itemsIndexed(ejerciciosUi) { idx, ej ->
                             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
                                         Checkbox(
                                             checked = ej.checked,
                                             onCheckedChange = { checked ->
-                                                ejerciciosUi[idx] = ej.copy(checked = checked)
+                                                if (checked && !ej.checked) {
+                                                    ejerciciosUi[idx] = ej.copy(checked = true)
+                                                    val nextIdx = idx + 1
+                                                    if (nextIdx < ejerciciosUi.size && ej.descansoSeg > 0) {
+                                                        restTimerSecs = ej.descansoSeg.coerceIn(30, 300)
+                                                        nextEjercicioNombre = ejerciciosUi[nextIdx].nombre
+                                                        showRestTimer = true
+                                                    }
+                                                } else {
+                                                    ejerciciosUi[idx] = ej.copy(checked = checked)
+                                                }
+                                                if (!checked && idx in errorEjIndices) errorEjIndices = errorEjIndices - idx
                                             }
                                         )
-                                        Spacer(modifier = Modifier.height(0.dp))
-                                        Text(ej.nombre, fontWeight = FontWeight.SemiBold)
+                                        Text(
+                                            ej.nombre,
+                                            fontWeight = FontWeight.SemiBold,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        ExerciseInfoButton(
+                                            onClick = { mostrarDetalleEjercicio(ej) },
+                                            size = 36.dp
+                                        )
+                                    }
+                                    if (idx in errorEjIndices) {
+                                        Text(
+                                            "Introduce un valor para poder guardar este ejercicio",
+                                            color = MaterialTheme.colorScheme.error,
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
                                     }
                                     if (ej.tipo != null) {
                                         if (ej.objetivoSegundos != null) {
@@ -568,6 +661,7 @@ fun EntrenamientoPersonalizadoScreen(
                                                     else -> v
                                                 }
                                                 ejerciciosUi[idx] = ej.copy(distancia = v, valor = baseValue)
+                                        if (idx in errorEjIndices) errorEjIndices = errorEjIndices - idx
                                             },
                                             label = { Text(labelDist) },
                                             placeholder = { Text(if (ej.tipo == "SWIM") "Ej: 1500" else "Ej: 7.20") },
@@ -601,7 +695,7 @@ fun EntrenamientoPersonalizadoScreen(
                                             ) {
                                                 Icon(Icons.Filled.Explore, null, Modifier.size(18.dp))
                                                 Spacer(Modifier.size(6.dp))
-                                                Text("Ruta e iniciar carrera")
+                                                Text("Iniciar carrera con GPS")
                                             }
                                         }
                                     } else {
@@ -619,7 +713,10 @@ fun EntrenamientoPersonalizadoScreen(
                                         }
                                         ExerciseValueInput(
                                             value = ej.valor,
-                                            onValueChange = { v -> ejerciciosUi[idx] = ej.copy(valor = v) },
+                                            onValueChange = { v ->
+                                                ejerciciosUi[idx] = ej.copy(valor = v)
+                                                if (idx in errorEjIndices) errorEjIndices = errorEjIndices - idx
+                                            },
                                             unidad = unidadEff,
                                             modifier = Modifier.fillMaxWidth()
                                         )
@@ -647,6 +744,15 @@ fun EntrenamientoPersonalizadoScreen(
                             onClick = {
                                 guardando = true
                                 error = ""
+                                val sinValor = ejerciciosUi.indices
+                                    .filter { i -> ejerciciosUi[i].checked && ejerciciosUi[i].valor.toDoubleOrNull() == null }
+                                    .toSet()
+                                errorEjIndices = sinValor
+                                if (sinValor.isNotEmpty()) {
+                                    guardando = false
+                                    error = "Falta el valor en: ${sinValor.map { ejerciciosUi[it].nombre }.joinToString(", ")}"
+                                    return@Button
+                                }
                                 val ejercicios = ejerciciosUi
                                     .filter { it.checked }
                                     .mapNotNull {

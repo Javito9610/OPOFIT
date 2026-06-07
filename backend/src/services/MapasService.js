@@ -1,16 +1,24 @@
 /**
- * Lugares de entreno cercanos (Google Places) + rutas sugeridas.
- * Requiere GOOGLE_MAPS_API_KEY en Railway/.env
+ * Lugares de entreno cercanos (Google Places + Overpass/OSM fallback) + rutas sugeridas.
+ * Google Places se usa si GOOGLE_MAPS_API_KEY está configurada.
+ * Si no, Overpass API (OpenStreetMap, gratuito) ofrece datos reales sin clave.
  */
 const crypto = require('crypto');
 
 const TIPOS_LUGAR = {
   GYM: { placeType: 'gym', keyword: null, etiqueta: 'Gimnasio' },
-  CROSSFIT: { placeType: 'gym', keyword: 'crossfit', etiqueta: 'CrossFit / Box' },
+  CROSSFIT: {
+    placeType: null,
+    keyword: 'crossfit',
+    keywordsAlt: ['box crossfit'],
+    textQueries: ['crossfit box', 'crossfit gym'],
+    etiqueta: 'CrossFit / Box'
+  },
   PISTA: {
-    placeType: 'stadium',
+    placeType: null,
     keyword: 'pista atletismo',
-    keywordsAlt: ['athletic track', 'running track', 'estadio'],
+    keywordsAlt: ['athletic track', 'running track', 'pista de atletismo'],
+    textQueries: ['pista atletismo', 'athletic track', 'estadio atletismo'],
     etiqueta: 'Pista / Estadio'
   },
   CALISTENIA: {
@@ -19,14 +27,8 @@ const TIPOS_LUGAR = {
     keywordsAlt: [
       'street workout',
       'outdoor gym',
-      'calistenia',
-      'calisthenics',
-      'pull up bar park',
       'parque calistenia',
-      'barra fija',
       'barras paralelas',
-      'workout park',
-      'parque barras',
       'gimnasio al aire libre'
     ],
     textQueries: [
@@ -34,13 +36,49 @@ const TIPOS_LUGAR = {
       'street workout park',
       'outdoor fitness park',
       'parque calistenia',
-      'parque de barras',
-      'calisthenics outdoor gym'
+      'parque de barras'
     ],
     radioDefault: 12000,
     etiqueta: 'Parque / Calistenia'
   },
   PARQUE: { placeType: 'park', keyword: null, etiqueta: 'Parque' }
+};
+
+// OSM tags queried via Overpass for each tipo
+const OVERPASS_TAGS = {
+  GYM: [
+    'node["amenity"="gym"]',
+    'way["amenity"="gym"]',
+    'node["leisure"="fitness_centre"]',
+    'way["leisure"="fitness_centre"]'
+  ],
+  CROSSFIT: [
+    'node["sport"="crossfit"]',
+    'way["sport"="crossfit"]',
+    'node["amenity"="gym"]["sport"="crossfit"]',
+    'way["amenity"="gym"]["sport"="crossfit"]'
+  ],
+  PISTA: [
+    'node["leisure"="track"]',
+    'way["leisure"="track"]',
+    'node["sport"="athletics"]',
+    'way["sport"="athletics"]',
+    'node["leisure"="sports_centre"]["sport"="athletics"]',
+    'way["leisure"="sports_centre"]["sport"="athletics"]'
+  ],
+  CALISTENIA: [
+    'node["leisure"="fitness_station"]',
+    'way["leisure"="fitness_station"]',
+    'node["sport"="calisthenics"]',
+    'node["leisure"="outdoor_gym"]',
+    'way["leisure"="outdoor_gym"]'
+  ],
+  PARQUE: [
+    'node["leisure"="park"]',
+    'way["leisure"="park"]',
+    'node["leisure"="garden"]',
+    'way["leisure"="garden"]'
+  ]
 };
 
 function apiKey() {
@@ -83,35 +121,54 @@ class MapasService {
     const radioDefecto = meta.radioDefault || 5000;
     const radio = Math.min(20000, Math.max(500, Number(radioM) || radioDefecto));
 
-    if (!key) {
-      return MapasService.lugaresFallback(latN, lngN, tipo);
+    // 1. Google Places (requires API key with Places API enabled)
+    if (key) {
+      try {
+        const result = await MapasService.buscarConGoogle(latN, lngN, radio, tipo, meta, key);
+        if (result.length > 0) return result;
+      } catch (e) {
+        console.warn(`Google Places error (tipo=${tipo}): ${e.message} — usando Overpass`);
+      }
     }
 
+    // 2. Overpass API (OpenStreetMap, gratuito, sin clave)
+    try {
+      const result = await MapasService.overpassLugares(latN, lngN, radio, tipo);
+      if (result.length > 0) return result;
+    } catch (e) {
+      console.warn(`Overpass error (tipo=${tipo}): ${e.message} — usando fallback geométrico`);
+    }
+
+    // 3. Fallback geométrico (datos de demostración)
+    return MapasService.lugaresFallback(latN, lngN, tipo);
+  }
+
+  static async buscarConGoogle(latN, lngN, radio, tipo, meta, key) {
     const vistos = new Set();
     const acumulado = [];
 
     const agregar = (results) => {
       for (const p of results || []) {
         if (!p?.place_id || vistos.has(p.place_id)) continue;
+        const pLat = p.geometry?.location?.lat;
+        const pLng = p.geometry?.location?.lng;
+        if (!Number.isFinite(pLat) || !Number.isFinite(pLng)) continue;
         vistos.add(p.place_id);
         acumulado.push({
           id: p.place_id,
           nombre: p.name,
           direccion: p.vicinity || p.formatted_address || '',
-          lat: p.geometry?.location?.lat,
-          lng: p.geometry?.location?.lng,
+          lat: pLat,
+          lng: pLng,
           rating: p.rating ?? null,
           abierto: p.opening_hours?.open_now ?? null,
           tipo,
-          distanciaM: distanciaM(latN, lngN, p.geometry?.location?.lat, p.geometry?.location?.lng)
+          distanciaM: distanciaM(latN, lngN, pLat, pLng)
         });
       }
     };
 
-    const keywords = [
-      meta.keyword,
-      ...(meta.keywordsAlt || [])
-    ].filter(Boolean);
+    const keywords = [meta.keyword, ...(meta.keywordsAlt || [])].filter(Boolean);
 
     for (const kw of keywords) {
       if (acumulado.length >= 20) break;
@@ -130,7 +187,47 @@ class MapasService {
       agregar(data.results);
     }
 
-    return acumulado
+    return acumulado.sort((a, b) => a.distanciaM - b.distanciaM).slice(0, 20);
+  }
+
+  static async overpassLugares(lat, lng, radioM, tipo) {
+    const tags = OVERPASS_TAGS[tipo] || OVERPASS_TAGS.GYM;
+    const aroundFilter = `(around:${radioM},${lat},${lng})`;
+    const unionBody = tags.map((t) => `  ${t}${aroundFilter};`).join('\n');
+    const query = `[out:json][timeout:20];\n(\n${unionBody}\n);\nout center 20;`;
+
+    const resp = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'OpoFit/1.0' },
+      body: `data=${encodeURIComponent(query)}`
+    });
+    if (!resp.ok) throw new Error(`Overpass HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    const etiqueta = (TIPOS_LUGAR[tipo] || TIPOS_LUGAR.GYM).etiqueta;
+    const seen = new Set();
+    return (data.elements || [])
+      .map((el) => {
+        const elLat = el.lat ?? el.center?.lat;
+        const elLng = el.lon ?? el.center?.lon;
+        if (!Number.isFinite(elLat) || !Number.isFinite(elLng)) return null;
+        const nombre = el.tags?.name || el.tags?.['name:es'] || etiqueta;
+        const street = el.tags?.['addr:street'] || '';
+        const num = el.tags?.['addr:housenumber'] || '';
+        const direccion = [street, num].filter(Boolean).join(' ');
+        return {
+          id: `osm_${el.id}`,
+          nombre,
+          direccion,
+          lat: elLat,
+          lng: elLng,
+          rating: null,
+          abierto: null,
+          tipo,
+          distanciaM: distanciaM(lat, lng, elLat, elLng)
+        };
+      })
+      .filter((l) => l !== null && !seen.has(l.id) && seen.add(l.id))
       .sort((a, b) => a.distanciaM - b.distanciaM)
       .slice(0, 20);
   }
@@ -138,7 +235,8 @@ class MapasService {
   static async nearbySearch(lat, lng, radio, placeType, keyword, key) {
     let url =
       `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}` +
-      `&radius=${radio}&type=${placeType}&key=${key}`;
+      `&radius=${radio}&key=${key}`;
+    if (placeType) url += `&type=${placeType}`;
     if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
     const data = await fetchJson(url);
     if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {

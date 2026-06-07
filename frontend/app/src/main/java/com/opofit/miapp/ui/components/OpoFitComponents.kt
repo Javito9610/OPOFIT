@@ -144,11 +144,12 @@ fun StatCard(
     modifier: Modifier = Modifier,
     supporting: String? = null,
     icon: ImageVector? = null,
-    accentColor: Color = MaterialTheme.colorScheme.primary
+    accentColor: Color = MaterialTheme.colorScheme.primary,
+    onClick: (() -> Unit)? = null
 ) {
     val compact = isCompactScreen()
     val pad = if (compact) 10.dp else 12.dp
-    ElevatedCard(modifier = modifier) {
+    ElevatedCard(modifier = modifier, onClick = onClick) {
         Column(
             modifier = Modifier.padding(pad),
             verticalArrangement = Arrangement.spacedBy(4.dp)

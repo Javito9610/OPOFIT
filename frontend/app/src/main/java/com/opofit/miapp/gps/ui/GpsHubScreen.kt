@@ -170,7 +170,10 @@ fun GpsHubScreen(
         if (uri != null) viewModel.importActividad(uri)
     }
 
-    LaunchedEffect(Unit) { viewModel.loadHistory() }
+    LaunchedEffect(Unit) {
+        viewModel.loadHistory()
+        viewModel.hrManager().autoConnectSavedDevice()
+    }
 
     LaunchedEffect(importMsg) {
         importMsg?.let { msg ->
@@ -188,9 +191,8 @@ fun GpsHubScreen(
             title = { Text("Permisos necesarios") },
             text = {
                 Text(
-                    "Para registrar tu ruta necesitamos acceso al GPS, y para detectar cadencia el sensor de pasos. " +
-                        "Si quieres también pulso, conecta una banda BLE (Polar, Garmin en broadcast, etc.). " +
-                        "Apple Watch no es compatible con Android."
+                    "Necesitamos acceso al GPS para registrar tu ruta. " +
+                        "Opcionalmente puedes conectar una banda o reloj para ver el pulso en vivo."
                 )
             }
         )
@@ -286,11 +288,20 @@ fun GpsHubScreen(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
-                        Text(
-                            "Ritmo, velocidad, cadencia, altitud, kcal y trazado en el mapa.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                        )
+                        val hrConnected = hrState is HrBleManager.State.Connected
+                        if (hrConnected) {
+                            Text(
+                                "Reloj conectado · el pulso se mostrará durante la actividad.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.tertiary
+                            )
+                        } else {
+                            Text(
+                                "Ritmo, distancia, mapa en vivo y pulso opcional.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            )
+                        }
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             item {
                                 TypeChip(
@@ -322,8 +333,8 @@ fun GpsHubScreen(
                                 label = {
                                     val name = (hrState as? HrBleManager.State.Connected)?.device?.name
                                     Text(
-                                        if (connected) "Reloj: ${name ?: "conectado"}"
-                                        else "Conectar reloj/banda"
+                                        if (connected) "Pulso: ${name ?: "conectado"} ✓"
+                                        else "Conectar pulso (opcional)"
                                     )
                                 },
                                 leadingIcon = {
@@ -389,14 +400,14 @@ fun GpsHubScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Filled.UploadFile, null, tint = MaterialTheme.colorScheme.primary)
                             Text(
-                                "  Importar actividad (GPX / TCX)",
+                                "  Traer actividad del reloj",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
                         Text(
-                            "¿Entrenaste sin el móvil? Exporta desde Garmin, Polar, Suunto o Strava " +
-                                "como GPX/TCX, o desliza abajo para sincronizar Health Connect.",
+                            "Desliza hacia abajo para sincronizar automáticamente, o sube un archivo " +
+                                "exportado desde Garmin, Polar, Strava u otra app.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -409,7 +420,7 @@ fun GpsHubScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(Icons.Filled.UploadFile, null, Modifier.size(18.dp))
-                            Text("  Elegir fichero .gpx o .tcx")
+                            Text("  Subir archivo del reloj")
                         }
                     }
                 }
@@ -530,14 +541,13 @@ private fun HrConnectDialog(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(
-                    "Conectar pulsómetro",
+                    "Conectar pulso en vivo",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    "Bandas BLE con pulso en vivo (Polar, Wahoo, Garmin broadcast HR). " +
-                        "Amazfit/Zepp: activa «Broadcast HR» en la app del reloj; si no, usa Health Connect. " +
-                        "Prueba «Buscar todos» si no aparece el tuyo.",
+                    "Banda de pecho o reloj compatible (Polar, Wahoo, Garmin…). " +
+                        "Si no aparece tu dispositivo, prueba «Búsqueda amplia».",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -554,7 +564,7 @@ private fun HrConnectDialog(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                             Spacer(Modifier.size(8.dp))
-                            Text("Buscando dispositivos BLE...")
+                            Text("Buscando dispositivos…")
                         }
                     }
                     is HrBleManager.State.Connecting -> Text("Conectando a ${st.device.name ?: st.device.address}...")
@@ -627,7 +637,11 @@ private fun HrConnectDialog(
                                             maxLines = 1
                                         )
                                         Text(
-                                            "${device.address} · ${device.rssi} dBm",
+                                            when {
+                                                device.rssi >= -60 -> "Señal fuerte"
+                                                device.rssi >= -75 -> "Señal media"
+                                                else -> "Señal débil — acércate al dispositivo"
+                                            },
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -662,11 +676,11 @@ private fun HrConnectDialog(
                     Button(
                         onClick = { viewModel.startHrScan() },
                         modifier = Modifier.weight(1f)
-                    ) { Text("Buscar HR") }
+                    ) { Text("Buscar") }
                     OutlinedButton(
                         onClick = { viewModel.startHrScanBroad() },
                         modifier = Modifier.weight(1f)
-                    ) { Text("Buscar todos") }
+                    ) { Text("Búsqueda amplia") }
                 }
                 if (hrState is HrBleManager.State.Connected) {
                     OutlinedButton(

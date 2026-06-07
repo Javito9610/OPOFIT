@@ -49,7 +49,7 @@ class RutinasLibresViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
-    fun crearRutina(userId: Int, nombre: String, ejercicios: List<EjercicioLibreItem>) {
+    fun crearRutina(userId: Int, nombre: String, ejercicios: List<EjercicioLibreItem>, entorno: String? = null) {
         if (nombre.isBlank()) {
             _uiState.update { it.copy(error = "El nombre de la rutina no puede estar vacío") }
             return
@@ -58,7 +58,7 @@ class RutinasLibresViewModel(application: Application) : AndroidViewModel(applic
             _uiState.update { it.copy(isLoading = true, error = "", guardadoExitoso = false) }
             try {
                 val token = tokenManager.getToken().first() ?: ""
-                val body = CrearRutinaLibreRequest(userId, nombre, ejercicios)
+                val body = CrearRutinaLibreRequest(userId, nombre, ejercicios, entorno)
                 val response = RetrofitClient.rutinasLibresApi.crearRutina("Bearer $token", body)
                 if (response.ok) {
                     _uiState.update { it.copy(isLoading = false, guardadoExitoso = true) }

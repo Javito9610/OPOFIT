@@ -125,6 +125,7 @@ data class RankingDetalleUsuario(
     val userId: Int,
     val nombre: String,
     val notaMedia: Double?,
+    val perfilPublico: Boolean? = null,
     val pruebas: List<RankingDetallePrueba>?
 )
 

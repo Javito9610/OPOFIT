@@ -129,6 +129,13 @@ beforeAll(async () => {
   token = login.body.token;
   userId = login.body.user?.id_usuario;
   expect(userId).toBeTruthy();
+
+  // user1 viene como premium en el seed; el plan semanal del banco solo está
+  // sembrado a nivel BASICO. Si lo dejamos premium, nivelSugerido=INTERMEDIO
+  // hace que el controlador devuelva 404. Forzamos no-premium para que el
+  // mapeo nivelParaRutinas caiga en BASICO (ruta de no-premium).
+  const u = memDb.state.usuarios.find((x) => x.id_usuario === userId);
+  if (u) u.es_premium = 0;
 });
 
 describe('E2E plan inteligente por entorno', () => {

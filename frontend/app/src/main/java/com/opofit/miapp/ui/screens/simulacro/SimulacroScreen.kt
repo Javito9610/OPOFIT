@@ -20,10 +20,12 @@ import com.opofit.miapp.data.responsemodels.GuardarSimulacroRequest
 import com.opofit.miapp.data.responsemodels.PerfilTrasSimulacro
 import com.opofit.miapp.data.responsemodels.PruebaOficialSimulacro
 import com.opofit.miapp.data.responsemodels.ResultadoSimulacroItem
+import com.opofit.miapp.data.responsemodels.SimulacroHistorialItem
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
+import com.opofit.miapp.ui.viewmodels.SimulacroViewModel
 import com.opofit.miapp.utils.ApiErrorParser
+import com.opofit.miapp.utils.AppEvents
 import com.opofit.miapp.utils.TimeFormatUtil
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -32,7 +34,8 @@ import kotlinx.coroutines.launch
 fun SimulacroScreen(
     authViewModel: AuthViewModel,
     onNavigateBack: () -> Unit,
-    onNavigatePremium: () -> Unit
+    onNavigatePremium: () -> Unit,
+    simulacroViewModel: SimulacroViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     val authState by authViewModel.uiState.collectAsState()
     val oposicionId = authState.oposicionId ?: 1
@@ -40,9 +43,17 @@ fun SimulacroScreen(
     val tokenManager = remember { TokenManager(context) }
     val scope = rememberCoroutineScope()
 
-    var pruebas by remember { mutableStateOf<List<PruebaOficialSimulacro>>(emptyList()) }
-    var paso by remember { mutableIntStateOf(0) }
-    var loading by remember { mutableStateOf(true) }
+    // ViewModel holds timer + values so the simulacro survives navigation away and back.
+    val vmState by simulacroViewModel.state.collectAsState()
+    val pruebas = vmState.pruebas
+    val paso = vmState.paso
+    val loading = vmState.loading
+    val cronometroActivo = vmState.cronometroActivo
+    val elapsedMs = vmState.elapsedMs
+    val valores = vmState.valores
+    val marcasPreCargadas = vmState.marcasPreCargadas
+
+    // Local state: validation, result display, dialogs (post-completion only).
     var error by remember { mutableStateOf("") }
     var errorCampo by remember { mutableStateOf("") }
     var guardando by remember { mutableStateOf(false) }
@@ -53,45 +64,43 @@ fun SimulacroScreen(
     var mostrarDialogoPerfil by remember { mutableStateOf(false) }
     var aplicandoMarcas by remember { mutableStateOf(false) }
     var mensajeExito by remember { mutableStateOf<String?>(null) }
+    var historialSimulacros by remember { mutableStateOf<List<SimulacroHistorialItem>>(emptyList()) }
+    var mostrarHistorial by remember { mutableStateOf(false) }
 
-    var cronometroActivo by remember { mutableStateOf(false) }
-    var elapsedMs by remember { mutableStateOf(0L) }
-    val valores = remember { mutableStateMapOf<Int, String>() }
+    val userId = authState.userId ?: 0
 
     LaunchedEffect(oposicionId) {
-        loading = true
-        error = ""
+        simulacroViewModel.cargarPruebas(oposicionId)
+        // Load history separately (premium-gated).
         try {
             val token = tokenManager.getToken().first() ?: ""
-            val resp = RetrofitClient.simulacroApi.listarPruebas("Bearer $token", oposicionId)
-            if (resp.ok && resp.data != null) {
-                pruebas = resp.data
-                paso = 0
-            } else {
-                error = resp.msg ?: "No se pudieron cargar las pruebas"
-            }
-        } catch (e: Exception) {
-            error = ApiErrorParser.message(e)
-        } finally {
-            loading = false
+            val histResp = RetrofitClient.simulacroApi.historial("Bearer $token", oposicionId)
+            if (histResp.ok && histResp.data != null) historialSimulacros = histResp.data
+        } catch (_: Exception) {}
+    }
+
+    // Pre-fill values from the user's profile marks once pruebas are loaded.
+    LaunchedEffect(pruebas.size, userId) {
+        if (pruebas.isNotEmpty() && userId > 0) {
+            simulacroViewModel.precargarMarcas(userId, oposicionId)
         }
     }
 
-    LaunchedEffect(cronometroActivo) {
-        while (cronometroActivo) {
-            delay(50L)
-            elapsedMs += 50L
-        }
+    // Propagate ViewModel load errors to local error state.
+    LaunchedEffect(vmState.error) {
+        if (vmState.error.isNotBlank()) error = vmState.error
     }
 
+    // Reset per-step timer and validation when step changes.
     LaunchedEffect(paso, pruebas.size) {
-        cronometroActivo = false
         errorCampo = ""
         val p = pruebas.getOrNull(paso) ?: return@LaunchedEffect
-        elapsedMs = if (p.unidad == "s") {
-            valores[p.id_pruebas_oficiales]?.toDoubleOrNull()?.let { TimeFormatUtil.msFromSeconds(it) } ?: 0L
+        if (p.unidad == "s") {
+            val savedMs = valores[p.id_pruebas_oficiales]?.toDoubleOrNull()
+                ?.let { TimeFormatUtil.msFromSeconds(it) } ?: 0L
+            simulacroViewModel.setElapsedMs(savedMs)
         } else {
-            0L
+            simulacroViewModel.resetTimer()
         }
     }
 
@@ -137,7 +146,12 @@ fun SimulacroScreen(
                 }
                 notaFinal != null -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Resultado del simulacro", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text("Nota media estimada: $notaFinal / 10", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
+                    Text("Nota del simulacro: $notaFinal / 10", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        "Esta nota es de esta sesión. La nota oficial del perfil solo cambia si actualizas tus marcas.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     perfilTrasSimulacro?.let { p ->
                         if (p.subirNivel) {
                             ElevatedCard() {
@@ -155,11 +169,17 @@ fun SimulacroScreen(
                     mensajeExito?.let { msg ->
                         Text(msg, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
                     }
-                    if (perfilTrasSimulacro?.hayMejoras == true) {
-                        Button(
-                            onClick = { mostrarDialogoPerfil = true },
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text("Actualizar marcas en mi perfil") }
+                    Button(
+                        onClick = { mostrarDialogoPerfil = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            if (perfilTrasSimulacro?.hayMejoras == true) {
+                                "Actualizar marcas en mi perfil"
+                            } else {
+                                "Revisar marcas del simulacro"
+                            }
+                        )
                     }
                     OutlinedButton(onClick = onNavigateBack, modifier = Modifier.fillMaxWidth()) { Text("Volver") }
                 }
@@ -167,6 +187,48 @@ fun SimulacroScreen(
                     "Tu oposición no tiene pruebas físicas deportivas en convocatoria (p. ej. Ayudante de Instituciones Penitenciarias). Consulta la ficha de tu oposición."
                 )
                 else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Historial de simulacros anteriores (solo cuando no ha empezado aún)
+                    if (paso == 0 && historialSimulacros.isNotEmpty()) {
+                        item {
+                            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Row(
+                                        Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            "Simulacros anteriores",
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        TextButton(onClick = { mostrarHistorial = !mostrarHistorial }) {
+                                            Text(if (mostrarHistorial) "Ocultar" else "Ver todos")
+                                        }
+                                    }
+                                    val itemsAMostrar = if (mostrarHistorial) historialSimulacros else historialSimulacros.take(3)
+                                    itemsAMostrar.forEach { sim ->
+                                        Row(
+                                            Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                sim.fecha.take(10),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            Text(
+                                                sim.nota_media?.let { "$it / 10" } ?: "—",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                     if (hayAptoNoApto) {
                         item {
                             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
@@ -174,6 +236,18 @@ fun SimulacroScreen(
                                     "Oficialmente estas pruebas se califican Apto / No Apto (BOE). La nota 0-10 es orientativa para entrenar.",
                                     modifier = Modifier.padding(12.dp),
                                     style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+                    }
+                    if (paso == 0 && marcasPreCargadas && valores.isNotEmpty()) {
+                        item {
+                            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    "Los campos se han rellenado con tus mejores marcas del perfil. Actualiza los que hayan cambiado.",
+                                    modifier = Modifier.padding(12.dp),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
@@ -204,19 +278,19 @@ fun SimulacroScreen(
                                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                         Button(onClick = {
                                             if (cronometroActivo) {
-                                                cronometroActivo = false
-                                                valores[idPrueba] = "%.3f".format(TimeFormatUtil.secondsFromMs(elapsedMs))
+                                                simulacroViewModel.stopTimer()
+                                                simulacroViewModel.setValor(idPrueba, "%.3f".format(TimeFormatUtil.secondsFromMs(elapsedMs)))
                                                 errorCampo = ""
                                             } else {
-                                                cronometroActivo = true
+                                                simulacroViewModel.startTimer()
                                             }
                                         }) {
                                             Text(if (cronometroActivo) "Parar" else "Iniciar")
                                         }
                                         OutlinedButton(onClick = {
-                                            cronometroActivo = false
-                                            elapsedMs = 0L
-                                            valores.remove(idPrueba)
+                                            simulacroViewModel.stopTimer()
+                                            simulacroViewModel.resetTimer()
+                                            simulacroViewModel.removeValor(idPrueba)
                                             errorCampo = ""
                                         }) {
                                             Text("Reset")
@@ -237,8 +311,8 @@ fun SimulacroScreen(
                                 } else {
                                     OutlinedTextField(
                                         value = valores[pruebaActual.id_pruebas_oficiales] ?: "",
-                                        onValueChange = {
-                                            valores[pruebaActual.id_pruebas_oficiales] = it
+                                        onValueChange = { v ->
+                                            simulacroViewModel.setValor(pruebaActual.id_pruebas_oficiales, v)
                                             errorCampo = ""
                                         },
                                         label = { Text(etiquetaEntrada(pruebaActual)) },
@@ -258,9 +332,7 @@ fun SimulacroScreen(
                             if (paso > 0) {
                                 OutlinedButton(
                                     onClick = {
-                                        paso--
-                                        cronometroActivo = false
-                                        elapsedMs = 0L
+                                        simulacroViewModel.setPaso(paso - 1)
                                         errorCampo = ""
                                     },
                                     modifier = Modifier.weight(1f)
@@ -270,10 +342,10 @@ fun SimulacroScreen(
                                 onClick = {
                                     val id = pruebaActual!!.id_pruebas_oficiales
                                     val v = if (esTiempo) {
-                                        cronometroActivo = false
+                                        simulacroViewModel.stopTimer()
                                         if (elapsedMs > 0L) {
                                             val sec = TimeFormatUtil.secondsFromMs(elapsedMs)
-                                            valores[id] = "%.3f".format(sec)
+                                            simulacroViewModel.setValor(id, "%.3f".format(sec))
                                             sec
                                         } else null
                                     } else {
@@ -287,12 +359,12 @@ fun SimulacroScreen(
                                         }
                                         return@Button
                                     }
-                                    valores[id] = if (esTiempo) "%.3f".format(v) else v.toString()
+                                    simulacroViewModel.setValor(id, if (esTiempo) "%.3f".format(v) else v.toString())
                                     errorCampo = ""
-                                    cronometroActivo = false
-                                    elapsedMs = 0L
+                                    simulacroViewModel.stopTimer()
+                                    simulacroViewModel.resetTimer()
                                     if (paso < pruebas.size - 1) {
-                                        paso++
+                                        simulacroViewModel.setPaso(paso + 1)
                                     } else {
                                         guardando = true
                                         scope.launch {
@@ -315,9 +387,14 @@ fun SimulacroScreen(
                                                     }
                                                     perfilTrasSimulacro = resp.data.perfil
                                                     ultimosResultados = resultados
-                                                    if (resp.data.perfil?.hayMejoras == true) {
-                                                        mostrarDialogoPerfil = true
-                                                    }
+                                                    historialSimulacros = listOf(
+                                                        SimulacroHistorialItem(
+                                                            id_simulacro = resp.data.idSimulacro ?: 0,
+                                                            nota_media = resp.data.notaMedia,
+                                                            fecha = java.time.Instant.now().toString()
+                                                        )
+                                                    ) + historialSimulacros
+                                                    mostrarDialogoPerfil = true
                                                 } else {
                                                     error = resp.msg ?: "Error al guardar"
                                                 }
@@ -351,7 +428,13 @@ fun SimulacroScreen(
             title = { Text("¿Actualizar tu perfil?") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Has superado marcas del simulacro respecto a tu perfil:")
+                    Text(
+                        if (p.hayMejoras) {
+                            "Has superado marcas del simulacro respecto a tu perfil:"
+                        } else {
+                            "Puedes guardar las marcas de este simulacro en tu perfil (solo se aplican mejoras):"
+                        }
+                    )
                     p.mejoras?.forEach { m ->
                         val unidad = if (m.unidad == "s") "s" else "rep"
                         val ant = m.valorAnterior?.let { String.format("%.2f", it) } ?: "—"
@@ -379,8 +462,10 @@ fun SimulacroScreen(
                                 )
                                 if (resp.ok) {
                                     resp.data?.perfil?.let { perfilTrasSimulacro = it }
-                                    mensajeExito = resp.msg ?: "Perfil actualizado correctamente"
+                                    mensajeExito = (resp.msg ?: "Perfil actualizado correctamente") +
+                                        " El ranking se actualizará con tus nuevas marcas."
                                     authViewModel.refreshSessionFromBackend()
+                                    AppEvents.signalHomeRefresh()
                                     mostrarDialogoPerfil = false
                                 } else {
                                     error = resp.msg ?: "No se pudieron actualizar las marcas"

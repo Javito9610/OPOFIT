@@ -58,7 +58,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.CambiarPasswordRequest
+import com.opofit.miapp.data.api.EntornoBody
+import com.opofit.miapp.data.responsemodels.EntornoEntrenoOpcion
+import com.opofit.miapp.data.responsemodels.TogglePerfilPublicoRequest
+import com.opofit.miapp.ui.components.EntornoEntrenoSheet
 import com.opofit.miapp.ui.components.OpoFitLogo
+import com.opofit.miapp.ui.components.SectionHeader
 import com.opofit.miapp.ui.viewmodels.AjustesViewModel
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import androidx.compose.ui.platform.LocalContext
@@ -79,6 +84,8 @@ fun AjustesScreen(
     val uiState by ajustesViewModel.uiState.collectAsState()
 
     val userId = authState.userId ?: 0
+    val oposicionId = authState.oposicionId ?: 1
+    val esFitness = authState.modoUso?.equals("FITNESS", ignoreCase = true) == true
 
     var unidadPeso by remember { mutableStateOf("kg") }
     var unidadDistancia by remember { mutableStateOf("km") }
@@ -95,6 +102,48 @@ fun AjustesScreen(
     var passNueva by remember { mutableStateOf("") }
     var passMsg by remember { mutableStateOf("") }
     var mostrarDialogoEliminar by remember { mutableStateOf(false) }
+    var entornoSeleccionado by remember { mutableStateOf<String?>(null) }
+    var entornosOpciones by remember { mutableStateOf<List<EntornoEntrenoOpcion>>(emptyList()) }
+    var mostrarSheetEntorno by remember { mutableStateOf(false) }
+    var perfilPublico by remember { mutableStateOf(false) }
+
+    LaunchedEffect(userId, oposicionId, esFitness) {
+        if (userId <= 0) return@LaunchedEffect
+        try {
+            val token = tokenManager.getToken().first().orEmpty()
+            if (token.isBlank()) return@LaunchedEffect
+            val entornos = RetrofitClient.planesApi.getEntornos("Bearer $token")
+            entornosOpciones = entornos.data.orEmpty().filter { it.id != "MIXTO" && it.id != "PISTA" }
+            val usuario = RetrofitClient.planesApi.getEntornoUsuario("Bearer $token")
+            entornoSeleccionado = usuario.data?.entorno
+            if (!esFitness) {
+                val det = RetrofitClient.rankingApi.detalleUsuario("Bearer $token", oposicionId, userId)
+                if (det.ok && det.data != null) {
+                    perfilPublico = det.data.perfilPublico == true
+                }
+            }
+        } catch (_: Exception) { }
+    }
+
+    EntornoEntrenoSheet(
+        visible = mostrarSheetEntorno,
+        opciones = entornosOpciones,
+        seleccionado = entornoSeleccionado,
+        onDismiss = { mostrarSheetEntorno = false },
+        onConfirmar = { ent ->
+            scope.launch {
+                try {
+                    val token = tokenManager.getToken().first().orEmpty()
+                    val res = RetrofitClient.planesApi.putEntornoUsuario("Bearer $token", EntornoBody(ent))
+                    if (res.ok) {
+                        entornoSeleccionado = ent
+                        snackbarHostState.showSnackbar("Entorno actualizado. Regenera el plan si quieres nuevos ejercicios.")
+                    }
+                } catch (_: Exception) { }
+                mostrarSheetEntorno = false
+            }
+        }
+    )
 
     LaunchedEffect(uiState.unidadPeso, uiState.unidadDistancia) {
         unidadPeso = uiState.unidadPeso
@@ -208,11 +257,7 @@ fun AjustesScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Unidades de medida",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
+            SectionHeader(title = "Apariencia", subtitle = "Tema visual")
 
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth()
@@ -242,6 +287,8 @@ fun AjustesScreen(
                     )
                 }
             }
+
+            SectionHeader(title = "Unidades", subtitle = "Peso y distancia")
 
             ExposedDropdownMenuBox(
                 expanded = expandedPeso,
@@ -295,6 +342,22 @@ fun AjustesScreen(
                                 expandedDistancia = false
                             }
                         )
+                    }
+                }
+            }
+
+            SectionHeader(title = "Entrenamiento", subtitle = "Plan y recordatorios")
+
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Entorno de entreno", fontWeight = FontWeight.SemiBold)
+                    Text(
+                        entornosOpciones.find { it.id == entornoSeleccionado }?.let { "${it.emoji.orEmpty()} ${it.etiqueta}" }
+                            ?: "Sin configurar — el plan usará material genérico",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    OutlinedButton(onClick = { mostrarSheetEntorno = true }, modifier = Modifier.fillMaxWidth()) {
+                        Text("Cambiar entorno (gym, casa, calistenia…)")
                     }
                 }
             }
@@ -361,19 +424,58 @@ fun AjustesScreen(
                 }
             }
 
-            Divider()
+            if (!esFitness) {
+                SectionHeader(title = "Privacidad", subtitle = "Ranking y visibilidad")
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Aparecer en el ranking", fontWeight = FontWeight.SemiBold)
+                            Text(
+                                "Otros opositores de tu convocatoria verán tu nota media.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = perfilPublico,
+                            onCheckedChange = { checked ->
+                                perfilPublico = checked
+                                scope.launch {
+                                    try {
+                                        val token = tokenManager.getToken().first().orEmpty()
+                                        RetrofitClient.rankingApi.togglePerfilPublico(
+                                            "Bearer $token",
+                                            TogglePerfilPublicoRequest(checked)
+                                        )
+                                    } catch (_: Exception) {
+                                        perfilPublico = !checked
+                                    }
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+
+            SectionHeader(title = "Dispositivos", subtitle = "Reloj y sincronización")
 
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "Dispositivos y relojes",
+                        text = "Conexiones y reloj",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = "Conecta tu reloj o pulsera (Garmin, Polar, Mi Band, Amazfit...) para que tus actividades se sincronicen automáticamente con OpoFit.",
+                        text = "Conecta Garmin, Polar, Mi Band, Amazfit u otro reloj para traer tus actividades automáticamente.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -381,7 +483,7 @@ fun AjustesScreen(
                         onClick = onNavigateToMisDispositivos,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Gestionar dispositivos")
+                        Text("Conexiones y reloj")
                     }
                 }
             }
@@ -437,7 +539,7 @@ fun AjustesScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Cuenta",
+                        text = "Zona de peligro",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold
                     )

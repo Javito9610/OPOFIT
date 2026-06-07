@@ -408,11 +408,16 @@ private fun tituloEjeY(h: HistorialEjercicio): String = when (h.unidad) {
 
 @Composable
 private fun ChartRitmoCard(h: HistorialEjercicio) {
-    val ritmos = remember(h.puntos) {
+    val ritmos = remember(h.puntos, h.unidad) {
         h.puntos.mapNotNull { p ->
-            val dist = if (h.unidad == "km") p.valor else p.valor / 1000.0
-            val secs = p.duracionSeg ?: return@mapNotNull null
-            if (dist <= 0 || secs <= 0) null else secs / dist
+            val dist = when (h.unidad) {
+                "km" -> p.valor
+                "m" -> p.valor / 1000.0
+                "min" -> null
+                else -> if (p.valor > 50) p.valor / 1000.0 else p.valor
+            } ?: return@mapNotNull null
+            val secs = p.duracionSeg?.takeIf { it > 0 } ?: return@mapNotNull null
+            if (dist <= 0 || secs <= 0) null else secs.toDouble() / dist
         }
     }
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
