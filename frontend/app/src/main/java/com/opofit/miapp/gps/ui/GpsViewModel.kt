@@ -222,6 +222,7 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
     fun connectHr(device: HrBleManager.FoundDevice) = hrBle.connect(device)
     fun disconnectHr() = hrBle.disconnect()
     fun hrManager(): HrBleManager = hrBle
+    fun pairedHrDevices(): List<HrBleManager.FoundDevice> = hrBle.pairedDevices()
 
     fun loadHistory() {
         viewModelScope.launch {

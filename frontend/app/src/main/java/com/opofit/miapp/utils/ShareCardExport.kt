@@ -104,7 +104,11 @@ object ShareCardExport {
             putExtra(Intent.EXTRA_TEXT, titulo)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(Intent.createChooser(intent, "Compartir en…"))
+        val chooser = Intent.createChooser(intent, "Compartir en…").apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(chooser)
     }
 
     /** Comprueba si una app concreta está instalada (Android 11+ requiere queries en el manifest). */
@@ -121,15 +125,33 @@ object ShareCardExport {
     fun isWhatsAppInstalled(context: Context): Boolean =
         isAppInstalled(context, "com.whatsapp") || isAppInstalled(context, "com.whatsapp.w4b")
 
+    /**
+     * Comparte a Instagram. El intent oficial `com.instagram.share.ADD_TO_STORY` exige un
+     * Facebook App ID registrado (developers.facebook.com) y sin él Instagram se abre con
+     * pantalla negra. Usamos ACTION_SEND con package=instagram, e Instagram lanza su propio
+     * selector (Historia / Feed / DM) sin necesidad de App ID. Es el flujo estándar
+     * que usan Strava y la mayoría de apps fitness.
+     */
     fun shareInstagramStory(context: Context, bitmap: Bitmap): Boolean {
         val uri = saveBitmap(context, bitmap)
-        val intent = Intent("com.instagram.share.ADD_TO_STORY").apply {
-            setDataAndType(uri, "image/*")
-            putExtra("interactive_asset_uri", uri)
-            putExtra("source_application", context.packageName)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "image/jpeg"
+            `package` = "com.instagram.android"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            // Necesario para que Instagram pueda leer el URI del FileProvider.
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         return if (intent.resolveActivity(context.packageManager) != null) {
+            // Conceder permiso explícito al proceso de Instagram (algunos OEM lo exigen
+            // además del flag, sobre todo Samsung One UI).
+            try {
+                context.grantUriPermission(
+                    "com.instagram.android",
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) { /* permiso ya concedido o no aplica */ }
             context.startActivity(intent)
             true
         } else false
@@ -143,8 +165,14 @@ object ShareCardExport {
             putExtra(Intent.EXTRA_STREAM, uri)
             if (texto.isNotBlank()) putExtra(Intent.EXTRA_TEXT, texto)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         return if (intent.resolveActivity(context.packageManager) != null) {
+            try {
+                context.grantUriPermission(
+                    "com.whatsapp", uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) { }
             context.startActivity(intent)
             true
         } else false

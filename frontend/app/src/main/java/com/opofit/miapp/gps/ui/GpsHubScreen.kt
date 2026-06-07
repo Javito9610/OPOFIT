@@ -543,18 +543,24 @@ private fun HrConnectDialog(
 ) {
     val found by viewModel.hrFound.collectAsState()
     val liveHr by viewModel.hrManager().heartRate.collectAsState()
-    val deviceListScroll = rememberScrollState()
     val connectingAddress = (hrState as? HrBleManager.State.Connecting)?.device?.address
     val connectedAddress = (hrState as? HrBleManager.State.Connected)?.device?.address
+
+    // Emparejados al sistema (BT Classic + BLE bonded). Se recargan cada vez que se abre
+    // el diálogo. Aquí saldrá el Amazfit/Mi Band aunque NO se anuncie en el escaneo BLE.
+    val paired = remember(hrState) { viewModel.pairedHrDevices() }
 
     Dialog(onDismissRequest = onDismiss) {
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 520.dp)
+                .heightIn(max = 600.dp)
         ) {
+            // Scroll exterior: cabe TODO el contenido, ningún botón ni texto queda cortado.
             Column(
-                modifier = Modifier.padding(20.dp),
+                modifier = Modifier
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(
@@ -562,189 +568,130 @@ private fun HrConnectDialog(
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
-                Text(
-                    "Buscar bandas/relojes que emiten pulso (Polar, Wahoo, Garmin con «emisión» activa, " +
-                        "Mi Band/Amazfit con «Broadcast HR» activado en Zepp). Si no aparece tu dispositivo, " +
-                        "pulsa «Mostrar todo el Bluetooth» y elígelo manualmente.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
 
+                // Estado actual (compacto: 1-2 líneas máx)
                 when (val st = hrState) {
-                    is HrBleManager.State.Idle -> {
-                        Text(
-                            if (found.isEmpty()) "Pulsa Buscar para escanear."
-                            else "${found.size} dispositivo(s) — selecciona uno:",
-                            style = MaterialTheme.typography.labelMedium
-                        )
+                    is HrBleManager.State.Idle -> Text(
+                        if (found.isEmpty()) "Selecciona un dispositivo emparejado o pulsa Buscar."
+                        else "${found.size} encontrado(s)",
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                    is HrBleManager.State.Scanning -> Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.size(6.dp))
+                        Text("Buscando…", style = MaterialTheme.typography.labelMedium)
                     }
-                    is HrBleManager.State.Scanning -> {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                            Spacer(Modifier.size(8.dp))
-                            Text("Buscando dispositivos…")
-                        }
-                    }
-                    is HrBleManager.State.Connecting -> Text("Conectando a ${st.device.name ?: st.device.address}...")
-                    is HrBleManager.State.Connected -> {
+                    is HrBleManager.State.Connecting -> Text(
+                        "Conectando a ${st.device.name ?: st.device.address}…",
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                    is HrBleManager.State.Connected -> Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Filled.Favorite, null, tint = MaterialTheme.colorScheme.error)
                             Spacer(Modifier.size(6.dp))
-                            Text("Conectado a ${st.device.name ?: st.device.address}")
+                            Text(
+                                "Conectado a ${st.device.name ?: st.device.address}",
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
                         Text(
-                            liveHr?.let { "Pulso en vivo: $it bpm" }
-                                ?: "Esperando pulso… (mide en el reloj o en la muñeca)",
+                            liveHr?.let { "$it bpm en vivo" } ?: "Esperando pulso del reloj…",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
                     is HrBleManager.State.Error -> Text(
                         st.message,
-                        color = MaterialTheme.colorScheme.error
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 48.dp, max = 260.dp)
-                        .verticalScroll(deviceListScroll),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    if (found.isEmpty()) {
-                        Text(
-                            "La lista se actualiza al escanear.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                // SECCIÓN 1: emparejados (aquí va a estar SU Amazfit aunque no aparezca en escaneo).
+                if (paired.isNotEmpty()) {
+                    Text(
+                        "Dispositivos emparejados a este móvil",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    paired.forEach { device ->
+                        HrDeviceRow(
+                            device = device,
+                            isConnecting = connectingAddress == device.address,
+                            isConnected = connectedAddress == device.address,
+                            showSignal = false,
+                            onClick = { viewModel.connectHr(device) }
                         )
-                    } else {
-                        found.forEach { device ->
-                            val isConnecting = connectingAddress == device.address
-                            val isConnected = connectedAddress == device.address
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable(enabled = !isConnecting) {
-                                        viewModel.connectHr(device)
-                                    },
-                                shape = MaterialTheme.shapes.medium,
-                                color = when {
-                                    isConnected -> MaterialTheme.colorScheme.tertiaryContainer
-                                    isConnecting -> MaterialTheme.colorScheme.secondaryContainer
-                                    else -> MaterialTheme.colorScheme.surfaceVariant
-                                },
-                                tonalElevation = 1.dp
-                            ) {
-                                Row(
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 14.dp, vertical = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                ) {
-                                    Icon(
-                                        if (isConnected) Icons.Filled.BluetoothConnected else Icons.Filled.Bluetooth,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                    Column(Modifier.weight(1f)) {
-                                        Text(
-                                            device.name?.ifBlank { null } ?: "Dispositivo sin nombre",
-                                            fontWeight = FontWeight.SemiBold,
-                                            maxLines = 1
-                                        )
-                                        Text(
-                                            when {
-                                                device.rssi >= -60 -> "Señal fuerte"
-                                                device.rssi >= -75 -> "Señal media"
-                                                else -> "Señal débil — acércate al dispositivo"
-                                            },
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                    when {
-                                        isConnecting -> CircularProgressIndicator(
-                                            modifier = Modifier.size(18.dp),
-                                            strokeWidth = 2.dp
-                                        )
-                                        isConnected -> Text(
-                                            "OK",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                        else -> Text(
-                                            "Conectar",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                }
-                            }
-                        }
                     }
                 }
 
+                // SECCIÓN 2: encontrados al escanear.
+                if (found.isNotEmpty()) {
+                    Text(
+                        "Encontrados al escanear",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    found.forEach { device ->
+                        HrDeviceRow(
+                            device = device,
+                            isConnecting = connectingAddress == device.address,
+                            isConnected = connectedAddress == device.address,
+                            showSignal = true,
+                            onClick = { viewModel.connectHr(device) }
+                        )
+                    }
+                }
+
+                // Botones SIEMPRE activos. Si estás escaneando y los pulsas, se reinicia el escaneo.
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Button(
-                        enabled = hrState !is HrBleManager.State.Scanning,
                         onClick = { viewModel.startHrScan() },
                         modifier = Modifier.weight(1f)
                     ) { Text("Buscar pulso") }
                     OutlinedButton(
-                        enabled = hrState !is HrBleManager.State.Scanning,
                         onClick = { viewModel.startHrScanBroad() },
                         modifier = Modifier.weight(1f)
-                    ) { Text("Mostrar todo el Bluetooth") }
+                    ) { Text("Mostrar todo BT") }
                 }
-                Text(
-                    "• «Buscar pulso»: solo dispositivos que emiten pulso (recomendado).\n" +
-                        "• «Mostrar todo el Bluetooth»: lista cualquier dispositivo cercano, " +
-                        "útil si tu reloj no advertise pulso.",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
 
-                // Aviso explícito para usuarios con Amazfit/Mi Band/Garmin emparejados a su app:
-                // estos relojes están conectados a su app vía BT Classic y NO aparecen en escaneos
-                // BLE aunque "estén conectados". Hay que activar Broadcast HR o usar Health Connect.
+                // Si está escaneando, dar opción de parar
+                if (hrState is HrBleManager.State.Scanning) {
+                    TextButton(
+                        onClick = { viewModel.stopHrScan() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Detener búsqueda") }
+                }
+
+                // Tarjeta de Health Connect (compacta).
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.tertiaryContainer,
-                    tonalElevation = 1.dp
+                    color = MaterialTheme.colorScheme.tertiaryContainer
                 ) {
                     Column(
                         modifier = Modifier.padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            "¿No aparece tu reloj aunque esté conectado?",
+                            "¿Amazfit, Mi Band o Garmin?",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
                         Text(
-                            "Si tu reloj está emparejado con Zepp/Mi Fitness/Garmin Connect, " +
-                                "Android lo oculta del escaneo Bluetooth de otras apps. Necesitas:\n\n" +
-                                "1) Activar Broadcast HR en la app del reloj (no todos lo permiten), o\n" +
-                                "2) Usar Health Connect: el pulso llega a OpoFit a través de la app del reloj. " +
-                                "Es la opción recomendada para Amazfit, Mi Band y similares.",
+                            "Si el reloj no se conecta por BLE, usa Health Connect: " +
+                                "el pulso llega vía la app del reloj.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
                         Button(
-                            onClick = {
-                                onDismiss()
-                                onOpenHealthConnect()
-                            },
+                            onClick = { onDismiss(); onOpenHealthConnect() },
                             modifier = Modifier.fillMaxWidth()
-                        ) { Text("Conectar con Health Connect") }
+                        ) { Text("Abrir Health Connect") }
                     }
                 }
 
@@ -758,6 +705,83 @@ private fun HrConnectDialog(
                     onClick = onDismiss,
                     modifier = Modifier.align(Alignment.End)
                 ) { Text("Cerrar") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HrDeviceRow(
+    device: HrBleManager.FoundDevice,
+    isConnecting: Boolean,
+    isConnected: Boolean,
+    showSignal: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !isConnecting, onClick = onClick),
+        shape = MaterialTheme.shapes.medium,
+        color = when {
+            isConnected -> MaterialTheme.colorScheme.tertiaryContainer
+            isConnecting -> MaterialTheme.colorScheme.secondaryContainer
+            else -> MaterialTheme.colorScheme.surfaceVariant
+        },
+        tonalElevation = 1.dp
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Icon(
+                if (isConnected) Icons.Filled.BluetoothConnected else Icons.Filled.Bluetooth,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Column(Modifier.weight(1f)) {
+                Text(
+                    device.name?.ifBlank { null } ?: "Dispositivo sin nombre",
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                if (showSignal) {
+                    Text(
+                        when {
+                            device.rssi >= -60 -> "Señal fuerte"
+                            device.rssi >= -75 -> "Señal media"
+                            else -> "Señal débil — acércate"
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    Text(
+                        "Emparejado",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            when {
+                isConnecting -> CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp), strokeWidth = 2.dp
+                )
+                isConnected -> Text(
+                    "OK",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                else -> Text(
+                    "Conectar",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
         }
     }

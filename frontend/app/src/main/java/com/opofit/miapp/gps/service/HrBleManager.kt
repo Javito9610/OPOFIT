@@ -61,6 +61,24 @@ class HrBleManager(private val context: Context) {
     private val _heartRate = MutableStateFlow<Int?>(null)
     val heartRate: StateFlow<Int?> = _heartRate.asStateFlow()
 
+    /**
+     * Dispositivos ya emparejados al sistema (Bluetooth Classic + BLE bonded).
+     * Incluye Amazfit/Mi Band/Garmin emparejados a Zepp aunque no estén anunciándose
+     * activamente. Útil para mostrar al usuario que el reloj sí está conocido por el
+     * sistema, y permite intentar conectar directamente sin escanear.
+     */
+    fun pairedDevices(): List<FoundDevice> {
+        if (!hasPermissions()) return emptyList()
+        val bonded = adapter?.bondedDevices ?: return emptyList()
+        return bonded.map { d ->
+            FoundDevice(
+                address = d.address,
+                name = try { d.name } catch (_: SecurityException) { null },
+                rssi = 0
+            )
+        }
+    }
+
     private var scanCallback: ScanCallback? = null
     private var gatt: BluetoothGatt? = null
     private var onHrSample: ((Int) -> Unit)? = null
