@@ -3,6 +3,8 @@ package com.opofit.miapp.ui.screens.entrenamientos
 import com.opofit.miapp.gps.service.ChronoForegroundService
 import com.opofit.miapp.gps.service.SessionTimerTracker
 import com.opofit.miapp.ui.components.ElevatedCard
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +25,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.Button
@@ -143,6 +146,7 @@ fun EntrenamientosScreen(
     onNavigateBack: () -> Unit,
     onEntrenamientoFinalizado: (offerShare: Boolean) -> Unit,
     onNavigateToGps: (distKm: Double?) -> Unit = {},
+    onNavigateToMisDispositivos: () -> Unit = {},
     initialEnfoque: String = "",
     initialPlanDiaId: Int? = null,
     initialRutinaOpoId: Int? = null,
@@ -573,6 +577,11 @@ fun EntrenamientosScreen(
         }
     }
 
+    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
+    val hrLive by com.opofit.miapp.gps.service.HrBleManager.get(context).heartRate.collectAsState()
+    val hrState by com.opofit.miapp.gps.service.HrBleManager.get(context).state.collectAsState()
+    val hrConnected = hrState is com.opofit.miapp.gps.service.HrBleManager.State.Connected
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -585,10 +594,42 @@ fun EntrenamientosScreen(
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
+                actions = {
+                    // HR chip: muestra pulso en vivo si conectado, abre Mis Dispositivos si no.
+                    androidx.compose.foundation.layout.Row(
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .background(
+                                color = if (hrConnected) MaterialTheme.colorScheme.tertiaryContainer
+                                else MaterialTheme.colorScheme.surface.copy(alpha = 0.25f),
+                                shape = MaterialTheme.shapes.medium
+                            )
+                            .clickable { onNavigateToMisDispositivos() }
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.Favorite,
+                            null,
+                            tint = if (hrConnected) androidx.compose.ui.graphics.Color(0xFFE53935)
+                            else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            hrLive?.let { "$it" } ?: if (hrConnected) "—" else "Conectar",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (hrConnected) MaterialTheme.colorScheme.onTertiaryContainer
+                            else MaterialTheme.colorScheme.onPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         },
@@ -1168,5 +1209,23 @@ fun EntrenamientosScreen(
                 Spacer(modifier = Modifier.height((160 + hintsVisibles * 22).dp))
             }
         }
+    }
+    com.opofit.miapp.ui.components.CoachMarkOverlay(
+        screenKey = "entrenamiento_v1",
+        steps = listOf(
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Tu entreno paso a paso",
+                text = "Cada ejercicio aparece como una tarjeta. Pon series, reps y peso, luego dale al check para marcarlo como hecho."
+            ),
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Cronómetro general arriba",
+                text = "Mide cuánto tiempo llevas entrenando. Si registras peso en kg/reps, no necesita estar activo, pero ayuda para llevar la cuenta."
+            ),
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Botón finalizar abajo",
+                text = "Cuando termines, pulsa «Finalizar entrenamiento». Si dejas valores vacíos, la app te avisa."
+            )
+        )
+    )
     }
 }

@@ -268,14 +268,9 @@ fun MainScreen(
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                     )
 
-                    DrawerSectionLabel("Conexión")
-                    NavigationDrawerItem(
-                        label = { Text("Conexiones y reloj") },
-                        icon = { Icon(Icons.Filled.Watch, null) },
-                        selected = false,
-                        onClick = { runAndClose(onNavigateToMisDispositivos) },
-                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                    )
+                    // "Conexiones y reloj" se accede desde Ajustes → Dispositivos, no duplicar aquí.
+                    // "Cerrar sesión" ya está en Ajustes → Zona de peligro, no duplicar aquí.
+                    DrawerSectionLabel("Cuenta")
                     NavigationDrawerItem(
                         label = { Text("OpoFit Premium") },
                         icon = { Icon(Icons.Filled.Star, null) },
@@ -283,20 +278,11 @@ fun MainScreen(
                         onClick = { runAndClose(onNavigateToPremium) },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                     )
-
-                    DrawerSectionLabel("Cuenta")
                     NavigationDrawerItem(
                         label = { Text("Ajustes") },
                         icon = { Icon(Icons.Filled.Settings, null) },
                         selected = false,
                         onClick = { runAndClose(onNavigateToAjustes) },
-                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                    )
-                    NavigationDrawerItem(
-                        label = { Text("Cerrar sesión") },
-                        icon = { Icon(Icons.AutoMirrored.Filled.ExitToApp, null) },
-                        selected = false,
-                        onClick = { runAndClose(onLogout) },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                     )
                     Spacer(Modifier.height(16.dp))

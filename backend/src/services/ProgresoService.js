@@ -104,5 +104,31 @@ class ProgresoService {
     const [rows] = await db.query(sql, [userId]);
     return rows;
   }
+
+  /**
+   * Borra una sesión de historial. Valida que pertenezca al usuario.
+   * Por integridad referencial elimina primero los detalles y luego la cabecera.
+   */
+  static async borrarSesion(userId, idSesion) {
+    const [[sesion]] = await db.query(
+      'SELECT usuarios_id_usuario FROM historial_sesiones WHERE id_historial_sesion = ?',
+      [idSesion]
+    );
+    if (!sesion) return { ok: false, code: 'NO_ENCONTRADA', msg: 'Sesión no encontrada' };
+    if (Number(sesion.usuarios_id_usuario) !== Number(userId)) {
+      return { ok: false, code: 'NO_AUTORIZADO', msg: 'No puedes borrar sesiones de otro usuario' };
+    }
+    // Borrar primero los detalles (FK) y luego la cabecera.
+    try {
+      await db.query(
+        'DELETE FROM detalle_historial_sesion WHERE historial_sesiones_id_historial_sesion = ?',
+        [idSesion]
+      );
+    } catch (_) {
+      /* Si la tabla de detalle no existe en alguna instalación, seguimos */
+    }
+    await db.query('DELETE FROM historial_sesiones WHERE id_historial_sesion = ?', [idSesion]);
+    return { ok: true };
+  }
 }
 module.exports = ProgresoService;

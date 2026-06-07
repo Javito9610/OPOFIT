@@ -120,8 +120,31 @@ const verHistorialSesiones = async (req, res) => {
     });
   }
 };
+const borrarSesion = async (req, res) => {
+  try {
+    const userId = req.usuario?.id;
+    const idSesion = Number(req.params.id);
+    if (!userId) {
+      return res.status(401).json({ ok: false, msg: 'Sesión inválida' });
+    }
+    if (!Number.isFinite(idSesion) || idSesion <= 0) {
+      return res.status(400).json({ ok: false, msg: 'ID de sesión inválido' });
+    }
+    const r = await progresoService.borrarSesion(userId, idSesion);
+    if (!r.ok) {
+      const status = r.code === 'NO_ENCONTRADA' ? 404 : r.code === 'NO_AUTORIZADO' ? 403 : 500;
+      return res.status(status).json({ ok: false, msg: r.msg || 'No se pudo borrar' });
+    }
+    return res.status(200).json({ ok: true, msg: 'Sesión eliminada' });
+  } catch (error) {
+    console.error('Error en borrarSesion:', error.message);
+    return res.status(500).json({ ok: false, msg: 'Error al borrar la sesión' });
+  }
+};
+
 module.exports = {
   guardarEntrenamiento,
   verEvolucion,
-  verHistorialSesiones
+  verHistorialSesiones,
+  borrarSesion
 };

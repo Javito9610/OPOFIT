@@ -257,6 +257,7 @@ fun AppNavigation(
                     GpsRecordingContext.prepare(ActivityType.RUN, conRuta = false)
                     navController.navigate(NavDestinations.GPS_RECORDING)
                 },
+                onNavigateToMisDispositivos = { navController.navigate(NavDestinations.MIS_DISPOSITIVOS) },
                 initialEnfoque = enfoque,
                 initialPlanDiaId = idPlanDia.takeIf { it > 0 },
                 initialRutinaOpoId = idRutinaOpo.takeIf { it > 0 }
@@ -462,7 +463,8 @@ fun AppNavigation(
                 onNavigateBack = { navController.popBackStack() },
                 onOpenEjercicio = { idEj -> navController.navigate("historial_ejercicio/$idEj") },
                 onOpenPlan = { idPlan -> navController.navigate("historial_plan/$idPlan") },
-                onOpenGpsActividad = { uuid -> navController.navigate("gps_activity/$uuid") }
+                onOpenGpsActividad = { uuid -> navController.navigate("gps_activity/$uuid") },
+                onNavigateToCompartir = { navController.navigate(NavDestinations.COMPARTIR_ACTIVIDAD) }
             )
         }
 

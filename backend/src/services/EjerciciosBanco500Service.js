@@ -4,7 +4,9 @@ const db = require('../config/db');
 const EntornoEntreno = require('../utils/EntornoEntreno');
 const EjercicioMetadataService = require('./EjercicioMetadataService');
 
-const BANCO_VERSION = 3;
+// v4: ampliación con 138 ejercicios profesionales nuevos (Core, Hombros, Agilidad,
+// Pliometría, Pierna/Glúteo, Pecho/Tirón, Brazos, Movilidad oposición).
+const BANCO_VERSION = 4;
 
 function resolveJsonPath() {
   const candidates = [

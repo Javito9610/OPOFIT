@@ -60,15 +60,24 @@ private data class ChartGeometry(
     val width: Float,
     val height: Float,
     val minY: Double,
-    val maxY: Double
+    val maxY: Double,
+    val invertY: Boolean = false
 ) {
     fun xFor(index: Int, count: Int): Float =
         if (count <= 1) left + width / 2f else left + width * index / (count - 1)
 
     fun yFor(value: Double): Float {
+        // Bug previo: cuando invertY=true se pasaba minY=maxRaw+pad y maxY=minRaw-pad
+        // → maxY - minY era negativo → coerceAtLeast(0.0001) lo aplastaba a ~0
+        // → TODOS los puntos salían en la misma altura (línea plana). Ahora minY/maxY
+        // siempre representan el rango real (min ≤ max) y la inversión se aplica al final.
         val range = (maxY - minY).coerceAtLeast(0.0001)
         val norm = ((value - minY) / range).coerceIn(0.0, 1.0)
-        return top + height * (1f - norm.toFloat())
+        return if (invertY) {
+            top + height * norm.toFloat() // valor mayor abajo (p.ej. ritmo lento)
+        } else {
+            top + height * (1f - norm.toFloat()) // valor mayor arriba (estándar)
+        }
     }
 }
 
@@ -93,9 +102,12 @@ fun LineAreaChart(
     }
     val minRaw = values.min()
     val maxRaw = values.max()
+    // pad mínimo de 0.5 evita rango cero cuando todos los valores son iguales,
+    // pero también garantiza un mínimo de "espacio" en gráficos con poca varianza.
     val pad = ((maxRaw - minRaw) * 0.08).coerceAtLeast(0.5)
-    val minY = if (invertY) maxRaw + pad else minRaw - pad
-    val maxY = if (invertY) minRaw - pad else maxRaw + pad
+    // Siempre min ≤ max. La inversión visual se hace en ChartGeometry.yFor.
+    val minY = minRaw - pad
+    val maxY = maxRaw + pad
 
     val progress by animateFloatAsState(
         targetValue = 1f,
@@ -152,7 +164,8 @@ fun LineAreaChart(
             width = size.width - labelWidth - 4.dp.toPx(),
             height = size.height - labelHeight - topPadding,
             minY = minY,
-            maxY = maxY
+            maxY = maxY,
+            invertY = invertY
         )
 
         if (yAxisLabel != null) {
@@ -170,8 +183,12 @@ fun LineAreaChart(
                 strokeWidth = 1f,
                 pathEffect = if (i > 0 && i < 4) PathEffect.dashPathEffect(floatArrayOf(6f, 6f)) else null
             )
+            // Etiquetas Y coherentes con yFor:
+            // invertY=false → arriba=maxY (estándar Cartesiano: valor alto arriba)
+            // invertY=true  → arriba=minY (convención Strava para ritmo: rápido arriba)
+            // Así la posición del label coincide con dónde se dibuja la línea para ese valor.
             val v = if (invertY) {
-                minY - (minY - maxY) * i.toDouble() / 4.0
+                minY + (maxY - minY) * i.toDouble() / 4.0
             } else {
                 maxY - (maxY - minY) * i.toDouble() / 4.0
             }

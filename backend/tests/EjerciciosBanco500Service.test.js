@@ -13,7 +13,9 @@ describe('EjerciciosBanco500Service', () => {
   test('seedBanco500 inserta ejercicios del JSON', async () => {
     const jsonPath = path.resolve(__dirname, '../data/ejercicios-banco-500.json');
     const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-    expect(data.ejercicios.length).toBe(500);
+    // Tras la ampliación v4 el banco crece. Lo que importa es que sea ≥500.
+    expect(data.ejercicios.length).toBeGreaterThanOrEqual(500);
+    const total = data.ejercicios.length;
 
     db.query
       .mockResolvedValueOnce([[]]) // meta vacía
@@ -22,26 +24,26 @@ describe('EjerciciosBanco500Service', () => {
         if (sql.includes('SELECT id_ejercicio FROM ejercicios')) return [[]];
         if (sql.includes('INSERT INTO ejercicios')) return [{ insertId: 100 }];
         if (sql.includes('app_meta')) return [{ affectedRows: 1 }];
-        if (sql.includes('SELECT COUNT(*) AS total')) return [[{ total: 560 }]];
+        if (sql.includes('SELECT COUNT(*) AS total')) return [[{ total: total + 60 }]];
         return [[]];
       });
 
     const r = await EjerciciosBanco500Service.seedBanco500(true);
     expect(r.skipped).toBe(false);
-    expect(r.insertados + r.actualizados).toBe(500);
-    expect(r.total).toBe(560);
+    expect(r.insertados + r.actualizados).toBe(total);
+    expect(r.total).toBe(total + 60);
   });
 
   test('seedBanco500 omite si ya está sembrado y hay >= 500', async () => {
-    // Debe coincidir con BANCO_VERSION (actual: 3) para entrar en la rama de skip.
-    const BANCO_VERSION_ACTUAL = '3';
+    // Debe coincidir con BANCO_VERSION (actual: 4) para entrar en la rama de skip.
+    const BANCO_VERSION_ACTUAL = '4';
     db.query
       .mockResolvedValueOnce([[{ valor: BANCO_VERSION_ACTUAL }]])
-      .mockResolvedValueOnce([[{ n: 520 }]]);
+      .mockResolvedValueOnce([[{ n: 638 }]]);
 
     const r = await EjerciciosBanco500Service.seedBanco500(false);
     expect(r.skipped).toBe(true);
-    expect(r.total).toBe(520);
+    expect(r.total).toBe(638);
   });
 
   test('JSON tiene pilares y entornos válidos', () => {

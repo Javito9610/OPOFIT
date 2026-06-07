@@ -132,6 +132,7 @@ fun ComunidadScreen(
         }
     }
 
+    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -457,5 +458,23 @@ fun ComunidadScreen(
                 }
             }
         }
+    }
+    com.opofit.miapp.ui.components.CoachMarkOverlay(
+        screenKey = "comunidad_v1",
+        steps = listOf(
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Tu comunidad opositora",
+                text = "Aquí ves actividades de tus amigos, grupos por oposición, gente cerca de ti y chat directo."
+            ),
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Pestañas: Actividad, Grupos, Cerca, Amigos, Buscar, Chat",
+                text = "Cada pestaña tiene su función. La pestaña «Amigos» muestra un badge naranja si tienes solicitudes pendientes."
+            ),
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Privacidad",
+                text = "Solo te ven los amigos que aceptas. Puedes hacer posts visibles solo para amigos o públicos para tu oposición."
+            )
+        )
+    )
     }
 }

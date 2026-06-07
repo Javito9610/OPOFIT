@@ -350,7 +350,15 @@ fun AjustesScreen(
 
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Entorno de entreno", fontWeight = FontWeight.SemiBold)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Entorno de entreno", fontWeight = FontWeight.SemiBold)
+                        com.opofit.miapp.ui.components.InfoTip(
+                            title = "¿Para qué sirve el entorno?",
+                            text = "Le dices a la app dónde entrenas habitualmente (gym, casa, parque calistenia, " +
+                                "pista, CrossFit). El plan se adapta para usar ejercicios coherentes con tu material. " +
+                                "Por ejemplo, si dices «casa» no te propone press banca olímpico."
+                        )
+                    }
                     Text(
                         entornosOpciones.find { it.id == entornoSeleccionado }?.let { "${it.emoji.orEmpty()} ${it.etiqueta}" }
                             ?: "Sin configurar — el plan usará material genérico",
@@ -366,7 +374,16 @@ fun AjustesScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Recordatorio de entreno", fontWeight = FontWeight.SemiBold)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Recordatorio de entreno", fontWeight = FontWeight.SemiBold)
+                        com.opofit.miapp.ui.components.InfoTip(
+                            title = "¿Cómo funciona el recordatorio?",
+                            text = "Si lo activas, OpoFit te manda una notificación push a la hora que elijas, " +
+                                "SOLO los días que tienes sesión pendiente. " +
+                                "Si ya hiciste la sesión de hoy, no te molesta. " +
+                                "Necesitas permitir notificaciones en el sistema."
+                        )
+                    }
                     Text(
                         "Te avisamos a la hora que elijas si hoy tienes sesión pendiente en tu plan.",
                         style = MaterialTheme.typography.bodySmall,
@@ -566,6 +583,36 @@ fun AjustesScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Cerrar Sesión")
+                    }
+                }
+            }
+
+            // Sección Tutorial: permite resetear los coach marks para ver
+            // los tips de cada pantalla otra vez. Útil cuando un nuevo usuario
+            // entra a la cuenta o el usuario quiere refrescar la memoria.
+            SectionHeader(title = "Tutorial", subtitle = "Vuelve a ver los tips de cada pantalla")
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Ver tutorial otra vez",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        "Resetea los tips de bienvenida. La próxima vez que entres a Home, GPS, Plan, Simulacro, Perfil… volverás a ver las explicaciones.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    OutlinedButton(
+                        onClick = {
+                            com.opofit.miapp.ui.components.resetAllCoachMarks(context)
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Tutorial reactivado. Vuelve a entrar a cada pantalla.")
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Reactivar tutorial")
                     }
                 }
             }

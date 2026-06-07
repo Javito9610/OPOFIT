@@ -161,6 +161,7 @@ fun RutinasScreen(
         onDismiss = { ejercicioDetalle = null }
     )
 
+    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
@@ -732,5 +733,23 @@ fun RutinasScreen(
             }
         }
         }
+    }
+    com.opofit.miapp.ui.components.CoachMarkOverlay(
+        screenKey = "rutinas_v1",
+        steps = listOf(
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Tu plan de hoy",
+                text = "Arriba aparece la sesión recomendada para hoy. Si está marcada en verde, ya la has completado. Tira hacia abajo para refrescar."
+            ),
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Plan semanal completo",
+                text = "Debajo ves toda la semana. Cada día con su pilar (Fuerza, Resistencia, Velocidad). Toca un día para ver detalle."
+            ),
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Si no te convence, regenera",
+                text = "El botón «Otra opción» te propone una variante distinta. Útil si hoy no tienes material para hacer un ejercicio en concreto."
+            )
+        )
+    )
     }
 }

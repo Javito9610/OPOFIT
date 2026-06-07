@@ -111,6 +111,7 @@ fun SimulacroScreen(
             ?: if (p?.unidad == "s") "Tiempo (segundos)" else "Repeticiones conseguidas"
     val hayAptoNoApto = pruebas.any { it.tipo_baremo == "APTO_NO_APTO" }
 
+    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -483,5 +484,23 @@ fun SimulacroScreen(
                 TextButton(onClick = { mostrarDialogoPerfil = false }) { Text("Ahora no") }
             }
         )
+    }
+    com.opofit.miapp.ui.components.CoachMarkOverlay(
+        screenKey = "simulacro_v1",
+        steps = listOf(
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Simulacro oficial",
+                text = "Vas a hacer las pruebas físicas de tu oposición tal cual te las harán. Una a una, con cronómetro real."
+            ),
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Cronómetro automático",
+                text = "Para pruebas de tiempo (carrera, plancha), pulsa Iniciar y el cronómetro corre solo en segundo plano. Puedes salir de la app sin que se pare."
+            ),
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Tu nota se calcula sola",
+                text = "Al terminar verás tu nota media. Si supera la del perfil, te ofrece actualizar tus marcas. Queda guardado en historial."
+            )
+        )
+    )
     }
 }

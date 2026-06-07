@@ -7,4 +7,5 @@ const {
 router.post('/registrar', validarToken, progresoController.guardarEntrenamiento);
 router.get('/evolucion/:userId/:idEjercicio', validarToken, progresoController.verEvolucion);
 router.get('/sesiones/:userId', validarToken, progresoController.verHistorialSesiones);
+router.delete('/sesion/:id', validarToken, progresoController.borrarSesion);
 module.exports = router;

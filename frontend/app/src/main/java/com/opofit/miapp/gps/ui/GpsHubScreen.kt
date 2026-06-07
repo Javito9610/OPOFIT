@@ -46,7 +46,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.IconButton
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -226,6 +228,7 @@ fun GpsHubScreen(
         )
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -345,13 +348,18 @@ fun GpsHubScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             val connected = hrState is HrBleManager.State.Connected
+                            // weight(1f) + ellipsis evita que el chip empuje al botón
+                            // fuera de pantalla y rompa el texto en vertical.
                             AssistChip(
+                                modifier = Modifier.weight(1f, fill = false),
                                 onClick = { openHrDialog() },
                                 label = {
                                     val name = (hrState as? HrBleManager.State.Connected)?.device?.name
                                     Text(
                                         if (connected) "Pulso: ${name ?: "conectado"} ✓"
-                                        else "Conectar pulso (opcional)"
+                                        else "Conectar pulso (opcional)",
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                 },
                                 leadingIcon = {
@@ -366,7 +374,18 @@ fun GpsHubScreen(
                                 )
                             )
                             if (connected) {
-                                TextButton(onClick = { viewModel.disconnectHr() }) { Text("Desconectar") }
+                                // Antes: TextButton "Desconectar" → texto vertical al no caber.
+                                // Ahora: IconButton compacto con X. UX tipo Strava/Garmin.
+                                IconButton(
+                                    onClick = { viewModel.disconnectHr() },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Close,
+                                        contentDescription = "Desconectar pulso",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
                         }
                         if (tracking.active) {
@@ -473,6 +492,26 @@ fun GpsHubScreen(
             item { Spacer(Modifier.height(8.dp)) }
         }
         }
+    }
+
+    // Coach marks la primera vez en GPS.
+    com.opofit.miapp.ui.components.CoachMarkOverlay(
+        screenKey = "gps_hub_v1",
+        steps = listOf(
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Tu zona de GPS 🏃",
+                text = "Aquí registras carreras, paseos y rutas en bici al aire libre. Mapa en vivo, ritmo, distancia, kcal y pulso si conectas el reloj."
+            ),
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Conecta el pulso (opcional)",
+                text = "Pulsa «Conectar pulso» para enlazar tu reloj/banda. Si tienes Amazfit/Mi Band/Garmin, lo más cómodo es Health Connect."
+            ),
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Una vez conectado, se queda",
+                text = "Tu reloj se reconecta automáticamente la próxima vez que abras la app. No tienes que volver a buscarlo cada vez."
+            )
+        )
+    )
     }
 }
 

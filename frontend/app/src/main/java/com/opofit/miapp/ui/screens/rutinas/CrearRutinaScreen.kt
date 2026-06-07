@@ -218,6 +218,7 @@ fun CrearRutinaScreen(
     val entornoLabel = entornosOpciones.find { it.id == entornoSeleccionado }?.etiqueta
         ?: entornoSeleccionado.orEmpty()
 
+    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -525,5 +526,23 @@ fun CrearRutinaScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
+    }
+    com.opofit.miapp.ui.components.CoachMarkOverlay(
+        screenKey = "crear_rutina_v1",
+        steps = listOf(
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Crea tu rutina personal",
+                text = "Elige primero el enfoque (gym, casa, calistenia, crossfit…). La app te sugerirá ejercicios coherentes para ese entorno."
+            ),
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Añade ejercicios por grupo muscular",
+                text = "En cada card, abre el desplegable y filtra por músculo o escribe en el cuadro para buscar. Puedes añadir tantos como quieras."
+            ),
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Series, reps y descanso",
+                text = "Rellena los valores por ejercicio. Si dejas algo vacío al guardar, la app marca la fila en rojo para que la completes."
+            )
+        )
+    )
     }
 }

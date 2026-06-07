@@ -266,30 +266,46 @@ private fun RouteMap(activity: ActivitySummary) {
                 }
             }
             if (pts.size >= 2) {
-                Row(
+                // Antes: 3 textos en Row con SpaceBetween → "lento → rápido" se rompía
+                // vertical en pantallas estrechas. Ahora: leyenda en Column con la frase
+                // dividida a izq/der de las barras, todo siempre horizontal.
+                Column(
                     Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
                         "Color por velocidad",
                         style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        SpeedPalette.forEach { c ->
-                            Box(
-                                Modifier
-                                    .size(width = 24.dp, height = 6.dp)
-                                    .background(c, MaterialTheme.shapes.small)
-                            )
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "lento",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            SpeedPalette.forEach { c ->
+                                Box(
+                                    Modifier
+                                        .size(width = 22.dp, height = 6.dp)
+                                        .background(c, MaterialTheme.shapes.small)
+                                )
+                            }
                         }
+                        Text(
+                            "rápido",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1
+                        )
                     }
-                    Text(
-                        "lento → rápido",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
         }

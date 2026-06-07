@@ -138,6 +138,7 @@ fun HistorialScreen(
         }
     }
 
+    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -203,6 +204,20 @@ fun HistorialScreen(
             }
         }
         }
+    }
+    com.opofit.miapp.ui.components.CoachMarkOverlay(
+        screenKey = "historial_v1",
+        steps = listOf(
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Todo lo que has hecho",
+                text = "Aquí ves tus sesiones de entreno, simulacros y rutas GPS, juntos en una única línea de tiempo."
+            ),
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Toca para ver detalle",
+                text = "Cada sesión abre una vista con gráficas. Si es de OPO, también te muestra qué pilar trabajaste."
+            )
+        )
+    )
     }
 }
 

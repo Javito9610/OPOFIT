@@ -124,6 +124,7 @@ fun PerfilScreen(
         }
     }
 
+    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
         topBar = {
@@ -422,5 +423,23 @@ fun PerfilScreen(
             }
             }
         }
+    }
+    com.opofit.miapp.ui.components.CoachMarkOverlay(
+        screenKey = "perfil_v1",
+        steps = listOf(
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Tu perfil",
+                text = "Tus marcas oficiales, peso, altura y nivel calculado. Cuanto más completo esté, mejor se adapta tu plan."
+            ),
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Marcas = nota = plan",
+                text = "Registra tus marcas reales en cada prueba oficial. La app calcula tu nota media con el baremo y ajusta tu plan al nivel correcto."
+            ),
+            com.opofit.miapp.ui.components.CoachStep(
+                title = "Comparte y compite",
+                text = "Si activas «Perfil público» en Ajustes, otros opositores pueden ver tu nota en el ranking. Puedes desactivarlo cuando quieras."
+            )
+        )
+    )
     }
 }

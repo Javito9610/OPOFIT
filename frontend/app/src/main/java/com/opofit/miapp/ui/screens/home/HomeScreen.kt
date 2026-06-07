@@ -66,6 +66,8 @@ import androidx.compose.ui.unit.dp
 import com.opofit.miapp.ui.utils.isCompactScreen
 import com.opofit.miapp.ui.utils.isVeryCompactScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.opofit.miapp.ui.components.CoachMarkOverlay
+import com.opofit.miapp.ui.components.CoachStep
 import com.opofit.miapp.ui.components.ElevatedCard
 import com.opofit.miapp.ui.components.EntrenoHoyHeroCard
 import com.opofit.miapp.ui.components.OpoFitLogo
@@ -141,6 +143,7 @@ fun HomeScreen(
         }
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -626,6 +629,41 @@ fun HomeScreen(
                 }
             }
         }
+    }
+
+    // Coach marks la primera vez: 3 burbujas explicando lo esencial.
+    // Se guarda en SharedPrefs y nunca más vuelven a aparecer (a menos que el
+    // usuario resetee desde Ajustes → "Ver tutorial otra vez").
+    CoachMarkOverlay(
+        screenKey = if (esFitness) "home_fitness_v1" else "home_opo_v1",
+        steps = if (esFitness) listOf(
+            CoachStep(
+                title = "Hola, atleta 👋",
+                text = "Aquí ves tu progreso: tu última actividad, tu plan y accesos rápidos. Tira hacia abajo para refrescar."
+            ),
+            CoachStep(
+                title = "Empieza una actividad",
+                text = "Pulsa «Empezar carrera» para abrir el GPS y registrar carrera, paseo o bici con mapa en vivo, ritmo y pulso."
+            ),
+            CoachStep(
+                title = "Comunidad y rutinas",
+                text = "Crea tu rutina personalizada o entra a la comunidad: chat con amigos, grupos por intereses y feed de actividades."
+            )
+        ) else listOf(
+            CoachStep(
+                title = "Hola, opositor 👋",
+                text = "Esta es tu pantalla principal. Aquí verás tu plan de hoy, tu progreso y accesos a lo importante."
+            ),
+            CoachStep(
+                title = "Tu plan se adapta a ti",
+                text = "Cuanto más entrenes y más marcas registres en tu perfil, mejor se ajusta el plan a tus puntos débiles. La sesión de hoy aparece arriba."
+            ),
+            CoachStep(
+                title = "Simulacro y ranking",
+                text = "Practica con un simulacro oficial cuando estés listo. Tu nota aparece en el ranking de tu oposición (puedes desactivarlo en Ajustes)."
+            )
+        )
+    )
     }
 }
 
