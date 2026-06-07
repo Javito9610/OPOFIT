@@ -34,6 +34,23 @@
     <queries>
         <package android:name="com.google.android.apps.healthdata" />
         <package android:name="com.google.android.apps.fitness" />
+        <!-- Android 11+ exige declarar las apps que vamos a "ver" con resolveActivity.
+             Sin esto, shareInstagramStory/shareWhatsApp creían que la app no estaba
+             instalada y caían al chooser genérico aunque sí lo estuviera. -->
+        <package android:name="com.instagram.android" />
+        <package android:name="com.whatsapp" />
+        <package android:name="com.whatsapp.w4b" />
+        <package android:name="com.facebook.katana" />
+        <package android:name="com.facebook.orca" />
+        <package android:name="com.snapchat.android" />
+        <package android:name="com.twitter.android" />
+        <package android:name="com.zhiliaoapp.musically" />
+        <package android:name="org.telegram.messenger" />
+        <!-- Para el chooser genérico de "Más apps" -->
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="image/*" />
+        </intent>
         <intent>
             <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
         </intent>

@@ -546,8 +546,9 @@ private fun HrConnectDialog(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    "Banda de pecho o reloj compatible (Polar, Wahoo, Garmin…). " +
-                        "Si no aparece tu dispositivo, prueba «Búsqueda amplia».",
+                    "Buscar bandas/relojes que emiten pulso (Polar, Wahoo, Garmin con «emisión» activa, " +
+                        "Mi Band/Amazfit con «Broadcast HR» activado en Zepp). Si no aparece tu dispositivo, " +
+                        "pulsa «Mostrar todo el Bluetooth» y elígelo manualmente.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -674,14 +675,23 @@ private fun HrConnectDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Button(
+                        enabled = hrState !is HrBleManager.State.Scanning,
                         onClick = { viewModel.startHrScan() },
                         modifier = Modifier.weight(1f)
-                    ) { Text("Buscar") }
+                    ) { Text("Buscar pulso") }
                     OutlinedButton(
+                        enabled = hrState !is HrBleManager.State.Scanning,
                         onClick = { viewModel.startHrScanBroad() },
                         modifier = Modifier.weight(1f)
-                    ) { Text("Búsqueda amplia") }
+                    ) { Text("Mostrar todo el Bluetooth") }
                 }
+                Text(
+                    "• «Buscar pulso»: solo dispositivos que emiten pulso (recomendado).\n" +
+                        "• «Mostrar todo el Bluetooth»: lista cualquier dispositivo cercano, " +
+                        "útil si tu reloj no advertise pulso.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 if (hrState is HrBleManager.State.Connected) {
                     OutlinedButton(
                         onClick = { viewModel.disconnectHr() },

@@ -107,6 +107,20 @@ object ShareCardExport {
         context.startActivity(Intent.createChooser(intent, "Compartir en…"))
     }
 
+    /** Comprueba si una app concreta está instalada (Android 11+ requiere queries en el manifest). */
+    fun isAppInstalled(context: Context, packageName: String): Boolean {
+        return try {
+            context.packageManager.getPackageInfo(packageName, 0)
+            true
+        } catch (_: android.content.pm.PackageManager.NameNotFoundException) {
+            false
+        }
+    }
+
+    fun isInstagramInstalled(context: Context): Boolean = isAppInstalled(context, "com.instagram.android")
+    fun isWhatsAppInstalled(context: Context): Boolean =
+        isAppInstalled(context, "com.whatsapp") || isAppInstalled(context, "com.whatsapp.w4b")
+
     fun shareInstagramStory(context: Context, bitmap: Bitmap): Boolean {
         val uri = saveBitmap(context, bitmap)
         val intent = Intent("com.instagram.share.ADD_TO_STORY").apply {

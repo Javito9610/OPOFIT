@@ -16,11 +16,13 @@ import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelUuid
 import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -99,13 +101,52 @@ class HrBleManager(private val context: Context) {
         return loc
     }
 
+    /** Servicios de localización del sistema activos (no permiso, sino el toggle global).
+     *  BLE scan devuelve cero resultados si está apagado en Android <12. En 12+ no hace falta
+     *  si declaras BLUETOOTH_SCAN con neverForLocation (ya lo hacemos), pero algunos OEM (Xiaomi,
+     *  Huawei) siguen exigiéndolo de facto. Por eso lo comprobamos en cualquier caso. */
+    fun hasLocationServices(): Boolean {
+        val lm = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return false
+        return LocationManagerCompat.isLocationEnabled(lm)
+    }
+
+    /** Heurística para detectar emulador (Android Studio AVD, Genymotion).
+     *  Los emuladores normales NO tienen Bluetooth real funcional. */
+    fun isProbablyEmulator(): Boolean {
+        val fingerprint = Build.FINGERPRINT.lowercase()
+        val model = Build.MODEL.lowercase()
+        val device = Build.DEVICE.lowercase()
+        return fingerprint.contains("generic") ||
+            fingerprint.contains("emulator") ||
+            fingerprint.contains("sdk_") ||
+            model.contains("emulator") ||
+            model.contains("android sdk") ||
+            device.contains("generic") ||
+            Build.HARDWARE.contains("goldfish") ||
+            Build.HARDWARE.contains("ranchu")
+    }
+
     fun startScan(broad: Boolean = false) {
+        if (isProbablyEmulator()) {
+            _state.value = State.Error(
+                "Estás en el emulador. Los emuladores no tienen Bluetooth real, así que no aparecerán dispositivos. " +
+                    "Prueba la app en un móvil físico."
+            )
+            return
+        }
         if (!hasBluetooth()) {
             _state.value = State.Error("Activa el Bluetooth en el sistema")
             return
         }
         if (!hasPermissions()) {
             _state.value = State.Error("Faltan permisos de Bluetooth")
+            return
+        }
+        if (!hasLocationServices()) {
+            _state.value = State.Error(
+                "Activa la ubicación del sistema. Android exige tenerla encendida para escanear Bluetooth, " +
+                    "aunque OpoFit no la use para localizarte."
+            )
             return
         }
         stopScan()
@@ -131,7 +172,8 @@ class HrBleManager(private val context: Context) {
             }
 
             override fun onScanFailed(errorCode: Int) {
-                _state.value = State.Error("Escaneo BLE fallo ($errorCode)")
+                cancelScanTimeout()
+                _state.value = State.Error("Escaneo BLE falló ($errorCode)")
             }
         }
         scanCallback = callback
@@ -143,6 +185,39 @@ class HrBleManager(private val context: Context) {
                 .build()
             scanner.startScan(listOf(filter), settings, callback)
         }
+        // Auto-stop a los 20s para no quedarnos buscando indefinidamente: si no
+        // encontró nada damos feedback claro al usuario en vez de la rueda infinita.
+        scheduleScanTimeout(broad)
+    }
+
+    private var scanTimeoutRunnable: Runnable? = null
+    private fun scheduleScanTimeout(broad: Boolean) {
+        cancelScanTimeout()
+        val r = Runnable {
+            if (_state.value is State.Scanning) {
+                stopScan()
+                if (_found.value.isEmpty()) {
+                    val msg = if (broad) {
+                        "No se encontró ningún dispositivo Bluetooth cerca. " +
+                            "Comprueba que el reloj/banda esté encendido, emparejado en Ajustes → Bluetooth " +
+                            "y a menos de 1 metro."
+                    } else {
+                        "No se encontró ninguna banda/reloj emitiendo pulso. " +
+                            "Si tienes Mi Band/Amazfit, activa «Broadcast HR» en Zepp. " +
+                            "Si no, prueba «Búsqueda amplia»."
+                    }
+                    _state.value = State.Error(msg)
+                } else {
+                    _state.value = State.Idle
+                }
+            }
+        }
+        scanTimeoutRunnable = r
+        mainHandler.postDelayed(r, 20_000L)
+    }
+    private fun cancelScanTimeout() {
+        scanTimeoutRunnable?.let { mainHandler.removeCallbacks(it) }
+        scanTimeoutRunnable = null
     }
 
     private fun advertisesHr(result: ScanResult): Boolean {
@@ -152,6 +227,7 @@ class HrBleManager(private val context: Context) {
     }
 
     fun stopScan() {
+        cancelScanTimeout()
         scanCallback?.let { adapter?.bluetoothLeScanner?.stopScan(it) }
         scanCallback = null
         if (_state.value is State.Scanning) _state.value = State.Idle

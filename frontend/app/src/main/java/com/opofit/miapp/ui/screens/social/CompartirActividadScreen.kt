@@ -181,65 +181,83 @@ fun CompartirActividadScreen(
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold
             )
+            // Detectamos instaladas en tiempo de composición: el chip muestra
+            // "no instalada" si no, y el botón cae directo al chooser genérico.
+            val instagramOk = remember { ShareCardExport.isInstagramInstalled(context) }
+            val whatsappOk = remember { ShareCardExport.isWhatsAppInstalled(context) }
+            if (!instagramOk || !whatsappOk) {
+                Text(
+                    "Algunas apps no están instaladas en este dispositivo. " +
+                            "Al pulsar el botón se abrirá el selector del sistema con las opciones disponibles.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             if (sharing) {
                 CircularProgressIndicator(Modifier.size(28.dp))
             } else {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = {
-                        scope.launch {
-                            sharing = true
-                            try {
-                                val bitmap = ShareCardExport.renderBitmap(context) {
-                                    ShareCardPreview(
-                                        titulo = titulo,
-                                        stats = pending.stats,
-                                        fotoFondoUri = fotoUri,
-                                        fotoFondoBitmap = fotoBitmap,
-                                        usarFoto = usarFoto,
-                                        routePoints = pending.routePoints,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-                                withContext(Dispatchers.Main) {
-                                    if (!ShareCardExport.shareInstagramStory(context, bitmap)) {
-                                        ShareCardExport.shareGeneric(context, bitmap, titulo)
+                    OutlinedButton(
+                        enabled = !sharing,
+                        onClick = {
+                            scope.launch {
+                                sharing = true
+                                try {
+                                    val bitmap = ShareCardExport.renderBitmap(context) {
+                                        ShareCardPreview(
+                                            titulo = titulo,
+                                            stats = pending.stats,
+                                            fotoFondoUri = fotoUri,
+                                            fotoFondoBitmap = fotoBitmap,
+                                            usarFoto = usarFoto,
+                                            routePoints = pending.routePoints,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
                                     }
+                                    withContext(Dispatchers.Main) {
+                                        if (!instagramOk || !ShareCardExport.shareInstagramStory(context, bitmap)) {
+                                            ShareCardExport.shareGeneric(context, bitmap, titulo)
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    error = e.message ?: "Error al compartir"
+                                } finally {
+                                    sharing = false
                                 }
-                            } catch (e: Exception) {
-                                error = e.message ?: "Error al compartir"
-                            } finally {
-                                sharing = false
                             }
                         }
-                    }) { Text("Instagram Story") }
+                    ) { Text(if (instagramOk) "Instagram Story" else "Instagram (no instalada)") }
 
-                    OutlinedButton(onClick = {
-                        scope.launch {
-                            sharing = true
-                            try {
-                                val bitmap = ShareCardExport.renderBitmap(context) {
-                                    ShareCardPreview(
-                                        titulo = titulo,
-                                        stats = pending.stats,
-                                        fotoFondoUri = fotoUri,
-                                        fotoFondoBitmap = fotoBitmap,
-                                        usarFoto = usarFoto,
-                                        routePoints = pending.routePoints,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-                                withContext(Dispatchers.Main) {
-                                    if (!ShareCardExport.shareWhatsApp(context, bitmap, titulo)) {
-                                        ShareCardExport.shareGeneric(context, bitmap, titulo)
+                    OutlinedButton(
+                        enabled = !sharing,
+                        onClick = {
+                            scope.launch {
+                                sharing = true
+                                try {
+                                    val bitmap = ShareCardExport.renderBitmap(context) {
+                                        ShareCardPreview(
+                                            titulo = titulo,
+                                            stats = pending.stats,
+                                            fotoFondoUri = fotoUri,
+                                            fotoFondoBitmap = fotoBitmap,
+                                            usarFoto = usarFoto,
+                                            routePoints = pending.routePoints,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
                                     }
+                                    withContext(Dispatchers.Main) {
+                                        if (!whatsappOk || !ShareCardExport.shareWhatsApp(context, bitmap, titulo)) {
+                                            ShareCardExport.shareGeneric(context, bitmap, titulo)
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    error = e.message ?: "Error al compartir"
+                                } finally {
+                                    sharing = false
                                 }
-                            } catch (e: Exception) {
-                                error = e.message ?: "Error al compartir"
-                            } finally {
-                                sharing = false
                             }
                         }
-                    }) { Text("WhatsApp") }
+                    ) { Text(if (whatsappOk) "WhatsApp" else "WhatsApp (no instalada)") }
 
                     Button(onClick = {
                         scope.launch {
