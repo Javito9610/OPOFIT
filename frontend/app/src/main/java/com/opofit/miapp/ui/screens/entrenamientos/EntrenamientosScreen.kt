@@ -26,6 +26,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.Button
@@ -911,11 +912,16 @@ fun EntrenamientosScreen(
                                                 avisoMsg = "No se pudo generar el archivo para el reloj."
                                             }
                                         },
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier.weight(1f),
+                                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 8.dp)
                                     ) {
                                         Icon(Icons.Filled.UploadFile, null, Modifier.size(16.dp))
                                         Spacer(Modifier.size(4.dp))
-                                        Text("Enviar plan", style = MaterialTheme.typography.labelMedium)
+                                        Text(
+                                            "Enviar",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            maxLines = 1
+                                        )
                                     }
                                     OutlinedButton(
                                         onClick = {
@@ -939,7 +945,8 @@ fun EntrenamientosScreen(
                                             }
                                         },
                                         modifier = Modifier.weight(1f),
-                                        enabled = !importingReloj
+                                        enabled = !importingReloj,
+                                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 8.dp)
                                     ) {
                                         if (importingReloj) {
                                             CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
@@ -947,16 +954,26 @@ fun EntrenamientosScreen(
                                             Icon(Icons.Filled.Sync, null, Modifier.size(16.dp))
                                         }
                                         Spacer(Modifier.size(4.dp))
-                                        Text("Sincronizar", style = MaterialTheme.typography.labelMedium)
+                                        Text(
+                                            "Sincro",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            maxLines = 1
+                                        )
                                     }
                                     OutlinedButton(
                                         onClick = { importFileLauncher.launch("*/*") },
                                         enabled = !importingReloj,
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier.weight(1f),
+                                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 8.dp)
                                     ) {
-                                        Icon(Icons.Filled.UploadFile, null, Modifier.size(16.dp))
+                                        // Icono de import (flecha hacia abajo / dentro), no export.
+                                        Icon(Icons.Filled.FileDownload, null, Modifier.size(16.dp))
                                         Spacer(Modifier.size(4.dp))
-                                        Text("Archivo", style = MaterialTheme.typography.labelMedium)
+                                        Text(
+                                            "Subir",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            maxLines = 1
+                                        )
                                     }
                                 }
                             }

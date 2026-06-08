@@ -241,11 +241,11 @@
               "nombre_dia": "Martes",
               "orden": 2,
               "enfoque": "RESISTENCIA",
-              "titulo": "HIIT 30:30 — 12 reps al 110 % vVO₂máx · R activo 5'. Bloque 2: 4 km Z2",
-              "descripcion": "HIIT 30:30 — 12 reps al 110 % vVO₂máx · R activo 5'. Bloque 2: 4 km Z2",
+              "titulo": "HIIT 30:30 — 12 reps al 110 % ritmo VO2max · R activo 5'. Bloque 2: 4 km Z2",
+              "descripcion": "HIIT 30:30 — 12 reps al 110 % ritmo VO2max · R activo 5'. Bloque 2: 4 km Z2",
               "ejercicios": [
                 {
-                  "nombre": "HIIT 30:30 — 12 reps al 110 % vVO₂máx",
+                  "nombre": "HIIT 30:30 — 12 reps al 110 % ritmo VO2max",
                   "series": 1,
                   "repeticiones": 10,
                   "descanso": 90,
@@ -759,11 +759,11 @@
               "nombre_dia": "Martes",
               "orden": 2,
               "enfoque": "RESISTENCIA",
-              "titulo": "HIIT 30:30 — 10 reps al 110 % vVO₂máx · 3 km Z2 final",
-              "descripcion": "HIIT 30:30 — 10 reps al 110 % vVO₂máx · 3 km Z2 final",
+              "titulo": "HIIT 30:30 — 10 reps al 110 % ritmo VO2max · 3 km Z2 final",
+              "descripcion": "HIIT 30:30 — 10 reps al 110 % ritmo VO2max · 3 km Z2 final",
               "ejercicios": [
                 {
-                  "nombre": "HIIT 30:30 — 10 reps al 110 % vVO₂máx",
+                  "nombre": "HIIT 30:30 — 10 reps al 110 % ritmo VO2max",
                   "series": 1,
                   "repeticiones": 10,
                   "descanso": 90,

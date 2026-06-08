@@ -4,9 +4,9 @@ const db = require('../config/db');
 const EntornoEntreno = require('../utils/EntornoEntreno');
 const EjercicioMetadataService = require('./EjercicioMetadataService');
 
-// v5: segunda ampliación con +118 (atletismo, natación, bomberos, CrossFit, cardio
-// variado, prevención lesiones, estiramientos). Total ~756 ejercicios.
-const BANCO_VERSION = 5;
+// v6: saneamiento — eliminadas 17 series surrealistas (5000m × 12, etc.) y
+// renombrado vVO₂máx → ritmo VO2max para legibilidad. Total ~739 ejercicios.
+const BANCO_VERSION = 6;
 
 function resolveJsonPath() {
   const candidates = [

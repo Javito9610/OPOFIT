@@ -1956,24 +1956,6 @@
       "tipo_ilustracion": "RUN"
     },
     {
-      "nombre": "Series 1200 m x 10",
-      "pilar": "RESISTENCIA",
-      "grupo_muscular": "Cardio",
-      "equipamiento": "Pista",
-      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
-      "entornos": "PISTA,MIXTO",
-      "tipo_ilustracion": "RUN"
-    },
-    {
-      "nombre": "Series 1200 m x 12",
-      "pilar": "RESISTENCIA",
-      "grupo_muscular": "Cardio",
-      "equipamiento": "Pista",
-      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
-      "entornos": "PISTA,MIXTO",
-      "tipo_ilustracion": "RUN"
-    },
-    {
       "nombre": "Series 1600 m x 3",
       "pilar": "RESISTENCIA",
       "grupo_muscular": "Cardio",
@@ -2019,24 +2001,6 @@
       "tipo_ilustracion": "RUN"
     },
     {
-      "nombre": "Series 1600 m x 10",
-      "pilar": "RESISTENCIA",
-      "grupo_muscular": "Cardio",
-      "equipamiento": "Pista",
-      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
-      "entornos": "PISTA,MIXTO",
-      "tipo_ilustracion": "RUN"
-    },
-    {
-      "nombre": "Series 1600 m x 12",
-      "pilar": "RESISTENCIA",
-      "grupo_muscular": "Cardio",
-      "equipamiento": "Pista",
-      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
-      "entornos": "PISTA,MIXTO",
-      "tipo_ilustracion": "RUN"
-    },
-    {
       "nombre": "Series 2000 m x 3",
       "pilar": "RESISTENCIA",
       "grupo_muscular": "Cardio",
@@ -2073,33 +2037,6 @@
       "tipo_ilustracion": "RUN"
     },
     {
-      "nombre": "Series 2000 m x 8",
-      "pilar": "RESISTENCIA",
-      "grupo_muscular": "Cardio",
-      "equipamiento": "Pista",
-      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
-      "entornos": "PISTA,MIXTO",
-      "tipo_ilustracion": "RUN"
-    },
-    {
-      "nombre": "Series 2000 m x 10",
-      "pilar": "RESISTENCIA",
-      "grupo_muscular": "Cardio",
-      "equipamiento": "Pista",
-      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
-      "entornos": "PISTA,MIXTO",
-      "tipo_ilustracion": "RUN"
-    },
-    {
-      "nombre": "Series 2000 m x 12",
-      "pilar": "RESISTENCIA",
-      "grupo_muscular": "Cardio",
-      "equipamiento": "Pista",
-      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
-      "entornos": "PISTA,MIXTO",
-      "tipo_ilustracion": "RUN"
-    },
-    {
       "nombre": "Series 3000 m x 3",
       "pilar": "RESISTENCIA",
       "grupo_muscular": "Cardio",
@@ -2127,97 +2064,7 @@
       "tipo_ilustracion": "RUN"
     },
     {
-      "nombre": "Series 3000 m x 6",
-      "pilar": "RESISTENCIA",
-      "grupo_muscular": "Cardio",
-      "equipamiento": "Pista",
-      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
-      "entornos": "PISTA,MIXTO",
-      "tipo_ilustracion": "RUN"
-    },
-    {
-      "nombre": "Series 3000 m x 8",
-      "pilar": "RESISTENCIA",
-      "grupo_muscular": "Cardio",
-      "equipamiento": "Pista",
-      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
-      "entornos": "PISTA,MIXTO",
-      "tipo_ilustracion": "RUN"
-    },
-    {
-      "nombre": "Series 3000 m x 10",
-      "pilar": "RESISTENCIA",
-      "grupo_muscular": "Cardio",
-      "equipamiento": "Pista",
-      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
-      "entornos": "PISTA,MIXTO",
-      "tipo_ilustracion": "RUN"
-    },
-    {
-      "nombre": "Series 3000 m x 12",
-      "pilar": "RESISTENCIA",
-      "grupo_muscular": "Cardio",
-      "equipamiento": "Pista",
-      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
-      "entornos": "PISTA,MIXTO",
-      "tipo_ilustracion": "RUN"
-    },
-    {
       "nombre": "Series 5000 m x 3",
-      "pilar": "RESISTENCIA",
-      "grupo_muscular": "Cardio",
-      "equipamiento": "Pista",
-      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
-      "entornos": "PISTA,MIXTO",
-      "tipo_ilustracion": "RUN"
-    },
-    {
-      "nombre": "Series 5000 m x 4",
-      "pilar": "RESISTENCIA",
-      "grupo_muscular": "Cardio",
-      "equipamiento": "Pista",
-      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
-      "entornos": "PISTA,MIXTO",
-      "tipo_ilustracion": "RUN"
-    },
-    {
-      "nombre": "Series 5000 m x 5",
-      "pilar": "RESISTENCIA",
-      "grupo_muscular": "Cardio",
-      "equipamiento": "Pista",
-      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
-      "entornos": "PISTA,MIXTO",
-      "tipo_ilustracion": "RUN"
-    },
-    {
-      "nombre": "Series 5000 m x 6",
-      "pilar": "RESISTENCIA",
-      "grupo_muscular": "Cardio",
-      "equipamiento": "Pista",
-      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
-      "entornos": "PISTA,MIXTO",
-      "tipo_ilustracion": "RUN"
-    },
-    {
-      "nombre": "Series 5000 m x 8",
-      "pilar": "RESISTENCIA",
-      "grupo_muscular": "Cardio",
-      "equipamiento": "Pista",
-      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
-      "entornos": "PISTA,MIXTO",
-      "tipo_ilustracion": "RUN"
-    },
-    {
-      "nombre": "Series 5000 m x 10",
-      "pilar": "RESISTENCIA",
-      "grupo_muscular": "Cardio",
-      "equipamiento": "Pista",
-      "instrucciones_tecnicas": "Ritmo umbral, recuperación 2-3 min.",
-      "entornos": "PISTA,MIXTO",
-      "tipo_ilustracion": "RUN"
-    },
-    {
-      "nombre": "Series 5000 m x 12",
       "pilar": "RESISTENCIA",
       "grupo_muscular": "Cardio",
       "equipamiento": "Pista",
