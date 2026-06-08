@@ -23,6 +23,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -112,9 +113,14 @@ fun RutinasLibresScreen(
             )
         },
         floatingActionButton = {
+            // navigationBarsPadding + offset adicional para que no toque el borde
+            // del móvil (gesture bar de Android 10+).
             FloatingActionButton(
                 onClick = onNavigateToCrearRutina,
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .navigationBarsPadding()
+                    .padding(bottom = 12.dp)
             ) {
                 Icon(Icons.Filled.Add, contentDescription = "Crear rutina", tint = MaterialTheme.colorScheme.onPrimary)
             }

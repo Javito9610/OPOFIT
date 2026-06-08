@@ -74,6 +74,9 @@ fun CompartirActividadScreen(
 
     var titulo by remember { mutableStateOf(pending?.tituloSugerido.orEmpty()) }
     var texto by remember { mutableStateOf("") }
+    // Estado del editor compartido entre el preview en pantalla y el render a bitmap.
+    // Sin esto, las posiciones que mueve el usuario se perdían al exportar.
+    val editorState = com.opofit.miapp.ui.components.rememberShareEditorState()
     var publico by remember { mutableStateOf(false) }
     var fotoUri by remember { mutableStateOf<Uri?>(null) }
     var fotoBitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -137,7 +140,9 @@ fun CompartirActividadScreen(
                 fotoFondoBitmap = null,
                 usarFoto = usarFoto,
                 routePoints = pending.routePoints,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                editing = true,
+                editorState = editorState
             )
 
             Row(
@@ -211,7 +216,9 @@ fun CompartirActividadScreen(
                                             fotoFondoBitmap = fotoBitmap,
                                             usarFoto = usarFoto,
                                             routePoints = pending.routePoints,
-                                            modifier = Modifier.fillMaxWidth()
+                                            modifier = Modifier.fillMaxWidth(),
+                                            editing = false,
+                                            editorState = editorState
                                         )
                                     }
                                     withContext(Dispatchers.Main) {
@@ -242,7 +249,9 @@ fun CompartirActividadScreen(
                                             fotoFondoBitmap = fotoBitmap,
                                             usarFoto = usarFoto,
                                             routePoints = pending.routePoints,
-                                            modifier = Modifier.fillMaxWidth()
+                                            modifier = Modifier.fillMaxWidth(),
+                                            editing = false,
+                                            editorState = editorState
                                         )
                                     }
                                     withContext(Dispatchers.Main) {

@@ -55,14 +55,17 @@ const getInfoOposiciones = async (req, res) => {
 };
 const getNoticiasRss = async (req, res) => {
   try {
-    const {
-      id
-    } = req.params;
+    const { id } = req.params;
     if (!id) {
       return res.status(400).json({
         ok: false,
         msg: "ID de oposición no proporcionado"
       });
+    }
+    // ?refresh=true → invalida cache y fuerza descarga fresca de los feeds.
+    // Útil para pull-to-refresh del usuario y para garantizar noticias actuales.
+    if (req.query?.refresh === 'true') {
+      RssService.invalidarCache(id);
     }
     const noticias = await RssService.obtenerNoticiasRss(id);
     res.status(200).json({

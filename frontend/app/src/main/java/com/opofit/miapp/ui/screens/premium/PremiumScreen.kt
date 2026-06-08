@@ -59,10 +59,24 @@ fun PremiumScreen(onNavigateBack: () -> Unit) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
+                actions = {
+                    com.opofit.miapp.ui.components.InfoTip(
+                        title = "¿Qué incluye Premium?",
+                        text = "Premium desbloquea las funciones más avanzadas:\n\n" +
+                            "• Planes nivel INTERMEDIO y AVANZADO (gratis es BÁSICO).\n" +
+                            "• Baremos completos de TODAS las pruebas (gratis muestra solo 4 filas).\n" +
+                            "• Historial completo de simulacros.\n" +
+                            "• Ranking ampliado (más opositores).\n" +
+                            "• IA que diseña tu plan adaptado a tu material y nivel.\n\n" +
+                            "Las funciones gratis siguen siendo completamente funcionales: " +
+                            "plan, perfil, marcas, simulacro con nota, comunidad y GPS."
+                    )
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }

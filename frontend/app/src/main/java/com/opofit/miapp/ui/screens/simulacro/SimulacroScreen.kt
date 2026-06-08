@@ -121,10 +121,23 @@ fun SimulacroScreen(
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
+                actions = {
+                    com.opofit.miapp.ui.components.InfoTip(
+                        title = "¿Qué es el simulacro?",
+                        text = "Reproduce las pruebas físicas oficiales de tu oposición tal cual te las harán el día del examen.\n\n" +
+                            "Por cada prueba, registras tu marca (tiempo o reps). La app calcula tu nota con el baremo oficial.\n\n" +
+                            "Al terminar puedes:\n" +
+                            "• Guardar el simulacro en historial.\n" +
+                            "• Aplicar las marcas a tu PERFIL si mejoraste (actualiza ranking).\n" +
+                            "• Compartir el resultado.\n\n" +
+                            "El cronómetro funciona en 2º plano: puedes salir de la app sin que se pare."
+                    )
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }

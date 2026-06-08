@@ -135,10 +135,22 @@ fun RankingScreen(
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
+                actions = {
+                    com.opofit.miapp.ui.components.InfoTip(
+                        title = "¿Cómo funciona el ranking?",
+                        text = "El ranking se ordena por NOTA MEDIA de cada opositor (0-10), calculada con el " +
+                            "baremo oficial de tu oposición.\n\n" +
+                            "Solo apareces aquí si has activado «Perfil público» en Ajustes → Privacidad. " +
+                            "Solo ves opositores de TU MISMA oposición.\n\n" +
+                            "Tu nota se actualiza cuando registras nuevas marcas en el perfil o haces un simulacro " +
+                            "y aplicas las marcas a tu perfil."
+                    )
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }

@@ -5743,6 +5743,1068 @@
       "entornos": "CASA,GYM,CALISTENIA,PISTA,MIXTO",
       "tipo_ilustracion": "GENERAL",
       "instrucciones_tecnicas": "Combo: zancada + rotación + abrir cadera + isquios. 8/lado. Calentamiento completo."
+    },
+    {
+      "nombre": "Skipping rodillas altas en sitio rápido",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "—",
+      "entornos": "PISTA,CASA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "En sitio, rodillas a la cintura, tempo máximo. 4×15s con 30s descanso. Activación neural."
+    },
+    {
+      "nombre": "Skipping con avance",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "—",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "Avanzando 20m, rodillas altas. Foco técnica de zancada. 4 series."
+    },
+    {
+      "nombre": "Talones al glúteo en sitio",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "—",
+      "entornos": "PISTA,CASA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "En sitio, tocar talón con glúteo alternando. 30s tempo alto. 4 series."
+    },
+    {
+      "nombre": "Pasos cortos rápidos",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "—",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "Pasos muy cortos y rápidos durante 20m. Foco frecuencia. 4 series."
+    },
+    {
+      "nombre": "Salidas desde tacos",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Tacos salida",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "Salida explosiva desde tacos hasta los 30m. 5 series con 2 min descanso."
+    },
+    {
+      "nombre": "Salidas tumbado boca abajo",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "—",
+      "entornos": "PISTA,CASA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "Tumbado boca abajo. A señal levanta y sprint 20m. Mide reacción."
+    },
+    {
+      "nombre": "Salidas desde sentado",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "—",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "Sentado, a señal sprint 30m. Trabaja reactividad y aceleración."
+    },
+    {
+      "nombre": "Salidas con cambio de dirección",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Conos",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "Sprint 10m, frenada con squat, vuelta sprint. 6 series."
+    },
+    {
+      "nombre": "Sprint en cuesta 30m",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "—",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "Sprint 30m en cuesta 6-8%. 6 series con 90s descanso. Potencia muscular."
+    },
+    {
+      "nombre": "Sprint en cuesta abajo",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "—",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "Cuesta 3-5% bajada. Sprint 30m. Mejora frecuencia de zancada. 5 series."
+    },
+    {
+      "nombre": "Carrera con paracaídas",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Paracaídas",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "Sprint 30m con paracaídas. Sobrecarga resistencia. 6 series con 2 min descanso."
+    },
+    {
+      "nombre": "Carrera con trineo lastrado",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Trineo",
+      "entornos": "PISTA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "Arrastra trineo con peso (10-15% peso corporal) durante 20-30m. 5 series."
+    },
+    {
+      "nombre": "Series 100m al 90%",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "—",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "6×100m al 90% con 90s descanso. Trabajo de tolerancia láctica."
+    },
+    {
+      "nombre": "Series 200m al 80%",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "—",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "6×200m al 80% con 2 min descanso. Capacidad anaeróbica."
+    },
+    {
+      "nombre": "Series 400m al ritmo objetivo",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "—",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "5×400m al ritmo objetivo de 1000m. 2 min descanso. VO2max."
+    },
+    {
+      "nombre": "Series 600m",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "—",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "5×600m a ritmo 2000m. Trabajo umbral. 2-3 min descanso."
+    },
+    {
+      "nombre": "Series 800m a ritmo objetivo",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "—",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "4×800m a ritmo 2000m objetivo. 2 min descanso. Resistencia específica."
+    },
+    {
+      "nombre": "Series 1000m",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "—",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "4×1000m al 95% VO2max (Helgerud). 90s descanso. Para mejorar VO2max."
+    },
+    {
+      "nombre": "Series 2000m",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "—",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "3×2000m a ritmo de competición de 5km. 3 min descanso. Capacidad aeróbica."
+    },
+    {
+      "nombre": "Test 1000m máximo",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "—",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "Solo. Calienta bien, 1000m al máximo. Anota tiempo cada 2 semanas."
+    },
+    {
+      "nombre": "Test 2000m máximo",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "—",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "Solo. 2000m al máximo. Test GC clásico. Tiempo de referencia."
+    },
+    {
+      "nombre": "Fartlek 30-30 corto",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "—",
+      "entornos": "PISTA,CASA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "30s rápido / 30s suave durante 15 min. Mejora VO2max sin tanto desgaste."
+    },
+    {
+      "nombre": "Fartlek 1-1 medio",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "—",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "1 min rápido / 1 min suave durante 20 min. Tolerancia láctica."
+    },
+    {
+      "nombre": "Fartlek 2-1",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "—",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "2 min rápido / 1 min suave. 6-8 reps. Resistencia específica."
+    },
+    {
+      "nombre": "Fartlek piramidal",
+      "pilar": "VELOCIDAD",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "—",
+      "entornos": "PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "1-2-3-4-3-2-1 min al 90% con 1 min suave entre. Trabajo completo."
+    },
+    {
+      "nombre": "Crol 200m suave técnico",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Piscina",
+      "entornos": "PISTA,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "Crol 200m suave, foco posición horizontal y respiración bilateral."
+    },
+    {
+      "nombre": "Crol 50m al máximo",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Piscina",
+      "entornos": "PISTA,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "50m crol al 95%. Trabajo específico oposición. 6 series con 1 min descanso."
+    },
+    {
+      "nombre": "Crol 100m al ritmo objetivo",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Piscina",
+      "entornos": "PISTA,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "100m crol al ritmo objetivo de 50m+5seg. 5 series con 1 min descanso."
+    },
+    {
+      "nombre": "Crol 200m progresivo",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Piscina",
+      "entornos": "PISTA,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "200m crol empezando suave terminando al 90%. 4 series con 2 min descanso."
+    },
+    {
+      "nombre": "Crol 400m continuo",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Piscina",
+      "entornos": "PISTA,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "400m crol técnico continuo. Foco velocidad de viraje y respiración."
+    },
+    {
+      "nombre": "Series 4x50m crol",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Piscina",
+      "entornos": "PISTA,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "4×50m al 90% con 30s descanso. Salidas de pared cronometradas."
+    },
+    {
+      "nombre": "Series 8x50m crol",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Piscina",
+      "entornos": "PISTA,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "8×50m al 85% con 30s descanso. Resistencia específica."
+    },
+    {
+      "nombre": "Series 6x100m crol",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Piscina",
+      "entornos": "PISTA,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "6×100m al 85% con 30s descanso. Capacidad aeróbica."
+    },
+    {
+      "nombre": "Series 4x200m crol",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Piscina",
+      "entornos": "PISTA,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "4×200m al 80% con 1 min descanso. Resistencia aeróbica."
+    },
+    {
+      "nombre": "Buceo dinámico 25m sin respirar",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Piscina",
+      "entornos": "PISTA,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "Buceo crol horizontal 25m. Trabajo apnea + técnica. Crucial Foral."
+    },
+    {
+      "nombre": "Buceo 10m + 40m crol",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Piscina",
+      "entornos": "PISTA,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "10m buceo dinámico salida + 40m crol. Específico prueba Foral."
+    },
+    {
+      "nombre": "Apnea estática 30s",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Piscina",
+      "entornos": "PISTA,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "Pulmones llenos, cabeza dentro, 30s. Trabajo CO2 tolerance. Progresar."
+    },
+    {
+      "nombre": "Apnea estática progresiva",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Piscina",
+      "entornos": "PISTA,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "30-45-60-45-30s con 1 min descanso. Adaptación."
+    },
+    {
+      "nombre": "Patada de espalda con tabla",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Tabla natación",
+      "entornos": "PISTA,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "De espalda con tabla en pecho. 4×50m. Trabajo de piernas + posición."
+    },
+    {
+      "nombre": "Brazada solo (pull buoy)",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Pull buoy",
+      "entornos": "PISTA,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "4×100m solo brazada con pull buoy. Foco técnica de brazada."
+    },
+    {
+      "nombre": "Patada solo (tabla)",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Tabla natación",
+      "entornos": "PISTA,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "4×50m solo patada con tabla. Foco propulsión piernas."
+    },
+    {
+      "nombre": "Series virajes",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Piscina",
+      "entornos": "PISTA,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "10 virajes encadenados con 15m crol. Foco salida pared explosiva."
+    },
+    {
+      "nombre": "Trepa de cuerda 5m con piernas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Cuerda",
+      "entornos": "CROSSFIT,GYM,PISTA,MIXTO",
+      "tipo_ilustracion": "PULL",
+      "instrucciones_tecnicas": "Trepa cuerda usando técnica J-hook con piernas. 4×3 reps. Específico bomberos."
+    },
+    {
+      "nombre": "Trepa de cuerda sin piernas",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Cuerda",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "PULL",
+      "instrucciones_tecnicas": "Trepa solo brazos. Avanzado. 3×2 reps. Máximo trabajo dorsal."
+    },
+    {
+      "nombre": "Descenso cuerda controlado",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Cuerda",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "PULL",
+      "instrucciones_tecnicas": "Bajada lenta de cuerda con técnica. 3×3 reps. Excéntrico de espalda."
+    },
+    {
+      "nombre": "Transporte maniquí",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Maniquí",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "SQUAT",
+      "instrucciones_tecnicas": "Transporta maniquí 30kg durante 20m. 5 series. Específico rescate bombero."
+    },
+    {
+      "nombre": "Transporte saco arena",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Saco",
+      "entornos": "CROSSFIT,GYM,PISTA,MIXTO",
+      "tipo_ilustracion": "SQUAT",
+      "instrucciones_tecnicas": "Saco 25kg al hombro, transporta 30m. 5 series. Cuerpos de seguridad."
+    },
+    {
+      "nombre": "Press de banca + dominada bomberos",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Barra",
+      "entornos": "GYM,MIXTO",
+      "tipo_ilustracion": "PUSH",
+      "instrucciones_tecnicas": "Press 12 reps al 50% peso corporal + dominada máxima. 5 series. Circuito."
+    },
+    {
+      "nombre": "Subida con bombona",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Bombona/Mochila",
+      "entornos": "CROSSFIT,GYM,PISTA,MIXTO",
+      "tipo_ilustracion": "SQUAT",
+      "instrucciones_tecnicas": "Subir escaleras con mochila 15kg. 5 pisos × 5 reps. Específico bombero."
+    },
+    {
+      "nombre": "Squat con bombona pesada",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Bombona",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "SQUAT",
+      "instrucciones_tecnicas": "Sentadilla con bombona/saco 20-25kg al pecho. 4×8. Específico bombero."
+    },
+    {
+      "nombre": "Pase manguera",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Manguera",
+      "entornos": "CROSSFIT,PISTA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "Despliega manguera 20m a velocidad. Específico bombero."
+    },
+    {
+      "nombre": "Escalada palanca/escalera",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Escalera",
+      "entornos": "CROSSFIT,PISTA,MIXTO",
+      "tipo_ilustracion": "PULL",
+      "instrucciones_tecnicas": "Sube escalera 3m con manos. Trabajo agarre + brazos."
+    },
+    {
+      "nombre": "Burpee box jump",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Cajón",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "JUMP",
+      "instrucciones_tecnicas": "Burpee + salto al cajón. Continuo. 5×6 reps."
+    },
+    {
+      "nombre": "Burpee pull-up",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Barra fija",
+      "entornos": "CROSSFIT,CALISTENIA,MIXTO",
+      "tipo_ilustracion": "PULL",
+      "instrucciones_tecnicas": "Burpee + dominada estricta. Continuo. 5×5 reps."
+    },
+    {
+      "nombre": "Burpee tuck jump",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "—",
+      "entornos": "CROSSFIT,CASA,MIXTO",
+      "tipo_ilustracion": "JUMP",
+      "instrucciones_tecnicas": "Burpee + tuck jump rodillas al pecho. Continuo. 5×8 reps."
+    },
+    {
+      "nombre": "Thruster",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Mancuerna",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "SQUAT",
+      "instrucciones_tecnicas": "Front squat + push press explosivo encadenado. 5×8. Compuesto rey CrossFit."
+    },
+    {
+      "nombre": "Thruster con barra",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Barra",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "SQUAT",
+      "instrucciones_tecnicas": "Front squat + push press con barra. 5×5 al 70%. Específico CrossFit."
+    },
+    {
+      "nombre": "Wallball",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Balón medicinal",
+      "entornos": "CROSSFIT,CASA,MIXTO",
+      "tipo_ilustracion": "SQUAT",
+      "instrucciones_tecnicas": "Sentadilla + lanzamiento balón medicinal arriba contra diana. 5×10 reps."
+    },
+    {
+      "nombre": "Box step-up con peso",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Cajón + mancuerna",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "SQUAT",
+      "instrucciones_tecnicas": "Step-up al cajón con mancuernas. 4×10/pierna."
+    },
+    {
+      "nombre": "Devil press",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Mancuerna",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "PUSH",
+      "instrucciones_tecnicas": "Burpee con mancuerna + snatch hasta arriba. 5×6 reps. Compuesto."
+    },
+    {
+      "nombre": "Manhattan WOD",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Variado",
+      "entornos": "CROSSFIT,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "AMRAP 20 min: 400m run + 21 KB swing + 12 pull-up. Test resistencia."
+    },
+    {
+      "nombre": "Fran WOD",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Barra fija",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "21-15-9 thrusters + pull-ups. Para tiempo. WOD clásico CrossFit."
+    },
+    {
+      "nombre": "Cindy WOD",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "—",
+      "entornos": "CROSSFIT,CALISTENIA,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "AMRAP 20 min: 5 pull-up + 10 push-up + 15 air squat. Resistencia."
+    },
+    {
+      "nombre": "Murph WOD",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Variado",
+      "entornos": "CROSSFIT,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "1mi run + 100 pull-up + 200 push-up + 300 squat + 1mi run. WOD heroico."
+    },
+    {
+      "nombre": "Toes to bar",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Core",
+      "equipamiento": "Barra fija",
+      "entornos": "CROSSFIT,CALISTENIA,MIXTO",
+      "tipo_ilustracion": "PULL",
+      "instrucciones_tecnicas": "Cuelgues de barra. Llevar pies al barra. 4×8. Core + tracción."
+    },
+    {
+      "nombre": "Knees to elbows",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Core",
+      "equipamiento": "Barra fija",
+      "entornos": "CROSSFIT,CALISTENIA,MIXTO",
+      "tipo_ilustracion": "PULL",
+      "instrucciones_tecnicas": "Cuelgues. Llevar rodillas a codos. 4×10. Más fácil que toes to bar."
+    },
+    {
+      "nombre": "Kettlebell swing ruso",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Kettlebell",
+      "entornos": "CROSSFIT,GYM,CASA,MIXTO",
+      "tipo_ilustracion": "SQUAT",
+      "instrucciones_tecnicas": "Swing hasta horizontal. 4×15. Foco caderas, no brazos."
+    },
+    {
+      "nombre": "Kettlebell swing americano",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Kettlebell",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "SQUAT",
+      "instrucciones_tecnicas": "Swing hasta sobre cabeza. 4×12. Más exigente. Olímpico CrossFit."
+    },
+    {
+      "nombre": "Kettlebell snatch",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Kettlebell",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "PUSH",
+      "instrucciones_tecnicas": "Snatch KB de suelo a arriba en un movimiento. 4×6/brazo."
+    },
+    {
+      "nombre": "Kettlebell clean",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Kettlebell",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "PULL",
+      "instrucciones_tecnicas": "Clean KB al rack position. 4×8/brazo. Trabajo de potencia."
+    },
+    {
+      "nombre": "Push press",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Barra",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "PUSH",
+      "instrucciones_tecnicas": "Push press con barra: cuarto squat + push militar. 5×5 al 75%."
+    },
+    {
+      "nombre": "Power clean",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Barra",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "PULL",
+      "instrucciones_tecnicas": "Clean explosivo a media sentadilla. 5×3 al 80%. Olímpico."
+    },
+    {
+      "nombre": "Hang power clean",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Barra",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "PULL",
+      "instrucciones_tecnicas": "Clean desde el muslo (no del suelo). 5×3. Técnica olímpica."
+    },
+    {
+      "nombre": "Power snatch",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Barra",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "PUSH",
+      "instrucciones_tecnicas": "Snatch explosivo a media sentadilla. 5×3 al 75%. Olímpico avanzado."
+    },
+    {
+      "nombre": "Remo ergometro 500m",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Remo",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "500m remo al 90%. Trabajo full body anaeróbico. 5 series con 2 min descanso."
+    },
+    {
+      "nombre": "Remo 1000m al 80%",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Remo",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "1000m remo al 80%. Capacidad aeróbica + fuerza-resistencia."
+    },
+    {
+      "nombre": "Remo 2000m test",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Remo",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "Test 2000m al máximo. Anota tiempo. Estándar CrossFit."
+    },
+    {
+      "nombre": "Remo HIIT 250m x10",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Remo",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "10×250m al 95% con 1 min descanso. HIIT intenso."
+    },
+    {
+      "nombre": "Assault bike 30s sprint",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Assault bike",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "8×30s al máximo con 30s descanso. Pura potencia anaeróbica."
+    },
+    {
+      "nombre": "Assault bike 5 min al 80%",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Assault bike",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "5 min steady al 80%. Capacidad aeróbica."
+    },
+    {
+      "nombre": "Sky erg ergometro",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "SkyErg",
+      "entornos": "CROSSFIT,GYM,MIXTO",
+      "tipo_ilustracion": "PULL",
+      "instrucciones_tecnicas": "500m con SkyErg al 80%. Trabajo tirón + pulmonar. Específico CrossFit."
+    },
+    {
+      "nombre": "Escalera mecánica 10 min",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Escalera mecánica",
+      "entornos": "GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "10 min escalera mecánica nivel medio. Trabajo glúteos + cardio."
+    },
+    {
+      "nombre": "Escalera mecánica HIIT",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Escalera mecánica",
+      "entornos": "GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "5×1 min max / 1 min suave. Capacidad anaeróbica."
+    },
+    {
+      "nombre": "Eliptica 20 min Z2",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Elíptica",
+      "entornos": "GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "20 min elíptica zona 2 (conversacional). Cardio bajo impacto."
+    },
+    {
+      "nombre": "Bici sala 4x4 Helgerud",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Bici sala",
+      "entornos": "GYM,CASA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "4×4 min al 95% FCmax con 3 min recuperación. Mejora VO2max."
+    },
+    {
+      "nombre": "Spinning HIIT",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Bici sala",
+      "entornos": "GYM,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "40 min mezclando llanos + cuestas + sprints. Quema 500+ kcal."
+    },
+    {
+      "nombre": "Cinta inclinada caminata",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Cinta",
+      "entornos": "GYM,CASA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "20 min cinta inclinada 12% al 5km/h. Trabajo gemelos + cardio."
+    },
+    {
+      "nombre": "Cinta carrera 5km Z2",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Cinta",
+      "entornos": "GYM,CASA,MIXTO",
+      "tipo_ilustracion": "RUN",
+      "instrucciones_tecnicas": "5km cinta en zona 2. Largo lento aeróbico."
+    },
+    {
+      "nombre": "Saltar a la comba 5x100",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Resistencia",
+      "equipamiento": "Comba",
+      "entornos": "CROSSFIT,GYM,CASA,MIXTO",
+      "tipo_ilustracion": "JUMP",
+      "instrucciones_tecnicas": "5×100 saltos con 1 min descanso. Coordinación + cardio."
+    },
+    {
+      "nombre": "Double-unders 5x30",
+      "pilar": "RESISTENCIA",
+      "grupo_muscular": "Velocidad",
+      "equipamiento": "Comba",
+      "entornos": "CROSSFIT,GYM,CASA,MIXTO",
+      "tipo_ilustracion": "JUMP",
+      "instrucciones_tecnicas": "Saltos comba con doble paso. 5×30 reps. Coordinación avanzada."
+    },
+    {
+      "nombre": "Copenhague aductor",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,CALISTENIA,MIXTO",
+      "tipo_ilustracion": "PLANK",
+      "instrucciones_tecnicas": "Plancha lateral con pie superior en banco. 30s/lado. Prevención aductor."
+    },
+    {
+      "nombre": "Side plank aductor isométrico",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "PLANK",
+      "instrucciones_tecnicas": "Plancha lateral con pierna inferior apretando. 30s/lado. Foco aductor."
+    },
+    {
+      "nombre": "Squeeze pelota entre rodillas",
+      "pilar": "CORE",
+      "grupo_muscular": "Core",
+      "equipamiento": "Pelota",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "PLANK",
+      "instrucciones_tecnicas": "Sentado, pelota entre rodillas. Aprieta 5s × 15 reps. Aductor fácil."
+    },
+    {
+      "nombre": "Rotaciones externas hombro con banda",
+      "pilar": "CORE",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Banda",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "PULL",
+      "instrucciones_tecnicas": "Codo a 90°, rota hacia fuera con banda. 3×15. Rehab hombro."
+    },
+    {
+      "nombre": "Rotaciones internas hombro con banda",
+      "pilar": "CORE",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Banda",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "PULL",
+      "instrucciones_tecnicas": "Codo a 90°, rota hacia dentro con banda. 3×15. Equilibra hombro."
+    },
+    {
+      "nombre": "L-sit a 90°",
+      "pilar": "CORE",
+      "grupo_muscular": "Fuerza",
+      "equipamiento": "Paralelas",
+      "entornos": "CALISTENIA,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "PLANK",
+      "instrucciones_tecnicas": "En paralelas o suelo. Piernas a 90°. Mantén 10-20s. Core extremo."
+    },
+    {
+      "nombre": "Glute bridge unilateral",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Glúteo",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,CALISTENIA,MIXTO",
+      "tipo_ilustracion": "SQUAT",
+      "instrucciones_tecnicas": "Bridge con una pierna en suelo. 3×12/pierna. Prevención lumbar."
+    },
+    {
+      "nombre": "Clamshell con banda",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Glúteo",
+      "equipamiento": "Banda",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "SQUAT",
+      "instrucciones_tecnicas": "Tumbado lateral, rodillas flexionadas, abre con banda. 3×15. Glúteo medio."
+    },
+    {
+      "nombre": "Monster walk con banda",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Glúteo",
+      "equipamiento": "Banda",
+      "entornos": "CASA,GYM,CROSSFIT,MIXTO",
+      "tipo_ilustracion": "SQUAT",
+      "instrucciones_tecnicas": "Banda en tobillos. Pasos laterales + atrás. 4×10m. Activación glúteo medio."
+    },
+    {
+      "nombre": "Single leg deadlift",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Glúteo",
+      "equipamiento": "Mancuerna",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "SQUAT",
+      "instrucciones_tecnicas": "Peso muerto rumano con una pierna. 3×10/pierna. Equilibrio + isquios."
+    },
+    {
+      "nombre": "Nordic hamstring asistido",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Glúteo",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,CALISTENIA,MIXTO",
+      "tipo_ilustracion": "SQUAT",
+      "instrucciones_tecnicas": "Pies sujetos, baja torso controlando, usa manos para empujar arriba. 3×5."
+    },
+    {
+      "nombre": "Calf raise unilateral",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,CALISTENIA,MIXTO",
+      "tipo_ilustracion": "SQUAT",
+      "instrucciones_tecnicas": "Pantorrilla con una pierna. 3×15/pierna. Prevención tendón Aquiles."
+    },
+    {
+      "nombre": "Tibial anterior (puntas arriba)",
+      "pilar": "FUERZA",
+      "grupo_muscular": "Pierna",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "SQUAT",
+      "instrucciones_tecnicas": "Sentado, talones en suelo. Sube puntas controlando. 3×15. Prevención periostitis."
+    },
+    {
+      "nombre": "Estiramiento isquiotibiales tumbado",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "Tumbado, pierna recta arriba con banda/toalla. Mantén 30s/pierna."
+    },
+    {
+      "nombre": "Estiramiento cuádriceps de pie",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "De pie, mano sujeta tobillo. Mantén 30s/pierna. Estabiliza pelvis."
+    },
+    {
+      "nombre": "Estiramiento gemelos en pared",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "Manos en pared, pierna atrás extendida. 30s/pierna. Para correr."
+    },
+    {
+      "nombre": "Estiramiento soleo flexionando rodilla",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "Pierna atrás con rodilla flexionada. 30s/pierna. Tendón Aquiles."
+    },
+    {
+      "nombre": "Estiramiento glúteo cruzado",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "Tumbado, tobillo cruzado sobre rodilla opuesta, tira de muslo. 30s/lado."
+    },
+    {
+      "nombre": "Estiramiento piriforme sentado",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "Sentado, tobillo en muslo opuesto, inclina hacia adelante. 30s/lado."
+    },
+    {
+      "nombre": "Estiramiento aductor sentado",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "Sentado, plantas pies juntas, baja rodillas. 30s. Aductores."
+    },
+    {
+      "nombre": "Estiramiento pecho en marco puerta",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "Antebrazo en marco, gira cuerpo. 30s/lado. Pectoral mayor."
+    },
+    {
+      "nombre": "Estiramiento dorsal contra pared",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "Manos en pared a altura cintura, sienta hacia atrás. 30s. Dorsal grande."
+    },
+    {
+      "nombre": "Estiramiento tríceps brazo doblado",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "Codo arriba, mano detrás del cuello. 30s/brazo."
+    },
+    {
+      "nombre": "Estiramiento bíceps en pared",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "Mano en pared, brazo extendido atrás. 30s/brazo."
+    },
+    {
+      "nombre": "Estiramiento cuello lateral",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "Mano lleva cabeza a hombro. 30s/lado. Trapecio superior."
+    },
+    {
+      "nombre": "Estiramiento lumbar acurrucado",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "Tumbado, rodillas al pecho. 30s. Lumbar baja + glúteo."
+    },
+    {
+      "nombre": "Niño pose (yoga)",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "Rodillas y frente al suelo, brazos extendidos. 60s. Relajación postlumbar."
+    },
+    {
+      "nombre": "Postura cobra",
+      "pilar": "MOVILIDAD",
+      "grupo_muscular": "Movilidad",
+      "equipamiento": "—",
+      "entornos": "CASA,GYM,MIXTO",
+      "tipo_ilustracion": "GENERAL",
+      "instrucciones_tecnicas": "Boca abajo, eleva tronco con brazos. 30s. Movilidad lumbar reversa."
     }
   ]
 }

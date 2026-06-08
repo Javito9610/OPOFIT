@@ -882,7 +882,16 @@ fun EntrenamientosScreen(
                     if (!planEjercicios.isNullOrEmpty()) {
                         ElevatedCard(Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("Reloj", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("Reloj", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                                    com.opofit.miapp.ui.components.InfoTip(
+                                        title = "¿Cómo funciona con el reloj?",
+                                        text = "Tres pasos para que tu reloj y OpoFit hablen entre sí:\n\n" +
+                                            "1️⃣ ENVIAR PLAN: genera un archivo TCX/FIT con los ejercicios y lo envía a tu app del reloj (Garmin/Polar/Zepp). Tu reloj lo guarda como entreno guiado.\n\n" +
+                                            "2️⃣ SINCRONIZAR: tras entrenar, baja los datos del reloj automáticamente vía Health Connect (distancia, tiempo, pulso medio).\n\n" +
+                                            "3️⃣ ARCHIVO: si la sincro automática falla, exporta el archivo desde la app del reloj y súbelo aquí. Sirve para Garmin/Polar/Wikiloc."
+                                    )
+                                }
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -942,20 +951,13 @@ fun EntrenamientosScreen(
                                     }
                                     OutlinedButton(
                                         onClick = { importFileLauncher.launch("*/*") },
-                                        enabled = !importingReloj
+                                        enabled = !importingReloj,
+                                        modifier = Modifier.weight(1f)
                                     ) {
                                         Icon(Icons.Filled.UploadFile, null, Modifier.size(16.dp))
+                                        Spacer(Modifier.size(4.dp))
+                                        Text("Archivo", style = MaterialTheme.typography.labelMedium)
                                     }
-                                }
-                                TextButton(onClick = { mostrarAyudaReloj = !mostrarAyudaReloj }) {
-                                    Text(if (mostrarAyudaReloj) "Ocultar ayuda" else "¿Cómo funciona con el reloj?")
-                                }
-                                if (mostrarAyudaReloj) {
-                                    Text(
-                                        "1. Envía el plan antes de entrenar.\n2. Entrena con el reloj.\n3. Sincroniza o sube el archivo para rellenar distancia y tiempo.",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
                                 }
                             }
                         }

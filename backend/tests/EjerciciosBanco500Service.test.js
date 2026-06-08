@@ -35,15 +35,15 @@ describe('EjerciciosBanco500Service', () => {
   });
 
   test('seedBanco500 omite si ya está sembrado y hay >= 500', async () => {
-    // Debe coincidir con BANCO_VERSION (actual: 4) para entrar en la rama de skip.
-    const BANCO_VERSION_ACTUAL = '4';
+    // Debe coincidir con BANCO_VERSION (actual: 5) para entrar en la rama de skip.
+    const BANCO_VERSION_ACTUAL = '5';
     db.query
       .mockResolvedValueOnce([[{ valor: BANCO_VERSION_ACTUAL }]])
-      .mockResolvedValueOnce([[{ n: 638 }]]);
+      .mockResolvedValueOnce([[{ n: 756 }]]);
 
     const r = await EjerciciosBanco500Service.seedBanco500(false);
     expect(r.skipped).toBe(true);
-    expect(r.total).toBe(638);
+    expect(r.total).toBe(756);
   });
 
   test('JSON tiene pilares y entornos válidos', () => {

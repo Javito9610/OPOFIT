@@ -365,10 +365,20 @@ fun PerfilScreen(
 
                 if (perfilState.marcasUsuario.isNotEmpty()) {
                     item {
-                        SectionHeader(
-                            title = "Mis marcas",
-                            subtitle = "Tus mejores registros oficiales"
-                        )
+                        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            SectionHeader(
+                                title = "Mis marcas",
+                                subtitle = "Tus mejores registros oficiales",
+                                modifier = Modifier.weight(1f)
+                            )
+                            com.opofit.miapp.ui.components.InfoTip(
+                                title = "¿Qué son las marcas?",
+                                text = "Son tus mejores tiempos/repeticiones en las pruebas físicas oficiales de tu oposición. " +
+                                    "Cada marca se convierte en una nota (0-10) usando el baremo oficial.\n\n" +
+                                    "La media de tus notas determina tu NIVEL (Básico/Intermedio/Avanzado) y " +
+                                    "OpoFit adapta tu plan a ese nivel. Cuanto más completo el perfil, mejor el plan."
+                            )
+                        }
                     }
                     items(perfilState.marcasUsuario) { marca ->
                         ElevatedCard(modifier = Modifier.fillMaxWidth()) {

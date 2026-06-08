@@ -114,10 +114,22 @@ fun OposicionInfoScreen(
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
+                actions = {
+                    com.opofit.miapp.ui.components.InfoTip(
+                        title = "¿Qué hay en esta pantalla?",
+                        text = "Información oficial de tu oposición:\n\n" +
+                            "• Pruebas físicas: qué pruebas tienes que pasar y los baremos para sacar nota.\n" +
+                            "• Noticias: convocatorias, plazos y novedades del BOE/RSS oficiales.\n" +
+                            "• Fuentes: enlace a la convocatoria oficial.\n\n" +
+                            "Los baremos se actualizan automáticamente y las noticias se refrescan cada 6 horas. " +
+                            "Si ves algo incorrecto, contacta soporte."
+                    )
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }

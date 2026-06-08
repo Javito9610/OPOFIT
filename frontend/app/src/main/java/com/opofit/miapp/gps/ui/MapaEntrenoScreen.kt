@@ -786,18 +786,34 @@ fun MapaEntrenoScreen(
                             val objetivoKm = r.distanciaObjetivoKm ?: distKm
                             val realKm = r.distanciaKm
                             val diffKm = kotlin.math.abs(realKm - objetivoKm)
+                            val diffPct = if (objetivoKm > 0) diffKm / objetivoKm else 0.0
+                            // Antes la alarma saltaba con +15% de desvío, lo que en rutas
+                            // por calles es CONSTANTE (calles reales rara vez dan justo X km).
+                            // Ahora: tolerancia ±10% silenciosa, aviso amable hasta 30%,
+                            // solo warning fuerte si >30%.
                             Text(
                                 "Recorrido real: ${"%.2f".format(realKm)} km",
                                 fontWeight = FontWeight.Medium
                             )
+                            val pctTxt = if (objetivoKm > 0) {
+                                val signo = if (realKm > objetivoKm) "+" else "−"
+                                " ($signo${"%.0f".format(diffPct * 100)}%)"
+                            } else ""
                             Text(
-                                "Objetivo del entreno: ${"%.1f".format(objetivoKm)} km",
+                                "Objetivo del entreno: ${"%.1f".format(objetivoKm)} km$pctTxt",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            if (diffKm > objetivoKm * 0.15) {
+                            // ±10% silencioso; 10-30% aviso informativo; >30% aviso fuerte.
+                            if (diffPct > 0.10 && diffPct <= 0.30) {
                                 Text(
-                                    "La ruta por calles no coincide exacta con el objetivo. Prueba «Otra propuesta» o baja el slider.",
+                                    "Ruta razonablemente cerca del objetivo. Si quieres exactitud, prueba «Otra propuesta».",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            } else if (diffPct > 0.30) {
+                                Text(
+                                    "La ruta calculada está bastante lejos del objetivo. Prueba «Otra propuesta» o ajusta el slider.",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.tertiary
                                 )

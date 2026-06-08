@@ -41,6 +41,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -53,6 +55,32 @@ import com.opofit.miapp.gps.util.GpsMetrics
 import androidx.compose.foundation.Canvas
 import kotlin.math.max
 
+/**
+ * Estado HOIST del editor de tarjeta de compartir. Vive en la pantalla del editor
+ * y se pasa a ShareCardPreview tanto durante la edición como durante el render a
+ * bitmap. Sin esto, cada llamada a ShareCardPreview crea sus propios `remember`
+ * → el offset/scale editado por el usuario se PIERDE al renderizar para exportar.
+ */
+class ShareEditorState {
+    var fotoOffset by mutableStateOf(Offset.Zero)
+    var fotoScale by mutableStateOf(1f)
+    var routeOffset by mutableStateOf(Offset.Zero)
+    var routeScale by mutableStateOf(1f)
+    var modoActivo by mutableStateOf("ruta")
+    fun reset() {
+        fotoOffset = Offset.Zero
+        fotoScale = 1f
+        routeOffset = Offset.Zero
+        routeScale = 1f
+    }
+    fun isDirty(): Boolean =
+        fotoOffset != Offset.Zero || fotoScale != 1f ||
+            routeOffset != Offset.Zero || routeScale != 1f
+}
+
+@Composable
+fun rememberShareEditorState(): ShareEditorState = remember { ShareEditorState() }
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ShareCardPreview(
@@ -62,7 +90,14 @@ fun ShareCardPreview(
     fotoFondoBitmap: Bitmap? = null,
     usarFoto: Boolean = true,
     routePoints: List<RoutePoint> = emptyList(),
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // editing=true: muestra el chip de instrucciones, el botón reset, etc.
+    // editing=false: composición limpia para exportar a bitmap (sin UI editor).
+    // Antes los controles se exportaban a la foto que iba a Instagram.
+    editing: Boolean = true,
+    // Estado hoist. Si es null usa estado local (compatibilidad). Si pasamos el state
+    // desde el editor, las posiciones se preservan en el render bitmap final.
+    editorState: ShareEditorState? = null
 ) {
     val tipo = stats?.tipo?.uppercase().orEmpty()
     val emoji = when {
@@ -74,35 +109,67 @@ fun ShareCardPreview(
     }
     val accent = Color(0xFFFF5722)
 
+    // Estado hoist: si nos lo pasan desde el editor lo usamos; si no, local.
+    val localState = editorState ?: rememberShareEditorState()
+    val fotoOffset = localState.fotoOffset
+    val fotoScale = localState.fotoScale
+    val routeOffset = localState.routeOffset
+    val routeScale = localState.routeScale
+    val modoActivo = localState.modoActivo
+
     Box(
         modifier = modifier
             .aspectRatio(9f / 16f)
             .clip(RoundedCornerShape(16.dp))
     ) {
-        if (usarFoto && fotoFondoBitmap != null) {
-            Image(
-                bitmap = fotoFondoBitmap.asImageBitmap(),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        } else if (usarFoto && fotoFondoUri != null) {
-            AsyncImage(
-                model = fotoFondoUri,
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
+        // Capa de foto con gestos. graphicsLayer aplica el offset+scale.
+        val fotoGestureMod = if (editing && usarFoto && modoActivo == "foto") {
+            Modifier
+                .fillMaxSize()
+                .pointerInput("foto") {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        localState.fotoOffset = localState.fotoOffset + pan
+                        localState.fotoScale = (localState.fotoScale * zoom).coerceIn(0.5f, 3f)
+                    }
+                }
         } else {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(Color(0xFF1A237E), Color(0xFF0D1B3E), Color(0xFF000000))
+            Modifier.fillMaxSize()
+        }
+        val fotoTransformMod = Modifier
+            .fillMaxSize()
+            .graphicsLayer {
+                scaleX = fotoScale
+                scaleY = fotoScale
+                translationX = fotoOffset.x
+                translationY = fotoOffset.y
+            }
+
+        Box(modifier = fotoGestureMod) {
+            if (usarFoto && fotoFondoBitmap != null) {
+                Image(
+                    bitmap = fotoFondoBitmap.asImageBitmap(),
+                    contentDescription = null,
+                    modifier = fotoTransformMod,
+                    contentScale = ContentScale.Crop
+                )
+            } else if (usarFoto && fotoFondoUri != null) {
+                AsyncImage(
+                    model = fotoFondoUri,
+                    contentDescription = null,
+                    modifier = fotoTransformMod,
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color(0xFF1A237E), Color(0xFF0D1B3E), Color(0xFF000000))
+                            )
                         )
-                    )
-            )
+                )
+            }
         }
 
         Box(
@@ -117,22 +184,21 @@ fun ShareCardPreview(
                 )
         )
 
-        // Ruta movible y redimensionable. El usuario puede arrastrarla con un dedo y
-        // hacer pinch con dos dedos para escalarla, para colocarla donde no tape
-        // su cara cuando ponga foto de fondo (estilo Strava editable).
+        // Ruta movible y redimensionable (solo si hay puntos).
         if (routePoints.size >= 2) {
-            var routeOffset by remember { mutableStateOf(Offset.Zero) }
-            var routeScale by remember { mutableStateOf(1f) }
-            Box(
+            val rutaGestureMod = if (editing && modoActivo == "ruta") {
                 Modifier
                     .fillMaxSize()
-                    .pointerInput(routePoints) {
+                    .pointerInput("ruta") {
                         detectTransformGestures { _, pan, zoom, _ ->
-                            routeOffset += pan
-                            routeScale = (routeScale * zoom).coerceIn(0.4f, 3f)
+                            localState.routeOffset = localState.routeOffset + pan
+                            localState.routeScale = (localState.routeScale * zoom).coerceIn(0.4f, 3f)
                         }
                     }
-            ) {
+            } else {
+                Modifier.fillMaxSize()
+            }
+            Box(modifier = rutaGestureMod) {
                 Canvas(Modifier.fillMaxSize().padding(24.dp)) {
                     val pts = routePoints
                     val minLat = pts.minOf { it.lat }
@@ -163,49 +229,80 @@ fun ShareCardPreview(
                     drawPath(path, accent.copy(alpha = 0.35f), style = Stroke(size.width * 0.02f * routeScale, cap = StrokeCap.Round))
                     drawPath(path, accent, style = Stroke(size.width * 0.008f * routeScale, cap = StrokeCap.Round))
                 }
-                // Indicador "arrastra para mover" + botón reset, en esquina superior derecha.
+            }
+        }
+
+        // ── CONTROLES DE EDITOR ──────────────────────────────────────────
+        // Solo visibles cuando editing=true (en pantalla de edición).
+        // Cuando renderizamos a bitmap para exportar a IG/WhatsApp, editing=false
+        // y estos controles NO se dibujan. Antes salían en la foto exportada.
+        if (editing) {
+            // Selector Foto / Ruta arriba-izquierda
+            val hayFoto = usarFoto && (fotoFondoBitmap != null || fotoFondoUri != null)
+            val hayRuta = routePoints.size >= 2
+            if (hayFoto || hayRuta) {
                 Row(
                     Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 56.dp, end = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .align(Alignment.TopStart)
+                        .padding(top = 56.dp, start = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    // Solo mostramos el chip de hint si NO se ha movido aún
-                    if (routeOffset == Offset.Zero && routeScale == 1f) {
-                        Box(
-                            Modifier
-                                .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(10.dp))
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                    if (hayFoto) {
+                        EditorPill(
+                            text = "Foto",
+                            selected = modoActivo == "foto",
+                            onClick = { localState.modoActivo = "foto" }
+                        )
+                    }
+                    if (hayRuta) {
+                        EditorPill(
+                            text = "Ruta",
+                            selected = modoActivo == "ruta",
+                            onClick = { localState.modoActivo = "ruta" }
+                        )
+                    }
+                }
+            }
+            // Botón reset arriba-derecha (siempre visible mientras editas)
+            val movido = fotoOffset != Offset.Zero || fotoScale != 1f ||
+                routeOffset != Offset.Zero || routeScale != 1f
+            Row(
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 56.dp, end = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (!movido) {
+                    Box(
+                        Modifier
+                            .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(10.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Icon(
-                                    Icons.Filled.OpenWith, null,
-                                    tint = Color.White,
-                                    modifier = Modifier.padding(2.dp)
-                                )
-                                Text("Arrastra · pellizca", color = Color.White, fontSize = 10.sp)
-                            }
+                            Icon(
+                                Icons.Filled.OpenWith, null,
+                                tint = Color.White,
+                                modifier = Modifier.padding(2.dp)
+                            )
+                            Text("Arrastra · pellizca", color = Color.White, fontSize = 10.sp)
                         }
-                    } else {
-                        // Si ya está movido/escalado, mostramos botón reset
-                        IconButton(
-                            onClick = {
-                                routeOffset = Offset.Zero
-                                routeScale = 1f
-                            },
-                            modifier = Modifier
-                                .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(12.dp))
-                        ) {
-                            Icon(Icons.Filled.RestartAlt, "Restaurar ruta", tint = Color.White)
-                        }
+                    }
+                } else {
+                    IconButton(
+                        onClick = { localState.reset() },
+                        modifier = Modifier
+                            .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(12.dp))
+                    ) {
+                        Icon(Icons.Filled.RestartAlt, "Restaurar", tint = Color.White)
                     }
                 }
             }
         }
+        // ── FIN CONTROLES EDITOR ─────────────────────────────────────────
 
         Column(
             Modifier
@@ -270,5 +367,33 @@ private fun StatChip(label: String, value: String) {
     Column {
         Text(label, color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp)
         Text(value, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+    }
+}
+
+/**
+ * Pildora seleccionable arriba-izquierda del editor para elegir qué objeto
+ * estás moviendo: foto o ruta. Solo visible mientras `editing=true`.
+ */
+@Composable
+private fun EditorPill(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        Modifier
+            .clickable(onClick = onClick)
+            .background(
+                if (selected) Color(0xFFFF5722) else Color.Black.copy(alpha = 0.55f),
+                RoundedCornerShape(10.dp)
+            )
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+    ) {
+        Text(
+            text,
+            color = Color.White,
+            fontSize = 11.sp,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+        )
     }
 }

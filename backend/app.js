@@ -71,6 +71,31 @@ app.use('/api/notifications', require('./src/routes/NotificationRoute'));
 app.use('/api/notif-app', require('./src/routes/InAppNotifRoute'));
 app.use('/api/admin', require('./src/routes/AdminRoute'));
 
+// Cron de noticias/baremos: ACTIVO por defecto en cualquier despliegue.
+// Sin esto, las noticias de oposición se quedaban estancadas (el usuario reportaba
+// "noticias de hace meses"). Se desactiva solo con NOTICIAS_CRON_DISABLED=true.
+if (process.env.NOTICIAS_CRON_DISABLED !== 'true') {
+  const cron = require('node-cron');
+  const NoticiasMicro = require('./microservicios/noticias-micro');
+  const BaremoCheckMicro = require('./microservicios/baremo-check-micro');
+
+  const cronNoticias = process.env.NOTICIAS_CRON || '0 */3 * * *'; // cada 3h
+  cron.schedule(cronNoticias, () => {
+    NoticiasMicro.ejecutar().catch((e) => console.error('[cron noticias]', e.message));
+  });
+  // Primera ejecución 30s tras arrancar para refresco inmediato del cache.
+  setTimeout(() => {
+    NoticiasMicro.ejecutar().catch((e) => console.error('[noticias inicio]', e.message));
+  }, 30_000);
+
+  const cronBaremos = process.env.BAREMO_CHECK_CRON || '0 4 * * *';
+  cron.schedule(cronBaremos, () => {
+    BaremoCheckMicro.ejecutar().catch((e) => console.error('[cron baremos]', e.message));
+  });
+  console.log(`Cron noticias activo (${cronNoticias}) + refresh inicial en 30s`);
+  console.log(`Cron baremos activo (${cronBaremos})`);
+}
+
 if (process.env.NOTIFICATIONS_CRON === 'true') {
   const cron = require('node-cron');
   const NotificationService = require('./src/services/NotificationService');
@@ -80,23 +105,7 @@ if (process.env.NOTIFICATIONS_CRON === 'true') {
       .catch((e) => console.error('[cron] Error:', e.message));
   });
 
-  // Microservicios (modulares, reusables vía CLI desde microservicios/run.js).
-  const NoticiasMicro = require('./microservicios/noticias-micro');
-  const BaremoCheckMicro = require('./microservicios/baremo-check-micro');
-
-  const cronNoticias = process.env.NOTICIAS_CRON || '0 */6 * * *';
-  cron.schedule(cronNoticias, () => {
-    NoticiasMicro.ejecutar().catch((e) => console.error('[cron noticias]', e.message));
-  });
-
-  const cronBaremos = process.env.BAREMO_CHECK_CRON || '0 4 * * *';
-  cron.schedule(cronBaremos, () => {
-    BaremoCheckMicro.ejecutar().catch((e) => console.error('[cron baremos]', e.message));
-  });
-
   console.log('Cron de recordatorios activo (cada hora, hora preferida del usuario)');
-  console.log(`Cron noticias activo (${cronNoticias})`);
-  console.log(`Cron baremo-check activo (${cronBaremos})`);
 }
 
 const DbMigrationService = require('./src/services/DbMigrationService');
