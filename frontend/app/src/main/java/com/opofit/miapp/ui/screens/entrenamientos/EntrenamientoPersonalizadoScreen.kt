@@ -635,7 +635,9 @@ fun EntrenamientoPersonalizadoScreen(
                                         ) {
                                             Icon(Icons.Filled.Timer, null, Modifier.size(18.dp))
                                             Spacer(Modifier.size(6.dp))
-                                            Text("Usar tiempo del cronómetro (${TimeFormatUtil.formatElapsedMs(elapsedMs)})")
+                                            com.opofit.miapp.ui.components.ButtonText(
+                                                "Cronómetro: ${TimeFormatUtil.formatElapsedMs(elapsedMs)}"
+                                            )
                                         }
                                         val secsCalc = ej.objetivoSegundos?.let {
                                             minOf(TimeFormatUtil.secondsFromMs(elapsedMs), it.toDouble())
@@ -708,7 +710,9 @@ fun EntrenamientoPersonalizadoScreen(
                                             ) {
                                                 Icon(Icons.Filled.Timer, null, Modifier.size(18.dp))
                                                 Spacer(Modifier.size(6.dp))
-                                                Text("Aplicar ${TimeFormatUtil.formatElapsedMs(elapsedMs)} del cronómetro")
+                                                com.opofit.miapp.ui.components.ButtonText(
+                                                    "Aplicar ${TimeFormatUtil.formatElapsedMs(elapsedMs)}"
+                                                )
                                             }
                                         }
                                         ExerciseValueInput(
@@ -771,7 +775,9 @@ fun EntrenamientoPersonalizadoScreen(
                                             userId = userId,
                                             tipoRutina = "PERS",
                                             idRutina = rutinaId,
-                                            duracion = ((elapsedMs / 60_000L).toInt()).coerceAtLeast(1), // Backend espera minutos
+                                            // duracion EN SEGUNDOS (no minutos). Antes la doble división
+                                            // resultaba en "0 minutos" en el resumen del historial.
+                                            duracion = ((elapsedMs / 1000L).toInt()).coerceAtLeast(1),
                                             ejercicios = ejercicios,
                                             gpsActividadUuid = gpsActividadUuid
                                         )

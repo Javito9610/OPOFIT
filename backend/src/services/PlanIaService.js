@@ -13,6 +13,45 @@
  */
 const EntornoEntreno = require('../utils/EntornoEntreno');
 
+// Traducción material código → descripción humana para el prompt de la IA.
+const MATERIAL_LABEL = {
+  NADA: 'solo peso corporal',
+  BARRA_DOMINADAS: 'barra de dominadas',
+  BARRA_OLIMPICA: 'barra olímpica con discos',
+  MANCUERNAS: 'mancuernas',
+  KB: 'kettlebells',
+  TRX: 'TRX',
+  ANILLAS: 'anillas',
+  GOMAS: 'gomas elásticas',
+  COMBA: 'comba',
+  SACO: 'saco de boxeo',
+  FOAM: 'foam roller',
+  BANCO: 'banco regulable',
+  CAJA: 'caja pliométrica',
+  BICI: 'bicicleta',
+  REMO: 'remoergómetro',
+  ECHO_BIKE: 'echo bike / assault bike',
+  SKI_ERG: 'ski erg',
+  PISCINA: 'piscina',
+  PISTA: 'pista de atletismo',
+  MONTANA: 'montaña / trail',
+  GIMNASIO_COMPLETO: 'gimnasio completo (todo el material habitual)'
+};
+
+function mapearMaterialAHumano(materialArr) {
+  if (!Array.isArray(materialArr) || materialArr.length === 0) {
+    return 'NO especificado (asume solo peso corporal)';
+  }
+  if (materialArr.includes('GIMNASIO_COMPLETO')) {
+    return 'gimnasio completo (todo el material habitual disponible)';
+  }
+  const etiquetas = materialArr
+    .map((m) => MATERIAL_LABEL[String(m).toUpperCase()] || null)
+    .filter(Boolean);
+  if (!etiquetas.length) return 'NO especificado (asume solo peso corporal)';
+  return etiquetas.join(', ');
+}
+
 const NIVEL_VOLUMEN = {
   BASICO: { series: [3, 4], reps_fuerza: [8, 12], reps_max: 18, rpe: 6 },
   INTERMEDIO: { series: [4, 5], reps_fuerza: [6, 10], reps_max: 22, rpe: 7 },
@@ -283,6 +322,11 @@ PRINCIPIOS CIENTÍFICOS QUE APLICAS:
 
 RESTRICCIONES DURAS:
 - NO inventas ejercicios. Usas SOLO IDs del catálogo. ID inexistente = fallback.
+- MATERIAL del usuario: NUNCA propongas un ejercicio cuyo equipamiento no esté
+  en la lista que recibirás. Si el usuario solo tiene COMBA+SUELO, no metas
+  press banca con barra ni KB swings. Si necesitas un patrón cubierto solo por
+  material que no tiene, sustituye por la versión calistenia equivalente
+  (ej: dominadas → australian rows; KB swing → hip thrust con peso corporal).
 - Reps por ejercicio:
   * Dominadas/flexiones: 3-15 reps (no 6x20)
   * Press banca/sentadilla: 3-12 reps (5x5 al 80% es el rango básico)
@@ -297,6 +341,9 @@ RESTRICCIONES DURAS:
   * Resistencia intervalos: 60-120s
 - Empieza por el ejercicio MÁS DEMANDANTE del pilar principal (multiarticular pesado).
 - Acaba con ejercicios accesorios o core.
+- WODs / CrossFit / Calistenia: si el usuario tiene material apropiado y nivel
+  intermedio o superior, puedes proponer 1 WOD benchmark (AMRAP, EMOM, For Time,
+  Tabata) como el "ejercicio principal" — incluye time_cap en lugar de series.
 
 FORMATO RESPUESTA: SOLO JSON válido (sin markdown, sin texto antes/después).`;
 
@@ -307,8 +354,11 @@ FORMATO RESPUESTA: SOLO JSON válido (sin markdown, sin texto antes/después).`;
       .map((f) => f.pilar)
       .join(', ') || 'ninguno';
 
+    // Material disponible del usuario: lo usa la IA para filtrar.
+    const materialHumano = mapearMaterialAHumano(ctx.materialDisponible);
     const prompt = `CONTEXTO DEL ASPIRANTE:
 - Entorno entreno: ${meta.etiqueta} (${meta.descripcion || ''})
+- Material disponible REAL: ${materialHumano}
 - Nivel global: ${ctx.nivel || 'INTERMEDIO'}
 - Pilares DÉBILES (prioritarios para refuerzo): ${debilesTxt}
 - Pilares fuertes (mantenimiento): ${fuertesTxt}

@@ -25,6 +25,10 @@ import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.Pool
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.SelfImprovement
 import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,8 +49,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,6 +81,7 @@ private fun labelTipo(tipo: String): String = when (tipo.uppercase()) {
     "RESISTENCIA" -> "Resistencia"
     "VELOCIDAD" -> "Velocidad"
     "PERSONAL" -> "Personal"
+    "GPS" -> "Salidas GPS"
     else -> tipo.lowercase().replaceFirstChar { it.uppercase() }
 }
 
@@ -83,6 +90,7 @@ private fun colorTipo(tipo: String): Color = when (tipo.uppercase()) {
     "RESISTENCIA" -> Color(0xFF2E7D32)
     "VELOCIDAD" -> Color(0xFFEF6C00)
     "PERSONAL" -> Color(0xFF6A1B9A)
+    "GPS" -> Color(0xFF00838F)
     else -> Color(0xFF455A64)
 }
 
@@ -122,6 +130,10 @@ fun HistorialScreen(
     val pagerState = rememberPagerState(initialPage = 0) { HistTab.entries.size }
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    // Diálogos de confirmación para acciones destructivas (Strong/Hevy también
+    // los muestran antes de borrar para evitar tragedias por toques accidentales).
+    var sesionAEliminar by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<SesionItem?>(null) }
+    var mostrarVaciarTodo by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
 
     LaunchedEffect(authState.userId) {
         if (authState.userId != null) {
@@ -147,6 +159,41 @@ fun HistorialScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver")
+                    }
+                },
+                actions = {
+                    // Menú overflow con "Vaciar historial" (acción destructiva
+                    // con confirmación). El icono solo aparece cuando hay algo
+                    // que borrar para no inducir tap sin sentido.
+                    if ((ui.sesiones?.size ?: 0) > 0) {
+                        var expanded by androidx.compose.runtime.remember {
+                            androidx.compose.runtime.mutableStateOf(false)
+                        }
+                        IconButton(onClick = { expanded = true }) {
+                            Icon(
+                                androidx.compose.material.icons.Icons.Filled.MoreVert,
+                                contentDescription = "Más opciones",
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                        androidx.compose.material3.DropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            androidx.compose.material3.DropdownMenuItem(
+                                text = { Text("Vaciar historial") },
+                                onClick = {
+                                    expanded = false
+                                    mostrarVaciarTodo = true
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        androidx.compose.material.icons.Icons.Filled.DeleteSweep,
+                                        contentDescription = null
+                                    )
+                                }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -193,7 +240,9 @@ fun HistorialScreen(
                         filtroTipo = ui.filtroTipo,
                         onFiltroChange = { historialAvanzadoViewModel.setFiltroTipo(it) },
                         onOpenSesion = onOpenSesion,
-                        onOpenPlan = onOpenPlan
+                        onOpenPlan = onOpenPlan,
+                        onOpenGps = onOpenGpsActividad,
+                        onEliminarSesion = { ses -> sesionAEliminar = ses }
                     )
                     HistTab.GPS -> GpsTab(
                         actividades = gpsHistory.items,
@@ -204,6 +253,70 @@ fun HistorialScreen(
             }
         }
         }
+    }
+    // Diálogo confirmación de borrar UNA sesión.
+    sesionAEliminar?.let { ses ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { sesionAEliminar = null },
+            icon = {
+                Icon(
+                    androidx.compose.material.icons.Icons.Filled.DeleteOutline,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = { Text("¿Eliminar esta sesión?") },
+            text = {
+                Text(
+                    "Vas a borrar este entrenamiento del historial. Las marcas que rompiste con él volverán a estar disponibles. No se puede deshacer."
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    historialAvanzadoViewModel.borrarSesion(ses.id)
+                    sesionAEliminar = null
+                }) {
+                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { sesionAEliminar = null }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+    // Diálogo confirmación de vaciar TODO.
+    if (mostrarVaciarTodo) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { mostrarVaciarTodo = false },
+            icon = {
+                Icon(
+                    androidx.compose.material.icons.Icons.Filled.DeleteSweep,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = { Text("¿Vaciar todo el historial?") },
+            text = {
+                Text(
+                    "Se eliminarán TODAS tus sesiones de entreno y sus marcas. Esto no afecta a las salidas GPS (esas se borran desde su propia pantalla). No se puede deshacer."
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    historialAvanzadoViewModel.vaciarHistorial()
+                    mostrarVaciarTodo = false
+                }) {
+                    Text("Vaciar", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { mostrarVaciarTodo = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
     com.opofit.miapp.ui.components.CoachMarkOverlay(
         screenKey = "historial_v1",
@@ -259,8 +372,25 @@ private fun ResumenTab(resumen: ResumenHistorial?, periodo: String, onPeriodoCha
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                MetricBadge("Sesiones", "${resumen.sesiones}", Modifier.weight(1f))
-                MetricBadge("Minutos", "${resumen.minutos}", Modifier.weight(1f))
+                // Sesiones totales = entrenos + GPS. La etiqueta secundaria
+                // hace el desglose para que el usuario lo entienda de un vistazo.
+                val sub = when {
+                    resumen.sesionesGps > 0 && resumen.sesionesEntrenos > 0 ->
+                        "${resumen.sesionesEntrenos} entrenos + ${resumen.sesionesGps} GPS"
+                    resumen.sesionesGps > 0 -> "${resumen.sesionesGps} GPS"
+                    else -> null
+                }
+                MetricBadge(
+                    label = "Sesiones",
+                    value = "${resumen.sesiones}",
+                    modifier = Modifier.weight(1f),
+                    sublabel = sub
+                )
+                MetricBadge(
+                    label = "Minutos",
+                    value = "${resumen.minutos}",
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
         item {
@@ -281,7 +411,7 @@ private fun ResumenTab(resumen: ResumenHistorial?, periodo: String, onPeriodoCha
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        "Últimos 16 semanas (más oscuro = más entrenos)",
+                        "Últimas 16 semanas · entrenos + salidas GPS (más oscuro = más actividad)",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -305,6 +435,10 @@ private fun ResumenTab(resumen: ResumenHistorial?, periodo: String, onPeriodoCha
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold
                         )
+                        // El donut central ahora muestra DOS líneas con info útil:
+                        //   N sesiones / X min (en vez de solo "N sesiones").
+                        // Suma minutos del periodo al centro para que de un vistazo
+                        // se vea el volumen total, no solo el conteo.
                         DonutChart(
                             slices = resumen.porTipo.map { item ->
                                 DonutSlice(
@@ -314,7 +448,8 @@ private fun ResumenTab(resumen: ResumenHistorial?, periodo: String, onPeriodoCha
                                 )
                             },
                             centerTitle = "${resumen.porTipo.sumOf { it.sesiones }}",
-                            centerSubtitle = "sesiones",
+                            centerSubtitle = if (resumen.minutos > 0) "ses · ${resumen.minutos} min"
+                                             else "sesiones",
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -324,22 +459,60 @@ private fun ResumenTab(resumen: ResumenHistorial?, periodo: String, onPeriodoCha
         if (resumen.topPrs.isNotEmpty()) {
             item {
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            "Mejores marcas",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        resumen.topPrs.forEach { pr ->
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(
+                                Icons.Filled.EmojiEvents,
+                                contentDescription = null,
+                                tint = Color(0xFFFFA000)
+                            )
+                            Text(
+                                "Tus mejores marcas",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        // Cada PR se muestra como una fila pro con nombre, valor con
+                        // unidad legible y un chip de pilar al lado.
+                        resumen.topPrs.forEachIndexed { idx, pr ->
                             Row(
                                 Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(pr.ejercicio, style = MaterialTheme.typography.bodyMedium)
+                                // Posición #1, #2, #3 con color medalla
+                                val medalColor = when (idx) {
+                                    0 -> Color(0xFFFFC107)
+                                    1 -> Color(0xFFBDBDBD)
+                                    2 -> Color(0xFFCD7F32)
+                                    else -> MaterialTheme.colorScheme.outline
+                                }
                                 Text(
-                                    "%.2f".format(pr.valor),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold,
+                                    "#${idx + 1}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = medalColor
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        pr.ejercicio,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        maxLines = 1,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                    )
+                                    pr.pilar?.let { p ->
+                                        Text(
+                                            labelTipo(p),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = colorTipo(p)
+                                        )
+                                    }
+                                }
+                                Text(
+                                    formatPrConUnidad(pr.valor, pr.unidad, pr.scoreTipo),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }
@@ -351,13 +524,31 @@ private fun ResumenTab(resumen: ResumenHistorial?, periodo: String, onPeriodoCha
     }
 }
 
+/** Formato pro de una marca con unidad: "120 kg", "12 reps", "0:49 min", etc. */
+private fun formatPrConUnidad(valor: Double, unidad: String?, scoreTipo: String?): String {
+    val num = if (valor == valor.toLong().toDouble()) valor.toLong().toString()
+              else "%.1f".format(valor)
+    val u = when {
+        unidad != null -> com.opofit.miapp.utils.EntrenoValidation.unidadLegible(unidad)
+        scoreTipo == "peso" -> "kg"
+        scoreTipo == "tiempo" || scoreTipo == "tiempo_max" -> "seg"
+        scoreTipo == "distancia" -> "m"
+        scoreTipo == "calorias" -> "kcal"
+        scoreTipo == "rondas" || scoreTipo == "rondas_completadas" -> "rondas"
+        else -> "reps"
+    }
+    return "$num $u"
+}
+
 @Composable
 private fun SesionesTab(
     sesiones: List<SesionItem>,
     filtroTipo: String,
     onFiltroChange: (String) -> Unit,
     onOpenSesion: (Int) -> Unit,
-    onOpenPlan: (Int) -> Unit
+    onOpenPlan: (Int) -> Unit,
+    onOpenGps: (String) -> Unit = {},
+    onEliminarSesion: (SesionItem) -> Unit = {}
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -390,7 +581,13 @@ private fun SesionesTab(
             }
         } else {
             items(sesiones, key = { it.id }) { s ->
-                SesionCard(s, onClick = { onOpenSesion(s.id) }, onOpenPlan = onOpenPlan)
+                SesionCard(
+                    sesion = s,
+                    onClick = { onOpenSesion(s.id) },
+                    onOpenPlan = onOpenPlan,
+                    onOpenGps = onOpenGps,
+                    onEliminar = { onEliminarSesion(s) }
+                )
             }
         }
     }
@@ -400,7 +597,9 @@ private fun SesionesTab(
 private fun SesionCard(
     sesion: SesionItem,
     onClick: () -> Unit,
-    onOpenPlan: (Int) -> Unit
+    onOpenPlan: (Int) -> Unit,
+    onOpenGps: (String) -> Unit = {},
+    onEliminar: () -> Unit = {}
 ) {
     val icon = when {
         sesion.gpsActividadUuid != null -> when (sesion.enfoque?.uppercase()) {
@@ -456,10 +655,32 @@ private fun SesionCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            // Acciones de la sesión, en orden de relevancia: ver mapa GPS si
+            // hubo ruta, ver plan, eliminar. Antes el icono "Map" se mostraba
+            // siempre que había idPlan y abría el plan, lo que confundía
+            // (parecía un mapa de GPS pero abría una tabla).
+            if (!sesion.gpsActividadUuid.isNullOrBlank()) {
+                IconButton(onClick = { onOpenGps(sesion.gpsActividadUuid) }) {
+                    Icon(
+                        Icons.Filled.Map,
+                        contentDescription = "Ver ruta GPS"
+                    )
+                }
+            }
             if (sesion.idPlan != null) {
                 IconButton(onClick = { onOpenPlan(sesion.idPlan) }) {
-                    Icon(Icons.Filled.Map, "Ver plan")
+                    Icon(
+                        androidx.compose.material.icons.Icons.Filled.Insights,
+                        contentDescription = "Ver plan"
+                    )
                 }
+            }
+            IconButton(onClick = onEliminar) {
+                Icon(
+                    androidx.compose.material.icons.Icons.Filled.DeleteOutline,
+                    contentDescription = "Eliminar sesión",
+                    tint = MaterialTheme.colorScheme.error
+                )
             }
         }
     }

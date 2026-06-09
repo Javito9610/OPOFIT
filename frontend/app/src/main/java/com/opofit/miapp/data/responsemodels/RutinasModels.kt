@@ -37,7 +37,12 @@ data class EjercicioPlan(
     val motivo_ajuste: String? = null,
     val sustituido: Boolean = false,
     val nombre_original: String? = null,
-    val motivo_sustitucion: String? = null
+    val motivo_sustitucion: String? = null,
+    // v7-doctorado: si el ejercicio es un WOD/AMRAP/EMOM/etc., el frontend usa
+    // estos campos para mostrar el input correcto (timer/contador rondas).
+    val modalidad: String? = null,
+    val score_tipo: String? = null,
+    val time_cap_seg: Int? = null
 )
 
 data class PilarResumen(

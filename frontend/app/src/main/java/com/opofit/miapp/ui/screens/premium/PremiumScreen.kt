@@ -132,7 +132,7 @@ fun PremiumScreen(onNavigateBack: () -> Unit) {
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Activar Premium (prueba 30 días)")
+                    com.opofit.miapp.ui.components.ButtonText("Activar Premium · 30 días")
                 }
             }
             if (msg.isNotBlank()) Text(msg, color = MaterialTheme.colorScheme.primary)

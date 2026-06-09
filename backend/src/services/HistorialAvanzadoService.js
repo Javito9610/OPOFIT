@@ -58,14 +58,28 @@ class HistorialAvanzadoService {
       [distancePattern, swimPattern, userId, desdeYmd]
     );
 
+    // Heatmap: unimos sesiones de entreno + actividades GPS para que el calendario
+    // muestre TODA la actividad del usuario (antes solo pintaba entrenos clásicos
+    // y se veían huecos los días que solo había salida GPS).
     const [porDia] = await db.query(
-      `SELECT DATE(fecha_entreno) AS dia, COUNT(*) AS n, COALESCE(SUM(duracion_oficial), 0) AS segs
-       FROM historial_sesiones
-       WHERE usuarios_id_usuario = ?
-         AND fecha_entreno >= DATE_SUB(CURDATE(), INTERVAL 120 DAY)
-       GROUP BY DATE(fecha_entreno)
+      `SELECT dia, SUM(n) AS n, SUM(segs) AS segs FROM (
+         SELECT DATE(fecha_entreno) AS dia, COUNT(*) AS n, COALESCE(SUM(duracion_oficial), 0) AS segs
+           FROM historial_sesiones
+          WHERE usuarios_id_usuario = ?
+            AND fecha_entreno >= DATE_SUB(CURDATE(), INTERVAL 120 DAY)
+          GROUP BY DATE(fecha_entreno)
+         UNION ALL
+         SELECT DATE(FROM_UNIXTIME(iniciada_en / 1000)) AS dia,
+                COUNT(*) AS n,
+                COALESCE(SUM(duracion_seg), 0) AS segs
+           FROM gps_actividades
+          WHERE usuarios_id_usuario = ?
+            AND iniciada_en >= UNIX_TIMESTAMP(DATE_SUB(CURDATE(), INTERVAL 120 DAY)) * 1000
+          GROUP BY DATE(FROM_UNIXTIME(iniciada_en / 1000))
+       ) u
+       GROUP BY dia
        ORDER BY dia ASC`,
-      [userId]
+      [userId, userId]
     );
 
     const [porTipo] = await db.query(
@@ -83,20 +97,41 @@ class HistorialAvanzadoService {
       [userId, desdeYmd]
     );
 
+    // Devolvemos modalidad + score_tipo para que el frontend muestre la unidad
+    // correcta (kg, reps, seg, kcal, rondas, etc.) en lugar de "120,00" pelado.
+    // Top PRs como Strong/Hevy: solo ejercicios donde el usuario ha registrado
+    // ≥2 sesiones (hay PROGRESIÓN, no marcas iniciales). Antes se llenaba
+    // con cualquier ejercicio hecho una sola vez con un número grande
+    // (ej: "Natación crol 50m: 300m"). El usuario reportaba que era basura.
     const [topPrs] = await db.query(
-      `SELECT e.nombre AS ejercicio, MAX(r.valor_conseguido) AS valor, e.pilar
-       FROM registro_resultados r
-       JOIN historial_sesiones h ON r.historial_sesiones_id_historial_sesiones = h.id_historial_sesion
-       JOIN ejercicios e ON r.ejercicios_id_ejercicio = e.id_ejercicio
-       WHERE h.usuarios_id_usuario = ?
-       GROUP BY e.id_ejercicio, e.nombre, e.pilar
-       ORDER BY valor DESC
-       LIMIT 5`,
+      `SELECT e.nombre AS ejercicio,
+              MAX(r.valor_conseguido) AS valor,
+              MIN(r.valor_conseguido) AS valor_min,
+              COUNT(*) AS n_intentos,
+              e.pilar,
+              e.modalidad,
+              e.score_tipo
+         FROM registro_resultados r
+         JOIN historial_sesiones h ON r.historial_sesiones_id_historial_sesiones = h.id_historial_sesion
+         JOIN ejercicios e ON r.ejercicios_id_ejercicio = e.id_ejercicio
+        WHERE h.usuarios_id_usuario = ?
+        GROUP BY e.id_ejercicio, e.nombre, e.pilar, e.modalidad, e.score_tipo
+       HAVING COUNT(*) >= 2
+        ORDER BY (MAX(r.valor_conseguido) - MIN(r.valor_conseguido)) DESC, valor DESC
+        LIMIT 5`,
       [userId]
     );
 
-    const segundosTotal = Number(agregados?.[0]?.segundos_total || 0);
+    // Sumamos segundos de entrenos clásicos + sesiones GPS para "Minutos" totales.
+    // Antes el card "Minutos: 0" engañaba porque las salidas GPS no contaban.
+    const segundosEntrenos = Number(agregados?.[0]?.segundos_total || 0);
+    const segundosGps = Number(gpsAgg?.[0]?.dur || 0);
+    const segundosTotal = segundosEntrenos + segundosGps;
     const minutos = Math.round(segundosTotal / 60);
+    // Mismo criterio para el contador de "Sesiones": entrenos + actividades GPS.
+    const sesionesEntrenos = Number(agregados?.[0]?.sesiones || 0);
+    const sesionesGps = Number(gpsAgg?.[0]?.actividades || 0);
+    const sesionesTotal = sesionesEntrenos + sesionesGps;
     const gpsDistanciaKm = Number(gpsAgg?.[0]?.distancia || 0) / 1000;
     const kmCarrera = Number(ejKm?.[0]?.km_carrera || 0);
     const kmNado = Number(ejKm?.[0]?.km_nado || 0);
@@ -120,7 +155,10 @@ class HistorialAvanzadoService {
 
     return {
       periodo: periodo || 'week',
-      sesiones: Number(agregados?.[0]?.sesiones || 0),
+      // Total real = entrenos + actividades GPS (no solo entrenos).
+      sesiones: sesionesTotal,
+      sesionesEntrenos,
+      sesionesGps,
       minutos,
       distanciaTotalKm,
       kcalTotal,
@@ -135,8 +173,34 @@ class HistorialAvanzadoService {
         sesiones: Number(d.n),
         minutos: Math.round(Number(d.segs) / 60)
       })),
-      porTipo: porTipo.map((t) => ({ tipo: t.tipo, sesiones: Number(t.n) })),
-      topPrs: topPrs.map((p) => ({ ejercicio: p.ejercicio, valor: Number(p.valor), pilar: p.pilar }))
+      // La distribución también suma las actividades GPS como categoría "GPS"
+      // (igual que sesionesTotal arriba), para que el donut refleje la
+      // actividad real del usuario y no solo entrenos clásicos.
+      porTipo: (() => {
+        const base = porTipo.map((t) => ({ tipo: t.tipo, sesiones: Number(t.n) }));
+        if (sesionesGps > 0) base.push({ tipo: 'GPS', sesiones: sesionesGps });
+        return base;
+      })(),
+      topPrs: topPrs.map((p) => ({
+        ejercicio: p.ejercicio,
+        valor: Number(p.valor),
+        pilar: p.pilar,
+        scoreTipo: p.score_tipo || null,
+        unidad: (() => {
+          // Mapeo score_tipo → unidad mostrable. Coincide con la lógica del
+          // frontend para que ambos lados queden consistentes.
+          switch (p.score_tipo) {
+            case 'peso': return 'kg';
+            case 'tiempo':
+            case 'tiempo_max': return 's';
+            case 'distancia': return 'm';
+            case 'calorias': return 'kcal';
+            case 'rondas':
+            case 'rondas_completadas': return 'rondas';
+            default: return 'reps';
+          }
+        })()
+      }))
     };
   }
 

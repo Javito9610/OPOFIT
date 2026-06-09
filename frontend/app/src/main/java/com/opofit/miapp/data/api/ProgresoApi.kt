@@ -29,4 +29,10 @@ interface ProgresoApi {
         @Header("Authorization") token: String,
         @Path("id") idSesion: Int
     ): com.opofit.miapp.data.responsemodels.SimpleOkResponse
+
+    /** Vacía todo el historial de entrenamientos del usuario (NO toca GPS). */
+    @DELETE("/api/historial/sesiones")
+    suspend fun vaciarHistorial(
+        @Header("Authorization") token: String
+    ): com.opofit.miapp.data.responsemodels.SimpleOkResponse
 }

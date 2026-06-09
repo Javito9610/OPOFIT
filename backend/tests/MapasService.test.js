@@ -105,4 +105,71 @@ describe('MapasService', () => {
     expect(MapasService.redondearKm(9.000000953)).toBe(9);
     expect(MapasService.redondearKm(7.55)).toBe(7.6);
   });
+
+  // Tests del filtrado tipo-específico: el usuario reportaba que al seleccionar
+  // CrossFit o Calistenia salían sitios que no eran.
+  describe('Filtros must / mustNot por tipo', () => {
+    const fakeOverpass = (elements) => ({
+      ok: true,
+      json: async () => ({ elements })
+    });
+
+    test('GYM excluye centros de yoga / pilates aunque OSM los marque', async () => {
+      global.fetch = jest.fn().mockResolvedValue(
+        fakeOverpass([
+          { id: 1, lat: 41.4, lon: 2.16, tags: { name: 'Body & Mind Yoga Studio', amenity: 'gym' } },
+          { id: 2, lat: 41.41, lon: 2.17, tags: { name: 'AltaFit', amenity: 'gym' } },
+          { id: 3, lat: 41.42, lon: 2.18, tags: { name: 'Centro de Pilates Sant Cugat', amenity: 'gym' } }
+        ])
+      );
+      const res = await MapasService.buscarLugares(41.4, 2.16, 'GYM');
+      expect(res.length).toBe(1);
+      expect(res[0].nombre).toBe('AltaFit');
+    });
+
+    test('CROSSFIT acepta tag explícito sport=crossfit pero descarta yoga', async () => {
+      global.fetch = jest.fn().mockResolvedValue(
+        fakeOverpass([
+          { id: 10, lat: 41.4, lon: 2.16, tags: { name: 'CrossFit Wellness Yoga', sport: 'crossfit' } },
+          { id: 11, lat: 41.41, lon: 2.17, tags: { name: 'CrossFit Barcelona', sport: 'crossfit' } },
+          { id: 12, lat: 41.42, lon: 2.18, tags: { name: 'CF Box Granollers', sport: 'crossfit' } }
+        ])
+      );
+      const res = await MapasService.buscarLugares(41.4, 2.16, 'CROSSFIT');
+      const nombres = res.map((r) => r.nombre);
+      expect(nombres).toContain('CrossFit Barcelona');
+      expect(nombres).toContain('CF Box Granollers');
+      // El yoga tiene tag crossfit por error de OSM → mustNot lo descarta.
+      expect(nombres).not.toContain('CrossFit Wellness Yoga');
+    });
+
+    test('PISTA descarta pistas de tenis o motor sin sport=athletics', async () => {
+      global.fetch = jest.fn().mockResolvedValue(
+        fakeOverpass([
+          { id: 20, lat: 41.4, lon: 2.16, tags: { name: 'Pista de tenis municipal', leisure: 'track', sport: 'tennis' } },
+          { id: 21, lat: 41.41, lon: 2.17, tags: { name: 'Pista de atletismo Joan Serrahima', leisure: 'track', sport: 'athletics' } },
+          { id: 22, lat: 41.42, lon: 2.18, tags: { name: 'Hipódromo', leisure: 'track', sport: 'horse_racing' } }
+        ])
+      );
+      const res = await MapasService.buscarLugares(41.4, 2.16, 'PISTA');
+      expect(res.map((r) => r.nombre)).toEqual(['Pista de atletismo Joan Serrahima']);
+    });
+
+    test('CALISTENIA descarta parques infantiles / skate', async () => {
+      global.fetch = jest.fn().mockResolvedValue(
+        fakeOverpass([
+          { id: 30, lat: 41.4, lon: 2.16, tags: { name: 'Parque infantil', leisure: 'park' } },
+          { id: 31, lat: 41.41, lon: 2.17, tags: { name: 'Parque de calistenia', leisure: 'fitness_station' } },
+          { id: 32, lat: 41.42, lon: 2.18, tags: { name: 'Outdoor Gym Diagonal Mar', leisure: 'outdoor_gym' } },
+          { id: 33, lat: 41.43, lon: 2.19, tags: { name: 'Skatepark Joan Miró', leisure: 'fitness_station' } }
+        ])
+      );
+      const res = await MapasService.buscarLugares(41.4, 2.16, 'CALISTENIA');
+      const nombres = res.map((r) => r.nombre);
+      expect(nombres).toContain('Parque de calistenia');
+      expect(nombres).toContain('Outdoor Gym Diagonal Mar');
+      expect(nombres).not.toContain('Parque infantil');
+      expect(nombres).not.toContain('Skatepark Joan Miró');
+    });
+  });
 });

@@ -26,7 +26,12 @@ data class RecordRotoItem(
     val idEjercicio: Int,
     val nombreEjercicio: String,
     val valorAnterior: Double? = null,
-    val valorNuevo: Double
+    val valorNuevo: Double,
+    // Campos extra (backend v7+) para que el dialog muestre unidad correcta,
+    // icono según el tipo de ejercicio y % de mejora estilo Strong/Hevy.
+    val modalidad: String? = null,
+    val scoreTipo: String? = null,
+    val mejoraPorcentaje: Double? = null
 )
 
 data class PuntoEvolucion(

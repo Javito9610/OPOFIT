@@ -24,9 +24,26 @@ class PlanGeneradorService {
       [userId]
     );
     const u = rows[0] || {};
+    // Material disponible: consulta opcional, no rompe si la columna no existe
+    // (test, BD pre-migración). En esos casos asumimos solo peso corporal.
+    let material = ['NADA'];
+    try {
+      const [matRows] = await db.query(
+        'SELECT material_disponible FROM settings WHERE usuarios_id_usuario = ?',
+        [userId]
+      );
+      const raw = matRows[0]?.material_disponible;
+      if (raw) {
+        material = String(raw).split(',').map((m) => m.trim().toUpperCase()).filter(Boolean);
+        if (!material.length) material = ['NADA'];
+      }
+    } catch (_) {
+      // Columna no existe aún → seguimos con peso corporal.
+    }
     return {
       entorno: EntornoEntreno.normalizarEntorno(u.entorno_entreno),
-      seed: Number(u.plan_variacion_seed || 0)
+      seed: Number(u.plan_variacion_seed || 0),
+      materialDisponible: material
     };
   }
 
@@ -462,7 +479,7 @@ class PlanGeneradorService {
    */
   static async disenarSesionIA(userId, idOposicion, idPlanDia, nivel, genero) {
     const PlanesService = require('./PlanesService');
-    const { entorno, seed } = await PlanGeneradorService.obtenerPrefsUsuario(userId);
+    const { entorno, seed, materialDisponible } = await PlanGeneradorService.obtenerPrefsUsuario(userId);
     if (!entorno) throw new Error('Configura primero dónde entrenas');
 
     const planActual = await PlanesService.obtenerPlanSemanal(userId, idOposicion, nivel, genero);
@@ -481,6 +498,7 @@ class PlanGeneradorService {
       catalogo,
       pilaresDebiles: planActual.personalizacion?.pilares_debiles || [],
       pilaresFuertes: planActual.personalizacion?.pilares_fuertes || [],
+      materialDisponible, // ← la IA filtrará ejercicios por material real del usuario
       seed: seed + idDia,
       usarIA: true
     });

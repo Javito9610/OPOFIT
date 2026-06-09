@@ -136,6 +136,52 @@ class HistorialAvanzadoViewModel(application: Application) : AndroidViewModel(ap
         }
     }
 
+    /** Borra UNA sesión del historial y recarga lista + resumen. */
+    fun borrarSesion(idSesion: Int, onDone: ((Boolean) -> Unit)? = null) {
+        viewModelScope.launch {
+            try {
+                val token = tokenManager.getToken().first().orEmpty()
+                val resp = com.opofit.miapp.data.api.RetrofitClient.progresoApi
+                    .borrarSesion("Bearer $token", idSesion)
+                if (resp.ok) {
+                    cargarResumen()
+                    cargarSesiones()
+                    _uiState.update { it.copy(syncMessage = "Sesión eliminada") }
+                    onDone?.invoke(true)
+                } else {
+                    _uiState.update { it.copy(syncMessage = resp.msg ?: "No se pudo eliminar") }
+                    onDone?.invoke(false)
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(syncMessage = ApiErrorParser.message(e)) }
+                onDone?.invoke(false)
+            }
+        }
+    }
+
+    /** Vacía TODO el historial de entrenos (NO toca actividades GPS). */
+    fun vaciarHistorial(onDone: ((Boolean) -> Unit)? = null) {
+        viewModelScope.launch {
+            try {
+                val token = tokenManager.getToken().first().orEmpty()
+                val resp = com.opofit.miapp.data.api.RetrofitClient.progresoApi
+                    .vaciarHistorial("Bearer $token")
+                if (resp.ok) {
+                    cargarResumen()
+                    cargarSesiones()
+                    _uiState.update { it.copy(syncMessage = "Historial vaciado") }
+                    onDone?.invoke(true)
+                } else {
+                    _uiState.update { it.copy(syncMessage = resp.msg ?: "No se pudo vaciar") }
+                    onDone?.invoke(false)
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(syncMessage = ApiErrorParser.message(e)) }
+                onDone?.invoke(false)
+            }
+        }
+    }
+
     fun cargarHistorialPlan(idPlan: Int) {
         viewModelScope.launch {
             try {

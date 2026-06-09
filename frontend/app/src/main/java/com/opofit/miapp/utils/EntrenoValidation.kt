@@ -8,6 +8,40 @@ object EntrenoValidation {
         enfoqueBloque: String? = null
     ): String = EntrenoExerciseUtil.inferirUnidad(nombre, unidadExplicita, pilar, enfoqueBloque)
 
+    /** Formatea la unidad para mostrarla al usuario (ej: "s" → "seg", "reps" → "reps"). */
+    fun unidadLegible(unidad: String): String = when (unidad.lowercase().trim()) {
+        "s", "seg", "segundos" -> "seg"
+        "min", "minutos" -> "min"
+        "reps", "rep" -> "reps"
+        "km" -> "km"
+        "m", "metros" -> "m"
+        else -> unidad
+    }
+
+    /**
+     * Valida que el valor introducido tenga sentido respecto al tiempo total del entreno.
+     * Si el ejercicio mide tiempo (s/min) y el valor supera el cronómetro, no es posible.
+     */
+    fun validarValorContraTiempoTotal(
+        valor: String,
+        unidad: String,
+        elapsedMs: Long
+    ): String? {
+        if (elapsedMs <= 0L) return null
+        val v = valor.replace(",", ".").toDoubleOrNull() ?: return null
+        val elapsedSec = elapsedMs / 1000.0
+        val elapsedMin = elapsedSec / 60.0
+        return when (unidad.lowercase().trim()) {
+            "s", "seg" -> if (v > elapsedSec)
+                "Imposible: $valor seg > tiempo de entreno (${elapsedSec.toInt()} seg)"
+            else null
+            "min" -> if (v > elapsedMin)
+                "Imposible: $valor min > tiempo de entreno (%.1f min)".format(elapsedMin)
+            else null
+            else -> null
+        }
+    }
+
     fun validarValor(valor: String, unidad: String): String? {
         if (valor.isBlank()) return "Introduce un valor"
         val v = valor.replace(",", ".").toDoubleOrNull()

@@ -9,7 +9,17 @@ data class Ejercicio(
     val pilar: String? = null,
     val grupo_muscular: String? = null,
     val equipamiento: String? = null,
-    val tipo_ilustracion: String? = null
+    val tipo_ilustracion: String? = null,
+    // v7-doctorado: tipo de tracking del ejercicio para que la UI muestre el
+    // input correcto y el historial grafique según el tipo:
+    //   modalidad = convencional | calistenia | crossfit_lift | wod | emom |
+    //               amrap | for_time | tabata | death_by | chipper | ladder |
+    //               test | movilidad | cardio
+    //   score_tipo = reps | tiempo | tiempo_max | rondas | rondas_reps |
+    //                rondas_completadas | reps_min_ronda | ultima_ronda |
+    //                peso | distancia | rpe | calorias
+    val modalidad: String? = null,
+    val score_tipo: String? = null
 )
 
 fun Ejercicio.toEjercicioPlan(prescripcion: String = ""): com.opofit.miapp.data.responsemodels.EjercicioPlan {

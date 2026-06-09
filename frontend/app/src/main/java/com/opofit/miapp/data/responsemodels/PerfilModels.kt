@@ -60,7 +60,11 @@ data class ActualizarAjustesRequest(
     val unidadPeso: String,
     val unidadDistancia: String,
     val horaRecordatorio: Int? = null,
-    val recordatorioActivo: Boolean? = null
+    val recordatorioActivo: Boolean? = null,
+    // Lista de códigos: ["BARRA_DOMINADAS","KB","TRX",...]. Si la app aún no
+    // soporta esta sección o el usuario no ha tocado nada, dejarlo null para
+    // que el backend no resetee el campo.
+    val materialDisponible: List<String>? = null
 )
 
 data class ActualizarAjustesResponse(
@@ -73,11 +77,24 @@ data class AjustesData(
     val unidadPeso: String = "kg",
     val unidadDistancia: String = "km",
     val horaRecordatorio: Int = 18,
-    val recordatorioActivo: Boolean = true
+    val recordatorioActivo: Boolean = true,
+    val materialDisponible: List<String> = emptyList()
 )
 
 data class AjustesResponse(
     val ok: Boolean,
     val msg: String? = null,
     val data: AjustesData? = null
+)
+
+/** Catálogo de material disponible que devuelve el backend para los checkboxes. */
+data class MaterialDisponibleItem(
+    val id: String,
+    val label: String,
+    val icono: String? = null
+)
+
+data class MaterialDisponibleResponse(
+    val ok: Boolean,
+    val data: List<MaterialDisponibleItem> = emptyList()
 )

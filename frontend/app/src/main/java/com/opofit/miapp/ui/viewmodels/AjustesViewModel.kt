@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.ActualizarAjustesRequest
+import com.opofit.miapp.data.responsemodels.MaterialDisponibleItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,7 +30,11 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
         val unidadDistancia: String = "km",
         val darkMode: Boolean = false,
         val horaRecordatorio: Int = 18,
-        val recordatorioActivo: Boolean = true
+        val recordatorioActivo: Boolean = true,
+        // v7-doctorado: material disponible para que la IA y los entrenos
+        // libres no propongan ejercicios que el usuario no puede hacer.
+        val materialCatalogo: List<MaterialDisponibleItem> = emptyList(),
+        val materialSeleccionado: Set<String> = emptySet()
     )
 
     private val _uiState = MutableStateFlow(AjustesUiState())
@@ -69,10 +74,36 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
                         unidadPeso = d.unidadPeso,
                         unidadDistancia = d.unidadDistancia,
                         horaRecordatorio = d.horaRecordatorio,
-                        recordatorioActivo = d.recordatorioActivo
+                        recordatorioActivo = d.recordatorioActivo,
+                        materialSeleccionado = d.materialDisponible.toSet()
                     )
                 }
+                // Cargamos el catálogo de material (lista cerrada) para los checkboxes.
+                try {
+                    val mat = RetrofitClient.ejerciciosApi.listarMaterial("Bearer $token")
+                    if (mat.ok && mat.data.isNotEmpty()) {
+                        _uiState.update { it.copy(materialCatalogo = mat.data) }
+                    }
+                } catch (_: Exception) { /* opcional */ }
             } catch (_: Exception) { /* silencioso: defaults siguen siendo válidos */ }
+        }
+    }
+
+    /** Toggle de un item de material en la selección del usuario. */
+    fun toggleMaterial(codigo: String) {
+        _uiState.update { st ->
+            val nueva = st.materialSeleccionado.toMutableSet()
+            if (codigo in nueva) nueva.remove(codigo) else nueva.add(codigo)
+            // Si elige GIMNASIO_COMPLETO, lo dejamos solo (implica todo).
+            // Si elige NADA, lo dejamos solo (excluye al resto).
+            val final = when {
+                codigo == "GIMNASIO_COMPLETO" && codigo in nueva -> setOf("GIMNASIO_COMPLETO")
+                codigo == "NADA" && codigo in nueva -> setOf("NADA")
+                "GIMNASIO_COMPLETO" in nueva && codigo != "GIMNASIO_COMPLETO" -> nueva - "GIMNASIO_COMPLETO"
+                "NADA" in nueva && codigo != "NADA" -> nueva - "NADA"
+                else -> nueva
+            }
+            st.copy(materialSeleccionado = final)
         }
     }
 
@@ -94,12 +125,16 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
             _uiState.update { it.copy(isLoading = true, error = "", guardadoExitoso = false) }
             try {
                 val token = tokenManager.getToken().first() ?: ""
+                // Mandamos la selección de material para que el backend la guarde
+                // y la IA filtre planes en consecuencia.
+                val materialSel = _uiState.value.materialSeleccionado.toList()
                 val body = ActualizarAjustesRequest(
-                    userId,
-                    unidadPeso,
-                    unidadDistancia,
-                    horaRecordatorio,
-                    recordatorioActivo
+                    userId = userId,
+                    unidadPeso = unidadPeso,
+                    unidadDistancia = unidadDistancia,
+                    horaRecordatorio = horaRecordatorio,
+                    recordatorioActivo = recordatorioActivo,
+                    materialDisponible = materialSel.ifEmpty { null }
                 )
                 val response = RetrofitClient.usuarioApi.actualizarAjustes("Bearer $token", body)
                 if (response.ok) {

@@ -290,7 +290,9 @@ fun RegistrarEntrenamientoScreen(
                     Button(
                         onClick = {
                             val mins = duracion.toIntOrNull() ?: 0
-                            // El usuario ya escribe minutos; el backend tambien los espera en minutos.
+                            // El usuario escribe minutos pero el backend almacena
+                            // segundos en historial_sesiones.duracion_oficial.
+                            val segundos = (mins * 60).coerceAtLeast(60)
                             val realizados = ejercicios.mapNotNull { row ->
                                 val id = row.idEjercicio.toIntOrNull() ?: return@mapNotNull null
                                 val v = row.valor.toDoubleOrNull() ?: 0.0
@@ -304,7 +306,7 @@ fun RegistrarEntrenamientoScreen(
                                 userId = userId,
                                 tipoRutina = tipoRutinaSeleccionada,
                                 idRutina = rutinaId.toIntOrNull() ?: 1,
-                                duracion = mins,
+                                duracion = segundos,
                                 ejercicios = realizados,
                                 tituloRutina = tituloRutina
                             )

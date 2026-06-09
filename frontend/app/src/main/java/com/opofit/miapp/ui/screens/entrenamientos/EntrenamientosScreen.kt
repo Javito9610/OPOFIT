@@ -79,6 +79,8 @@ import com.opofit.miapp.gps.service.buildPendingShareFromEntreno
 import com.opofit.miapp.gps.util.TcxExport
 import com.opofit.miapp.ui.components.EntrenoActiveStepCard
 import com.opofit.miapp.ui.components.EntrenoLiveMetricsBar
+import com.opofit.miapp.ui.components.valoresPorSerieToCsv
+import com.opofit.miapp.ui.components.resumenSeries
 import com.opofit.miapp.ui.components.ExerciseDetailSheet
 import com.opofit.miapp.ui.components.ExerciseInfoButton
 import com.opofit.miapp.ui.components.ExerciseValueInput
@@ -119,7 +121,11 @@ private data class EjercicioEstado(
     val instrucciones_tecnicas: String? = null,
     val grupo_muscular: String? = null,
     val equipamiento: String? = null,
-    val tipo_ilustracion: String? = null
+    val tipo_ilustracion: String? = null,
+    // Serie-por-serie (estilo Strong/Hevy): si la prescripción es "4×12",
+    // el usuario rellena 4 entradas (una por serie). Se persiste como CSV
+    // en valorConseguido para conservar compatibilidad con el historial.
+    val valoresPorSerie: List<String> = emptyList()
 ) {
     fun toEjercicioPlan(): EjercicioPlan {
         val parts = prescripcion.split("×", limit = 2)
@@ -539,6 +545,14 @@ fun EntrenamientosScreen(
                 historialViewModel.clearRecordsCelebration()
                 prepararCompartirYFinalizar()
             }
+        },
+        onShare = {
+            // Botón "Compartir" en el diálogo de PR → empuja al editor de
+            // share-card (Insta / WhatsApp / perfil) tras cerrar el diálogo.
+            if (historialState.registradoExitoso) {
+                historialViewModel.clearRecordsCelebration()
+                prepararCompartirYFinalizar()
+            }
         }
     )
 
@@ -565,10 +579,15 @@ fun EntrenamientosScreen(
     val valoresInvalidosGlobal by remember {
         derivedStateOf {
             ejerciciosEstado.withIndex().any { (i, e) ->
-                e.completado && EntrenoValidation.validarValor(
-                    e.valorConseguido,
-                    unidadEjercicioGlobal(i)
-                ) != null
+                if (!e.completado) return@any false
+                val unidad = unidadEjercicioGlobal(i)
+                // Validación básica (rango + número)
+                if (EntrenoValidation.validarValor(e.valorConseguido, unidad) != null) return@any true
+                // Validación lógica: tiempo no puede exceder duración del entreno
+                if (EntrenoValidation.validarValorContraTiempoTotal(
+                        e.valorConseguido, unidad, elapsedMs
+                    ) != null) return@any true
+                false
             }
         }
     }
@@ -694,7 +713,11 @@ fun EntrenamientosScreen(
                                         userId = userId,
                                         tipoRutina = "OPO",
                                         idRutina = rutinaOpoId,
-                                        duracion = ((elapsedMs / 60_000L).toInt()).coerceAtLeast(1),
+                                        // ⚠ duracion EN SEGUNDOS (backend lo guarda así
+                                        // y luego lo divide entre 60 para mostrar minutos).
+                                        // Antes mandábamos minutos → backend lo dividía
+                                        // otra vez y aparecía "0 min".
+                                        duracion = ((elapsedMs / 1000L).toInt()).coerceAtLeast(1),
                                         ejercicios = realizados,
                                         gpsActividadUuid = gpsActividadUuid,
                                         tituloRutina = tituloRutina
@@ -1061,6 +1084,19 @@ fun EntrenamientosScreen(
                         estado = ejerciciosEstado.getOrNull(idx) ?: return
                     }
                 }
+                // Validación lógica (estilo Strong/Hevy): si tiene N series
+                // declaradas, exigimos que TODAS estén rellenas antes de
+                // saltar al siguiente ejercicio. Permite ahorrar un click
+                // con "Igualar todas las series" del SeriesInput.
+                val prescParts = estado.prescripcion.split("×", limit = 2)
+                val seriesObj = prescParts.getOrNull(0)?.toIntOrNull() ?: 1
+                if (seriesObj > 1 && estado.tipo == null) {
+                    val seriesRellenas = estado.valoresPorSerie.count { it.isNotBlank() }
+                    if (seriesRellenas < seriesObj) {
+                        avisoMsg = "Anota las $seriesObj series antes de completar el ejercicio (llevas $seriesRellenas)."
+                        return
+                    }
+                }
                 ejerciciosEstado[idx] = estado.copy(completado = true)
                 val nextIdx = idx + 1
                 if (nextIdx < ejerciciosEstado.size) {
@@ -1095,6 +1131,12 @@ fun EntrenamientosScreen(
                         "RUN" -> if (unitDist == "mi") "Distancia (mi)" else "Distancia (km)"
                         else -> "Distancia"
                     }
+                    // Parseamos "S×R" de la prescripción para mostrar input por serie.
+                    val prescParts = activo.prescripcion.split("×", limit = 2)
+                    val seriesObjetivo = prescParts.getOrNull(0)?.toIntOrNull() ?: 1
+                    val repsObjetivo = prescParts.getOrNull(1)
+                        ?.replace(Regex("[^0-9]"), "")
+                        ?.toIntOrNull()
                     EntrenoActiveStepCard(
                         paso = pasoActualIdx + 1,
                         total = ejerciciosEstado.size,
@@ -1105,9 +1147,30 @@ fun EntrenamientosScreen(
                         valor = activo.valorConseguido,
                         distancia = activo.distancia,
                         elapsedMsCronometro = elapsedMs,
+                        seriesObjetivo = seriesObjetivo,
+                        repsObjetivo = repsObjetivo,
+                        valoresPorSerie = activo.valoresPorSerie,
+                        onValoresPorSerieChange = { nuevos ->
+                            val csv = valoresPorSerieToCsv(nuevos)
+                            ejerciciosEstado[pasoActualIdx] = activo.copy(
+                                valoresPorSerie = nuevos,
+                                valorConseguido = csv
+                            )
+                            // Validamos cada serie con las reglas habituales + reglas
+                            // lógicas (tiempo de un set no puede superar el cronómetro).
+                            val errs = nuevos.mapNotNull { v ->
+                                if (v.isBlank()) null
+                                else EntrenoValidation.validarValor(v, unidadEff)
+                                    ?: EntrenoValidation.validarValorContraTiempoTotal(v, unidadEff, elapsedMs)
+                            }
+                            val err = errs.firstOrNull()
+                            erroresValor = if (err == null) erroresValor - pasoActualIdx
+                                else erroresValor + (pasoActualIdx to err)
+                        },
                         onValorChange = { v ->
                             ejerciciosEstado[pasoActualIdx] = activo.copy(valorConseguido = v)
                             val err = EntrenoValidation.validarValor(v, unidadEff)
+                                ?: EntrenoValidation.validarValorContraTiempoTotal(v, unidadEff, elapsedMs)
                             erroresValor = if (err == null) erroresValor - pasoActualIdx else erroresValor + (pasoActualIdx to err)
                         },
                         onDistanciaChange = { v ->
@@ -1194,8 +1257,19 @@ fun EntrenamientosScreen(
                                 )
                             }
                             if (estado.completado && estado.valorConseguido.isNotBlank()) {
+                                // Mostrar el valor CON UNIDAD legible (ej: "49 seg" en vez de
+                                // solo "49" para plancha). El usuario reportaba confusión.
+                                // Si hay valores por serie (estilo Strong/Hevy), resumimos:
+                                //   - todas iguales → "4×12 reps"
+                                //   - distintas → "media 10 reps (8–12)"
+                                val unidadEj = unidadEjercicio(index)
+                                val resumen = if (estado.valoresPorSerie.size > 1) {
+                                    resumenSeries(estado.valorConseguido, unidadEj)
+                                } else {
+                                    "${estado.valorConseguido} ${EntrenoValidation.unidadLegible(unidadEj)}"
+                                }
                                 Text(
-                                    "Resultado: ${estado.valorConseguido}",
+                                    "Resultado: $resumen",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

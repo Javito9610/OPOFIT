@@ -250,6 +250,7 @@ const obtenerAjustes = async (req, res) => {
     const [[u]] = await db.query(
       `SELECT COALESCE(s.unidad_peso, 'kg') AS unidadPeso,
               COALESCE(s.unidad_distancia, 'km') AS unidadDistancia,
+              COALESCE(s.material_disponible, 'NADA') AS materialDisponible,
               COALESCE(u.hora_recordatorio_entreno, '18:00:00') AS horaRecordatorio,
               COALESCE(u.recordatorio_entreno_activo, 1) AS recordatorioActivo
          FROM usuarios u
@@ -266,6 +267,7 @@ const obtenerAjustes = async (req, res) => {
       data: {
         unidadPeso: u.unidadPeso,
         unidadDistancia: u.unidadDistancia,
+        materialDisponible: String(u.materialDisponible || 'NADA').split(',').filter(Boolean),
         horaRecordatorio: horaInt,
         recordatorioActivo: Number(u.recordatorioActivo) === 1
       }
@@ -283,7 +285,8 @@ const actualizarSettings = async (req, res) => {
       unidadPeso,
       unidadDistancia,
       horaRecordatorio,
-      recordatorioActivo
+      recordatorioActivo,
+      materialDisponible // array opcional con códigos: ['BARRA_DOMINADAS','KB',...]
     } = req.body;
     if (!userId || !unidadPeso || !unidadDistancia) {
       return res.status(400).json({
@@ -298,6 +301,20 @@ const actualizarSettings = async (req, res) => {
       });
     }
     await db.query('UPDATE settings SET unidad_peso = ?, unidad_distancia = ? WHERE usuarios_id_usuario = ?', [unidadPeso, unidadDistancia, userId]);
+    if (Array.isArray(materialDisponible)) {
+      // Validamos contra una lista cerrada para no permitir basura en BD.
+      const VALIDOS = new Set([
+        'NADA', 'BARRA_DOMINADAS', 'BARRA_OLIMPICA', 'MANCUERNAS', 'KB',
+        'TRX', 'ANILLAS', 'GOMAS', 'COMBA', 'SACO', 'FOAM', 'BANCO',
+        'CAJA', 'BICI', 'REMO', 'ECHO_BIKE', 'SKI_ERG', 'PISCINA',
+        'PISTA', 'MONTANA', 'GIMNASIO_COMPLETO'
+      ]);
+      const limpio = materialDisponible
+        .map((m) => String(m).trim().toUpperCase())
+        .filter((m) => VALIDOS.has(m));
+      const csv = limpio.length ? limpio.join(',') : 'NADA';
+      await db.query('UPDATE settings SET material_disponible = ? WHERE usuarios_id_usuario = ?', [csv, userId]);
+    }
     if (horaRecordatorio != null) {
       const h = String(horaRecordatorio).match(/^\d{1,2}/)?.[0] || '18';
       await db.query('UPDATE usuarios SET hora_recordatorio_entreno = ? WHERE id_usuario = ?', [

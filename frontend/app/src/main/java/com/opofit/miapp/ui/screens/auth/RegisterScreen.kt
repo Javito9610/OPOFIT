@@ -507,7 +507,7 @@ fun RegisterScreen(
                             enabled = !uiState.isLoading,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Cancelar registro con Google y usar email/contraseña")
+                            com.opofit.miapp.ui.components.ButtonText("Usar email en su lugar")
                         }
                     }
 

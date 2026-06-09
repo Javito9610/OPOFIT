@@ -4,9 +4,19 @@ const db = require('../config/db');
 const EntornoEntreno = require('../utils/EntornoEntreno');
 const EjercicioMetadataService = require('./EjercicioMetadataService');
 
-// v6: saneamiento — eliminadas 17 series surrealistas (5000m × 12, etc.) y
-// renombrado vVO₂máx → ritmo VO2max para legibilidad. Total ~739 ejercicios.
-const BANCO_VERSION = 6;
+// v7: ampliación "doctorado en ciencias del deporte". +297 ejercicios cubriendo
+// calistenia avanzada (progresiones front/back lever, planche, handstand,
+// muscle-up, human flag, dragon flag), CrossFit (olympic lifts, gymnastics,
+// monostructural), 17 WODs benchmark clásicos (Fran, Murph, Cindy, Helen,
+// Diane, Grace, Annie, Karen, Mary, Angie, Barbara, Chelsea, Nancy, DT, JT,
+// Kalsu, Filthy Fifty), formatos EMOM/AMRAP/Tabata/For Time/Death by/Chipper/
+// Ladder, material específico (TRX, KB, mancuernas, gomas, comba, saco,
+// anillas, maza, bolsa búlgara), tests baremo reales (course-navette, 1000 m
+// PN, 2000 m GC, salto Sargent, curso bombero CBA, BLA Andalucía), movilidad
+// estructurada. Nuevos campos modalidad + score_tipo en CADA ejercicio para
+// que la UI muestre el input correcto y el historial grafique PR por tipo.
+// Total ~1036 ejercicios.
+const BANCO_VERSION = 7;
 
 function resolveJsonPath() {
   const candidates = [
@@ -87,6 +97,9 @@ class EjerciciosBanco500Service {
         [nombre]
       );
 
+      const modalidad = e.modalidad || 'convencional';
+      const scoreTipo = e.score_tipo || 'reps';
+
       if (exists.length) {
         await db.query(
           `UPDATE ejercicios SET
@@ -96,9 +109,11 @@ class EjerciciosBanco500Service {
              grupo_muscular = ?,
              equipamiento = COALESCE(equipamiento, ?),
              entornos = COALESCE(entornos, ?),
-             tipo_ilustracion = COALESCE(tipo_ilustracion, ?)
+             tipo_ilustracion = COALESCE(tipo_ilustracion, ?),
+             modalidad = ?,
+             score_tipo = ?
            WHERE id_ejercicio = ?`,
-          [instr, categoria, pilar, grupo, equip, entornos, ilust, exists[0].id_ejercicio]
+          [instr, categoria, pilar, grupo, equip, entornos, ilust, modalidad, scoreTipo, exists[0].id_ejercicio]
         );
         actualizados += 1;
         continue;
@@ -106,9 +121,9 @@ class EjerciciosBanco500Service {
 
       await db.query(
         `INSERT INTO ejercicios
-           (nombre, video_url, instrucciones_tecnicas, categoria, pilar, grupo_muscular, equipamiento, entornos, tipo_ilustracion)
-         VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?)`,
-        [nombre, instr, categoria, pilar, grupo, equip, entornos, ilust]
+           (nombre, video_url, instrucciones_tecnicas, categoria, pilar, grupo_muscular, equipamiento, entornos, tipo_ilustracion, modalidad, score_tipo)
+         VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [nombre, instr, categoria, pilar, grupo, equip, entornos, ilust, modalidad, scoreTipo]
       );
       insertados += 1;
     }

@@ -77,6 +77,33 @@ class DbMigrationService {
         'TINYINT(1) NOT NULL DEFAULT 0'
       );
 
+      // v7-doctorado: el material disponible del usuario (CSV) lo usan tanto la
+      // IA generadora de planes como el filtro de ejercicios libres para no
+      // proponer dominadas a alguien sin barra ni KB swings a alguien sin KB.
+      // Catálogo soportado: BARRA_DOMINADAS, BARRA_OLIMPICA, MANCUERNAS, KB,
+      // TRX, ANILLAS, GOMAS, COMBA, SACO, FOAM, BANCO, CAJA, BICI, REMO,
+      // ECHO_BIKE, SKI_ERG, PISCINA, PISTA, MONTAÑA, NADA.
+      await DbMigrationService.addColumnIfMissing(
+        'settings',
+        'material_disponible',
+        "VARCHAR(500) NULL DEFAULT 'NADA'"
+      );
+
+      // v7-doctorado: campos modalidad + score_tipo en cada ejercicio para que
+      // la UI sepa qué input mostrar (timer para AMRAP, contador rondas para
+      // EMOM, peso×reps para crossfit_lift, etc.) y el historial pueda
+      // graficar PR por tipo de ejercicio.
+      await DbMigrationService.addColumnIfMissing(
+        'ejercicios',
+        'modalidad',
+        "VARCHAR(32) NOT NULL DEFAULT 'convencional'"
+      );
+      await DbMigrationService.addColumnIfMissing(
+        'ejercicios',
+        'score_tipo',
+        "VARCHAR(32) NOT NULL DEFAULT 'reps'"
+      );
+
       await DbMigrationService.addColumnIfMissing(
         'oposiciones',
         'incluida_gratis',
@@ -151,6 +178,35 @@ class DbMigrationService {
       }
 
       await db.query('UPDATE oposiciones SET incluida_gratis = 1 WHERE incluida_gratis = 0 OR incluida_gratis IS NULL');
+
+      // v7.1-doctorado: fix one-shot del bug de "0 minutos" en el historial.
+      // El frontend enviaba MINUTOS en `historial_sesiones.duracion_oficial`
+      // pero el resto del backend la trata como SEGUNDOS (la divide entre 60
+      // para mostrar). Resultado: 5 min → guardado como 5 s → resumen "0 min".
+      // Corregimos las filas afectadas (duración < 5 min = sospechosamente
+      // pequeña) multiplicándolas por 60. Se ejecuta una sola vez gracias al
+      // marcador en app_meta.
+      try {
+        const [marcador] = await db.query(
+          `SELECT valor FROM app_meta WHERE clave = 'duracion_oficial_fix_v1' LIMIT 1`
+        );
+        if (!marcador?.[0]?.valor) {
+          const [r] = await db.query(
+            `UPDATE historial_sesiones
+                SET duracion_oficial = duracion_oficial * 60
+              WHERE duracion_oficial > 0 AND duracion_oficial < 300`
+          );
+          await db.query(
+            `INSERT INTO app_meta (clave, valor) VALUES ('duracion_oficial_fix_v1', '1')
+             ON DUPLICATE KEY UPDATE valor = VALUES(valor)`
+          );
+          if (r.affectedRows > 0) {
+            console.log(`[migrate] historial_sesiones.duracion_oficial: ${r.affectedRows} filas reescaladas (min → seg)`);
+          }
+        }
+      } catch (e) {
+        console.warn('[migrate] duracion_oficial_fix_v1 saltado:', e.message);
+      }
 
       await db.query(
         `UPDATE pruebas_oficiales SET unidad_entrada = 's'

@@ -305,7 +305,7 @@ fun RutinasScreen(
                                             onClick = onNavigateToRutinasLibres,
                                             modifier = Modifier.fillMaxWidth()
                                         ) {
-                                            Text("Ver rutinas libres mientras tanto")
+                                            com.opofit.miapp.ui.components.ButtonText("Ver rutinas libres")
                                         }
                                     } else {
                                         Text(
@@ -336,7 +336,7 @@ fun RutinasScreen(
                                             onClick = onNavigateToRutinasLibres,
                                             modifier = Modifier.fillMaxWidth()
                                         ) {
-                                            Text("Ver rutinas libres (mientras tanto)")
+                                            com.opofit.miapp.ui.components.ButtonText("Ver rutinas libres")
                                         }
                                     }
                                 }
@@ -507,7 +507,7 @@ fun RutinasScreen(
                                                 },
                                                 modifier = Modifier.fillMaxWidth()
                                             ) {
-                                                Text("Ver lugares cerca (${uiState.entornoEntreno})")
+                                                com.opofit.miapp.ui.components.ButtonText("Ver lugares cerca")
                                             }
                                         }
                                     }
@@ -572,7 +572,7 @@ fun RutinasScreen(
                                             onClick = onNavigateToRutinasLibres,
                                             modifier = Modifier.fillMaxWidth()
                                         ) {
-                                            Text("Banco de ejercicios · rutinas libres")
+                                            com.opofit.miapp.ui.components.ButtonText("Banco de ejercicios libres")
                                         }
                                     }
                                 }

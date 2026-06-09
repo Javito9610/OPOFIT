@@ -3,6 +3,10 @@ package com.opofit.miapp.data.responsemodels
 data class ResumenHistorial(
     val periodo: String,
     val sesiones: Int,
+    // v7.1: el resumen ahora desglosa por origen para que la UI pueda mostrar
+    // "1 entreno + 2 GPS" en lugar de un total sin contexto.
+    val sesionesEntrenos: Int = 0,
+    val sesionesGps: Int = 0,
     val minutos: Int,
     val distanciaTotalKm: Double = 0.0,
     val kcalTotal: Int = 0,
@@ -33,7 +37,11 @@ data class DistribucionTipo(
 data class TopPr(
     val ejercicio: String,
     val valor: Double,
-    val pilar: String? = null
+    val pilar: String? = null,
+    // v7-doctorado: backend devuelve la unidad o tipo de marca para que la UI
+    // muestre "120 kg" / "12 reps" / "0:49 min" en lugar de "120,00".
+    val unidad: String? = null,
+    val scoreTipo: String? = null
 )
 
 data class ResumenHistorialResponse(

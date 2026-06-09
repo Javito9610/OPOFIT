@@ -49,6 +49,11 @@ fun EntrenoActiveStepCard(
     velocidadTexto: String = "-",
     labelDistancia: String = "Distancia",
     onInfoClick: (() -> Unit)? = null,
+    // --- Soporte serie-por-serie (estilo Strong / Hevy) ---
+    seriesObjetivo: Int = 1,
+    repsObjetivo: Int? = null,
+    valoresPorSerie: List<String> = emptyList(),
+    onValoresPorSerieChange: ((List<String>) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     ElevatedCard(
@@ -91,11 +96,11 @@ fun EntrenoActiveStepCard(
                 ) {
                     Icon(Icons.Filled.Timer, null, Modifier.size(18.dp))
                     Spacer(Modifier.size(6.dp))
-                    Text(
+                    ButtonText(
                         if (valor.isNotBlank()) {
-                            "Tiempo aplicado: $valor ${unidad ?: "min"}"
+                            "Aplicado: $valor ${unidad ?: "min"}"
                         } else {
-                            "Usar tiempo del cronómetro (${TimeFormatUtil.formatElapsedMs(elapsedMsCronometro)})"
+                            "Aplicar ${TimeFormatUtil.formatElapsedMs(elapsedMsCronometro)}"
                         }
                     )
                 }
@@ -135,15 +140,34 @@ fun EntrenoActiveStepCard(
                     FilledTonalButton(onClick = onUsarCronometro, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Filled.Timer, null, Modifier.size(18.dp))
                         Spacer(Modifier.size(6.dp))
-                        Text("Aplicar ${TimeFormatUtil.formatElapsedMs(elapsedMsCronometro)} del cronómetro")
+                        ButtonText("Aplicar ${TimeFormatUtil.formatElapsedMs(elapsedMsCronometro)}")
                     }
                 }
-                ExerciseValueInput(
-                    value = valor,
-                    onValueChange = onValorChange,
-                    unidad = unidad,
-                    error = errorValor
-                )
+                // Si la prescripción tiene >1 serie y tenemos callback de series,
+                // mostramos el input estilo Strong/Hevy (una fila por serie).
+                if (seriesObjetivo > 1 && onValoresPorSerieChange != null && unidad != null) {
+                    SeriesInput(
+                        seriesObjetivo = seriesObjetivo,
+                        repsObjetivo = repsObjetivo,
+                        unidad = unidad,
+                        valoresPorSerie = valoresPorSerie,
+                        onValoresChange = onValoresPorSerieChange
+                    )
+                    if (!errorValor.isNullOrBlank()) {
+                        Text(
+                            errorValor,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                } else {
+                    ExerciseValueInput(
+                        value = valor,
+                        onValueChange = onValorChange,
+                        unidad = unidad,
+                        error = errorValor
+                    )
+                }
             }
             Button(onClick = onCompletar, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.CheckCircle, null, Modifier.size(18.dp))

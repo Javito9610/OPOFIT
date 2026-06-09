@@ -5,46 +5,96 @@
  */
 const crypto = require('crypto');
 
+// Catálogo de tipos. Tras los reportes de falsos positivos (CrossFit que era
+// un yoga, "parque calistenia" que era un parque cualquiera, "pista" que era
+// un campo de tenis) refinamos los filtros con dos capas:
+//  1) Filtros DE FUENTE (lo más estrictos posibles en la consulta).
+//  2) Filtros POSTERIORES por nombre/tags (must / mustNot) para excluir basura
+//     que aún se cuele. Esto se aplica TANTO a Google Places como a Overpass.
+//
+// Cada tipo declara:
+//   - placeType / keyword: para Google Places nearbysearch.
+//   - textQueries: para Google Places text search (fallback).
+//   - mustMatch: regex que DEBE encajar en nombre+dirección+tags para
+//     considerar el sitio válido (si está definido).
+//   - mustNotMatch: regex que NO puede encajar (excluye yoga, spa, etc.).
+//   - osmTagsObligatorios: tags OSM que filtran resultados de Overpass.
 const TIPOS_LUGAR = {
-  GYM: { placeType: 'gym', keyword: null, etiqueta: 'Gimnasio' },
+  GYM: {
+    placeType: 'gym',
+    keyword: null,
+    etiqueta: 'Gimnasio',
+    // Excluimos lo que NO es un gimnasio real (yoga, pilates, fisio, spa,
+    // pole dance, etc.) — Google los clasifica como "gym" alegremente.
+    mustNotMatch: /(yoga|pilates|fisio|fisioterap|osteopat|spa|wellness|estetic|peluquer|nutrici|nail|tattoo|fisiocross|pole\s*dance|kine[sz]i|psico|cli[ní]nica|salud\s+mental|odonto|dental|barber)/i
+  },
   CROSSFIT: {
     placeType: null,
     keyword: 'crossfit',
-    keywordsAlt: ['box crossfit'],
-    textQueries: ['crossfit box', 'crossfit gym'],
-    etiqueta: 'CrossFit / Box'
+    keywordsAlt: ['crossfit box', 'box crossfit'],
+    textQueries: ['crossfit box', 'crossfit gym', 'crossfit affiliate'],
+    etiqueta: 'CrossFit / Box',
+    // CrossFit DEBE aparecer en el nombre o dirección — si no, no es un box
+    // CrossFit (era un gym normal capturado por keyword).
+    mustMatch: /(cross\s*fit|crossfit|cf\b|box\s+cf|wod)/i,
+    // Excluimos "CrossFit Wellness", franquicias yoga que usan la palabra,
+    // físios que ofrecen "crossfit rehabilitation".
+    mustNotMatch: /(yoga|pilates|fisioterap|fisio\s|spa|wellness\s+only)/i
   },
   PISTA: {
     placeType: null,
     keyword: 'pista atletismo',
-    keywordsAlt: ['athletic track', 'running track', 'pista de atletismo'],
-    textQueries: ['pista atletismo', 'athletic track', 'estadio atletismo'],
-    etiqueta: 'Pista / Estadio'
+    keywordsAlt: ['athletic track', 'running track', 'pista atletismo'],
+    textQueries: ['pista atletismo', 'estadio atletismo', 'athletics stadium'],
+    etiqueta: 'Pista de atletismo',
+    // DEBE contener atletismo / athletics / pista de running / tartán.
+    // "Pista" sola no vale porque captura tenis, pádel, motor, equitación.
+    mustMatch: /(atletismo|athletic|running\s+track|tart[áa]n|tartan|polideportivo|estadio\s+olímpico|estadio\s+municipal|estadio\s+de\s+atletismo)/i,
+    mustNotMatch: /(p[áa]del|tenis|hipodromo|hip[oó]dromo|karting|motocross|motor|moto\s*gp|circuito\s+de\s+motor|equitaci[oó]n)/i
   },
   CALISTENIA: {
-    placeType: 'park',
+    // NO usamos placeType=park: traía cualquier parque urbano aunque no
+    // tuviera ni una barra. El usuario veía falsos positivos masivos.
+    placeType: null,
     keyword: 'calisthenics',
     keywordsAlt: [
       'street workout',
       'outdoor gym',
       'parque calistenia',
-      'barras paralelas',
-      'gimnasio al aire libre'
+      'gimnasio al aire libre',
+      'parque biosaludable'
     ],
     textQueries: [
-      'calisthenics park',
+      'parque calistenia',
       'street workout park',
       'outdoor fitness park',
-      'parque calistenia',
+      'parque street workout',
       'parque de barras'
     ],
     radioDefault: 12000,
-    etiqueta: 'Parque / Calistenia'
+    etiqueta: 'Calistenia',
+    // DEBE mencionar calistenia / street workout / barras / fitness al aire
+    // libre / biosaludable — descarta parques infantiles y jardines.
+    mustMatch: /(calistenia|calisthenic|street\s*workout|outdoor\s*gym|fitness\s*station|biosaludable|parque\s+de\s+barras|barras\s+paralelas|gimnasio\s+al\s+aire\s+libre)/i,
+    mustNotMatch: /(infantil|columpios?|skate|skatepark|patinaje)/i
   },
-  PARQUE: { placeType: 'park', keyword: null, etiqueta: 'Parque' }
+  PARQUE: {
+    placeType: 'park',
+    keyword: null,
+    etiqueta: 'Parque',
+    mustNotMatch: /(industrial|empresarial|aparcamient|parking)/i
+  }
 };
 
-// OSM tags queried via Overpass for each tipo
+// OSM tags consultados vía Overpass.
+// Reglas v7.1-doctorado:
+//   - GYM: amenity=gym OR leisure=fitness_centre. NO incluimos sport=yoga
+//     ni sport=climbing (eso es otro deporte).
+//   - CROSSFIT: SOLO sitios con sport=crossfit explícito (descartamos cualquier
+//     gym sin esa etiqueta).
+//   - PISTA: leisure=track CON sport=running|athletics|athletic. Las pistas
+//     sin sport (motor, tenis, etc.) NO entran.
+//   - CALISTENIA: solo tags específicos de calistenia / outdoor gym.
 const OVERPASS_TAGS = {
   GYM: [
     'node["amenity"="gym"]',
@@ -54,13 +104,11 @@ const OVERPASS_TAGS = {
   ],
   CROSSFIT: [
     'node["sport"="crossfit"]',
-    'way["sport"="crossfit"]',
-    'node["amenity"="gym"]["sport"="crossfit"]',
-    'way["amenity"="gym"]["sport"="crossfit"]'
+    'way["sport"="crossfit"]'
   ],
   PISTA: [
-    'node["leisure"="track"]',
-    'way["leisure"="track"]',
+    'node["leisure"="track"]["sport"~"running|athletics|athletic"]',
+    'way["leisure"="track"]["sport"~"running|athletics|athletic"]',
     'node["sport"="athletics"]',
     'way["sport"="athletics"]',
     'node["leisure"="sports_centre"]["sport"="athletics"]',
@@ -70,16 +118,53 @@ const OVERPASS_TAGS = {
     'node["leisure"="fitness_station"]',
     'way["leisure"="fitness_station"]',
     'node["sport"="calisthenics"]',
+    'way["sport"="calisthenics"]',
     'node["leisure"="outdoor_gym"]',
     'way["leisure"="outdoor_gym"]'
   ],
   PARQUE: [
     'node["leisure"="park"]',
-    'way["leisure"="park"]',
-    'node["leisure"="garden"]',
-    'way["leisure"="garden"]'
+    'way["leisure"="park"]'
   ]
 };
+
+/**
+ * Aplica filtros mustMatch / mustNotMatch a un lugar.
+ *
+ * Convenios:
+ *   - mustMatch SOLO se evalúa sobre nombre + dirección + nombre:es/en. Razón:
+ *     los tags OSM ya filtran por categoría en la query Overpass (p.ej. solo
+ *     resultados con sport=crossfit), así que añadir el tag al texto haría
+ *     que CUALQUIER box pasara el filtro aunque el nombre fuese "McFit".
+ *   - mustNotMatch SÍ se evalúa sobre nombre + dirección + tags porque ahí lo
+ *     que queremos es vetar (yoga/pilates/spa) lo cual puede venir en tags.
+ *   - Si el tag SPORT del lugar coincide exactamente con la categoría (ej:
+ *     sport=crossfit para tipo CROSSFIT), aceptamos automáticamente — el tag
+ *     explícito es señal más fuerte que el nombre.
+ */
+function lugarCumpleFiltro(tipoMeta, nombre, direccion, tags = {}) {
+  const tagSport = String(tags.sport || '').toLowerCase();
+  const tagLeisure = String(tags.leisure || '').toLowerCase();
+
+  // mustNot: si pasa cualquier mención prohibida en cualquier campo → fuera.
+  const txtCompleto = [nombre, direccion, tagSport, tagLeisure, tags.amenity, tags['name:es'], tags['name:en']]
+    .filter(Boolean)
+    .join(' ');
+  if (tipoMeta.mustNotMatch && tipoMeta.mustNotMatch.test(txtCompleto)) return false;
+
+  if (!tipoMeta.mustMatch) return true;
+
+  // Atajo: tag explícito de la categoría exacta es señal fuerte.
+  if (tipoMeta === TIPOS_LUGAR.CROSSFIT && tagSport === 'crossfit') return true;
+  if (tipoMeta === TIPOS_LUGAR.CALISTENIA && (tagSport === 'calisthenics' || tagLeisure === 'fitness_station' || tagLeisure === 'outdoor_gym')) return true;
+  if (tipoMeta === TIPOS_LUGAR.PISTA && (tagSport === 'athletics' || tagSport === 'running')) return true;
+
+  // Caso normal: solo nombre/dirección/nombres localizados.
+  const txtNombre = [nombre, direccion, tags['name:es'], tags['name:en']]
+    .filter(Boolean)
+    .join(' ');
+  return tipoMeta.mustMatch.test(txtNombre);
+}
 
 function apiKey() {
   return process.env.GOOGLE_MAPS_API_KEY || process.env.MAPS_API_KEY || '';
@@ -153,6 +238,13 @@ class MapasService {
         const pLat = p.geometry?.location?.lat;
         const pLng = p.geometry?.location?.lng;
         if (!Number.isFinite(pLat) || !Number.isFinite(pLng)) continue;
+        // Filtro must/mustNot para evitar yoga categorizado como gym, etc.
+        const tagsParaFiltro = {
+          sport: (p.types || []).join(' ')
+        };
+        if (!lugarCumpleFiltro(meta, p.name, p.vicinity || p.formatted_address || '', tagsParaFiltro)) {
+          continue;
+        }
         vistos.add(p.place_id);
         acumulado.push({
           id: p.place_id,
@@ -204,7 +296,8 @@ class MapasService {
     if (!resp.ok) throw new Error(`Overpass HTTP ${resp.status}`);
     const data = await resp.json();
 
-    const etiqueta = (TIPOS_LUGAR[tipo] || TIPOS_LUGAR.GYM).etiqueta;
+    const meta = TIPOS_LUGAR[tipo] || TIPOS_LUGAR.GYM;
+    const etiqueta = meta.etiqueta;
     const seen = new Set();
     return (data.elements || [])
       .map((el) => {
@@ -215,6 +308,11 @@ class MapasService {
         const street = el.tags?.['addr:street'] || '';
         const num = el.tags?.['addr:housenumber'] || '';
         const direccion = [street, num].filter(Boolean).join(' ');
+        // Aplicamos el filtro must / mustNot también a los resultados de OSM:
+        // un node llamado "Spa Wellness" con amenity=gym sigue siendo un spa.
+        if (!lugarCumpleFiltro(meta, nombre, direccion, el.tags || {})) {
+          return null;
+        }
         return {
           id: `osm_${el.id}`,
           nombre,

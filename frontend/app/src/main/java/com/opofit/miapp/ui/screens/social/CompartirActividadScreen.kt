@@ -233,7 +233,11 @@ fun CompartirActividadScreen(
                                 }
                             }
                         }
-                    ) { Text(if (instagramOk) "Instagram Story" else "Instagram (no instalada)") }
+                    ) {
+                        com.opofit.miapp.ui.components.ButtonText(
+                            if (instagramOk) "Instagram Story" else "Instagram (instalar)"
+                        )
+                    }
 
                     OutlinedButton(
                         enabled = !sharing,
@@ -266,7 +270,11 @@ fun CompartirActividadScreen(
                                 }
                             }
                         }
-                    ) { Text(if (whatsappOk) "WhatsApp" else "WhatsApp (no instalada)") }
+                    ) {
+                        com.opofit.miapp.ui.components.ButtonText(
+                            if (whatsappOk) "WhatsApp" else "WhatsApp (instalar)"
+                        )
+                    }
 
                     Button(onClick = {
                         scope.launch {
@@ -294,7 +302,8 @@ fun CompartirActividadScreen(
                         }
                     }) {
                         Icon(Icons.Filled.Share, null, Modifier.size(18.dp))
-                        Text("  Más apps (Snapchat, Facebook…)")
+                        Spacer(Modifier.size(6.dp))
+                        com.opofit.miapp.ui.components.ButtonText("Más apps")
                     }
                 }
             }
@@ -360,10 +369,10 @@ fun CompartirActividadScreen(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = titulo.isNotBlank()
                 ) {
-                    Text("Publicar en mi perfil OpoFit")
+                    com.opofit.miapp.ui.components.ButtonText("Publicar en mi perfil")
                 }
                 OutlinedButton(onClick = onNavigateBack, modifier = Modifier.fillMaxWidth()) {
-                    Text("Cerrar sin publicar")
+                    com.opofit.miapp.ui.components.ButtonText("Cerrar sin publicar")
                 }
             }
             Spacer(Modifier.height(24.dp))

@@ -45,9 +45,17 @@ describe('ProgresoService.registrarEntreno', () => {
     db.getConnection.mockResolvedValue(conn);
   });
 
-  test('inserta historial y resultados', async () => {
-    // detectarRecords -> usa db.query no conn.query; para cada ejercicio una query
-    db.query.mockResolvedValueOnce([[]]); // sin marca previa
+  test('inserta historial y resultados (con récord superado)', async () => {
+    // detectarRecords -> usa db.query no conn.query; para cada ejercicio una query.
+    // Ahora la query devuelve el nombre del ejercicio + la marca previa para
+    // evitar que el dialog muestre "Ejercicio 140: — → X" cuando es la primera
+    // vez (eso ya no se considera récord, hace falta SUPERAR una marca real).
+    db.query.mockResolvedValueOnce([[{
+      nombre_ejercicio: 'Press banca con barra',
+      modalidad: 'crossfit_lift',
+      score_tipo: 'peso',
+      valor_anterior: 80
+    }]]);
     conn.query
       .mockResolvedValueOnce([{ insertId: 7 }]) // INSERT historial
       .mockResolvedValueOnce([{ affectedRows: 1 }]); // INSERT resultado
@@ -56,11 +64,37 @@ describe('ProgresoService.registrarEntreno', () => {
       tipoRutina: 'OPO',
       idRutina: 1,
       duracion: 30,
-      ejercicios: [{ id_ejercicio: 1, valor: 10 }]
+      ejercicios: [{ id_ejercicio: 1, valor: 90 }] // supera 80 → PR
     });
     expect(r.success).toBe(true);
     expect(r.idHistorial).toBe(7);
     expect(r.recordsRotos).toHaveLength(1);
+    expect(r.recordsRotos[0].nombreEjercicio).toBe('Press banca con barra');
+    expect(r.recordsRotos[0].valorAnterior).toBe(80);
+    expect(r.recordsRotos[0].valorNuevo).toBe(90);
+  });
+
+  test('NO marca como récord la primera vez (sin marca previa)', async () => {
+    // Antes esto sí contaba como récord ("— → X") y quedaba feo en el dialog.
+    // Ahora exigimos una marca anterior real para celebrar.
+    db.query.mockResolvedValueOnce([[{
+      nombre_ejercicio: 'Sentadilla',
+      modalidad: 'convencional',
+      score_tipo: 'reps',
+      valor_anterior: null
+    }]]);
+    conn.query
+      .mockResolvedValueOnce([{ insertId: 8 }])
+      .mockResolvedValueOnce([{ affectedRows: 1 }]);
+    const r = await ProgresoService.registrarEntreno({
+      userId: 1,
+      tipoRutina: 'OPO',
+      idRutina: 1,
+      duracion: 30,
+      ejercicios: [{ id_ejercicio: 5, valor: 12 }]
+    });
+    expect(r.success).toBe(true);
+    expect(r.recordsRotos).toHaveLength(0);
   });
 
   test('rollback ante error', async () => {

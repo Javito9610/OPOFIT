@@ -142,9 +142,22 @@ const borrarSesion = async (req, res) => {
   }
 };
 
+const vaciarHistorial = async (req, res) => {
+  try {
+    const userId = req.usuario?.id;
+    if (!userId) return res.status(401).json({ ok: false, msg: 'Sesión inválida' });
+    const r = await progresoService.vaciarHistorial(userId);
+    return res.status(200).json({ ok: true, borradas: r.borradas, msg: 'Historial vaciado' });
+  } catch (error) {
+    console.error('Error en vaciarHistorial:', error.message);
+    return res.status(500).json({ ok: false, msg: 'No se pudo vaciar el historial' });
+  }
+};
+
 module.exports = {
   guardarEntrenamiento,
   verEvolucion,
   verHistorialSesiones,
-  borrarSesion
+  borrarSesion,
+  vaciarHistorial
 };

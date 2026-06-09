@@ -471,7 +471,8 @@ private fun lerp(a: Color, b: Color, t: Float): Color = Color(
 fun MetricBadge(
     label: String,
     value: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    sublabel: String? = null
 ) {
     Surface(
         modifier = modifier,
@@ -489,6 +490,13 @@ fun MetricBadge(
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
+            sublabel?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }

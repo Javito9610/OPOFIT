@@ -365,8 +365,23 @@ fun AjustesScreen(
                         style = MaterialTheme.typography.bodyMedium
                     )
                     OutlinedButton(onClick = { mostrarSheetEntorno = true }, modifier = Modifier.fillMaxWidth()) {
-                        Text("Cambiar entorno (gym, casa, calistenia…)")
+                        com.opofit.miapp.ui.components.ButtonText(
+                            "Cambiar entorno de entreno"
+                        )
                     }
+                }
+            }
+
+            // v7-doctorado: selector de material disponible. La IA respeta esta
+            // lista y los entrenos libres filtran ejercicios por ella.
+            if (uiState.materialCatalogo.isNotEmpty()) {
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                    com.opofit.miapp.ui.components.MaterialDisponibleSection(
+                        catalogo = uiState.materialCatalogo,
+                        seleccionado = uiState.materialSeleccionado,
+                        onToggle = { ajustesViewModel.toggleMaterial(it) },
+                        modifier = Modifier.padding(16.dp)
+                    )
                 }
             }
 
