@@ -387,8 +387,10 @@ private fun ResumenTab(resumen: ResumenHistorial?, periodo: String, onPeriodoCha
                     sublabel = sub
                 )
                 MetricBadge(
-                    label = "Minutos",
-                    value = "${resumen.minutos}",
+                    // "Tiempo" en lugar de "Minutos" porque el valor puede ser
+                    // "5h 30 min" o "2 semanas" y eso no son minutos.
+                    label = "Tiempo",
+                    value = com.opofit.miapp.utils.TimeFormatUtil.formatDuracionLegible(resumen.minutos),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -403,26 +405,43 @@ private fun ResumenTab(resumen: ResumenHistorial?, periodo: String, onPeriodoCha
             }
         }
         item {
+            // El número de semanas y la altura cambian según el período para
+            // que el calendario tenga sentido: 4 semanas para "Semana", 16
+            // para "Mes", 52 para "Año". Antes era siempre 16 y el chip de
+            // período no afectaba al heatmap.
+            val (weeksMostrar, descripCal) = when (periodo.lowercase()) {
+                "week" -> 4 to "Últimas 4 semanas"
+                "year" -> 52 to "Últimas 52 semanas"
+                else -> 16 to "Últimas 16 semanas"
+            }
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(14.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            "Calendario de actividad",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        com.opofit.miapp.ui.components.InfoTip(
+                            title = "¿Qué significan los cuadritos?",
+                            text = "Cada cuadrito es un día. Cuanto más oscuro, más sesiones (entrenos + salidas GPS) registraste ese día. Los días vacíos se quedan grises. Estilo \"contribuciones de GitHub\"."
+                        )
+                    }
                     Text(
-                        "Calendario de actividad",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        "Últimas 16 semanas · entrenos + salidas GPS (más oscuro = más actividad)",
+                        "$descripCal · entrenos + salidas GPS",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(Modifier.height(8.dp))
                     CalendarHeatmap(
                         countsByDate = resumen.heatmap.associate { it.dia to it.sesiones },
-                        weeks = 16,
+                        weeks = weeksMostrar,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(140.dp)
+                            .height(if (weeksMostrar >= 52) 110.dp else 140.dp)
                     )
+                    Spacer(Modifier.height(6.dp))
+                    com.opofit.miapp.ui.components.HeatmapLegend()
                 }
             }
         }

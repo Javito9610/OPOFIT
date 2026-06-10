@@ -97,6 +97,9 @@ class PlanGeneradorService {
     );
     return rows
       .filter((e) => EntornoEntreno.ejercicioCompatible(e.entornos, entorno))
+      // Filtro defensivo extra para que NUNCA se cuele saco / trineo / yoke
+      // en gym comercial — el banco puede tener datos legacy ruidosos.
+      .filter((e) => EntornoEntreno.ejercicioRealistaParaEntorno(e.nombre, e.equipamiento, entorno))
       .map((e) => {
         const nombre = EjercicioMetadataService.normalizarNombreEjercicio(e.nombre);
         const pilar = EntornoEntreno.normalizarPilar(e.pilar || 'FUERZA');
@@ -160,12 +163,12 @@ class PlanGeneradorService {
     return { titulo, descripcion };
   }
 
-  static mapearEjercicio(ej, sustituto, entorno) {
+  static mapearEjercicio(ej, sustituto, entorno, nivel) {
     const base = EjercicioMetadataService.enriquecerEjercicio(ej);
     if (!sustituto) {
       return EjercicioInteligenteService.aplicarInteligencia(
-        { ...base, entorno_aplicado: entorno, sustituido: false },
-        { seed: ej.orden || 1 }
+        { ...base, entorno_aplicado: entorno, sustituido: false, nivel },
+        { seed: ej.orden || 1, nivel }
       );
     }
     const grupo = EjercicioMetadataService.inferirGrupoMuscular(
@@ -195,11 +198,14 @@ class PlanGeneradorService {
         sustituto.nombre
       )
     });
-    return EjercicioInteligenteService.aplicarInteligencia(mapped, { seed: ej.orden || 0 });
+    return EjercicioInteligenteService.aplicarInteligencia(
+      { ...mapped, nivel: nivel ?? mapped.nivel },
+      { seed: ej.orden || 0, nivel }
+    );
   }
 
   static async generarSemana(planBase, userId, entorno, seed, opts = {}) {
-    const { soloDiaId } = opts;
+    const { soloDiaId, nivel } = opts;
     if (!entorno || entorno === 'MIXTO') {
       return { plan: planBase, sustituciones: 0 };
     }
@@ -221,7 +227,7 @@ class PlanGeneradorService {
           seed
         );
         if (sust) sustituciones += 1;
-        return PlanGeneradorService.mapearEjercicio(ej, sust, entorno);
+        return PlanGeneradorService.mapearEjercicio(ej, sust, entorno, nivel);
       });
       const resumen = PlanGeneradorService.resumenDiaDesdeEjercicios(dia, ejercicios);
       return { ...dia, ejercicios, titulo: resumen.titulo, descripcion: resumen.descripcion };
@@ -331,7 +337,7 @@ class PlanGeneradorService {
       }
     }
 
-    const { plan, sustituciones } = await PlanGeneradorService.generarSemana(planBase, userId, entorno, seed);
+    const { plan, sustituciones } = await PlanGeneradorService.generarSemana(planBase, userId, entorno, seed, { nivel });
     const ultimasSesiones = await PlanGeneradorService.obtenerUltimasSesiones(userId, 3);
     const coaching = await PlanIaService.generarCoaching({
       entorno,
@@ -394,7 +400,7 @@ class PlanGeneradorService {
       userId,
       entorno,
       daySeed,
-      { soloDiaId: idDia }
+      { soloDiaId: idDia, nivel }
     );
 
     const nuevoDia = planParcial.semana.find((d) => d.id_plan_dia === idDia);

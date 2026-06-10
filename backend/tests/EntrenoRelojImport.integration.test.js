@@ -15,7 +15,9 @@ describe('Flujo entreno reloj + instrucciones', () => {
     };
     const ej = aplicarInteligencia(enriquecerEjercicio(base), { seed: 9 });
     expect((ej.instrucciones_tecnicas.match(/Codos apuntan al techo/g) || []).length).toBe(1);
-    expect((ej.instrucciones_tecnicas.match(/Detalle técnico:/g) || []).length).toBe(1);
+    // Las instrucciones pobres (<60 chars, frase única) ya no se cuelan como
+    // "Detalle técnico" — el usuario reportaba que quedaba pobre.
+    expect(ej.instrucciones_tecnicas).not.toContain('Detalle técnico:');
   });
 
   test('tempo run usa unidad tiempo no reps', () => {

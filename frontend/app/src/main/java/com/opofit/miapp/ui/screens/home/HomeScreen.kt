@@ -337,9 +337,14 @@ fun HomeScreen(
                                             accentColor = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.weight(1f)
                                         )
+                                        // "Minutos" pasa a "Tiempo" para alojar
+                                        // valores grandes (horas / días) sin romper
+                                        // la card. El formatter elige la unidad.
                                         StatCard(
-                                            label = "Minutos",
-                                            value = "${resumen?.minutosSemana ?: 0}",
+                                            label = "Tiempo",
+                                            value = com.opofit.miapp.utils.TimeFormatUtil.formatDuracionLegible(
+                                                resumen?.minutosSemana ?: 0
+                                            ),
                                             supporting = "entrenando",
                                             icon = Icons.Filled.Timer,
                                             accentColor = AccentTeal,
@@ -351,7 +356,7 @@ fun HomeScreen(
                                         value = "${resumen?.rachaDias ?: 0}",
                                         supporting = if ((resumen?.rachaDias ?: 0) > 0) {
                                             if (veryCompact) "días" else "días seguidos"
-                                        } else "sin racha",
+                                        } else "¡entrena hoy para empezar!",
                                         icon = Icons.Filled.LocalFireDepartment,
                                         accentColor = AccentOrange,
                                         modifier = Modifier.fillMaxWidth()
@@ -371,8 +376,10 @@ fun HomeScreen(
                                         modifier = Modifier.weight(1f)
                                     )
                                     StatCard(
-                                        label = "Minutos",
-                                        value = "${resumen?.minutosSemana ?: 0}",
+                                        label = "Tiempo",
+                                        value = com.opofit.miapp.utils.TimeFormatUtil.formatDuracionLegible(
+                                            resumen?.minutosSemana ?: 0
+                                        ),
                                         supporting = "entrenando",
                                         icon = Icons.Filled.Timer,
                                         accentColor = AccentTeal,
@@ -381,7 +388,7 @@ fun HomeScreen(
                                     StatCard(
                                         label = "Racha",
                                         value = "${resumen?.rachaDias ?: 0}",
-                                        supporting = if ((resumen?.rachaDias ?: 0) > 0) "días seguidos" else "sin racha",
+                                        supporting = if ((resumen?.rachaDias ?: 0) > 0) "días seguidos" else "¡entrena hoy para empezar!",
                                         icon = Icons.Filled.LocalFireDepartment,
                                         accentColor = AccentOrange,
                                         modifier = Modifier.weight(1f)

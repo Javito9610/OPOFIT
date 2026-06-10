@@ -46,6 +46,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
@@ -430,15 +431,32 @@ fun CalendarHeatmap(
         cal.time
     }
     val df = remember { java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US) }
+    val mesFmt = remember { java.text.SimpleDateFormat("MMM", java.util.Locale.forLanguageTag("es-ES")) }
     val maxCount = (countsByDate.values.maxOrNull() ?: 0).coerceAtLeast(1)
+    val onSurface = MaterialTheme.colorScheme.onSurfaceVariant
+    val textMeasurer = androidx.compose.ui.text.rememberTextMeasurer()
+    val textStyle = androidx.compose.ui.text.TextStyle(
+        color = onSurface,
+        fontSize = 10.sp
+    )
+    val diasSemana = listOf("L", "X", "V")  // mostramos 3 para no saturar
 
+    // Canvas con eje vertical (días) + eje horizontal (meses) y rejilla.
+    // Más claro que la versión anterior (solo cuadritos sin contexto).
     Canvas(modifier = modifier) {
         val totalDays = weeks * 7
-        val cell = (size.width / weeks).coerceAtMost(size.height / 7f)
-        val gap = cell * 0.18f
+        // Reservamos ~16dp arriba (etiquetas meses) y ~16dp izq (días semana).
+        val pad = 18f
+        val gridW = size.width - pad
+        val gridH = size.height - pad
+        val cell = (gridW / weeks).coerceAtMost(gridH / 7f)
+        val gap = cell * 0.16f
+
         val cal = java.util.Calendar.getInstance()
         cal.time = today
         cal.add(java.util.Calendar.DAY_OF_YEAR, -(totalDays - 1))
+
+        var mesAnterior = -1
         for (i in 0 until totalDays) {
             val dow = (cal.get(java.util.Calendar.DAY_OF_WEEK) + 5) % 7
             val week = i / 7
@@ -447,16 +465,71 @@ fun CalendarHeatmap(
             val intensity = (count.toFloat() / maxCount).coerceIn(0f, 1f)
             val color = if (count == 0) emptyColor
             else lerp(emptyColor, activeColor, 0.35f + 0.65f * intensity)
-            val x = week * cell + gap / 2f
-            val y = dow * cell + gap / 2f
+            val x = pad + week * cell + gap / 2f
+            val y = pad + dow * cell + gap / 2f
             drawRoundRect(
                 color = color,
                 topLeft = Offset(x, y),
                 size = Size(cell - gap, cell - gap),
                 cornerRadius = androidx.compose.ui.geometry.CornerRadius(cell * 0.18f, cell * 0.18f)
             )
+            // Etiqueta de mes en la primera columna donde aparece un mes nuevo.
+            val mesActual = cal.get(java.util.Calendar.MONTH)
+            if (dow == 0 && mesActual != mesAnterior) {
+                val texto = mesFmt.format(cal.time).take(3)
+                drawText(
+                    textMeasurer = textMeasurer,
+                    text = texto,
+                    style = textStyle,
+                    topLeft = Offset(pad + week * cell + 1f, 0f)
+                )
+                mesAnterior = mesActual
+            }
             cal.add(java.util.Calendar.DAY_OF_YEAR, 1)
         }
+
+        // Etiquetas L/X/V a la izquierda de la rejilla.
+        diasSemana.forEachIndexed { idx, etiqueta ->
+            val rowIdx = idx * 2  // L=0, X=2, V=4
+            drawText(
+                textMeasurer = textMeasurer,
+                text = etiqueta,
+                style = textStyle,
+                topLeft = Offset(0f, pad + rowIdx * cell + cell * 0.25f)
+            )
+        }
+    }
+}
+
+/**
+ * Leyenda compacta del heatmap: "Menos □ ▢ ▣ ■ Más".
+ *
+ * Antes el usuario no entendía qué significaba "más oscuro = más entrenos"
+ * solo con texto. Ahora también muestra la escala visualmente.
+ */
+@Composable
+fun HeatmapLegend(
+    activeColor: Color = MaterialTheme.colorScheme.primary,
+    emptyColor: Color = MaterialTheme.colorScheme.outline.copy(alpha = 0.22f),
+    modifier: Modifier = Modifier
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = modifier
+    ) {
+        Text("Menos", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        listOf(0f, 0.25f, 0.5f, 0.75f, 1f).forEach { t ->
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .background(
+                        color = if (t == 0f) emptyColor else lerp(emptyColor, activeColor, 0.35f + 0.65f * t),
+                        shape = RoundedCornerShape(2.dp)
+                    )
+            )
+        }
+        Text("Más", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

@@ -14,9 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
+import kotlinx.coroutines.launch
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -107,12 +109,27 @@ fun GpsRecordingScreen(
         startedSession = true
     }
 
+    // Zoom inicial: la primera vez que aparezca un punto, animamos la cámara
+    // hasta nivel 17 (calle visible). Antes mantenía el zoom de mundo (~3) y
+    // el usuario veía Europa entera. A partir de ahí respetamos el zoom
+    // manual, pero si baja de 10 (vista regional) lo subimos a 16.
+    var primerPunto by remember { mutableStateOf(true) }
     LaunchedEffect(state.points.lastOrNull()?.timestampMs) {
         val last = state.points.lastOrNull() ?: return@LaunchedEffect
-        cameraPositionState.position = CameraPosition.fromLatLngZoom(
-            LatLng(last.lat, last.lng),
-            cameraPositionState.position.zoom.takeIf { it > 0f } ?: 16f
+        val zoomActual = cameraPositionState.position.zoom
+        val zoomDeseado = when {
+            primerPunto -> 17f
+            zoomActual < 10f -> 16f
+            else -> zoomActual
+        }
+        cameraPositionState.animate(
+            update = com.google.android.gms.maps.CameraUpdateFactory.newLatLngZoom(
+                LatLng(last.lat, last.lng),
+                zoomDeseado
+            ),
+            durationMs = if (primerPunto) 700 else 250
         )
+        primerPunto = false
     }
 
     if (showFinishDialog) {
@@ -160,8 +177,38 @@ fun GpsRecordingScreen(
         )
     }
 
+    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     Box(Modifier.fillMaxSize()) {
         MapWithRoute(state, cameraPositionState, plannedRoute)
+
+        // FAB "Centrar en mi posición". Si el usuario hace zoom out y el mapa
+        // se queda lejos, este botón lo trae de vuelta a la última posición
+        // GPS con zoom de calle (17). Antes solo se centraba automáticamente
+        // tras cada punto y si lo arrastrabas no había forma de volver.
+        androidx.compose.material3.SmallFloatingActionButton(
+            onClick = {
+                val last = state.points.lastOrNull() ?: return@SmallFloatingActionButton
+                coroutineScope.launch {
+                    cameraPositionState.animate(
+                        update = com.google.android.gms.maps.CameraUpdateFactory.newLatLngZoom(
+                            LatLng(last.lat, last.lng),
+                            17f
+                        ),
+                        durationMs = 400
+                    )
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 16.dp, end = 14.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.primary
+        ) {
+            androidx.compose.material3.Icon(
+                androidx.compose.material.icons.Icons.Filled.MyLocation,
+                contentDescription = "Centrar en mi posición"
+            )
+        }
 
         Surface(
             tonalElevation = 6.dp,

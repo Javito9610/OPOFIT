@@ -1191,23 +1191,23 @@
       "score_tipo": "reps"
     },
     {
-      "nombre": "Sled push",
+      "nombre": "Empuje de trineo",
       "pilar": "FUERZA",
       "grupo_muscular": "Pierna",
       "equipamiento": "Trineo",
       "instrucciones_tecnicas": "Inclinación baja, máxima intención.",
-      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "entornos": "PISTA,CROSSFIT,MIXTO",
       "tipo_ilustracion": "SQUAT",
       "modalidad": "calistenia",
       "score_tipo": "reps"
     },
     {
-      "nombre": "Sled drag marcha atrás",
+      "nombre": "Arrastre de trineo marcha atrás",
       "pilar": "FUERZA",
       "grupo_muscular": "Pierna",
       "equipamiento": "Trineo",
       "instrucciones_tecnicas": "Cadena posterior.",
-      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "entornos": "PISTA,CROSSFIT,MIXTO",
       "tipo_ilustracion": "SQUAT",
       "modalidad": "calistenia",
       "score_tipo": "reps"
@@ -1477,12 +1477,12 @@
       "score_tipo": "reps"
     },
     {
-      "nombre": "Towel pull-up",
+      "nombre": "Dominada con toalla (agarre)",
       "pilar": "FUERZA",
       "grupo_muscular": "Brazos",
       "equipamiento": "Barra/toalla",
       "instrucciones_tecnicas": "Agarre reforzado.",
-      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "entornos": "PISTA,CROSSFIT,MIXTO",
       "tipo_ilustracion": "PULL",
       "modalidad": "calistenia",
       "score_tipo": "reps"
@@ -4117,12 +4117,12 @@
       "score_tipo": "reps"
     },
     {
-      "nombre": "Sprint con trineo ligero 20 m",
+      "nombre": "Sprint con trineo ligero (20 m)",
       "pilar": "VELOCIDAD",
       "grupo_muscular": "Velocidad",
       "equipamiento": "Trineo",
       "instrucciones_tecnicas": "Resistencia específica.",
-      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "entornos": "PISTA,CROSSFIT,MIXTO",
       "tipo_ilustracion": "AGILITY",
       "modalidad": "calistenia",
       "score_tipo": "reps"
@@ -4436,7 +4436,7 @@
       "score_tipo": "reps"
     },
     {
-      "nombre": "Cambio de dirección 90° x 8",
+      "nombre": "Cambios de dirección 90° (8 series)",
       "pilar": "VELOCIDAD",
       "grupo_muscular": "Agilidad",
       "equipamiento": "Conos",
@@ -5467,7 +5467,7 @@
       "tipo_ilustracion": "PLANK",
       "instrucciones_tecnicas": "Hollow hold mecido como una hamaca. 30-45s. Activación CrossFit clásica.",
       "modalidad": "calistenia",
-      "score_tipo": "reps"
+      "score_tipo": "tiempo"
     },
     {
       "nombre": "Arco superman",
@@ -6009,11 +6009,11 @@
       "score_tipo": "reps"
     },
     {
-      "nombre": "Trineo o sled push",
+      "nombre": "Empuje de trineo",
       "pilar": "VELOCIDAD",
       "grupo_muscular": "Agilidad",
       "equipamiento": "Trineo",
-      "entornos": "CROSSFIT,GYM,PISTA,MIXTO",
+      "entornos": "CROSSFIT,PISTA,MIXTO",
       "tipo_ilustracion": "RUN",
       "instrucciones_tecnicas": "Empuje de trineo 10-15m con carga moderada. Combina fuerza y aceleración.",
       "modalidad": "convencional",
@@ -7219,7 +7219,7 @@
       "score_tipo": "tiempo"
     },
     {
-      "nombre": "Buceo 10m + 40m crol",
+      "nombre": "Buceo 10 m + 40 m crol",
       "pilar": "RESISTENCIA",
       "grupo_muscular": "Resistencia",
       "equipamiento": "Piscina",
@@ -7344,14 +7344,14 @@
       "pilar": "FUERZA",
       "grupo_muscular": "Fuerza",
       "equipamiento": "Saco",
-      "entornos": "CROSSFIT,GYM,PISTA,MIXTO",
+      "entornos": "CROSSFIT,PISTA,MIXTO",
       "tipo_ilustracion": "SQUAT",
       "instrucciones_tecnicas": "Saco 25kg al hombro, transporta 30m. 5 series. Cuerpos de seguridad.",
       "modalidad": "convencional",
       "score_tipo": "reps"
     },
     {
-      "nombre": "Press de banca + dominada bomberos",
+      "nombre": "Press banca y dominada (test bombero)",
       "pilar": "FUERZA",
       "grupo_muscular": "Fuerza",
       "equipamiento": "Barra",
@@ -8848,7 +8848,7 @@
       "entornos": "CALISTENIA,CROSSFIT,GYM,MIXTO",
       "tipo_ilustracion": "CORE",
       "modalidad": "calistenia",
-      "score_tipo": "reps",
+      "score_tipo": "tiempo",
       "categoria": "Core"
     },
     {
@@ -9584,48 +9584,48 @@
       "categoria": "Fuerza"
     },
     {
-      "nombre": "Sled push (trineo)",
+      "nombre": "Empuje de trineo",
       "pilar": "FUERZA",
       "grupo_muscular": "Cuádriceps",
       "equipamiento": "Trineo",
       "instrucciones_tecnicas": "Empuja trineo cargado 10-20 m. Brutal piernas + cardio.",
-      "entornos": "CROSSFIT,GYM,MIXTO",
+      "entornos": "CROSSFIT,MIXTO",
       "tipo_ilustracion": "RUN",
       "modalidad": "convencional",
       "score_tipo": "reps",
       "categoria": "Fuerza"
     },
     {
-      "nombre": "Sled drag (trineo)",
+      "nombre": "Arrastre de trineo",
       "pilar": "FUERZA",
       "grupo_muscular": "Glúteos",
       "equipamiento": "Trineo",
       "instrucciones_tecnicas": "Tira de trineo con cuerda. Posterior.",
-      "entornos": "CROSSFIT,GYM,MIXTO",
+      "entornos": "CROSSFIT,MIXTO",
       "tipo_ilustracion": "RUN",
       "modalidad": "convencional",
       "score_tipo": "reps",
       "categoria": "Fuerza"
     },
     {
-      "nombre": "Sandbag clean",
+      "nombre": "Cargada de saco a hombro",
       "pilar": "FUERZA",
       "grupo_muscular": "Full body",
       "equipamiento": "Saco arena",
       "instrucciones_tecnicas": "Carga saco a hombro desde suelo.",
-      "entornos": "CROSSFIT,GYM,MIXTO",
+      "entornos": "CROSSFIT,MIXTO",
       "tipo_ilustracion": "OLY",
       "modalidad": "crossfit_lift",
       "score_tipo": "peso",
       "categoria": "Fuerza"
     },
     {
-      "nombre": "Sandbag carry",
+      "nombre": "Transporte de saco a hombro",
       "pilar": "FUERZA",
       "grupo_muscular": "Full body",
       "equipamiento": "Saco arena",
       "instrucciones_tecnicas": "Camina con saco al hombro o pecho.",
-      "entornos": "CROSSFIT,GYM,MIXTO",
+      "entornos": "CROSSFIT,MIXTO",
       "tipo_ilustracion": "RUN",
       "modalidad": "convencional",
       "score_tipo": "reps",
@@ -9644,12 +9644,12 @@
       "categoria": "Fuerza"
     },
     {
-      "nombre": "Yoke carry",
+      "nombre": "Yoke walk (caminar con barra cargada)",
       "pilar": "FUERZA",
       "grupo_muscular": "Full body",
       "equipamiento": "Yoke",
       "instrucciones_tecnicas": "Camina con barra cargada sobre los trapecios. Strongman.",
-      "entornos": "GYM,MIXTO",
+      "entornos": "MIXTO",
       "tipo_ilustracion": "RUN",
       "modalidad": "convencional",
       "score_tipo": "reps",
@@ -11072,36 +11072,36 @@
       "categoria": "Fuerza"
     },
     {
-      "nombre": "Mace 360",
+      "nombre": "Maza giratoria 360°",
       "pilar": "FUERZA",
       "grupo_muscular": "Hombros",
       "equipamiento": "Maza",
       "instrucciones_tecnicas": "Gira maza alrededor de la cabeza. Movilidad hombro.",
-      "entornos": "GYM,MIXTO",
+      "entornos": "MIXTO",
       "tipo_ilustracion": "PULL",
       "modalidad": "convencional",
       "score_tipo": "reps",
       "categoria": "Fuerza"
     },
     {
-      "nombre": "Mace 10-2",
+      "nombre": "Maza pendular 10-2",
       "pilar": "FUERZA",
       "grupo_muscular": "Hombros",
       "equipamiento": "Maza",
       "instrucciones_tecnicas": "Gira de las 10 a las 2 con cadera. Coordinación.",
-      "entornos": "GYM,MIXTO",
+      "entornos": "MIXTO",
       "tipo_ilustracion": "PULL",
       "modalidad": "convencional",
       "score_tipo": "reps",
       "categoria": "Fuerza"
     },
     {
-      "nombre": "Mace squat",
+      "nombre": "Sentadilla con maza al hombro",
       "pilar": "FUERZA",
       "grupo_muscular": "Cuádriceps",
       "equipamiento": "Maza",
       "instrucciones_tecnicas": "Sentadilla con maza al hombro.",
-      "entornos": "GYM,MIXTO",
+      "entornos": "MIXTO",
       "tipo_ilustracion": "SQUAT",
       "modalidad": "crossfit_lift",
       "score_tipo": "peso",
@@ -11113,7 +11113,7 @@
       "grupo_muscular": "Full body",
       "equipamiento": "Bolsa búlgara",
       "instrucciones_tecnicas": "Swing entre piernas + lanzamiento al hombro.",
-      "entornos": "GYM,MIXTO",
+      "entornos": "MIXTO",
       "tipo_ilustracion": "OLY",
       "modalidad": "convencional",
       "score_tipo": "reps",
@@ -11125,7 +11125,7 @@
       "grupo_muscular": "Hombros",
       "equipamiento": "Bolsa búlgara",
       "instrucciones_tecnicas": "Gira alrededor de la cabeza.",
-      "entornos": "GYM,MIXTO",
+      "entornos": "MIXTO",
       "tipo_ilustracion": "PUSH",
       "modalidad": "convencional",
       "score_tipo": "reps",
@@ -11137,7 +11137,7 @@
       "grupo_muscular": "Full body",
       "equipamiento": "Bolsa búlgara",
       "instrucciones_tecnicas": "Carga + press overhead.",
-      "entornos": "GYM,MIXTO",
+      "entornos": "MIXTO",
       "tipo_ilustracion": "OLY",
       "modalidad": "crossfit_lift",
       "score_tipo": "peso",

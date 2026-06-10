@@ -133,10 +133,16 @@ function instruccionesDesdeNombre(nombre, pilar) {
 
 function esInstruccionGenerica(instr) {
   const t = String(instr || '').trim();
-  if (!t || t.length < 28) return true;
+  // Subimos el umbral de 28 a 60 chars: "Codos fijos, extensión completa." (34
+  // chars) se consideraba específica pero al usuario le pareció pobre. Con 60
+  // chars exigimos que haya al menos una frase técnica + algún cue extra.
+  if (!t || t.length < 60) return true;
   if (INSTRUCCION_GENERICAS.some((re) => re.test(t))) return true;
+  // Si no hay punto o punto y coma a partir del primer carácter, asumimos una
+  // sola frase telegráfica y la consideramos pobre.
+  if (!/[.;]/.test(t.slice(1))) return true;
   const palabras = t.split(/\s+/).length;
-  if (palabras < 6 && !/[.;]/.test(t.slice(1))) return true;
+  if (palabras < 10) return true;
   return false;
 }
 

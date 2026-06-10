@@ -5,10 +5,24 @@ const PremiumService = require('./PremiumService');
 const RankingService = require('./RankingService');
 
 class DashboardService {
+  /**
+   * Días consecutivos con actividad (entrenamiento o salida GPS).
+   *
+   * Reglas (alineadas con Strong / Hevy / Strava):
+   *   - Empezamos por el día más reciente con actividad.
+   *   - Si la última actividad fue HOY o AYER, la racha sigue viva.
+   *   - Si pasaron 2+ días sin actividad, racha = 0.
+   *
+   * Antes la racha exigía que el usuario hubiera entrenado HOY mismo, así
+   * que casi siempre salía 0 (la mayoría no entrenan justo el día que abren
+   * la app), por eso el usuario reportaba "está siempre a 0".
+   */
   static calcularRacha(fechasDistinct) {
     if (!fechasDistinct?.length) return 0;
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
+    const ayer = new Date(hoy);
+    ayer.setDate(ayer.getDate() - 1);
     const set = new Set(
       fechasDistinct.map((r) => {
         const d = new Date(r.d);
@@ -16,8 +30,13 @@ class DashboardService {
         return d.getTime();
       })
     );
+    // Punto de partida: si tiene actividad HOY empezamos desde hoy, si no y
+    // tiene AYER empezamos desde ayer (racha sigue contando), si no → 0.
+    let cursor;
+    if (set.has(hoy.getTime())) cursor = new Date(hoy);
+    else if (set.has(ayer.getTime())) cursor = new Date(ayer);
+    else return 0;
     let racha = 0;
-    const cursor = new Date(hoy);
     while (set.has(cursor.getTime())) {
       racha += 1;
       cursor.setDate(cursor.getDate() - 1);
@@ -27,25 +46,45 @@ class DashboardService {
 
   static async obtenerResumen(userId, idOposicion, opts = {}) {
     const esFitness = !!opts.esFitness;
+    // duracion_oficial está en SEGUNDOS pero `minutosSemana` debe ir en minutos.
+    // Antes faltaba la división → la home decía "300 min" para una sesión de
+    // 5 min, falseando la métrica.
     const [[semana]] = await db.query(
       `SELECT COUNT(*) AS sesiones,
-              COALESCE(SUM(duracion_oficial), 0) AS minutos
+              ROUND(COALESCE(SUM(duracion_oficial), 0) / 60) AS minutos
        FROM historial_sesiones
        WHERE usuarios_id_usuario = ?
          AND fecha_entreno >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)`,
+      [userId]
+    );
+    // Añadimos minutos de actividades GPS (carreras, bici, etc.) — antes la
+    // home solo contaba entrenos clásicos.
+    const [[semanaGps]] = await db.query(
+      `SELECT COUNT(*) AS actividades,
+              ROUND(COALESCE(SUM(duracion_seg), 0) / 60) AS minutos
+         FROM gps_actividades
+        WHERE usuarios_id_usuario = ?
+          AND iniciada_en >= UNIX_TIMESTAMP(DATE_SUB(CURDATE(), INTERVAL 7 DAY)) * 1000`,
       [userId]
     );
     const [[total]] = await db.query(
       `SELECT COUNT(*) AS sesiones FROM historial_sesiones WHERE usuarios_id_usuario = ?`,
       [userId]
     );
+    // Para la racha, unimos días con entreno + días con GPS — actividad es actividad.
     const [fechasRows] = await db.query(
-      `SELECT DISTINCT DATE(fecha_entreno) AS d
-       FROM historial_sesiones
-       WHERE usuarios_id_usuario = ?
+      `SELECT DISTINCT d FROM (
+         SELECT DATE(fecha_entreno) AS d
+           FROM historial_sesiones
+          WHERE usuarios_id_usuario = ?
+         UNION
+         SELECT DATE(FROM_UNIXTIME(iniciada_en / 1000)) AS d
+           FROM gps_actividades
+          WHERE usuarios_id_usuario = ?
+       ) u
        ORDER BY d DESC
        LIMIT 90`,
-      [userId]
+      [userId, userId]
     );
     const [[ultimaSesion]] = await db.query(
       `SELECT fecha_entreno, duracion_oficial, tipo_rutina
@@ -125,8 +164,9 @@ class DashboardService {
     return {
       modoUso: esFitness ? 'FITNESS' : 'OPOSITOR',
       oposicionNombre: esFitness ? 'Modo fitness' : (opo?.nombre || null),
-      sesionesSemana: Number(semana?.sesiones || 0),
-      minutosSemana: Number(semana?.minutos || 0),
+      // Suma TODO: entrenos clásicos + salidas GPS (carrera, bici, etc.).
+      sesionesSemana: Number(semana?.sesiones || 0) + Number(semanaGps?.actividades || 0),
+      minutosSemana: Number(semana?.minutos || 0) + Number(semanaGps?.minutos || 0),
       sesionesTotales: Number(total?.sesiones || 0),
       rachaDias: DashboardService.calcularRacha(fechasRows),
       ultimaSesion: ultimaSesion

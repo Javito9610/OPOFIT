@@ -4,19 +4,12 @@ const db = require('../config/db');
 const EntornoEntreno = require('../utils/EntornoEntreno');
 const EjercicioMetadataService = require('./EjercicioMetadataService');
 
-// v7: ampliación "doctorado en ciencias del deporte". +297 ejercicios cubriendo
-// calistenia avanzada (progresiones front/back lever, planche, handstand,
-// muscle-up, human flag, dragon flag), CrossFit (olympic lifts, gymnastics,
-// monostructural), 17 WODs benchmark clásicos (Fran, Murph, Cindy, Helen,
-// Diane, Grace, Annie, Karen, Mary, Angie, Barbara, Chelsea, Nancy, DT, JT,
-// Kalsu, Filthy Fifty), formatos EMOM/AMRAP/Tabata/For Time/Death by/Chipper/
-// Ladder, material específico (TRX, KB, mancuernas, gomas, comba, saco,
-// anillas, maza, bolsa búlgara), tests baremo reales (course-navette, 1000 m
-// PN, 2000 m GC, salto Sargent, curso bombero CBA, BLA Andalucía), movilidad
-// estructurada. Nuevos campos modalidad + score_tipo en CADA ejercicio para
-// que la UI muestre el input correcto y el historial grafique PR por tipo.
-// Total ~1036 ejercicios.
-const BANCO_VERSION = 7;
+// v8: realismo por entorno. Eliminadas referencias a saco arena / trineo /
+// maza / yoke / bolsa búlgara de los entornos GYM/CASA/CALISTENIA (esos
+// materiales son de boxes CrossFit y strongman, no de un gym comercial
+// estándar). Renombrados 16 ejercicios con nombres confusos ("Vallas + giros
+// 180°" → "Vallas con giro de 180°"). Total ~1036 ejercicios.
+const BANCO_VERSION = 8;
 
 function resolveJsonPath() {
   const candidates = [

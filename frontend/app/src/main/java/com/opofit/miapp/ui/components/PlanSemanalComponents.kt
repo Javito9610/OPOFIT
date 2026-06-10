@@ -274,28 +274,66 @@ fun PlanPersonalizacionCard(
         modifier = modifier.fillMaxWidth()
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+            // Cabecera: título + chip de coaching debajo (no en SpaceBetween).
+            // Antes el chip "Coaching automático" se descuadraba y partía el
+            // texto en dos líneas a la derecha. Ahora título en una línea
+            // limpia y el chip de fuente como subtítulo si toca.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Filled.AutoAwesome,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.size(8.dp))
+                Text(
+                    "Tu plan inteligente",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+            }
+            // FlowRow para que entorno + nivel + fuente se reorganicen y no
+            // se corten en pantallas pequeñas.
+            androidx.compose.foundation.layout.FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Filled.AutoAwesome,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
+                if (!personalizacion.entorno_etiqueta.isNullOrBlank()) {
+                    AssistChip(
+                        onClick = {},
+                        label = {
+                            Text(
+                                "${personalizacion.entorno_emoji ?: ""} ${personalizacion.entorno_etiqueta}",
+                                maxLines = 1
+                            )
+                        }
                     )
-                    Text(
-                        "  Tu plan inteligente",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                }
+                // Nivel del plan (BÁSICO / INTERMEDIO / AVANZADO) — el usuario
+                // pidió saber qué plan tiene. Antes no aparecía en ningún sitio.
+                personalizacion.nivel_usado?.takeIf { it.isNotBlank() }?.let { nivel ->
+                    AssistChip(
+                        onClick = {},
+                        label = {
+                            Text(
+                                "Nivel ${nivelLabel(nivel)}",
+                                maxLines = 1,
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
+                        )
                     )
                 }
                 coachingFuenteLabel(personalizacion.coaching_fuente)?.let { label ->
                     AssistChip(
                         onClick = {},
-                        label = { Text(label, style = MaterialTheme.typography.labelSmall) },
+                        label = {
+                            Text(label, maxLines = 1, style = MaterialTheme.typography.labelSmall)
+                        },
                         enabled = false,
                         colors = AssistChipDefaults.assistChipColors(
                             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
@@ -303,19 +341,17 @@ fun PlanPersonalizacionCard(
                     )
                 }
             }
-            if (!personalizacion.entorno_etiqueta.isNullOrBlank()) {
-                AssistChip(
-                    onClick = {},
-                    label = { Text("${personalizacion.entorno_emoji ?: ""} ${personalizacion.entorno_etiqueta}") }
-                )
-            }
             Text(
                 textoIa,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = if (expandido) Int.MAX_VALUE else 2
+                // Subido de 2 → 4 líneas colapsado. Antes el texto se cortaba
+                // en "...(nota" justo antes de cerrar el paréntesis y quedaba
+                // ilegible.
+                maxLines = if (expandido) Int.MAX_VALUE else 4,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
-            if (textoIa.length > 80) {
+            if (textoIa.length > 200) {
                 TextButton(onClick = { expandido = !expandido }) {
                     Text(if (expandido) "Ver menos" else "Ver explicación completa")
                 }
@@ -462,9 +498,17 @@ fun EntrenoHoyHeroCard(
     }
 }
 
+/** Etiqueta legible para el chip de nivel del plan. */
+private fun nivelLabel(nivel: String): String = when (nivel.uppercase()) {
+    "BASICO", "BÁSICO" -> "Básico"
+    "INTERMEDIO" -> "Intermedio"
+    "AVANZADO" -> "Avanzado"
+    else -> nivel.lowercase().replaceFirstChar { it.uppercase() }
+}
+
 private fun coachingFuenteLabel(fuente: String?): String? = when (fuente?.lowercase()) {
     "openai", "gemini" -> "Coaching IA"
-    "reglas" -> "Coaching automático"
+    "reglas" -> "Coaching pro"
     "cache" -> null
     else -> null
 }

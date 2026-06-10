@@ -162,8 +162,12 @@ describe('EjercicioInteligenteService.aplicarInteligencia', () => {
       }),
       { seed: 3 }
     );
+    // Instrucción técnica del banco (textoMovimiento) siempre presente.
     expect((ej.instrucciones_tecnicas.match(/Codos apuntan al techo/g) || []).length).toBe(1);
-    expect((ej.instrucciones_tecnicas.match(/Detalle técnico:/g) || []).length).toBe(1);
+    // La instrucción original "Codo fijo, extensión completa." es ahora
+    // considerada GENÉRICA (<60 chars, una sola frase): se descarta para no
+    // contaminar el texto con pistas pobres. El usuario lo reportó.
+    expect(ej.instrucciones_tecnicas).not.toContain('Detalle técnico:');
   });
 
   test('clasifica sprint como velocidad', () => {

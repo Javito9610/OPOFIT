@@ -105,7 +105,8 @@ class EjerciciosService {
       ? rows
       : rows.filter((e) => {
           const csv = e.entornos || EntornoEntreno.inferirEntornosDesdeEquipamiento(e.equipamiento, e.pilar).join(',');
-          return EntornoEntreno.ejercicioCompatible(csv, ent);
+          return EntornoEntreno.ejercicioCompatible(csv, ent)
+              && EntornoEntreno.ejercicioRealistaParaEntorno(e.nombre, e.equipamiento, ent);
         });
 
     // Filtrado por material disponible (CSV de códigos)

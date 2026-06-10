@@ -50,9 +50,14 @@ class ChronoForegroundService : Service() {
                 refreshNotification()
             }
             ACTION_STOP -> stopForegroundTimer()
-            null -> if (!SessionTimerTracker.state.value.active) stopSelf()
+            // Antes: si nos relanza el sistema sin sesión activa hacíamos stopSelf
+            // pero NO quitábamos la notificación foreground → quedaba colgada en
+            // la barra hasta reiniciar. Ahora forzamos cleanup completo.
+            null -> if (!SessionTimerTracker.state.value.active) stopForegroundTimer()
         }
-        return START_STICKY
+        // START_NOT_STICKY evita que Android nos relance con intent=null y revivamos
+        // la notificación fantasma cuando ya no hay sesión.
+        return START_NOT_STICKY
     }
 
     private fun startForegroundTimer() {
@@ -99,12 +104,16 @@ class ChronoForegroundService : Service() {
         }
         val stop = actionIntent(ACTION_STOP, "Detener")
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            // Icono monocromo dedicado: si usábamos R.mipmap.ic_launcher la
+            // status bar mostraba un círculo blanco genérico porque Android
+            // exige icono sin color para notificaciones desde API 21.
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(time)
             .setContentIntent(tapIntent)
             .setOnlyAlertOnce(true)
             .setOngoing(true)
+            .setSilent(true)
             .addAction(0, pauseResume.first, pauseResume.second)
             .addAction(0, stop.first, stop.second)
             .build()

@@ -408,18 +408,66 @@ function aplicarInteligencia(ej, ctx = {}) {
   const instrucciones = generarInstrucciones({ ...ej, nombre });
   const grupo = meta().inferirGrupoMuscular(ej.grupo_muscular, nombre, ej.pilar || ej.categoria);
 
+  // Override final por COHERENCIA isométrica: si el banco prescribe "27 reps"
+  // de "Hollow rocks" / "Plancha" / "L-sit" / "Hold", lo tratamos como
+  // segundos (esas reps son "27 segundos" en la práctica). El usuario veía
+  // "4×27 Hollow rocks" sin unidad y le confundía.
+  let unidad = prescripcion.unidad;
+  let repeticiones = prescripcion.repeticiones;
+  const esIsometricoPorNombre = /\b(plancha|hollow|l-sit|wall sit|farmer hold|hold|isom|colgado\s*max|superman\s*hold)\b/i
+    .test(nombre);
+  if (esIsometricoPorNombre && unidad === 'reps') {
+    unidad = 's';
+  }
+
+  // Escalado de ritmos absurdos por nivel: si el ejercicio menciona ritmo de
+  // tirada larga (3'05/km, 4'00/km, etc.) en un nivel BÁSICO, lo subimos a
+  // un ritmo que el aspirante pueda mantener. Antes podía aparecer "1000 m
+  // a 3'05/km" para un BÁSICO, que es nivel élite y descorazonador.
+  const nivel = String(ctx.nivel || ej.nivel || '').toUpperCase();
+  const instruccionesAjustadas = ajustarRitmoSegunNivel(instrucciones, nombre, nivel);
+
   return {
     ...ej,
-    nombre,
+    nombre: ajustarNombreRitmoSegunNivel(nombre, nivel),
     grupo_muscular: grupo,
     series: prescripcion.series,
-    repeticiones: prescripcion.repeticiones,
-    unidad: prescripcion.unidad,
+    repeticiones,
+    unidad,
     descanso: prescripcion.descanso ?? ej.descanso ?? 90,
-    instrucciones_tecnicas: instrucciones,
+    instrucciones_tecnicas: instruccionesAjustadas,
     prescripcion_inteligente: true,
     instrucciones_inteligentes: true
   };
+}
+
+/**
+ * Si el nombre del ejercicio o las instrucciones mencionan un ritmo en
+ * formato `M'SS"` o `M:SS/km`, lo ajustamos cuando el nivel es BASICO o
+ * INTERMEDIO para que sea sostenible:
+ *
+ *  - BASICO: + 90 s/km sobre el ritmo declarado.
+ *  - INTERMEDIO: + 45 s/km.
+ *  - AVANZADO: sin cambios.
+ *
+ * Sin esto, el banco original (pensado para escala AVANZADA / 14 km/h) hace
+ * que un aspirante básico vea ritmos imposibles como "3'05/km".
+ */
+function ajustarRitmoSegunNivel(texto, nombre, nivel) {
+  if (!texto || !nivel || nivel === 'AVANZADO') return texto;
+  const delta = nivel === 'BASICO' ? 90 : 45;
+  return texto.replace(/(\d)[':](\d{2})(?:["']?)/g, (m, mins, secs) => {
+    const t = Number(mins) * 60 + Number(secs);
+    if (t < 150 || t > 480) return m; // ritmos fuera de rango razonable: no tocar
+    const ajustado = t + delta;
+    const mm = Math.floor(ajustado / 60);
+    const ss = String(ajustado % 60).padStart(2, '0');
+    return `${mm}'${ss}"`;
+  });
+}
+
+function ajustarNombreRitmoSegunNivel(nombre, nivel) {
+  return ajustarRitmoSegunNivel(nombre, nombre, nivel);
 }
 
 module.exports = {

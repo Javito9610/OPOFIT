@@ -124,10 +124,19 @@ describe('DashboardService.calcularRacha', () => {
     expect(DashboardService.calcularRacha([{ d: hoy }])).toBe(1);
   });
 
-  test('Solo ayer pero no hoy -> 0', () => {
+  test('Solo ayer pero no hoy -> 1 (racha sigue viva el dia siguiente)', () => {
+    // Cambio de criterio: si la ultima actividad fue ayer, la racha sigue
+    // contando — el usuario aun esta a tiempo de mantenerla entrenando hoy.
+    // Igual que Strava/Hevy. Antes salia 0 y el usuario lo veia en la home.
     const ayer = new Date();
     ayer.setDate(ayer.getDate() - 1);
-    expect(DashboardService.calcularRacha([{ d: ayer }])).toBe(0);
+    expect(DashboardService.calcularRacha([{ d: ayer }])).toBe(1);
+  });
+
+  test('Antier (hace 2 dias) sin hoy/ayer -> 0', () => {
+    const antier = new Date();
+    antier.setDate(antier.getDate() - 2);
+    expect(DashboardService.calcularRacha([{ d: antier }])).toBe(0);
   });
 
   test('Hoy + ayer + antier -> 3', () => {
@@ -157,7 +166,8 @@ describe('DashboardService.obtenerResumen', () => {
 
   test('devuelve estructura completa con datos minimos', async () => {
     db.query
-      .mockResolvedValueOnce([[{ sesiones: 2, minutos: 60 }]]) // semana
+      .mockResolvedValueOnce([[{ sesiones: 2, minutos: 60 }]]) // semana entrenos
+      .mockResolvedValueOnce([[{ actividades: 0, minutos: 0 }]]) // semana GPS
       .mockResolvedValueOnce([[{ sesiones: 20 }]]) // total
       .mockResolvedValueOnce([[]]) // fechas
       .mockResolvedValueOnce([[]]) // ultima sesion
@@ -179,9 +189,30 @@ describe('DashboardService.obtenerResumen', () => {
     expect(r.graficaSemanal).toHaveLength(7);
   });
 
+  test('sesiones y minutos suman entrenos clasicos + GPS', async () => {
+    db.query
+      .mockResolvedValueOnce([[{ sesiones: 2, minutos: 40 }]]) // entrenos
+      .mockResolvedValueOnce([[{ actividades: 1, minutos: 35 }]]) // GPS
+      .mockResolvedValueOnce([[{ sesiones: 20 }]])
+      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([[{ nombre: 'Opo 1' }]])
+      .mockResolvedValueOnce([[]]);
+    RutinaService.calcularNotaYNivel.mockResolvedValue({
+      nivelSugerido: 'BASICO',
+      pruebasFaltantes: 0,
+      genero: 'HOMBRE'
+    });
+    const r = await DashboardService.obtenerResumen(1, 1);
+    expect(r.sesionesSemana).toBe(3);
+    expect(r.minutosSemana).toBe(75);
+  });
+
   test('modo fitness omite ranking y simulacro', async () => {
     db.query
       .mockResolvedValueOnce([[{ sesiones: 1, minutos: 30 }]])
+      .mockResolvedValueOnce([[{ actividades: 0, minutos: 0 }]])
       .mockResolvedValueOnce([[{ sesiones: 5 }]])
       .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([[]])

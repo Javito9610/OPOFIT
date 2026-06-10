@@ -67,6 +67,47 @@ function ejercicioCompatible(entornosCsv, entornoUsuario) {
   return lista.includes(ent) || lista.includes('MIXTO');
 }
 
+/**
+ * Filtro defensivo (defense-in-depth): aunque el ejercicio diga que es
+ * compatible con un entorno, descartamos los obvios falsos positivos
+ * (saco de arena en gimnasio comercial, dominada con toalla en casa sin
+ * barra, etc.). El usuario reportaba "y dale con los putos saquitos en el
+ * gym": esta función impide que se cuelen.
+ */
+function ejercicioRealistaParaEntorno(nombre, equipamiento, entornoUsuario) {
+  const ent = normalizarEntorno(entornoUsuario) || 'MIXTO';
+  if (ent === 'MIXTO') return true;
+  const n = String(nombre || '').toLowerCase();
+  const eq = String(equipamiento || '').toLowerCase();
+
+  // Material strongman / outdoor (saco arena, sandbag, trineo, sled, yoke,
+  // maza, mace, bolsa búlgara) NO encaja con un gym comercial ni con CASA
+  // ni con CALISTENIA estricta. Sí encaja en CROSSFIT y PISTA.
+  const esStrongman =
+    /saco.*(arena|kg|boxeo)|sandbag|sled|trineo|yoke|\bmaza\b|\bmace\b|bolsa\s+búlgara|bolsa\s+bulgara|bandera\s+lastrada/i
+      .test(`${n} ${eq}`);
+  if (esStrongman && (ent === 'GYM' || ent === 'CASA' || ent === 'CALISTENIA')) {
+    return false;
+  }
+
+  // Toalla como agarre (towel pull-up / con toalla) solo tiene sentido si
+  // hay barra de dominadas → CALISTENIA / CROSSFIT / GYM con barra.
+  // En CASA sin barra no.
+  if (/toalla|towel/.test(n) && ent === 'CASA') return false;
+
+  // Anillas no son típicas de un gym comercial estándar.
+  if (/anilla|ring (dip|muscle|pull|row|fly)|iron cross/i.test(`${n} ${eq}`) && ent === 'GYM') {
+    return false;
+  }
+
+  // Cuerda gruesa para climbing solo en boxes CrossFit típicos.
+  if (/legless rope|rope climb/i.test(n) && (ent === 'GYM' || ent === 'CASA')) {
+    return false;
+  }
+
+  return true;
+}
+
 function inferirTipoIlustracion(nombre, pilar, grupo) {
   const n = String(nombre || '').toLowerCase();
   const g = String(grupo || '').toLowerCase();
@@ -133,6 +174,7 @@ module.exports = {
   inferirEntornosDesdeEquipamiento,
   parseEntornosCsv,
   ejercicioCompatible,
+  ejercicioRealistaParaEntorno,
   inferirTipoIlustracion,
   hashSeed,
   seededPick,

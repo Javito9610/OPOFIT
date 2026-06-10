@@ -47,32 +47,48 @@ const KEYWORDS_BY_OPO = {
   ]
 };
 
+// v7.1: ampliamos fuentes. Antes solo BOE por canal y se quedaban estancadas
+// porque cada canal del BOE publica MUY poco. Ahora cada oposición tiene
+// al menos 3 fuentes que se cruzan + canal genérico de empleo público.
+// Si una fuente falla, las otras siguen. El feed BOE general (boe.php?s=2A
+// y 2B = oposiciones) suele actualizarse a diario.
 const RSS_FEEDS = {
   1: [
-    { url: 'https://www.boe.es/rss/canal.php?c=policia', nombre: 'BOE - Policía Nacional' }
+    { url: 'https://www.boe.es/rss/canal.php?c=policia', nombre: 'BOE - Policía Nacional' },
+    { url: 'https://www.boe.es/rss/boe.php?s=2A', nombre: 'BOE Sección II-A (oposiciones)' },
+    { url: 'https://www.boe.es/rss/boe.php?s=2B', nombre: 'BOE Sección II-B (oposiciones)' },
+    { url: 'https://www.policia.es/rss/noticias.xml', nombre: 'Policía Nacional - Noticias' }
   ],
   2: [
     { url: 'https://www.boe.es/rss/canal.php?c=defensa', nombre: 'BOE - Defensa' },
-    {
-      url: 'https://web.guardiacivil.es/es/administracion/atom_noticias.html',
-      nombre: 'Guardia Civil - Noticias'
-    }
+    { url: 'https://www.boe.es/rss/boe.php?s=2A', nombre: 'BOE Sección II-A (oposiciones)' },
+    { url: 'https://web.guardiacivil.es/es/administracion/atom_noticias.html',
+      nombre: 'Guardia Civil - Noticias' },
+    { url: 'https://www.boe.es/rss/canal.php?c=empleo_publico', nombre: 'BOE - Empleo público' }
   ],
   3: [
     { url: 'https://www.boe.es/rss/canal.php?c=empleo_publico', nombre: 'BOE - Empleo público' },
-    { url: 'https://www.bocm.es/boletin/rss/bocm.xml', nombre: 'BOCM - Comunidad de Madrid' }
+    { url: 'https://www.boe.es/rss/boe.php?s=2A', nombre: 'BOE Sección II-A (oposiciones)' },
+    { url: 'https://www.bocm.es/boletin/rss/bocm.xml', nombre: 'BOCM - Comunidad de Madrid' },
+    { url: 'https://dogc.gencat.cat/ca/rss/dogc.xml', nombre: 'DOGC - Catalunya' }
   ],
   4: [
     { url: 'https://www.boe.es/rss/canal.php?c=empleo_publico', nombre: 'BOE - Empleo público' },
+    { url: 'https://www.boe.es/rss/boe.php?s=2A', nombre: 'BOE Sección II-A' },
+    { url: 'https://www.boe.es/rss/boe.php?s=2B', nombre: 'BOE Sección II-B' },
     { url: 'https://www.bocm.es/boletin/rss/bocm.xml', nombre: 'BOCM - Madrid' }
   ],
   5: [
     { url: 'https://www.boe.es/rss/canal.php?c=personal', nombre: 'BOE - Personal' },
-    { url: 'https://www.boe.es/rss/canal.php?c=empleo_publico', nombre: 'BOE - Empleo público' }
+    { url: 'https://www.boe.es/rss/canal.php?c=empleo_publico', nombre: 'BOE - Empleo público' },
+    { url: 'https://www.boe.es/rss/boe.php?s=2A', nombre: 'BOE Sección II-A' }
   ],
   6: [
     { url: 'https://www.boe.es/rss/canal.php?c=defensa', nombre: 'BOE - Defensa' },
-    { url: 'https://www.boe.es/rss/canal.php?c=empleo_publico', nombre: 'BOE - Empleo público' }
+    { url: 'https://www.boe.es/rss/canal.php?c=empleo_publico', nombre: 'BOE - Empleo público' },
+    { url: 'https://www.boe.es/rss/boe.php?s=2A', nombre: 'BOE Sección II-A' },
+    { url: 'https://www.defensa.gob.es/sindicacion/rss/noticias.xml',
+      nombre: 'Ministerio de Defensa' }
   ]
 };
 
@@ -85,9 +101,12 @@ const FEEDS_GENERICOS_FILTRAR = new Set([
 /** Títulos ya notificados por push (persistencia ligera en memoria + hash) */
 const _alertasEnviadas = new Set();
 
-/** In-memory news cache with 30-minute TTL per oposicion ID. */
+/** In-memory news cache with 15-minute TTL per oposición ID.
+ * Antes era 30 min y el usuario veía "noticias estancadas" entre cron
+ * tick y cron tick. 15 min es mejor balance: refresco frecuente sin
+ * martillear las fuentes externas en cada petición. */
 const _newsCache = new Map();
-const CACHE_TTL_MS = 30 * 60 * 1000;
+const CACHE_TTL_MS = 15 * 60 * 1000;
 
 function getCached(id) {
   const entry = _newsCache.get(id);
