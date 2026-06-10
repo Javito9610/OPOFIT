@@ -402,8 +402,6 @@ private fun NoticiasTab(
 ) {
     fun esRelevanteParaOposicion(item: NoticiaRss): Boolean {
         val text = ("${item.titulo} ${item.descripcion}").lowercase()
-        
-        
         return text.contains("guardia civil") ||
             text.contains("dirección general de la guardia civil") ||
             text.contains("policía") ||
@@ -413,12 +411,45 @@ private fun NoticiasTab(
             text.contains("ministerio del interior")
     }
 
+    // Auto-purga: cualquier noticia con más de 60 días se descarta silenciosamente.
+    // Antes la convocatoria de enero (4-5 meses) se quedaba fija arriba con la
+    // estrellita ⭐ aunque ya no era novedad. El usuario lo reportaba como
+    // "están ahí fijadas y no deberían estarlo".
     val rssOrdenadas = remember(noticiasRss) {
-        noticiasRss.sortedWith(
-            compareByDescending<NoticiaRss> { it.urgente }
-                .thenByDescending { esRelevanteParaOposicion(it) || it.relevancia == "alta" }
-                .thenByDescending { it.fecha }
-        )
+        val ahora = System.currentTimeMillis()
+        val sieteDiasMs = 60L * 24L * 60L * 60L * 1000L
+        // Parser robusto: si la fecha viene en cualquier formato (ISO, YYYY-MM-DD,
+        // RFC1123…) lo intentamos; si no se puede, lo dejamos pasar como reciente.
+        fun parseFecha(s: String): Long {
+            if (s.isBlank()) return Long.MAX_VALUE
+            val formatos = listOf(
+                "yyyy-MM-dd'T'HH:mm:ss",
+                "yyyy-MM-dd HH:mm:ss",
+                "yyyy-MM-dd",
+                "EEE, d MMM yyyy HH:mm:ss z"
+            )
+            for (f in formatos) {
+                try {
+                    val sdf = java.text.SimpleDateFormat(f, java.util.Locale.ENGLISH)
+                    return sdf.parse(s)?.time ?: continue
+                } catch (_: Exception) { /* siguiente formato */ }
+            }
+            return Long.MAX_VALUE
+        }
+        noticiasRss
+            .filter {
+                // Mantenemos solo las de últimos 60 días + las que no se sepa
+                // la fecha (mejor mostrarlas que perderlas).
+                val t = parseFecha(it.fecha)
+                t == Long.MAX_VALUE || ahora - t <= sieteDiasMs
+            }
+            // Ordenamos PRIMERO por fecha (descendente) — así las nuevas siempre
+            // arriba. Antes el sort por "relevante" hacía que noticias antiguas
+            // con tu oposición se quedaran fijas indefinidamente.
+            .sortedWith(
+                compareByDescending<NoticiaRss> { parseFecha(it.fecha) }
+                    .thenByDescending { it.urgente }
+            )
     }
 
     fun etiquetaCategoria(cat: String): String = when (cat) {
@@ -472,6 +503,10 @@ private fun NoticiasTab(
         } else {
             items(rssOrdenadas) { noticia ->
                 val relevante = esRelevanteParaOposicion(noticia)
+                // Cards UNIFORMES. Antes las marcadas como relevantes usaban
+                // primaryContainer (color destacado) y las normales secondary,
+                // y se veían como dos diseños distintos. Ahora todas iguales
+                // y la "relevancia" se indica con un chip discreto arriba.
                 ElevatedCard(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -483,11 +518,19 @@ private fun NoticiasTab(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         if (relevante) {
-                            Text(
-                                text = "⭐ Relevante para tu oposición",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary
+                            // Chip pequeño, no estrellita gigante.
+                            androidx.compose.material3.AssistChip(
+                                onClick = {},
+                                label = {
+                                    Text(
+                                        "Tu oposición",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                },
+                                colors = androidx.compose.material3.AssistChipDefaults.assistChipColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                )
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                         }
@@ -495,40 +538,55 @@ private fun NoticiasTab(
                             text = noticia.titulo,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = if (relevante) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 3,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
-                        if (noticia.fecha.isNotBlank()) {
-                            Text(
-                                text = "🗓 ${noticia.fecha.take(10)}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (relevante) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        }
-                        if (noticia.fuente.isNotBlank()) {
-                            Text(
-                                text = "📌 ${noticia.fuente}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (relevante) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
-                            )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            if (noticia.fecha.isNotBlank()) {
+                                Text(
+                                    text = "🗓 ${noticia.fecha.take(10)}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            if (noticia.fuente.isNotBlank()) {
+                                Text(
+                                    text = "· ${noticia.fuente}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
                         }
                         val texto = noticia.resumen.ifBlank { noticia.descripcion }
                         if (texto.isNotBlank()) {
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = texto,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = if (relevante) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
-                                maxLines = 4
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 4,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                             )
                         }
+                        // Botón "Abrir" SIEMPRE visible si hay enlace, como en
+                        // las tarjetas de abajo. Antes algunas no lo mostraban.
                         if (noticia.enlace.isNotBlank()) {
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
                             TextButton(onClick = {
                                 UrlOpener.open(context, noticia.enlace)
                             }) {
                                 Text(
                                     text = "Abrir",
                                     style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }

@@ -65,7 +65,11 @@ data class BestSegment(
 data class ActivityLap(
     val index: Int,
     val durationSec: Int,
-    val distanceM: Double = 0.0
+    val distanceM: Double = 0.0,
+    // Algunos relojes (Garmin Connect, Suunto, Coros) escriben el nombre del
+    // intervalo en el campo Notes del TCX. Si está disponible lo usamos
+    // como pista para hacer matching por nombre con los ejercicios del plan.
+    val label: String? = null
 )
 
 data class ActivitySummary(

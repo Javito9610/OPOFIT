@@ -54,6 +54,10 @@ fun EntrenoActiveStepCard(
     repsObjetivo: Int? = null,
     valoresPorSerie: List<String> = emptyList(),
     onValoresPorSerieChange: ((List<String>) -> Unit)? = null,
+    // --- Soporte WOD / CrossFit / Calistenia ---
+    modalidad: String? = null,
+    scoreTipo: String? = null,
+    timeCapSeg: Int? = null,
     modifier: Modifier = Modifier
 ) {
     ElevatedCard(
@@ -143,9 +147,31 @@ fun EntrenoActiveStepCard(
                         ButtonText("Aplicar ${TimeFormatUtil.formatElapsedMs(elapsedMsCronometro)}")
                     }
                 }
-                // Si la prescripción tiene >1 serie y tenemos callback de series,
-                // mostramos el input estilo Strong/Hevy (una fila por serie).
-                if (seriesObjetivo > 1 && onValoresPorSerieChange != null && unidad != null) {
+                // Orden de prioridad para elegir el input:
+                //   1) Modalidad WOD/AMRAP/EMOM/etc → WodInput (counters + cap).
+                //   2) Prescripción multi-serie → SeriesInput (estilo Strong/Hevy).
+                //   3) Default → ExerciseValueInput (input simple con unidad).
+                val esModalidadWod = modalidad?.lowercase() in setOf(
+                    "wod", "amrap", "emom", "for_time", "tabata", "death_by",
+                    "chipper", "ladder", "crossfit_lift"
+                )
+                if (esModalidadWod) {
+                    WodInput(
+                        modalidad = modalidad!!,
+                        scoreTipo = scoreTipo,
+                        timeCapSeg = timeCapSeg,
+                        valor = valor,
+                        onValorChange = onValorChange,
+                        elapsedMsCronometro = elapsedMsCronometro
+                    )
+                    if (!errorValor.isNullOrBlank()) {
+                        Text(
+                            errorValor,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                } else if (seriesObjetivo > 1 && onValoresPorSerieChange != null && unidad != null) {
                     SeriesInput(
                         seriesObjetivo = seriesObjetivo,
                         repsObjetivo = repsObjetivo,

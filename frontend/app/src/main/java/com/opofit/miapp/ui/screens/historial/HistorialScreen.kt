@@ -436,9 +436,12 @@ private fun ResumenTab(resumen: ResumenHistorial?, periodo: String, onPeriodoCha
                     CalendarHeatmap(
                         countsByDate = resumen.heatmap.associate { it.dia to it.sesiones },
                         weeks = weeksMostrar,
+                        // +20 dp: el componente ahora reserva 28 px arriba para
+                        // los meses; sin un extra de alto, las celdas quedan
+                        // muy aplastadas y los meses casi sobre la rejilla.
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(if (weeksMostrar >= 52) 110.dp else 140.dp)
+                            .height(if (weeksMostrar >= 52) 130.dp else 160.dp)
                     )
                     Spacer(Modifier.height(6.dp))
                     com.opofit.miapp.ui.components.HeatmapLegend()
@@ -470,6 +473,20 @@ private fun ResumenTab(resumen: ResumenHistorial?, periodo: String, onPeriodoCha
                             centerSubtitle = if (resumen.minutos > 0) "ses · ${resumen.minutos} min"
                                              else "sesiones",
                             modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+        }
+        // Volumen por grupo muscular: solo cuando hay al menos 5 series para
+        // que el chart tenga sentido. Una sola serie ocuparía el ancho entero
+        // y daría una impresión engañosa.
+        if (resumen.porGrupoMuscular.sumOf { it.series } >= 5) {
+            item {
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(14.dp)) {
+                        com.opofit.miapp.ui.components.VolumenMusculosChart(
+                            datos = resumen.porGrupoMuscular
                         )
                     }
                 }

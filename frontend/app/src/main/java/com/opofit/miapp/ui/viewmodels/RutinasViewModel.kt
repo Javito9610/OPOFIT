@@ -28,6 +28,9 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
         val error: String = "",
         val notaActual: String = "",
         val nivelAsignado: String = "",
+        // Nivel REAL del plan que se le sirve al usuario (puede diferir de
+        // nivelAsignado si no es premium → siempre BASICO en ese caso).
+        val nivelRutinasMostradas: String? = null,
         val rutinaCompleta: List<BloqueRutina> = emptyList(),
         val planSemanal: PlanSemanal? = null,
         val calendario: PlanCalendario? = null,
@@ -67,6 +70,7 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
                             isLoading = false,
                             notaActual = data.notaActual,
                             nivelAsignado = data.nivelAsignado,
+                            nivelRutinasMostradas = data.nivelRutinasMostradas,
                             rutinaCompleta = data.rutinaCompleta,
                             planSemanal = data.planSemanal,
                             pruebasFaltantes = data.pruebasFaltantes,

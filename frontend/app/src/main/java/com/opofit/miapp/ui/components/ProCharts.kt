@@ -442,13 +442,16 @@ fun CalendarHeatmap(
     val diasSemana = listOf("L", "X", "V")  // mostramos 3 para no saturar
 
     // Canvas con eje vertical (días) + eje horizontal (meses) y rejilla.
-    // Más claro que la versión anterior (solo cuadritos sin contexto).
+    // Layout v2: ahora reservamos espacio explícito arriba para los meses
+    // (28 px / ~14 dp) e izquierda para días (18 px). Antes el padding era 18
+    // total y el "abr" se solapaba con la fila L de los cuadros. Ahora se
+    // separa con margen claro y nunca se mezclan.
     Canvas(modifier = modifier) {
         val totalDays = weeks * 7
-        // Reservamos ~16dp arriba (etiquetas meses) y ~16dp izq (días semana).
-        val pad = 18f
-        val gridW = size.width - pad
-        val gridH = size.height - pad
+        val padTop = 28f          // espacio para etiquetas de meses
+        val padLeft = 18f         // espacio para L / X / V
+        val gridW = size.width - padLeft
+        val gridH = size.height - padTop
         val cell = (gridW / weeks).coerceAtMost(gridH / 7f)
         val gap = cell * 0.16f
 
@@ -465,8 +468,8 @@ fun CalendarHeatmap(
             val intensity = (count.toFloat() / maxCount).coerceIn(0f, 1f)
             val color = if (count == 0) emptyColor
             else lerp(emptyColor, activeColor, 0.35f + 0.65f * intensity)
-            val x = pad + week * cell + gap / 2f
-            val y = pad + dow * cell + gap / 2f
+            val x = padLeft + week * cell + gap / 2f
+            val y = padTop + dow * cell + gap / 2f
             drawRoundRect(
                 color = color,
                 topLeft = Offset(x, y),
@@ -474,28 +477,30 @@ fun CalendarHeatmap(
                 cornerRadius = androidx.compose.ui.geometry.CornerRadius(cell * 0.18f, cell * 0.18f)
             )
             // Etiqueta de mes en la primera columna donde aparece un mes nuevo.
+            // Capitalizada y centrada arriba de la columna correspondiente.
             val mesActual = cal.get(java.util.Calendar.MONTH)
             if (dow == 0 && mesActual != mesAnterior) {
                 val texto = mesFmt.format(cal.time).take(3)
+                    .replaceFirstChar { c -> c.uppercase() }
                 drawText(
                     textMeasurer = textMeasurer,
                     text = texto,
                     style = textStyle,
-                    topLeft = Offset(pad + week * cell + 1f, 0f)
+                    topLeft = Offset(padLeft + week * cell + 1f, 4f)
                 )
                 mesAnterior = mesActual
             }
             cal.add(java.util.Calendar.DAY_OF_YEAR, 1)
         }
 
-        // Etiquetas L/X/V a la izquierda de la rejilla.
+        // Etiquetas L/X/V a la izquierda — alineadas verticalmente con su fila.
         diasSemana.forEachIndexed { idx, etiqueta ->
             val rowIdx = idx * 2  // L=0, X=2, V=4
             drawText(
                 textMeasurer = textMeasurer,
                 text = etiqueta,
                 style = textStyle,
-                topLeft = Offset(0f, pad + rowIdx * cell + cell * 0.25f)
+                topLeft = Offset(2f, padTop + rowIdx * cell + cell * 0.20f)
             )
         }
     }

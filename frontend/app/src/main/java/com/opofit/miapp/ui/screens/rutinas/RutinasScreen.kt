@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.outlined.FactCheck
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -350,16 +351,46 @@ fun RutinasScreen(
                             ) {
                                 if (!esFitness && uiState.notaActual.isNotEmpty()) {
                                     item {
-                                        ElevatedCard(
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Text(
-                                                text = "Nota ${uiState.notaActual} · ${uiState.nivelAsignado}",
-                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                                style = MaterialTheme.typography.labelLarge,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
+                                        // Cabecera pro tipo Strong/Hevy: dos filas claras.
+                                        //   1) Nivel REAL del plan que se está haciendo (el activo).
+                                        //   2) Nota + nivel calculado debajo, en texto secundario.
+                                        // Antes solo se veía "Nota 10.00 · AVANZADO" y el usuario pensaba
+                                        // que estaba entrenando AVANZADO cuando en realidad sin Premium
+                                        // se le sirve BASICO.
+                                        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                                            Column(
+                                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                ) {
+                                                    Text(
+                                                        "Plan activo:",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                    androidx.compose.material3.AssistChip(
+                                                        onClick = {},
+                                                        label = {
+                                                            Text(
+                                                                "Nivel ${(uiState.nivelRutinasMostradas ?: uiState.nivelAsignado).lowercase().replaceFirstChar { it.uppercase() }}",
+                                                                style = MaterialTheme.typography.labelSmall,
+                                                                fontWeight = FontWeight.SemiBold
+                                                            )
+                                                        },
+                                                        colors = androidx.compose.material3.AssistChipDefaults.assistChipColors(
+                                                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                                                        )
+                                                    )
+                                                }
+                                                Text(
+                                                    "Tu nota actual: ${uiState.notaActual} (nivel calculado ${uiState.nivelAsignado.lowercase()})",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -368,12 +399,23 @@ fun RutinasScreen(
                                         ElevatedCard(
                                             modifier = Modifier.fillMaxWidth()
                                         ) {
-                                            Text(
-                                                text = uiState.msgPremium!!,
-                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onTertiaryContainer
-                                            )
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                Icon(
+                                                    androidx.compose.material.icons.Icons.Filled.Lock,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.tertiary
+                                                )
+                                                Text(
+                                                    text = uiState.msgPremium!!,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -588,6 +630,46 @@ fun RutinasScreen(
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 if (!esFitness && uiState.notaActual.isNotEmpty()) {
+                                    item {
+                                        // Mismo bloque pro que en la rama de plan-semanal arriba.
+                                        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                                            Column(
+                                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                ) {
+                                                    Text(
+                                                        "Plan activo:",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                    androidx.compose.material3.AssistChip(
+                                                        onClick = {},
+                                                        label = {
+                                                            Text(
+                                                                "Nivel ${(uiState.nivelRutinasMostradas ?: uiState.nivelAsignado).lowercase().replaceFirstChar { it.uppercase() }}",
+                                                                style = MaterialTheme.typography.labelSmall,
+                                                                fontWeight = FontWeight.SemiBold
+                                                            )
+                                                        },
+                                                        colors = androidx.compose.material3.AssistChipDefaults.assistChipColors(
+                                                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                                                        )
+                                                    )
+                                                }
+                                                Text(
+                                                    "Tu nota actual: ${uiState.notaActual} (nivel calculado ${uiState.nivelAsignado.lowercase()})",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                if (false) {  // bloque legacy reemplazado arriba
                                     item {
                                         ElevatedCard(
                                             modifier = Modifier.fillMaxWidth()

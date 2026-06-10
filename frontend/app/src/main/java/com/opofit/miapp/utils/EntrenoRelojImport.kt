@@ -98,7 +98,19 @@ object EntrenoRelojImport {
         val updates = mutableListOf<Update>()
         val laps = activity.laps.filter { it.durationSec > 0 || it.distanceM > 0 }
 
-        if (laps.size >= pending.size && laps.size >= 2) {
+        // Estrategia 1: matching por NOMBRE. Si el reloj exportó los laps con
+        // `label` (Notes en TCX) intentamos asociar cada lap al slot más
+        // parecido por similitud de nombre. Esto da el mapping correcto
+        // aunque el orden de los laps en el reloj no coincida con el plan.
+        val lapsConNombre = laps.filter { !it.label.isNullOrBlank() }
+        val matcheoPorNombre = if (lapsConNombre.size >= 2) {
+            emparejarPorNombre(pending, lapsConNombre)
+        } else emptyMap()
+        if (matcheoPorNombre.isNotEmpty()) {
+            matcheoPorNombre.forEach { (slot, lap) ->
+                updates += buildUpdate(slot, lap, unidadFor(slot.index), esGps(slot), unitDist, markDone = true)
+            }
+        } else if (laps.size >= pending.size && laps.size >= 2) {
             pending.forEachIndexed { lapIdx, slot ->
                 val lap = laps[lapIdx]
                 updates += buildUpdate(slot, lap, unidadFor(slot.index), esGps(slot), unitDist, markDone = true)
@@ -192,6 +204,59 @@ object EntrenoRelojImport {
             )
             else -> Update(index = slot.index)
         }
+    }
+
+    /**
+     * Empareja cada slot con el lap cuyo `label` sea más parecido al `nombre`
+     * del slot, usando una métrica de similitud de cadenas (tokens + Jaccard).
+     *
+     * Devuelve solo los emparejamientos con similitud >= 0.35 (umbral
+     * conservador: si el reloj puso "Press banca 4×8" y el plan dice
+     * "Press de banca con barra", ambos contienen tokens en común y se
+     * emparejan). Por debajo del umbral preferimos no mapear y dejar que
+     * caigan al matcher posicional/manual.
+     */
+    private fun emparejarPorNombre(
+        slots: List<Slot>,
+        laps: List<com.opofit.miapp.gps.model.ActivityLap>
+    ): Map<Slot, com.opofit.miapp.gps.model.ActivityLap> {
+        if (slots.isEmpty() || laps.isEmpty()) return emptyMap()
+        val out = mutableMapOf<Slot, com.opofit.miapp.gps.model.ActivityLap>()
+        val lapsLibres = laps.toMutableList()
+        // Greedy: por cada slot, tomamos el lap libre más parecido.
+        for (slot in slots) {
+            val nombreSlot = tokenize(slot.nombre)
+            val mejor = lapsLibres
+                .maxByOrNull { lap -> similitudJaccard(nombreSlot, tokenize(lap.label ?: "")) }
+                ?: continue
+            val sim = similitudJaccard(nombreSlot, tokenize(mejor.label ?: ""))
+            if (sim >= 0.35) {
+                out[slot] = mejor
+                lapsLibres.remove(mejor)
+            }
+        }
+        return out
+    }
+
+    /** Tokens en minúsculas sin acentos, longitud >= 3, sin números puros. */
+    private fun tokenize(s: String): Set<String> {
+        val limpio = s.lowercase()
+            .replace(Regex("[áàä]"), "a")
+            .replace(Regex("[éèë]"), "e")
+            .replace(Regex("[íìï]"), "i")
+            .replace(Regex("[óòö]"), "o")
+            .replace(Regex("[úùü]"), "u")
+            .replace(Regex("[^a-z0-9\\s]"), " ")
+        return limpio.split(Regex("\\s+"))
+            .filter { it.length >= 3 && it.any { c -> c.isLetter() } }
+            .toSet()
+    }
+
+    private fun similitudJaccard(a: Set<String>, b: Set<String>): Double {
+        if (a.isEmpty() || b.isEmpty()) return 0.0
+        val inter = a.intersect(b).size
+        val union = a.union(b).size
+        return inter.toDouble() / union.toDouble()
     }
 
     private fun formatActivity(a: ActivitySummary): String {

@@ -12,15 +12,18 @@ const listar = async (req, res) => {
 
 const buscar = async (req, res) => {
   try {
-    const nombre = (req.query.nombre || '').trim();
+    // Aceptamos tres aliases: q (preferido), nombre (legacy) y email — así
+    // mantenemos la compatibilidad con el cliente antiguo y a la vez podemos
+    // buscar por email desde el nuevo input.
+    const consulta = (req.query.q || req.query.nombre || req.query.email || '').trim();
     const idOposicionRaw = req.query.idOposicion;
     const idOposicion = idOposicionRaw == null || idOposicionRaw === ''
       ? null
       : Number(idOposicionRaw);
-    if (!nombre) {
-      return res.status(400).json({ ok: false, msg: 'Indica nombre' });
+    if (!consulta) {
+      return res.status(400).json({ ok: false, msg: 'Indica nombre o email' });
     }
-    const data = await AmigosService.buscarPorNombre(req.usuario.id, nombre, idOposicion);
+    const data = await AmigosService.buscarPorNombre(req.usuario.id, consulta, idOposicion);
     res.json({ ok: true, data });
   } catch (e) {
     res.status(500).json({ ok: false, msg: e.message });

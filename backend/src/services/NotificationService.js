@@ -103,6 +103,94 @@ class NotificationService {
     return { enviados, total: usuarios?.length || 0, hora: horaActual };
   }
 
+  /**
+   * Envía push a un único usuario por su id. Lookup del token + delivery.
+   * Usado por: solicitud de amistad, aceptar amistad, invitación a grupo,
+   * mensaje directo en chat 1-a-1, etc.
+   */
+  static async enviarAUsuario(idUsuario, titulo, cuerpo, data = {}) {
+    const [rows] = await db.query(
+      'SELECT fcm_token FROM usuarios WHERE id_usuario = ? AND fcm_token IS NOT NULL AND fcm_token != ""',
+      [idUsuario]
+    );
+    const token = rows?.[0]?.fcm_token;
+    if (!token) return { ok: false, error: 'sin_token' };
+    return NotificationService.enviarAToken(token, titulo, cuerpo, data);
+  }
+
+  /**
+   * Notifica un nuevo mensaje a todos los miembros del grupo excepto al autor.
+   * Reloj-friendly: canal "comunidad_messages" en el cliente para que vibre
+   * con prioridad HIGH y se replique al wearable.
+   */
+  static async notificarMensajeGrupo({ idGrupo, idAutor, nombreAutor, nombreGrupo, texto }) {
+    const [rows] = await db.query(
+      `SELECT u.id_usuario, u.fcm_token
+         FROM grupo_miembros gm
+         JOIN usuarios u ON u.id_usuario = gm.id_usuario
+        WHERE gm.id_grupo = ?
+          AND gm.id_usuario != ?
+          AND u.fcm_token IS NOT NULL AND u.fcm_token != ""`,
+      [idGrupo, idAutor]
+    );
+    const previewTexto = String(texto || '').slice(0, 120);
+    let enviados = 0;
+    for (const u of rows || []) {
+      const r = await NotificationService.enviarAToken(
+        u.fcm_token,
+        `${nombreAutor} · ${nombreGrupo}`,
+        previewTexto,
+        {
+          tipo: 'mensaje_grupo',
+          canal: 'comunidad_messages',
+          idGrupo: String(idGrupo)
+        }
+      );
+      if (r.ok) enviados += 1;
+    }
+    return { enviados, total: rows?.length || 0 };
+  }
+
+  /** Notifica al destinatario una nueva solicitud de amistad. */
+  static async notificarSolicitudAmistad({ idDestino, nombreSolicitante }) {
+    return NotificationService.enviarAUsuario(
+      idDestino,
+      'Nueva solicitud de amistad',
+      `${nombreSolicitante} quiere ser tu amigo en OpoFit`,
+      { tipo: 'solicitud_amistad', canal: 'comunidad_messages' }
+    );
+  }
+
+  /** Notifica al solicitante que su solicitud fue aceptada. */
+  static async notificarAmistadAceptada({ idSolicitante, nombreAceptante }) {
+    return NotificationService.enviarAUsuario(
+      idSolicitante,
+      '¡Tienes un nuevo amigo!',
+      `${nombreAceptante} ha aceptado tu solicitud`,
+      { tipo: 'amistad_aceptada', canal: 'comunidad_messages' }
+    );
+  }
+
+  /** Notifica al invitado que ha sido añadido a un grupo privado. */
+  static async notificarInvitacionGrupo({ idDestino, nombreGrupo, nombreInvitador }) {
+    return NotificationService.enviarAUsuario(
+      idDestino,
+      `Te han invitado a "${nombreGrupo}"`,
+      `${nombreInvitador} te ha añadido al grupo`,
+      { tipo: 'invitacion_grupo', canal: 'comunidad_messages' }
+    );
+  }
+
+  /** Notifica al destinatario de un nuevo mensaje 1-a-1. */
+  static async notificarMensajeDirecto({ idDestino, nombreRemitente, texto }) {
+    return NotificationService.enviarAUsuario(
+      idDestino,
+      nombreRemitente,
+      String(texto || '').slice(0, 120),
+      { tipo: 'mensaje_directo', canal: 'comunidad_messages' }
+    );
+  }
+
   static async enviarNoticiaOposicion(idOposicion, titulo, cuerpo) {
     const [usuarios] = await db.query(
       `SELECT fcm_token FROM usuarios

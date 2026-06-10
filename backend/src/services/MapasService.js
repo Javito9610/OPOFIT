@@ -31,12 +31,16 @@ const TIPOS_LUGAR = {
   CROSSFIT: {
     placeType: null,
     keyword: 'crossfit',
-    keywordsAlt: ['crossfit box', 'box crossfit'],
+    keywordsAlt: ['crossfit box', 'box crossfit', 'affiliate crossfit'],
     textQueries: ['crossfit box', 'crossfit gym', 'crossfit affiliate'],
+    // Radio default amplio: en pueblos el box CrossFit más cercano puede
+    // estar a 15-25 km. Antes 5 km dejaba fuera al box del pueblo según
+    // reportaba el usuario.
+    radioDefault: 25000,
     etiqueta: 'CrossFit / Box',
     // CrossFit DEBE aparecer en el nombre o dirección — si no, no es un box
     // CrossFit (era un gym normal capturado por keyword).
-    mustMatch: /(cross\s*fit|crossfit|cf\b|box\s+cf|wod)/i,
+    mustMatch: /(cross\s*fit|crossfit|cf\b|box\s+cf|wod|functional\s+fitness)/i,
     // Excluimos "CrossFit Wellness", franquicias yoga que usan la palabra,
     // físios que ofrecen "crossfit rehabilitation".
     mustNotMatch: /(yoga|pilates|fisioterap|fisio\s|spa|wellness\s+only)/i
@@ -46,6 +50,9 @@ const TIPOS_LUGAR = {
     keyword: 'pista atletismo',
     keywordsAlt: ['athletic track', 'running track', 'pista atletismo'],
     textQueries: ['pista atletismo', 'estadio atletismo', 'athletics stadium'],
+    // Las pistas de atletismo son escasas en pueblos. Radio amplio para no
+    // devolver "0 resultados" cuando la más cercana está en la capital.
+    radioDefault: 30000,
     etiqueta: 'Pista de atletismo',
     // DEBE contener atletismo / athletics / pista de running / tartán.
     // "Pista" sola no vale porque captura tenis, pádel, motor, equitación.
@@ -195,7 +202,7 @@ class MapasService {
     }));
   }
 
-  static async buscarLugares(lat, lng, tipo = 'GYM', radioM = 5000) {
+  static async buscarLugares(lat, lng, tipo = 'GYM', radioM = null) {
     const key = apiKey();
     const latN = Number(lat);
     const lngN = Number(lng);
@@ -204,7 +211,9 @@ class MapasService {
     }
     const meta = TIPOS_LUGAR[tipo] || TIPOS_LUGAR.GYM;
     const radioDefecto = meta.radioDefault || 5000;
-    const radio = Math.min(20000, Math.max(500, Number(radioM) || radioDefecto));
+    // Radio máximo subido de 20 km a 50 km: en zonas rurales el box CrossFit
+    // más cercano puede estar a 30-40 km y antes ni aparecía.
+    const radio = Math.min(50000, Math.max(500, Number(radioM) || radioDefecto));
 
     // 1. Google Places (requires API key with Places API enabled)
     if (key) {

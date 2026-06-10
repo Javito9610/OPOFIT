@@ -66,13 +66,16 @@ class NearbyService {
        LIMIT 50`,
       [latN, lngN, latN, userId, radioM]
     );
+    // Output snake_case para que coincida con el modelo Kotlin del frontend
+    // (Gson default no convierte camelCase). Antes el id_usuario quedaba en 0
+    // y todas las features posteriores (solicitar amistad, ver perfil) fallaban.
     return (rows || []).map((r) => ({
-      idUsuario: r.id_usuario,
+      id_usuario: r.id_usuario,
       nombre: r.nombre,
-      modoUso: r.modo_uso || 'OPOSITOR',
-      avatarUrl: r.avatar_url,
-      oposicionNombre: r.oposicion_nombre || null,
-      distanciaM: Math.round(Number(r.distanciaM || 0))
+      modo_uso: r.modo_uso || 'OPOSITOR',
+      avatar_url: r.avatar_url,
+      oposicion_nombre: r.oposicion_nombre || null,
+      distancia_m: Math.round(Number(r.distanciaM || 0))
     }));
   }
 }

@@ -25,22 +25,29 @@ describe('AmigosService.enviarMensaje - validacion de texto', () => {
 
   test('insert ok cuando son amigos y texto valido', async () => {
     db.query
-      .mockResolvedValueOnce([[{ amigo_id: 2 }]])
-      .mockResolvedValueOnce([{ insertId: 99 }]);
+      .mockResolvedValueOnce([[{ amigo_id: 2 }]])           // listarAmigos
+      .mockResolvedValueOnce([{ insertId: 99 }])            // INSERT mensaje
+      .mockResolvedValueOnce([[{ nombre: 'Yo' }]]);         // SELECT remitente (push)
     const r = await AmigosService.enviarMensaje(1, 2, '  hola  ');
     expect(r).toEqual({ idMensaje: 99 });
-    // Se trimea antes de guardar
-    const params = db.query.mock.calls.at(-1)[1];
-    expect(params[2]).toBe('hola');
+    // Buscamos el INSERT específico (ya no es la última llamada porque
+    // detrás va el SELECT del remitente para el push FCM).
+    const insertCall = db.query.mock.calls.find((c) =>
+      String(c[0] || '').toLowerCase().startsWith('insert into mensajes_chat')
+    );
+    expect(insertCall[1][2]).toBe('hola');
   });
 
   test('trunca a 1000 caracteres', async () => {
     db.query
       .mockResolvedValueOnce([[{ amigo_id: 2 }]])
-      .mockResolvedValueOnce([{ insertId: 100 }]);
+      .mockResolvedValueOnce([{ insertId: 100 }])
+      .mockResolvedValueOnce([[{ nombre: 'Yo' }]]);
     const largo = 'a'.repeat(5000);
     await AmigosService.enviarMensaje(1, 2, largo);
-    const params = db.query.mock.calls.at(-1)[1];
-    expect(params[2].length).toBe(1000);
+    const insertCall = db.query.mock.calls.find((c) =>
+      String(c[0] || '').toLowerCase().startsWith('insert into mensajes_chat')
+    );
+    expect(insertCall[1][2].length).toBe(1000);
   });
 });

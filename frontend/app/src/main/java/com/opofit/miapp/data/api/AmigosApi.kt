@@ -22,10 +22,17 @@ interface AmigosApi {
     @GET("/api/amigos/feed")
     suspend fun feed(@Header("Authorization") token: String): FeedActividadResponse
 
+    /**
+     * Búsqueda unificada por nombre o email. El parámetro `q` lo recibe el
+     * backend y detecta automáticamente si tiene "@" para tratarlo como email
+     * (match exacto priorizado). Si no, hace LIKE en nombre y email.
+     * Mantenemos `nombre` también porque es lo que envía el cliente viejo.
+     */
     @GET("/api/amigos/buscar")
     suspend fun buscar(
         @Header("Authorization") token: String,
-        @Query("nombre") nombre: String,
+        @Query("q") consulta: String? = null,
+        @Query("nombre") nombre: String? = null,
         @Query("idOposicion") idOposicion: Int? = null
     ): BuscarUsuariosResponse
 

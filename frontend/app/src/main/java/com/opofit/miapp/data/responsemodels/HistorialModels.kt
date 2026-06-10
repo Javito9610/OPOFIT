@@ -13,7 +13,15 @@ data class ResumenHistorial(
     val gps: ResumenGps?,
     val heatmap: List<HeatmapDia>,
     val porTipo: List<DistribucionTipo>,
+    // v8: volumen por grupo muscular (estilo Hevy Muscle Distribution).
+    val porGrupoMuscular: List<VolumenGrupoMuscular> = emptyList(),
     val topPrs: List<TopPr>
+)
+
+data class VolumenGrupoMuscular(
+    val grupo: String,
+    val series: Int,
+    val ejerciciosUnicos: Int = 0
 )
 
 data class ResumenGps(

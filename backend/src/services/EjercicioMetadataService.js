@@ -206,8 +206,24 @@ function motivoSustitucion(entorno, grupo, nombreOriginal, nombreSustituto) {
   const orig = normalizarNombreEjercicio(nombreOriginal);
   const sust = normalizarNombreEjercicio(nombreSustituto);
   if (!orig || !sust || orig.toLowerCase() === sust.toLowerCase()) return null;
-  const g = grupo && grupo !== 'General' ? grupo.toLowerCase() : 'la misma zona muscular';
-  return `En ${lugar} hacemos ${sust} en lugar de ${orig} (${g}).`;
+  const g = grupo && grupo !== 'General' ? grupo.toLowerCase() : null;
+  // Templates rotativos para que la explicación NO sea siempre "En X hacemos
+  // Y en lugar de Z". El usuario reportaba que veía siempre el mismo texto
+  // y le parecía pobre. Usamos hash determinista del par origen→sustituto
+  // para que cada par tenga su propia variante (consistente entre cargas).
+  const seed = `${orig}|${sust}|${entorno}`
+    .split('')
+    .reduce((acc, ch) => (acc * 31 + ch.charCodeAt(0)) >>> 0, 0);
+  const ctxGrupo = g ? ` Trabajas igualmente ${g}.` : '';
+  const variantes = [
+    `En ${lugar} sustituimos ${orig} → ${sust} para que encaje con tu material.${ctxGrupo}`,
+    `Sin el material original (${orig}) en ${lugar}, ${sust} es la alternativa más cercana.${ctxGrupo}`,
+    `${sust} reemplaza a ${orig} aquí: mismo patrón, equipamiento accesible en ${lugar}.${ctxGrupo}`,
+    `Adaptación al entorno: en ${lugar} ${orig} no es realista, así que entrenas ${sust}.${ctxGrupo}`,
+    `Mismo estímulo que ${orig}, pero con ${sust} — se ajusta mejor al material de ${lugar}.${ctxGrupo}`,
+    `${sust} reproduce el patrón de ${orig} adaptado a ${lugar} sin perder eficacia.${ctxGrupo}`
+  ];
+  return variantes[seed % variantes.length];
 }
 
 module.exports = {

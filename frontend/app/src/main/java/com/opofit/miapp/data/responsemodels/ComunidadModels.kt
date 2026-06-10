@@ -5,18 +5,27 @@ data class GrupoComunidad(
     val nombre: String,
     val descripcion: String? = null,
     val id_oposicion: Int? = null,
+    // PRIVADO = estilo WhatsApp, solo por invitación; COMUNIDAD = público.
+    val tipo: String = "COMUNIDAD",
+    val creador_id: Int? = null,
     val miembros: Int = 0,
     val soy_miembro: Boolean = false,
+    val soy_creador: Boolean = false,
+    val mi_rol: String? = null,
     val creado_en: String? = null
 )
 
 data class GruposListResponse(val ok: Boolean, val data: List<GrupoComunidad>? = null, val msg: String? = null)
+data class GrupoResponse(val ok: Boolean, val data: GrupoComunidad? = null, val msg: String? = null)
 
 data class CrearGrupoRequest(
     val nombre: String,
     val descripcion: String? = null,
-    val idOposicion: Int? = null
+    val idOposicion: Int? = null,
+    val tipo: String = "COMUNIDAD"
 )
+
+data class InvitarAmigoRequest(val idAmigo: Int)
 
 data class MensajeGrupo(
     val id_mensaje: Int,

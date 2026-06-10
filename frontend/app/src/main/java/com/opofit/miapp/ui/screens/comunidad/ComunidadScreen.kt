@@ -7,7 +7,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -225,49 +227,123 @@ fun ComunidadScreen(
                     grupoSel = grupoSel,
                     mensajes = mensajesGrupo,
                     quedadas = quedadas,
+                    amigos = amigos,  // ← para el bottom sheet de "Invitar amigos"
                     oposicionId = oposicionId,
                     esFitness = esFitness,
-                    onCrearGrupo = { nombre, desc ->
+                    onCrearGrupo = { nombre, desc, tipo ->
                         scope.launch {
-                            val token = tokenManager.getToken().first() ?: ""
-                            RetrofitClient.comunidadApi.crearGrupo(
-                                "Bearer $token",
-                                CrearGrupoRequest(nombre, desc, if (esFitness) null else oposicionId)
-                            )
-                            cargarGrupos()
+                            // try/catch global: antes una respuesta inesperada del
+                            // backend o un id=0 hacía que la excepción saltara fuera
+                            // del scope y la app se cerraba. Ahora capturamos y
+                            // mostramos el error al usuario.
+                            try {
+                                val token = tokenManager.getToken().first() ?: ""
+                                val r = RetrofitClient.comunidadApi.crearGrupo(
+                                    "Bearer $token",
+                                    CrearGrupoRequest(
+                                        nombre = nombre,
+                                        descripcion = desc,
+                                        idOposicion = if (esFitness) null else oposicionId,
+                                        tipo = tipo
+                                    )
+                                )
+                                if (!r.ok) msg = r.msg ?: "No se pudo crear el grupo"
+                                cargarGrupos()
+                            } catch (e: Exception) {
+                                msg = ApiErrorParser.message(e)
+                            }
                         }
                     },
                     onUnirse = { id ->
                         scope.launch {
-                            val token = tokenManager.getToken().first() ?: ""
-                            RetrofitClient.comunidadApi.unirseGrupo("Bearer $token", id)
-                            cargarGrupos()
+                            try {
+                                val token = tokenManager.getToken().first() ?: ""
+                                val r = RetrofitClient.comunidadApi.unirseGrupo("Bearer $token", id)
+                                if (!r.ok) msg = r.msg ?: "No se pudo unir"
+                                cargarGrupos()
+                            } catch (e: Exception) {
+                                msg = ApiErrorParser.message(e)
+                            }
+                        }
+                    },
+                    onSalir = { id ->
+                        scope.launch {
+                            try {
+                                val token = tokenManager.getToken().first() ?: ""
+                                val r = RetrofitClient.comunidadApi.salirGrupo("Bearer $token", id)
+                                if (!r.ok) msg = r.msg ?: "No se pudo salir"
+                                if (grupoSel?.id_grupo == id) grupoSel = null
+                                cargarGrupos()
+                            } catch (e: Exception) {
+                                msg = ApiErrorParser.message(e)
+                            }
+                        }
+                    },
+                    onEliminar = { id ->
+                        scope.launch {
+                            try {
+                                val token = tokenManager.getToken().first() ?: ""
+                                val r = RetrofitClient.comunidadApi.eliminarGrupo("Bearer $token", id)
+                                if (!r.ok) msg = r.msg ?: "No se pudo eliminar"
+                                if (grupoSel?.id_grupo == id) grupoSel = null
+                                cargarGrupos()
+                            } catch (e: Exception) {
+                                msg = ApiErrorParser.message(e)
+                            }
                         }
                     },
                     onSeleccionar = { g ->
                         grupoSel = g
                         scope.launch {
-                            val token = tokenManager.getToken().first() ?: ""
-                            mensajesGrupo = RetrofitClient.comunidadApi.mensajesGrupo("Bearer $token", g.id_grupo).data.orEmpty()
-                            quedadas = RetrofitClient.comunidadApi.quedadasGrupo("Bearer $token", g.id_grupo).data.orEmpty()
+                            try {
+                                val token = tokenManager.getToken().first() ?: ""
+                                mensajesGrupo = RetrofitClient.comunidadApi.mensajesGrupo("Bearer $token", g.id_grupo).data.orEmpty()
+                                quedadas = RetrofitClient.comunidadApi.quedadasGrupo("Bearer $token", g.id_grupo).data.orEmpty()
+                            } catch (e: Exception) {
+                                msg = ApiErrorParser.message(e)
+                            }
                         }
                     },
                     onEnviarMensaje = { id, texto ->
                         scope.launch {
-                            val token = tokenManager.getToken().first() ?: ""
-                            RetrofitClient.comunidadApi.enviarMensajeGrupo(
-                                "Bearer $token", id, EnviarMensajeGrupoRequest(texto)
-                            )
-                            mensajesGrupo = RetrofitClient.comunidadApi.mensajesGrupo("Bearer $token", id).data.orEmpty()
+                            try {
+                                val token = tokenManager.getToken().first() ?: ""
+                                RetrofitClient.comunidadApi.enviarMensajeGrupo(
+                                    "Bearer $token", id, EnviarMensajeGrupoRequest(texto)
+                                )
+                                mensajesGrupo = RetrofitClient.comunidadApi.mensajesGrupo("Bearer $token", id).data.orEmpty()
+                            } catch (e: Exception) {
+                                msg = ApiErrorParser.message(e)
+                            }
                         }
                     },
                     onCrearQuedada = { id, titulo, lugar ->
                         scope.launch {
-                            val token = tokenManager.getToken().first() ?: ""
-                            RetrofitClient.comunidadApi.crearQuedada(
-                                "Bearer $token", id, CrearQuedadaRequest(titulo, lugar)
-                            )
-                            quedadas = RetrofitClient.comunidadApi.quedadasGrupo("Bearer $token", id).data.orEmpty()
+                            try {
+                                val token = tokenManager.getToken().first() ?: ""
+                                RetrofitClient.comunidadApi.crearQuedada(
+                                    "Bearer $token", id, CrearQuedadaRequest(titulo, lugar)
+                                )
+                                quedadas = RetrofitClient.comunidadApi.quedadasGrupo("Bearer $token", id).data.orEmpty()
+                            } catch (e: Exception) {
+                                msg = ApiErrorParser.message(e)
+                            }
+                        }
+                    },
+                    onInvitar = { idGrupo, idAmigo ->
+                        scope.launch {
+                            try {
+                                val token = tokenManager.getToken().first() ?: ""
+                                val r = RetrofitClient.comunidadApi.invitarAmigoAGrupo(
+                                    "Bearer $token", idGrupo,
+                                    com.opofit.miapp.data.responsemodels.InvitarAmigoRequest(idAmigo)
+                                )
+                                if (!r.ok) msg = r.msg ?: "No se pudo invitar"
+                                else msg = "Invitación enviada"
+                                cargarGrupos()
+                            } catch (e: Exception) {
+                                msg = ApiErrorParser.message(e)
+                            }
                         }
                     }
                 )
@@ -358,11 +434,34 @@ fun ComunidadScreen(
                     }
                 }
                 4 -> Column(Modifier.padding(16.dp)) {
+                    // Input universal: el usuario puede escribir nombre o email.
+                    // Detectamos email por la presencia de "@" y mostramos un
+                    // hint visual + cambio de label.
+                    val esEmail = busqueda.contains("@")
                     OutlinedTextField(
                         value = busqueda,
                         onValueChange = { busqueda = it },
-                        label = { Text("Nombre del aspirante") },
-                        modifier = Modifier.fillMaxWidth()
+                        label = { Text(if (esEmail) "Buscar por email" else "Buscar por nombre o email") },
+                        supportingText = {
+                            Text(
+                                if (esEmail) "Buscando coincidencia exacta de email"
+                                else "Escribe parte del nombre o pega un email completo",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        },
+                        leadingIcon = {
+                            androidx.compose.material3.Icon(
+                                if (esEmail) androidx.compose.material.icons.Icons.Filled.Email
+                                else androidx.compose.material.icons.Icons.Filled.Search,
+                                contentDescription = null
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = if (esEmail) androidx.compose.ui.text.input.KeyboardType.Email
+                                           else androidx.compose.ui.text.input.KeyboardType.Text
+                        )
                     )
                     Spacer(Modifier.height(8.dp))
                     Button(
@@ -370,10 +469,13 @@ fun ComunidadScreen(
                             scope.launch {
                                 try {
                                     val token = tokenManager.getToken().first() ?: ""
+                                    // Mandamos por `q` (param nuevo). El backend detecta
+                                    // automáticamente si es email y prioriza match exacto.
                                     val r = RetrofitClient.amigosApi.buscar(
-                                        "Bearer $token",
-                                        busqueda,
-                                        if (esFitness) null else oposicionId
+                                        token = "Bearer $token",
+                                        consulta = busqueda,
+                                        nombre = null,
+                                        idOposicion = if (esFitness) null else oposicionId
                                     )
                                     resultados = r.data.orEmpty()
                                 } catch (e: Exception) {
@@ -381,8 +483,9 @@ fun ComunidadScreen(
                                 }
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text(if (esFitness) "Buscar usuarios" else "Buscar en mi oposición") }
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = busqueda.isNotBlank()
+                    ) { Text("Buscar") }
                     Spacer(Modifier.height(12.dp))
                     resultados.forEach { u ->
                         ElevatedCard(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {

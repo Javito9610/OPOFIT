@@ -1,5 +1,7 @@
 const db = require('../config/db');
 const InAppNotifService = require('./InAppNotifService');
+// Lazy-require para evitar ciclos y permitir tests sin Firebase Admin.
+const NotificationService = () => require('./NotificationService');
 
 class AmigosService {
   static ordenPar(idA, idB) {
@@ -69,6 +71,18 @@ class AmigosService {
       cuerpo: null,
       actorId: solicitanteId
     });
+    // Push FCM (best-effort).
+    try {
+      const [solicitante] = await db.query(
+        'SELECT nombre FROM usuarios WHERE id_usuario = ?', [solicitanteId]
+      );
+      if (solicitante?.[0]) {
+        await NotificationService().notificarSolicitudAmistad({
+          idDestino: receptorId,
+          nombreSolicitante: solicitante[0].nombre
+        });
+      }
+    } catch (_) { /* silencioso */ }
     return { ok: true };
   }
 
@@ -91,33 +105,69 @@ class AmigosService {
         cuerpo: null,
         actorId: userId
       });
+      try {
+        const [aceptante] = await db.query(
+          'SELECT nombre FROM usuarios WHERE id_usuario = ?', [userId]
+        );
+        if (aceptante?.[0]) {
+          await NotificationService().notificarAmistadAceptada({
+            idSolicitante: row[0].solicitante_id,
+            nombreAceptante: aceptante[0].nombre
+          });
+        }
+      } catch (_) { /* silencioso */ }
     }
     return { ok: true };
   }
 
-  static async buscarPorNombre(userId, nombre, idOposicion, limite = 20) {
-    const term = `%${nombre}%`;
-    if (!idOposicion) {
+  /**
+   * Busca usuarios por nombre Y/O email. Si el texto parece email (contiene
+   * @ o se ve como uno) se prioriza la coincidencia exacta. Si no, LIKE en
+   * nombre + LIKE en email. El usuario quería buscar amigos por las dos vías.
+   *
+   * Además, ya NO restringimos por modo_uso: cualquier usuario es buscable
+   * sea opositor o fitness — el usuario quería poder agregar amigos
+   * independientemente del modo.
+   */
+  static async buscarPorNombre(userId, consulta, idOposicion, limite = 20) {
+    const term = `%${consulta}%`;
+    const esEmail = consulta.includes('@');
+    // Si la consulta tiene @ lo tratamos como búsqueda de email — match exacto
+    // primero, parcial después. Ordenamos por exactitud.
+    if (esEmail) {
       const [rows] = await db.query(
-        `SELECT u.id_usuario, u.nombre, u.perfil_publico, u.modo_uso
+        `SELECT u.id_usuario, u.nombre, u.email, u.perfil_publico, u.modo_uso,
+                u.avatar_url, u.oposiciones_id_oposicion AS id_oposicion
          FROM usuarios u
-         WHERE u.modo_uso = 'FITNESS'
-           AND u.id_usuario != ?
-           AND u.nombre LIKE ?
+         WHERE u.id_usuario != ?
+           AND (u.email = ? OR u.email LIKE ?)
+         ORDER BY (u.email = ?) DESC, u.nombre ASC
          LIMIT ?`,
-        [userId, term, limite]
+        [userId, consulta, term, consulta, limite]
       );
       return rows || [];
     }
-    const [rows] = await db.query(
-      `SELECT u.id_usuario, u.nombre, u.perfil_publico, u.modo_uso
-       FROM usuarios u
-       WHERE u.oposiciones_id_oposicion = ?
-         AND u.id_usuario != ?
-         AND u.nombre LIKE ?
-       LIMIT ?`,
-      [idOposicion, userId, term, limite]
-    );
+    // Si NO es email: buscamos por nombre o email parcial (ambos LIKE).
+    const params = idOposicion
+      ? [userId, term, term, idOposicion, limite]
+      : [userId, term, term, limite];
+    const sql = idOposicion
+      ? `SELECT u.id_usuario, u.nombre, u.email, u.perfil_publico, u.modo_uso,
+                u.avatar_url, u.oposiciones_id_oposicion AS id_oposicion
+         FROM usuarios u
+         WHERE u.id_usuario != ?
+           AND (u.nombre LIKE ? OR u.email LIKE ?)
+           AND u.oposiciones_id_oposicion = ?
+         ORDER BY u.nombre ASC
+         LIMIT ?`
+      : `SELECT u.id_usuario, u.nombre, u.email, u.perfil_publico, u.modo_uso,
+                u.avatar_url, u.oposiciones_id_oposicion AS id_oposicion
+         FROM usuarios u
+         WHERE u.id_usuario != ?
+           AND (u.nombre LIKE ? OR u.email LIKE ?)
+         ORDER BY u.nombre ASC
+         LIMIT ?`;
+    const [rows] = await db.query(sql, params);
     return rows || [];
   }
 
@@ -132,6 +182,19 @@ class AmigosService {
       'INSERT INTO mensajes_chat (id_remitente, id_destinatario, texto) VALUES (?, ?, ?)',
       [remitenteId, destinatarioId, limpio.substring(0, 1000)]
     );
+    // Push al destinatario (best-effort).
+    try {
+      const [remitente] = await db.query(
+        'SELECT nombre FROM usuarios WHERE id_usuario = ?', [remitenteId]
+      );
+      if (remitente?.[0]) {
+        await NotificationService().notificarMensajeDirecto({
+          idDestino: destinatarioId,
+          nombreRemitente: remitente[0].nombre,
+          texto: limpio
+        });
+      }
+    } catch (_) { /* silencioso */ }
     return { idMensaje: ins.insertId };
   }
 

@@ -89,6 +89,15 @@ class DbMigrationService {
         "VARCHAR(500) NULL DEFAULT 'NADA'"
       );
 
+      // v8: comunidad — grupos con tipo (PRIVADO estilo WhatsApp, COMUNIDAD
+      // estilo Strava clubs). Antes solo había un tipo y los privados no
+      // existían como concepto.
+      await DbMigrationService.addColumnIfMissing(
+        'grupos_comunidad',
+        'tipo',
+        "VARCHAR(16) NOT NULL DEFAULT 'COMUNIDAD'"
+      );
+
       // v7-doctorado: campos modalidad + score_tipo en cada ejercicio para que
       // la UI sepa qué input mostrar (timer para AMRAP, contador rondas para
       // EMOM, peso×reps para crossfit_lift, etc.) y el historial pueda

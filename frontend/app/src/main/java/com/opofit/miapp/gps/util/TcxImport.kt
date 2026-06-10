@@ -38,6 +38,7 @@ object TcxImport {
             var inLap = false
             var currentLapTime: Int? = null
             var currentLapDist: Double? = null
+            var currentLapNotes: String? = null
             val points = mutableListOf<GpsPoint>()
             var inTrackpoint = false
             var lat = 0.0
@@ -56,6 +57,7 @@ object TcxImport {
                             inLap = true
                             currentLapTime = null
                             currentLapDist = null
+                            currentLapNotes = null
                         }
                         "TotalTimeSeconds" -> {
                             val v = parser.nextText().toDoubleOrNull()?.toInt()
@@ -65,6 +67,10 @@ object TcxImport {
                             val v = parser.nextText().toDoubleOrNull()
                             if (inLap) currentLapDist = v else lapDistanceM = v
                         }
+                        // Algunos exportadores (Garmin Connect, Suunto) escriben
+                        // el nombre del intervalo en Notes dentro del Lap.
+                        // Lo guardamos como label para el matcher por nombre.
+                        "Notes" -> if (inLap) currentLapNotes = parser.nextText()?.trim()
                         "Trackpoint" -> {
                             inTrackpoint = true
                             lat = 0.0; lon = 0.0; ele = null; timeMs = null; hr = null; cad = null
@@ -82,9 +88,15 @@ object TcxImport {
                             val t = currentLapTime ?: 0
                             val d = currentLapDist ?: 0.0
                             if (t > 0 || d > 0) {
-                                laps += ActivityLap(laps.size + 1, t.coerceAtLeast(1), d)
+                                laps += ActivityLap(
+                                    laps.size + 1,
+                                    t.coerceAtLeast(1),
+                                    d,
+                                    label = currentLapNotes?.takeIf { it.isNotBlank() }
+                                )
                             }
                             inLap = false
+                            currentLapNotes = null
                         }
                         "Trackpoint" -> {
                             val ts = timeMs ?: 0L

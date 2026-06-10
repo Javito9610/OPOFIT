@@ -959,13 +959,40 @@ function query(sql, params = []) {
     );
     return Promise.resolve([m ? [{ rol: m.rol }] : [], []]);
   }
+  // listarGrupos / obtenerGrupo: la nueva query incluye COALESCE(tipo, 'COMUNIDAD').
   if (s.startsWith('select g.id_grupo, g.nombre, g.descripcion, g.id_oposicion')) {
     const userId = Number(params[0]);
-    const fitness = s.includes('g.id_oposicion is null');
-    const idOpo = fitness ? null : Number(params[1]);
-    const grupos = state.grupos_comunidad.filter((g) =>
-      fitness ? g.id_oposicion == null : g.id_oposicion === idOpo
-    );
+    // Si es obtenerGrupo (filtra por g.id_grupo = ? al final)
+    if (s.includes('where g.id_grupo = ?')) {
+      const idGrupo = Number(params[1]);
+      const g = state.grupos_comunidad.find((x) => x.id_grupo === idGrupo);
+      if (!g) return Promise.resolve([[], []]);
+      const miembros = state.grupo_miembros.filter((m) => m.id_grupo === g.id_grupo);
+      const self = miembros.find((m) => m.id_usuario === userId);
+      return Promise.resolve([[{
+        id_grupo: g.id_grupo,
+        nombre: g.nombre,
+        descripcion: g.descripcion,
+        id_oposicion: g.id_oposicion,
+        tipo: g.tipo || 'COMUNIDAD',
+        creador_id: g.creador_id,
+        creado_en: g.creado_en,
+        num_miembros: miembros.length,
+        mi_rol: self?.rol || null
+      }], []]);
+    }
+    // listarGrupos: devuelve COMUNIDAD + grupos donde soy miembro + (opcional) de mi oposicion
+    const idOpo = params.length >= 3 ? Number(params[2]) : null;
+    const grupos = state.grupos_comunidad.filter((g) => {
+      const tipo = g.tipo || 'COMUNIDAD';
+      const soyMiembro = state.grupo_miembros.some(
+        (m) => m.id_grupo === g.id_grupo && m.id_usuario === userId
+      );
+      if (tipo === 'COMUNIDAD') return true;
+      if (soyMiembro) return true;
+      if (idOpo != null && g.id_oposicion === idOpo) return true;
+      return false;
+    });
     const rows = grupos.map((g) => {
       const miembros = state.grupo_miembros.filter((m) => m.id_grupo === g.id_grupo);
       const self = miembros.find((m) => m.id_usuario === userId);
@@ -974,6 +1001,7 @@ function query(sql, params = []) {
         nombre: g.nombre,
         descripcion: g.descripcion,
         id_oposicion: g.id_oposicion,
+        tipo: g.tipo || 'COMUNIDAD',
         creador_id: g.creador_id,
         creado_en: g.creado_en,
         num_miembros: miembros.length,
@@ -982,9 +1010,18 @@ function query(sql, params = []) {
     }).sort((a, b) => new Date(b.creado_en) - new Date(a.creado_en));
     return Promise.resolve([rows, []]);
   }
+  // unirse() ahora pide id_grupo Y tipo en una sola query.
+  if (s.startsWith("select id_grupo, coalesce(tipo, 'comunidad') as tipo from grupos_comunidad where id_grupo")) {
+    const g = state.grupos_comunidad.find((x) => x.id_grupo === Number(params[0]));
+    return Promise.resolve([g ? [{ id_grupo: g.id_grupo, tipo: g.tipo || 'COMUNIDAD' }] : [], []]);
+  }
   if (s.startsWith('select id_grupo from grupos_comunidad where id_grupo')) {
     const g = state.grupos_comunidad.find((x) => x.id_grupo === Number(params[0]));
     return Promise.resolve([g ? [{ id_grupo: g.id_grupo }] : [], []]);
+  }
+  if (s.startsWith('select creador_id from grupos_comunidad where id_grupo')) {
+    const g = state.grupos_comunidad.find((x) => x.id_grupo === Number(params[0]));
+    return Promise.resolve([g ? [{ creador_id: g.creador_id }] : [], []]);
   }
   if (s.startsWith('insert into grupos_comunidad')) {
     const id = nextId.grupos_comunidad++;
@@ -994,9 +1031,22 @@ function query(sql, params = []) {
       descripcion: params[1],
       id_oposicion: params[2] == null ? null : Number(params[2]),
       creador_id: Number(params[3]),
+      tipo: params[4] || 'COMUNIDAD',
       creado_en: new Date()
     });
     return Promise.resolve([{ insertId: id, affectedRows: 1 }, []]);
+  }
+  if (s.startsWith('delete from grupo_mensajes where id_grupo')) {
+    state.grupo_mensajes = (state.grupo_mensajes || []).filter((m) => m.id_grupo !== Number(params[0]));
+    return Promise.resolve([{ affectedRows: 1 }, []]);
+  }
+  if (s.startsWith('delete from quedadas where id_grupo')) {
+    state.quedadas = (state.quedadas || []).filter((q) => q.id_grupo !== Number(params[0]));
+    return Promise.resolve([{ affectedRows: 1 }, []]);
+  }
+  if (s.startsWith('delete from grupos_comunidad where id_grupo')) {
+    state.grupos_comunidad = state.grupos_comunidad.filter((g) => g.id_grupo !== Number(params[0]));
+    return Promise.resolve([{ affectedRows: 1 }, []]);
   }
   if (s.startsWith('insert into grupo_miembros')) {
     const id = nextId.grupo_miembros++;
@@ -1118,6 +1168,39 @@ function query(sql, params = []) {
       solicitante_id: Number(params[2])
     });
     return Promise.resolve([{ insertId: id, affectedRows: 1 }, []]);
+  }
+  // Nueva búsqueda por nombre OR email (sin filtrar por modo_uso). Esta es
+  // la que usa el AmigosService actual tras el fix de búsqueda por email.
+  if (
+    s.includes('select u.id_usuario, u.nombre, u.email, u.perfil_publico, u.modo_uso') &&
+    s.includes('u.nombre like ? or u.email like ?')
+  ) {
+    const userId = Number(params[0]);
+    const term = String(params[1] || '').replace(/%/g, '').toLowerCase();
+    // Tres parámetros si no hay idOposicion, cuatro si lo hay.
+    const idOpoIdx = 3;
+    const tieneOpo = params.length > 4;
+    const idOpo = tieneOpo ? Number(params[idOpoIdx]) : null;
+    const limite = Number(params[tieneOpo ? 4 : 3] || 20);
+    const rows = state.usuarios
+      .filter((u) => {
+        if (u.id_usuario === userId) return false;
+        if (tieneOpo && u.oposiciones_id_oposicion !== idOpo) return false;
+        const n = String(u.nombre || '').toLowerCase();
+        const e = String(u.email || '').toLowerCase();
+        return n.includes(term) || e.includes(term);
+      })
+      .slice(0, limite)
+      .map((u) => ({
+        id_usuario: u.id_usuario,
+        nombre: u.nombre,
+        email: u.email,
+        perfil_publico: u.perfil_publico,
+        modo_uso: u.modo_uso,
+        avatar_url: u.avatar_url,
+        id_oposicion: u.oposiciones_id_oposicion
+      }));
+    return Promise.resolve([rows, []]);
   }
   if (s.includes('select u.id_usuario, u.nombre, u.perfil_publico, u.modo_uso') && s.includes("u.modo_uso = 'fitness'")) {
     const userId = Number(params[0]);

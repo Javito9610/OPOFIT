@@ -5,7 +5,9 @@ import com.opofit.miapp.data.responsemodels.CrearGrupoRequest
 import com.opofit.miapp.data.responsemodels.CrearQuedadaRequest
 import com.opofit.miapp.data.responsemodels.EnviarMensajeGrupoRequest
 import com.opofit.miapp.data.responsemodels.GrupoComunidad
+import com.opofit.miapp.data.responsemodels.GrupoResponse
 import com.opofit.miapp.data.responsemodels.GruposListResponse
+import com.opofit.miapp.data.responsemodels.InvitarAmigoRequest
 import com.opofit.miapp.data.responsemodels.MensajeGrupo
 import com.opofit.miapp.data.responsemodels.MensajesGrupoResponse
 import com.opofit.miapp.data.responsemodels.OkMsgResponse
@@ -13,6 +15,7 @@ import com.opofit.miapp.data.responsemodels.QuedadaGrupo
 import com.opofit.miapp.data.responsemodels.QuedadasResponse
 import com.opofit.miapp.data.responsemodels.UbicacionRequest
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
@@ -27,16 +30,39 @@ interface ComunidadApi {
         @Query("idOposicion") idOposicion: Int? = null
     ): GruposListResponse
 
+    // Antes devolvía GruposListResponse (lista) pero el backend manda un solo
+    // grupo en data → cuando el cliente intentaba deserializar la lista,
+    // Gson dejaba `data = null` y el ViewModel acababa con un crash al usar
+    // la respuesta. Ahora apuntamos al tipo correcto.
     @POST("/api/comunidad/grupos")
     suspend fun crearGrupo(
         @Header("Authorization") token: String,
         @Body body: CrearGrupoRequest
-    ): GruposListResponse
+    ): GrupoResponse
+
+    @DELETE("/api/comunidad/grupos/{id}")
+    suspend fun eliminarGrupo(
+        @Header("Authorization") token: String,
+        @Path("id") idGrupo: Int
+    ): OkMsgResponse
 
     @POST("/api/comunidad/grupos/{id}/unirse")
     suspend fun unirseGrupo(
         @Header("Authorization") token: String,
         @Path("id") idGrupo: Int
+    ): OkMsgResponse
+
+    @POST("/api/comunidad/grupos/{id}/salir")
+    suspend fun salirGrupo(
+        @Header("Authorization") token: String,
+        @Path("id") idGrupo: Int
+    ): OkMsgResponse
+
+    @POST("/api/comunidad/grupos/{id}/invitar")
+    suspend fun invitarAmigoAGrupo(
+        @Header("Authorization") token: String,
+        @Path("id") idGrupo: Int,
+        @Body body: InvitarAmigoRequest
     ): OkMsgResponse
 
     @GET("/api/comunidad/grupos/{id}/mensajes")

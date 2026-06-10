@@ -97,6 +97,25 @@ class HistorialAvanzadoService {
       [userId, desdeYmd]
     );
 
+    // Volumen por grupo muscular: número de SETS (registro_resultados) por
+    // grupo muscular en el periodo. Equivalente a la "Muscle Distribution"
+    // de Hevy. Solo cuenta ejercicios de fuerza/calistenia (excluye cardio
+    // y movilidad para no inflar artificialmente).
+    const [porGrupoMuscular] = await db.query(
+      `SELECT COALESCE(e.grupo_muscular, 'General') AS grupo,
+              COUNT(r.id_registro) AS series,
+              COUNT(DISTINCT r.ejercicios_id_ejercicio) AS ejercicios_unicos
+         FROM registro_resultados r
+         JOIN historial_sesiones h ON r.historial_sesiones_id_historial_sesiones = h.id_historial_sesion
+         JOIN ejercicios e ON r.ejercicios_id_ejercicio = e.id_ejercicio
+        WHERE h.usuarios_id_usuario = ?
+          AND h.fecha_entreno >= ?
+          AND e.modalidad NOT IN ('cardio', 'movilidad')
+        GROUP BY COALESCE(e.grupo_muscular, 'General')
+        ORDER BY series DESC`,
+      [userId, desdeYmd]
+    );
+
     // Devolvemos modalidad + score_tipo para que el frontend muestre la unidad
     // correcta (kg, reps, seg, kcal, rondas, etc.) en lugar de "120,00" pelado.
     // Top PRs como Strong/Hevy: solo ejercicios donde el usuario ha registrado
@@ -117,6 +136,7 @@ class HistorialAvanzadoService {
         WHERE h.usuarios_id_usuario = ?
         GROUP BY e.id_ejercicio, e.nombre, e.pilar, e.modalidad, e.score_tipo
        HAVING COUNT(*) >= 2
+                AND e.modalidad NOT IN ('cardio', 'movilidad')
         ORDER BY (MAX(r.valor_conseguido) - MIN(r.valor_conseguido)) DESC, valor DESC
         LIMIT 5`,
       [userId]
@@ -172,6 +192,14 @@ class HistorialAvanzadoService {
         dia: typeof d.dia === 'string' ? d.dia.slice(0, 10) : new Date(d.dia).toISOString().slice(0, 10),
         sesiones: Number(d.n),
         minutos: Math.round(Number(d.segs) / 60)
+      })),
+      // Volumen por grupo muscular (semana / mes / año según `periodo`).
+      // Estilo Hevy: cuántos sets has hecho de pecho, espalda, pierna, etc.
+      // Útil para detectar desbalances (mucho push y poco pull, p.ej.).
+      porGrupoMuscular: porGrupoMuscular.map((g) => ({
+        grupo: g.grupo,
+        series: Number(g.series || 0),
+        ejerciciosUnicos: Number(g.ejercicios_unicos || 0)
       })),
       // La distribución también suma las actividades GPS como categoría "GPS"
       // (igual que sesionesTotal arriba), para que el donut refleje la

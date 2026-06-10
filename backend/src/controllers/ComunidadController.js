@@ -15,16 +15,37 @@ const listarGrupos = async (req, res) => {
 
 const crearGrupo = async (req, res) => {
   try {
-    const { nombre, descripcion, idOposicion } = req.body || {};
+    const { nombre, descripcion, idOposicion, tipo } = req.body || {};
     const data = await GruposService.crearGrupo(req.usuario.id, {
       nombre,
       descripcion,
-      idOposicion: idOposicion != null ? Number(idOposicion) : null
+      idOposicion: idOposicion != null ? Number(idOposicion) : null,
+      tipo
     });
     res.status(201).json({ ok: true, data });
   } catch (e) {
-    const status = e.message === 'OPOSICION_NO_VALIDA' ? 400 : e.message === 'NOMBRE_OBLIGATORIO' ? 400 : 500;
+    const status = ['OPOSICION_NO_VALIDA', 'NOMBRE_OBLIGATORIO'].includes(e.message) ? 400 : 500;
     res.status(status).json({ ok: false, msg: e.message });
+  }
+};
+
+const eliminarGrupo = async (req, res) => {
+  try {
+    await GruposService.eliminarGrupo(req.usuario.id, Number(req.params.idGrupo));
+    res.json({ ok: true, msg: 'Grupo eliminado' });
+  } catch (e) {
+    const status = ['GRUPO_NO_ENCONTRADO', 'SOLO_CREADOR_PUEDE_ELIMINAR'].includes(e.message) ? 403 : 500;
+    res.status(status).json({ ok: false, msg: e.message });
+  }
+};
+
+const invitarAmigoAGrupo = async (req, res) => {
+  try {
+    const idAmigo = Number(req.body?.idAmigo);
+    await GruposService.invitarAmigo(req.usuario.id, Number(req.params.idGrupo), idAmigo);
+    res.json({ ok: true, msg: 'Invitación enviada' });
+  } catch (e) {
+    res.status(400).json({ ok: false, msg: e.message });
   }
 };
 
@@ -110,6 +131,8 @@ const listarCerca = async (req, res) => {
 module.exports = {
   listarGrupos,
   crearGrupo,
+  eliminarGrupo,
+  invitarAmigoAGrupo,
   unirseGrupo,
   salirGrupo,
   mensajesGrupo,

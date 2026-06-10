@@ -91,12 +91,16 @@ describe('AmigosService', () => {
 
     test('trunca a 1000 caracteres', async () => {
       db.query
-        .mockResolvedValueOnce([[{ amigo_id: 2 }]])
-        .mockResolvedValueOnce([{ insertId: 100 }]);
+        .mockResolvedValueOnce([[{ amigo_id: 2 }]])           // listarAmigos
+        .mockResolvedValueOnce([{ insertId: 100 }])           // INSERT mensaje
+        .mockResolvedValueOnce([[{ nombre: 'Yo' }]]);         // SELECT remitente para push
       const largo = 'a'.repeat(5000);
       await AmigosService.enviarMensaje(1, 2, largo);
-      const ultimaCall = db.query.mock.calls.at(-1);
-      const params = ultimaCall[1];
+      // Buscamos la llamada INSERT, no la última (que ahora es el SELECT del push).
+      const insertCall = db.query.mock.calls.find((c) =>
+        String(c[0] || '').toLowerCase().startsWith('insert into mensajes_chat')
+      );
+      const params = insertCall[1];
       expect(params[2].length).toBe(1000);
     });
   });

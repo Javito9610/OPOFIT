@@ -125,7 +125,12 @@ private data class EjercicioEstado(
     // Serie-por-serie (estilo Strong/Hevy): si la prescripción es "4×12",
     // el usuario rellena 4 entradas (una por serie). Se persiste como CSV
     // en valorConseguido para conservar compatibilidad con el historial.
-    val valoresPorSerie: List<String> = emptyList()
+    val valoresPorSerie: List<String> = emptyList(),
+    // Modalidad WOD/CrossFit (wod, amrap, emom, for_time, tabata, death_by,
+    // crossfit_lift). Cuando llega del banco, se renderiza con `WodInput`.
+    val modalidad: String? = null,
+    val scoreTipo: String? = null,
+    val timeCapSeg: Int? = null
 ) {
     fun toEjercicioPlan(): EjercicioPlan {
         val parts = prescripcion.split("×", limit = 2)
@@ -383,7 +388,10 @@ fun EntrenamientosScreen(
             instrucciones: String? = null,
             grupoMuscular: String? = null,
             equipamiento: String? = null,
-            tipoIlustracion: String? = null
+            tipoIlustracion: String? = null,
+            modalidad: String? = null,
+            scoreTipo: String? = null,
+            timeCapSeg: Int? = null
         ) {
             val pil = pilar ?: enfoqueBloque
             val objetivo = objetivoSegundosDesdeNombre(nombre)
@@ -410,7 +418,10 @@ fun EntrenamientosScreen(
                     instrucciones_tecnicas = instrucciones,
                     grupo_muscular = grupoMuscular,
                     equipamiento = equipamiento,
-                    tipo_ilustracion = tipoIlustracion
+                    tipo_ilustracion = tipoIlustracion,
+                    modalidad = modalidad,
+                    scoreTipo = scoreTipo,
+                    timeCapSeg = timeCapSeg
                 )
             )
         }
@@ -423,7 +434,10 @@ fun EntrenamientosScreen(
                     instrucciones = ej.instrucciones_tecnicas,
                     grupoMuscular = ej.grupo_muscular,
                     equipamiento = ej.equipamiento,
-                    tipoIlustracion = ej.tipo_ilustracion
+                    tipoIlustracion = ej.tipo_ilustracion,
+                    modalidad = ej.modalidad,
+                    scoreTipo = ej.score_tipo,
+                    timeCapSeg = ej.time_cap_seg
                 )
             }
         } else {
@@ -1201,7 +1215,10 @@ fun EntrenamientosScreen(
                         ritmoTexto = ritmoTxt,
                         velocidadTexto = velTxt,
                         labelDistancia = labelDist,
-                        onInfoClick = { mostrarDetalleEjercicio(activo) }
+                        onInfoClick = { mostrarDetalleEjercicio(activo) },
+                        modalidad = activo.modalidad,
+                        scoreTipo = activo.scoreTipo,
+                        timeCapSeg = activo.timeCapSeg
                     )
                 }
             }

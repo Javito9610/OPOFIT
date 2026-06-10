@@ -43,8 +43,8 @@ describe('NearbyService', () => {
     });
     const r = await NearbyService.listarCerca(1, 40.4168, -3.7038, 15);
     expect(r).toHaveLength(1);
-    expect(r[0].idUsuario).toBe(2);
-    expect(r[0].distanciaM).toBeGreaterThan(0);
+    expect(r[0].id_usuario).toBe(2);
+    expect(r[0].distancia_m).toBeGreaterThan(0);
   });
 
   test('listarCerca solo usuarios visibles', async () => {
@@ -72,8 +72,8 @@ describe('NearbyService', () => {
       ubicacion_visible: 1
     });
     const r = await NearbyService.listarCerca(1, 40.4168, -3.7038, 15);
-    expect(r[0].modoUso).toBe('OPOSITOR');
-    expect(r[0].oposicionNombre).toBe('PN');
+    expect(r[0].modo_uso).toBe('OPOSITOR');
+    expect(r[0].oposicion_nombre).toBe('PN');
   });
 
   test('listarCerca respeta radio en km', async () => {
