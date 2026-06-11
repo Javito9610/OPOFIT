@@ -34,21 +34,31 @@ class HealthConnectManager(private val context: Context) {
 
     enum class Availability { NOT_SUPPORTED, NOT_INSTALLED, AVAILABLE }
 
-    val permissions: Set<String> = setOf(
+    /** Lectura mínima para importar entrenos del reloj (sin esto no hay sync). */
+    val readPermissions: Set<String> = setOf(
         HealthPermission.getReadPermission(ExerciseSessionRecord::class),
         HealthPermission.getReadPermission(HeartRateRecord::class),
         HealthPermission.getReadPermission(DistanceRecord::class),
-        HealthPermission.getReadPermission(SpeedRecord::class),
         HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class),
-        HealthPermission.getReadPermission(ElevationGainedRecord::class),
-        HealthPermission.getReadPermission(StepsRecord::class),
-        // Write: permite empujar entrenamientos hechos en la app hacia el reloj
-        // (sync app → reloj vía Samsung Health / Mi Fitness / Zepp / Google Fit).
+        HealthPermission.getReadPermission(ElevationGainedRecord::class)
+    )
+
+    /** Opcionales: si faltan, el sync sigue (velocidad/pasos se calculan por distancia). */
+    val optionalReadPermissions: Set<String> = setOf(
+        HealthPermission.getReadPermission(SpeedRecord::class),
+        HealthPermission.getReadPermission(StepsRecord::class)
+    )
+
+    /** Escritura: solo para empujar actividades OpoFit al reloj. */
+    val writePermissions: Set<String> = setOf(
         HealthPermission.getWritePermission(ExerciseSessionRecord::class),
         HealthPermission.getWritePermission(DistanceRecord::class),
         HealthPermission.getWritePermission(ActiveCaloriesBurnedRecord::class),
         HealthPermission.getWritePermission(ElevationGainedRecord::class)
     )
+
+    /** Todo lo que pedimos al usuario en el diálogo de HC. */
+    val permissions: Set<String> = readPermissions + optionalReadPermissions + writePermissions
 
     fun availability(): Availability {
         return when (HealthConnectClient.getSdkStatus(context)) {
@@ -64,10 +74,21 @@ class HealthConnectManager(private val context: Context) {
         } else null
     }
 
-    suspend fun hasAllPermissions(): Boolean {
+    suspend fun hasReadPermissions(): Boolean {
         val client = clientOrNull() ?: return false
         val granted = client.permissionController.getGrantedPermissions()
-        return granted.containsAll(permissions)
+        return granted.containsAll(readPermissions)
+    }
+
+    suspend fun hasWritePermissions(): Boolean {
+        val client = clientOrNull() ?: return false
+        val granted = client.permissionController.getGrantedPermissions()
+        return granted.containsAll(writePermissions)
+    }
+
+    /** Lectura + escritura (empujar al reloj). */
+    suspend fun hasAllPermissions(): Boolean {
+        return hasReadPermissions() && hasWritePermissions()
     }
 
     /**
@@ -76,7 +97,7 @@ class HealthConnectManager(private val context: Context) {
      */
     suspend fun syncLastDays(days: Long = 30): SyncResult {
         val client = clientOrNull() ?: return SyncResult(0, 0, "Health Connect no disponible")
-        if (!hasAllPermissions()) return SyncResult(0, 0, "Faltan permisos de Health Connect")
+        if (!hasReadPermissions()) return SyncResult(0, 0, "Faltan permisos de lectura en Health Connect")
 
         val repo = GpsRepository.get(context)
         val end = Instant.now()
@@ -173,7 +194,7 @@ class HealthConnectManager(private val context: Context) {
      */
     suspend fun pushActivity(summary: ActivitySummary): PushResult {
         val client = clientOrNull() ?: return PushResult(0, 0, "Health Connect no disponible")
-        if (!hasAllPermissions()) return PushResult(0, 0, "Faltan permisos de Health Connect (incluye escritura)")
+        if (!hasWritePermissions()) return PushResult(0, 0, "Faltan permisos de escritura en Health Connect")
         return runCatching {
             val start = Instant.ofEpochMilli(summary.startedAtMs)
             val end = Instant.ofEpochMilli(summary.endedAtMs)
@@ -232,7 +253,7 @@ class HealthConnectManager(private val context: Context) {
     /** Sincroniza al reloj las últimas N actividades locales que no fueron previamente importadas desde HC. */
     suspend fun pushUltimasActividades(limite: Int = 10): PushResult {
         val client = clientOrNull() ?: return PushResult(0, 0, "Health Connect no disponible")
-        if (!hasAllPermissions()) return PushResult(0, 0, "Faltan permisos de Health Connect (incluye escritura)")
+        if (!hasWritePermissions()) return PushResult(0, 0, "Faltan permisos de escritura en Health Connect")
         val repo = GpsRepository.get(context)
         val locales = repo.listAll()
             .filter { !it.id.startsWith("hc_") } // no re-empujar las que vinieron del reloj

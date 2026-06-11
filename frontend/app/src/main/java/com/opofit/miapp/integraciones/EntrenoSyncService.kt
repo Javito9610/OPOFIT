@@ -51,7 +51,7 @@ object EntrenoSyncService {
         var polarImportadas = 0
 
         val hc = HealthConnectManager.get(context)
-        if (hc.availability() == HealthConnectManager.Availability.AVAILABLE && hc.hasAllPermissions()) {
+        if (hc.availability() == HealthConnectManager.Availability.AVAILABLE && hc.hasReadPermissions()) {
             val res = hc.syncLastDays(30)
             hcImportadas = res.importadas
             hcSaltadas = res.saltadas

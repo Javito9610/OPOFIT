@@ -1,5 +1,8 @@
 package com.opofit.miapp.ui.screens.home
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,6 +54,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import com.opofit.miapp.gps.util.GpsPermissionRequest
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -120,6 +128,24 @@ fun HomeScreen(
     val displayName = userName?.trim().orEmpty().ifBlank { if (esFitness) "Atleta" else "Opositor" }
     val compact = isCompactScreen()
     val veryCompact = isVeryCompactScreen()
+    val context = LocalContext.current
+    var showGpsPermDialog by remember { mutableStateOf(false) }
+
+    val gpsPermLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { granted ->
+        val ok = granted[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+            granted[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (ok) onNavigateToGps() else showGpsPermDialog = true
+    }
+
+    fun startGpsFromHome() {
+        if (GpsPermissionRequest.hasLocationPermission(context)) {
+            onNavigateToGps()
+        } else {
+            gpsPermLauncher.launch(GpsPermissionRequest.requiredPermissions())
+        }
+    }
 
     LaunchedEffect(oposicionId) {
         homeViewModel.cargarResumen(oposicionId)
@@ -133,7 +159,7 @@ fun HomeScreen(
 
     val quickLinks = buildList {
         add(QuickLink("Plan", "Entreno semanal", Icons.Filled.FitnessCenter, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary, onNavigateToRutinas))
-        add(QuickLink("Empezar carrera", "GPS al aire libre", Icons.Filled.Explore, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary, onNavigateToGps))
+        add(QuickLink("Empezar carrera", "GPS al aire libre", Icons.Filled.Explore, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary, { startGpsFromHome() }))
         if (esFitness) {
             add(QuickLink("Comunidad", "Grupos · Chat", Icons.Filled.Groups, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToComunidad))
             add(QuickLink("Rutinas libres", "Crea la tuya", Icons.Filled.FitnessCenter, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, onNavigateToRutinasLibres))
@@ -671,6 +697,22 @@ fun HomeScreen(
             )
         )
     )
+
+    if (showGpsPermDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showGpsPermDialog = false },
+            title = { Text("Permiso de ubicación") },
+            text = {
+                Text(
+                    "OpoFit necesita acceso a tu ubicación (y notificaciones en Android 13+) " +
+                        "para grabar la carrera con GPS. Actívalos en Ajustes del teléfono."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showGpsPermDialog = false }) { Text("Entendido") }
+            }
+        )
+    }
     }
 }
 

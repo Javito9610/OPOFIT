@@ -159,35 +159,35 @@ fun MisDispositivosScreen(
     }
     val hcPermLauncher = rememberLauncherForActivityResult(
         contract = PermissionController.createRequestPermissionResultContract()
-    ) { granted ->
+    ) { _ ->
+        // El callback solo devuelve lo concedido en ESE diálogo; el estado real
+        // hay que leerlo del PermissionController (el usuario puede haber activado
+        // permisos manualmente en Ajustes de HC).
         scope.launch {
-            when {
-                granted.containsAll(hcManager.permissions) -> {
-                    snackbarHostState.showSnackbar("Permisos OK. Sincronizando…")
-                    viewModel.syncHealthConnect()
-                }
-                granted.isNotEmpty() -> {
-                    snackbarHostState.showSnackbar(
-                        "Faltan permisos. Abre Health Connect y activa todos los datos."
-                    )
-                    viewModel.refresh()
-                }
-                else -> {
-                    snackbarHostState.showSnackbar("Concede los permisos a OpoFit en Health Connect")
-                    hcManager.openManagePermissions(context)
-                    viewModel.refresh()
-                }
+            viewModel.refresh()
+            if (hcManager.hasReadPermissions()) {
+                snackbarHostState.showSnackbar("Permisos OK. Sincronizando…")
+                viewModel.syncHealthConnect()
+            } else {
+                snackbarHostState.showSnackbar(
+                    "Faltan permisos de lectura. En Health Connect activa Ejercicio, Pulso, Distancia, Calorías y Desnivel."
+                )
             }
         }
     }
 
     fun requestHealthConnectPermissions() {
         if (hcManager.availability() != HealthConnectManager.Availability.AVAILABLE) return
-        runCatching {
-            hcPermLauncher.launch(hcManager.permissions)
-        }.onFailure {
-            scope.launch {
-                if (!hcManager.openHealthConnect(context)) {
+        scope.launch {
+            if (hcManager.hasReadPermissions()) {
+                snackbarHostState.showSnackbar("Ya tienes permisos. Sincronizando…")
+                viewModel.syncHealthConnect()
+                return@launch
+            }
+            runCatching {
+                hcPermLauncher.launch(hcManager.permissions)
+            }.onFailure {
+                if (!hcManager.openManagePermissions(context)) {
                     snackbarHostState.showSnackbar("Instala Health Connect desde Play Store")
                 }
             }

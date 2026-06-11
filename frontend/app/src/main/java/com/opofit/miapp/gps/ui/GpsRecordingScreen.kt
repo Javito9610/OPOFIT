@@ -59,6 +59,7 @@ import com.opofit.miapp.gps.service.RoutePreferences
 import com.opofit.miapp.gps.service.ShareActivityContext
 import com.opofit.miapp.gps.service.buildPendingShareFromGps
 import com.opofit.miapp.gps.util.GpsMetrics
+import com.opofit.miapp.gps.util.GpsPermissionRequest
 import com.opofit.miapp.ui.components.HeartRateZoneLive
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
@@ -105,7 +106,9 @@ fun GpsRecordingScreen(
 
     LaunchedEffect(state.active) {
         if (!startedSession && !state.active) {
-            viewModel.startTracking()
+            if (GpsPermissionRequest.hasLocationPermission(context)) {
+                viewModel.startTracking()
+            }
         }
         startedSession = true
     }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,14 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 /**
- * Mini stat card del perfil (Peso / Altura / IMC).
- *
- * Diseño: icono coloreado a la izquierda, label pequeño arriba, valor grande
- * en negrita debajo y unidad pequeña a la derecha del valor. Estilo Strong/
- * Hevy. Reemplaza el `Row` con tres `Column` sin estructura que se veía pobre.
+ * Mini stat del perfil (Peso / Altura / IMC).
+ * Label en una sola línea; valor grande debajo.
  */
 @Composable
 fun PerfilMiniStatCard(
@@ -48,8 +47,10 @@ fun PerfilMiniStatCard(
         )
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -57,10 +58,10 @@ fun PerfilMiniStatCard(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(24.dp)
+                        .size(26.dp)
                         .background(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
-                            RoundedCornerShape(6.dp)
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.75f),
+                            RoundedCornerShape(8.dp)
                         ),
                     contentAlignment = Alignment.Center
                 ) {
@@ -72,28 +73,34 @@ fun PerfilMiniStatCard(
                     )
                 }
                 Text(
-                    label.uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
+                    text = label,
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
             Row(
                 verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.spacedBy(3.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    valor,
+                    text = valor,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = valorColor
+                    color = valorColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 if (unidad.isNotBlank()) {
                     Text(
-                        unidad,
+                        text = unidad,
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 4.dp)
+                        modifier = Modifier.padding(bottom = 2.dp),
+                        maxLines = 1
                     )
                 }
             }

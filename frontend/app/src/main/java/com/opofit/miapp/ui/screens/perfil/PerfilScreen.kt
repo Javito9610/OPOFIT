@@ -61,8 +61,14 @@ import com.opofit.miapp.ui.viewmodels.PerfilViewModel
 import com.opofit.miapp.ui.viewmodels.RutinasViewModel
 import com.opofit.miapp.data.local.TokenManager
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.ui.platform.LocalContext
 import com.opofit.miapp.utils.Units
 import kotlinx.coroutines.flow.collectLatest
@@ -188,26 +194,77 @@ fun PerfilScreen(
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
-                                    AssistChip(
-                                        onClick = {},
-                                        label = {
-                                            Text(
-                                                if (esFitness) "Modo fitness" else (perfilData?.oposicionNombre ?: "Opositor")
-                                            )
-                                        }
+                                }
+                            }
+                            if (!esFitness) {
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(14.dp),
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
+                                    border = BorderStroke(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+                                    )
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Text(
+                                            text = "Oposición",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            text = perfilData?.oposicionNombre ?: "Opositor",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                    }
+                                }
+                            } else {
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(14.dp),
+                                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f)
+                                ) {
+                                    Text(
+                                        text = "Modo fitness",
+                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold
                                     )
                                 }
                             }
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(onClick = onNavigateToEditarPerfil, modifier = Modifier.weight(1f)) {
-                                    Icon(Icons.Filled.Edit, null, Modifier.size(16.dp))
-                                    Text(" Editar", maxLines = 1)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                FilledTonalButton(
+                                    onClick = onNavigateToEditarPerfil,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(Icons.Filled.Edit, null, Modifier.size(18.dp))
+                                    Spacer(Modifier.size(6.dp))
+                                    Text("Editar", maxLines = 1)
                                 }
-                                OutlinedButton(onClick = onNavigateToAjustes, modifier = Modifier.weight(1f)) {
+                                FilledTonalButton(
+                                    onClick = onNavigateToAjustes,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(Icons.Filled.Settings, null, Modifier.size(18.dp))
+                                    Spacer(Modifier.size(6.dp))
                                     Text("Ajustes", maxLines = 1)
                                 }
                             }
-                            OutlinedButton(onClick = onNavigateToComunidad, modifier = Modifier.fillMaxWidth()) {
+                            Button(
+                                onClick = onNavigateToComunidad,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Filled.Groups, null, Modifier.size(18.dp))
+                                Spacer(Modifier.size(8.dp))
                                 Text("Comunidad y grupos")
                             }
 

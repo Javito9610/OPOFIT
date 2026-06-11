@@ -44,7 +44,7 @@ class IntegracionesViewModel(application: Application) : AndroidViewModel(applic
                 val resp = api.estado("Bearer $token")
                 val hcAvail = hc.availability()
                 val hcConnected = if (hcAvail == HealthConnectManager.Availability.AVAILABLE) {
-                    hc.hasAllPermissions()
+                    hc.hasReadPermissions()
                 } else false
                 val gfConnected = gf.hasPermissions()
                 _uiState.update {
