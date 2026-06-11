@@ -165,6 +165,10 @@ class HealthConnectManager(private val context: Context) {
                 minHrBpm = hrSamples.minOrNull()?.toInt(),
                 kcal = totalKcal.takeIf { it > 0 }
             )
+            // Dedup cross-fuente: el mismo entreno puede llegar TAMBIÉN por
+            // Google Fit o TCX manual con otro id. Si ya hay una actividad
+            // equivalente (tipo + inicio + duración + distancia), saltamos.
+            if (repo.existsSimilar(summary)) { saltadas += 1; continue }
             repo.save(summary)
             importadas += 1
         }

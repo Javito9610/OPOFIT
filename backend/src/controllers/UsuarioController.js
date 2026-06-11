@@ -356,11 +356,53 @@ const subirAvatar = async (req, res) => {
   }
 };
 
+/**
+ * Actualiza SOLO el material disponible. Endpoint ligero para el flujo de
+ * selección de entorno (al elegir CASA/PISTA/MIXTO la app pregunta qué
+ * material tienes y lo guarda aquí, sin arrastrar unidades ni recordatorios
+ * como exige actualizarSettings).
+ */
+const actualizarMaterial = async (req, res) => {
+  try {
+    const userId = req.usuario?.id;
+    if (!userId) return res.status(401).json({ ok: false, msg: 'Sesión no válida' });
+    const { materialDisponible } = req.body || {};
+    if (!Array.isArray(materialDisponible)) {
+      return res.status(400).json({ ok: false, msg: 'materialDisponible debe ser una lista' });
+    }
+    const VALIDOS = new Set([
+      'NADA', 'BARRA_DOMINADAS', 'BARRA_OLIMPICA', 'MANCUERNAS', 'KB',
+      'TRX', 'ANILLAS', 'GOMAS', 'COMBA', 'SACO', 'FOAM', 'BANCO',
+      'CAJA', 'BICI', 'REMO', 'ECHO_BIKE', 'SKI_ERG', 'PISCINA',
+      'PISTA', 'MONTANA', 'GIMNASIO_COMPLETO'
+    ]);
+    const limpio = materialDisponible
+      .map((m) => String(m).trim().toUpperCase())
+      .filter((m) => VALIDOS.has(m));
+    const csv = limpio.length ? limpio.join(',') : 'NADA';
+    await db.query(
+      'UPDATE settings SET material_disponible = ? WHERE usuarios_id_usuario = ?',
+      [csv, userId]
+    );
+    // Invalidamos el plan cacheado: el material cambia los ejercicios que la
+    // IA puede usar, así que la próxima carga regenera con el material nuevo.
+    await db.query(
+      'DELETE FROM planes_generados_cache WHERE usuarios_id_usuario = ?',
+      [userId]
+    ).catch(() => {});
+    return res.status(200).json({ ok: true, material: limpio });
+  } catch (e) {
+    console.error('actualizarMaterial:', e.message);
+    return res.status(500).json({ ok: false, msg: 'No se pudo guardar el material' });
+  }
+};
+
 module.exports = {
   obtenerPerfil,
   obtenerAjustes,
   actualizarPerfil,
   actualizarSettings,
+  actualizarMaterial,
   eliminarCuenta,
   subirAvatar
 };

@@ -43,6 +43,13 @@ interface UsuarioApi {
         @Body body: ActualizarAjustesRequest
     ): ActualizarAjustesResponse
 
+    /** Guarda SOLO el material disponible (flujo de selección de entorno). */
+    @PUT("/api/user/material")
+    suspend fun actualizarMaterial(
+        @Header("Authorization") token: String,
+        @Body body: com.opofit.miapp.data.responsemodels.ActualizarMaterialRequest
+    ): ActualizarAjustesResponse
+
     @DELETE("/api/user/cuenta")
     suspend fun eliminarCuenta(
         @Header("Authorization") token: String

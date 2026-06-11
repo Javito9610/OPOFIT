@@ -158,8 +158,14 @@ class PlanGeneradorService {
     if (!nombres.length) {
       return { titulo: dia.titulo, descripcion: dia.descripcion };
     }
-    const titulo = nombres[0];
-    const descripcion = nombres.slice(0, 4).join(' · ');
+    // El título de la sesión indica cuántos ejercicios MÁS hay además del
+    // primero. Antes solo decía "Peso muerto con mochila" y el usuario creía
+    // que la sesión tenía un único ejercicio cuando en realidad tenía 5.
+    const titulo = nombres.length > 1
+      ? `${nombres[0]} +${nombres.length - 1} más`
+      : nombres[0];
+    const descripcion = nombres.slice(0, 4).join(' · ')
+      + (nombres.length > 4 ? ` · +${nombres.length - 4} más` : '');
     return { titulo, descripcion };
   }
 

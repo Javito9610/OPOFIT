@@ -32,9 +32,13 @@ describe('EntrenoValidator', () => {
     expect(validarEjercicioPorNombre('HIIT 30:30 x 12', -1).ok).toBe(false);
   });
 
-  test('valida duracion sesion', () => {
+  test('valida duracion sesion (en SEGUNDOS)', () => {
+    // La duración viaja en segundos desde el fix de unidades:
+    // 45 s y 900 s (15 min) son sesiones válidas; 0 no; >10 h imposible.
     expect(validarDuracionMin(45).ok).toBe(true);
     expect(validarDuracionMin(0).ok).toBe(false);
-    expect(validarDuracionMin(900).ok).toBe(false);
+    expect(validarDuracionMin(900).ok).toBe(true);
+    expect(validarDuracionMin(1800).ok).toBe(true);   // 30 min — el caso del bug
+    expect(validarDuracionMin(40_000).ok).toBe(false); // > 10 h
   });
 });

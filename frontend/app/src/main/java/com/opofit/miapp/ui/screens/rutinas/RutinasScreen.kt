@@ -152,7 +152,12 @@ fun RutinasScreen(
         opciones = uiState.entornosOpciones,
         seleccionado = uiState.entornoEntreno,
         onDismiss = { rutinasViewModel.cerrarSheetEntorno() },
-        onConfirmar = { entorno -> rutinasViewModel.guardarEntreno(userId, oposicionId, entorno) }
+        onConfirmar = { entorno -> rutinasViewModel.guardarEntreno(userId, oposicionId, entorno) },
+        // Flujo 2 pasos: para CASA/PISTA/MIXTO pregunta el material y lo
+        // guarda junto al entorno → la IA genera el plan con ese material.
+        onConfirmarConMaterial = { entorno, material ->
+            rutinasViewModel.guardarEntrenoConMaterial(userId, oposicionId, entorno, material)
+        }
     )
 
     ExerciseDetailSheet(

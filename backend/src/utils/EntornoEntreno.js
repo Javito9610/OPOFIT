@@ -95,6 +95,15 @@ function ejercicioRealistaParaEntorno(nombre, equipamiento, entornoUsuario) {
   // En CASA sin barra no.
   if (/toalla|towel/.test(n) && ent === 'CASA') return false;
 
+  // Mochila lastrada / garrafas / botellas / silla / improvisado: material
+  // de andar por CASA. En un gimnasio con barras, discos y mancuernas reales
+  // es ridículo proponer "peso muerto con mochila" (reporte del usuario).
+  // También fuera de CROSSFIT y CALISTENIA equipada.
+  const esImprovisado =
+    /mochila|garraf|botella|silla\b|toalla en puerta|sof[áa]|escal[oó]n de casa|lastre casero/i
+      .test(`${n} ${eq}`);
+  if (esImprovisado && (ent === 'GYM' || ent === 'CROSSFIT')) return false;
+
   // Anillas no son típicas de un gym comercial estándar.
   if (/anilla|ring (dip|muscle|pull|row|fly)|iron cross/i.test(`${n} ${eq}`) && ent === 'GYM') {
     return false;

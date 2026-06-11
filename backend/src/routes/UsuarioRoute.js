@@ -9,5 +9,6 @@ router.get('/ajustes', validarToken, usuarioController.obtenerAjustes);
 router.post('/avatar', validarToken, usuarioController.subirAvatar);
 router.put('/perfil', validarToken, usuarioController.actualizarPerfil);
 router.put('/settings', validarToken, usuarioController.actualizarSettings);
+router.put('/material', validarToken, usuarioController.actualizarMaterial);
 router.delete('/cuenta', validarToken, usuarioController.eliminarCuenta);
 module.exports = router;

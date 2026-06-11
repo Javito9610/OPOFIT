@@ -87,6 +87,11 @@ data class AjustesResponse(
     val data: AjustesData? = null
 )
 
+/** Body del PUT /api/user/material — solo la lista de códigos. */
+data class ActualizarMaterialRequest(
+    val materialDisponible: List<String>
+)
+
 /** Catálogo de material disponible que devuelve el backend para los checkboxes. */
 data class MaterialDisponibleItem(
     val id: String,

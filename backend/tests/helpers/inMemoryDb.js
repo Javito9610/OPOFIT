@@ -593,11 +593,66 @@ function query(sql, params = []) {
   if (s.startsWith('select count(*) as sesiones, coalesce(sum(duracion_oficial)')) {
     const userId = Number(params[0]);
     const sesiones = state.historial_sesiones.filter((h) => h.usuarios_id_usuario === userId);
-    return Promise.resolve([[{ sesiones: sesiones.length, minutos: sesiones.reduce((a, b) => a + Number(b.duracion_oficial || 0), 0) }], []]);
+    const segs = sesiones.reduce((a, b) => a + Number(b.duracion_oficial || 0), 0);
+    // Devolvemos TODAS las claves que los distintos servicios esperan:
+    //  - minutos (legacy DashboardService antiguo)
+    //  - segundos_total (HistorialAvanzadoService, que divide /60 en JS)
+    return Promise.resolve([[{ sesiones: sesiones.length, minutos: segs, segundos_total: segs }], []]);
+  }
+  // Variante post-fix de unidades: duracion_oficial en SEGUNDOS, dividida /60
+  // para devolver minutos (DashboardService + HistorialAvanzadoService).
+  if (s.startsWith('select count(*) as sesiones, round(coalesce(sum(duracion_oficial)')) {
+    const userId = Number(params[0]);
+    const sesiones = state.historial_sesiones.filter((h) => h.usuarios_id_usuario === userId);
+    const segs = sesiones.reduce((a, b) => a + Number(b.duracion_oficial || 0), 0);
+    return Promise.resolve([[{ sesiones: sesiones.length, minutos: Math.round(segs / 60) }], []]);
+  }
+  // detectarRecords v2: nombre + modalidad + score_tipo + valor_anterior por
+  // subquery — SIEMPRE devuelve el ejercicio aunque no haya marca previa.
+  if (s.startsWith('select e.nombre as nombre_ejercicio') && s.includes('as valor_anterior')) {
+    const userId = Number(params[0]);
+    const idEj = Number(params[2]);
+    const ej = state.ejercicios.find((e) => e.id_ejercicio === idEj);
+    if (!ej) return Promise.resolve([[], []]);
+    // Última marca del usuario en ese ejercicio (orden fecha desc).
+    const registros = state.registro_resultados
+      .filter((r) => r.ejercicios_id_ejercicio === idEj)
+      .map((r) => ({
+        r,
+        h: state.historial_sesiones.find(
+          (h) => h.id_historial_sesion === r.historial_sesiones_id_historial_sesiones &&
+                 h.usuarios_id_usuario === userId
+        )
+      }))
+      .filter((x) => x.h)
+      .sort((a, b) => new Date(b.h.fecha_entreno) - new Date(a.h.fecha_entreno));
+    return Promise.resolve([[{
+      nombre_ejercicio: ej.nombre,
+      modalidad: ej.modalidad || 'convencional',
+      score_tipo: ej.score_tipo || 'reps',
+      valor_anterior: registros.length ? registros[0].r.valor_conseguido : null
+    }], []]);
   }
   if (s.startsWith('select count(*) as sesiones from historial_sesiones')) {
     const n = state.historial_sesiones.filter((h) => h.usuarios_id_usuario === Number(params[0])).length;
     return Promise.resolve([[{ sesiones: n }], []]);
+  }
+  // Racha v2: días con actividad combinando entrenos + GPS (UNION).
+  if (s.startsWith('select distinct d from ( select date(fecha_entreno) as d')) {
+    const userId = Number(params[0]);
+    const set = new Set();
+    for (const h of state.historial_sesiones) {
+      if (h.usuarios_id_usuario === userId) {
+        set.add(new Date(h.fecha_entreno).toISOString().slice(0, 10));
+      }
+    }
+    for (const a of state.gps_actividades || []) {
+      if (a.usuarios_id_usuario === userId && a.iniciada_en) {
+        set.add(new Date(Number(a.iniciada_en)).toISOString().slice(0, 10));
+      }
+    }
+    const rows = [...set].sort().reverse().map((d) => ({ d }));
+    return Promise.resolve([rows, []]);
   }
   if (s.startsWith('select distinct date(fecha_entreno) as d from historial_sesiones')) {
     const userId = Number(params[0]);
@@ -1259,9 +1314,22 @@ function query(sql, params = []) {
       duracion_seg: Number(params[5]),
       distancia_m: Number(params[7]),
       polyline_json: params[17],
-      splits_json: params[18]
+      splits_json: params[18],
+      // El INSERT de Health Connect lleva origen literal + external_id como
+      // último parámetro. Para inserts normales queda undefined (ok).
+      origen: s.includes("'health_connect'") ? 'HEALTH_CONNECT' : null,
+      external_id: s.includes("'health_connect'") ? params[params.length - 1] : null
     });
     return Promise.resolve([{ insertId: id, affectedRows: 1 }, []]);
+  }
+  // Exists-check del import HC: dedup por external_id + origen.
+  if (s.startsWith('select id_actividad from gps_actividades') && s.includes('external_id')) {
+    const a = state.gps_actividades.find(
+      (x) => x.usuarios_id_usuario === Number(params[0]) &&
+             x.external_id === params[1] &&
+             x.origen === 'HEALTH_CONNECT'
+    );
+    return Promise.resolve([a ? [{ id_actividad: a.id_actividad }] : [], []]);
   }
   if (s.startsWith('select id_actividad from gps_actividades')) {
     const a = state.gps_actividades.find(

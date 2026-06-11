@@ -499,9 +499,10 @@ fun MapaEntrenoScreen(
                         if (mostrarRuta && modoPersonalizado) waypoints.add(click)
                     }
                 ) {
-                    if (ubicacionLista) {
-                        Marker(state = MarkerState(LatLng(lat, lng)), title = "Tú")
-                    }
+                    // La ubicación del usuario YA se muestra con el punto azul
+                    // nativo (isMyLocationEnabled). El Marker rojo "Tú" duplicaba
+                    // la información y confundía: parecía un lugar más del mapa.
+                    // Las chinchetas rojas quedan SOLO para lugares de entreno.
                     if (mostrarLugares) {
                         lugares.forEach { l ->
                             Marker(

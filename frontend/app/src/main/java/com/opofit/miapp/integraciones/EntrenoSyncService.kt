@@ -43,6 +43,11 @@ object EntrenoSyncService {
     suspend fun syncDesdeRelojYCloud(context: Context, token: String): Result {
         if (token.isBlank()) return Result(error = "Sesión no válida")
 
+        // Limpieza de duplicados históricos ANTES de importar: los syncs
+        // anteriores al fix de dedup dejaron actividades duplicadas/triplicadas
+        // (la misma carrera por HC + GF). Esto las consolida en una sola.
+        runCatching { GpsRepository.get(context).dedupAll() }
+
         var hcImportadas = 0
         var hcSaltadas = 0
         var gfImportadas = 0

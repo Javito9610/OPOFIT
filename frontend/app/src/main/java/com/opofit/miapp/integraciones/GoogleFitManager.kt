@@ -162,6 +162,10 @@ class GoogleFitManager(private val context: Context) {
                 minHrBpm = null,
                 kcal = kcal.takeIf { it > 0 }
             )
+            // Dedup cross-fuente: la misma sesión puede haber entrado ya por
+            // Health Connect (el reloj suele escribir en ambos). Sin esto el
+            // usuario veía la carrera duplicada tras cada sync.
+            if (repo.existsSimilar(summary)) { saltadas += 1; continue }
             repo.save(summary)
             importadas += 1
         }

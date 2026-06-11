@@ -113,9 +113,34 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun guardarEntreno(userId: Int, oposicionId: Int, entorno: String) {
+        guardarEntrenoConMaterial(userId, oposicionId, entorno, null)
+    }
+
+    /**
+     * Guarda entorno + (opcional) material disponible en un único flujo.
+     * El material llega del paso 2 del sheet de entorno cuando el sitio
+     * elegido no tiene equipamiento implícito (CASA, PISTA, MIXTO).
+     */
+    fun guardarEntrenoConMaterial(
+        userId: Int,
+        oposicionId: Int,
+        entorno: String,
+        material: List<String>?
+    ) {
         viewModelScope.launch {
             try {
                 val token = tokenManager.getToken().first() ?: ""
+                // 1) Material primero: así cuando el plan se regenere (al guardar
+                // el entorno se invalida la cache) ya tiene el material correcto.
+                if (material != null) {
+                    runCatching {
+                        RetrofitClient.usuarioApi.actualizarMaterial(
+                            "Bearer $token",
+                            com.opofit.miapp.data.responsemodels.ActualizarMaterialRequest(material)
+                        )
+                    }
+                }
+                // 2) Entorno (invalida plan cacheado en backend).
                 val res = RetrofitClient.planesApi.putEntornoUsuario("Bearer $token", EntornoBody(entorno))
                 if (res.ok) {
                     _uiState.update {

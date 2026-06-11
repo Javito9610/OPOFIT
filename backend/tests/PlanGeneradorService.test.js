@@ -220,8 +220,16 @@ describe('PlanGeneradorService', () => {
     const dia = { titulo: 'Viejo', descripcion: 'Vieja desc' };
     const ej = [{ nombre: 'Carrera Z2 30 min' }, { nombre: 'Movilidad cadera' }];
     const r = PlanGeneradorService.resumenDiaDesdeEjercicios(dia, ej);
-    expect(r.titulo).toBe('Carrera Z2 30 min');
+    // El título indica que hay MÁS ejercicios además del primero — antes
+    // "Carrera Z2 30 min" a secas hacía creer que la sesión era de 1 ejercicio.
+    expect(r.titulo).toBe('Carrera Z2 30 min +1 más');
     expect(r.descripcion).toContain('Movilidad');
+  });
+
+  test('resumenDiaDesdeEjercicios sin "+N" cuando hay un único ejercicio', () => {
+    const dia = { titulo: 'Viejo', descripcion: 'Vieja' };
+    const r = PlanGeneradorService.resumenDiaDesdeEjercicios(dia, [{ nombre: 'HIIT 4x4' }]);
+    expect(r.titulo).toBe('HIIT 4x4');
   });
 
   test('generarSemana con soloDiaId solo cambia un día', async () => {

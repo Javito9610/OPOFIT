@@ -16,13 +16,23 @@ function validarEjercicioPorNombre(nombre, valorRaw) {
   return { ok: true, valor: r.valor, unidad };
 }
 
+/**
+ * Valida la duración del entreno. UNIDAD: SEGUNDOS.
+ *
+ * ⚠ Historia del bug: el frontend pasó a enviar segundos (fix "0 minutos" en
+ * el historial) pero este validador seguía asumiendo minutos con tope 600.
+ * Resultado: cualquier sesión de más de 10 minutos (600 s) devolvía 400
+ * "Duración imposible" y el usuario NO podía guardar su entreno. Detectado
+ * por el E2E de viaje completo.
+ */
 function validarDuracionMin(duracion) {
   const d = Number(duracion);
   if (!Number.isFinite(d) || d < 1) {
-    return { ok: false, msg: 'La duración debe ser al menos 1 minuto' };
+    return { ok: false, msg: 'La duración debe ser al menos 1 segundo' };
   }
-  if (d > 600) {
-    return { ok: false, msg: 'Duración imposible (máximo 600 min / 10 h)' };
+  // 10 horas en segundos: más que cualquier sesión real.
+  if (d > 36_000) {
+    return { ok: false, msg: 'Duración imposible (máximo 10 h)' };
   }
   return { ok: true, valor: Math.round(d) };
 }

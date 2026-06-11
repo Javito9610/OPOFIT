@@ -372,18 +372,11 @@ fun AjustesScreen(
                 }
             }
 
-            // v7-doctorado: selector de material disponible. La IA respeta esta
-            // lista y los entrenos libres filtran ejercicios por ella.
-            if (uiState.materialCatalogo.isNotEmpty()) {
-                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                    com.opofit.miapp.ui.components.MaterialDisponibleSection(
-                        catalogo = uiState.materialCatalogo,
-                        seleccionado = uiState.materialSeleccionado,
-                        onToggle = { ajustesViewModel.toggleMaterial(it) },
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            }
+            // El selector de material vive ahora en el flujo de selección de
+            // entorno (sheet de 2 pasos en Plan): solo se pregunta cuando el
+            // entorno no tiene material implícito (CASA, PISTA, MIXTO). Aquí
+            // en Ajustes no pintaba nada y daba la impresión de "filosofía
+            // rara de un solo instrumento" según feedback del usuario.
 
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth()

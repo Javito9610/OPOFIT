@@ -4,12 +4,11 @@ const db = require('../config/db');
 const EntornoEntreno = require('../utils/EntornoEntreno');
 const EjercicioMetadataService = require('./EjercicioMetadataService');
 
-// v8: realismo por entorno. Eliminadas referencias a saco arena / trineo /
-// maza / yoke / bolsa búlgara de los entornos GYM/CASA/CALISTENIA (esos
-// materiales son de boxes CrossFit y strongman, no de un gym comercial
-// estándar). Renombrados 16 ejercicios con nombres confusos ("Vallas + giros
-// 180°" → "Vallas con giro de 180°"). Total ~1036 ejercicios.
-const BANCO_VERSION = 8;
+// v9: material improvisado (mochila lastrada, garrafas, botellas, sillas)
+// restringido a CASA. Antes "Peso muerto con mochila" podía aparecer en un
+// plan de GIMNASIO, donde hay barras y discos de verdad. 7 ejercicios
+// corregidos + filtro defensivo en EntornoEntreno. Total ~1036 ejercicios.
+const BANCO_VERSION = 9;
 
 function resolveJsonPath() {
   const candidates = [

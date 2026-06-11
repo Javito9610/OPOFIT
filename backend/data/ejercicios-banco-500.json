@@ -668,7 +668,7 @@
       "grupo_muscular": "Espalda",
       "equipamiento": "Mochila",
       "instrucciones_tecnicas": "Bisagra de cadera en casa.",
-      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "entornos": "CASA,MIXTO",
       "tipo_ilustracion": "PULL",
       "modalidad": "calistenia",
       "score_tipo": "reps"
@@ -844,7 +844,7 @@
       "grupo_muscular": "Pierna",
       "equipamiento": "Mochila",
       "instrucciones_tecnicas": "Peso en espalda, profundidad controlada.",
-      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "entornos": "CASA,MIXTO",
       "tipo_ilustracion": "SQUAT",
       "modalidad": "calistenia",
       "score_tipo": "reps"
@@ -998,7 +998,7 @@
       "grupo_muscular": "Pierna",
       "equipamiento": "Mochila",
       "instrucciones_tecnicas": "Bisagra en casa.",
-      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "entornos": "CASA,MIXTO",
       "tipo_ilustracion": "SQUAT",
       "modalidad": "calistenia",
       "score_tipo": "reps"
@@ -1317,7 +1317,7 @@
       "grupo_muscular": "Brazos",
       "equipamiento": "Botellas",
       "instrucciones_tecnicas": "Peso improvisado en casa.",
-      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "entornos": "CASA,MIXTO",
       "tipo_ilustracion": "PULL",
       "modalidad": "calistenia",
       "score_tipo": "reps"
@@ -3682,7 +3682,7 @@
       "grupo_muscular": "Cardio",
       "equipamiento": "Mochila 10-15 kg",
       "instrucciones_tecnicas": "Caminata con carga.",
-      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "entornos": "CASA,MIXTO",
       "tipo_ilustracion": "RUN",
       "modalidad": "calistenia",
       "score_tipo": "reps"
@@ -3693,7 +3693,7 @@
       "grupo_muscular": "Cardio",
       "equipamiento": "Mochila 10-15 kg",
       "instrucciones_tecnicas": "Resistencia militar.",
-      "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
+      "entornos": "CASA,MIXTO",
       "tipo_ilustracion": "RUN",
       "modalidad": "calistenia",
       "score_tipo": "reps"
@@ -7366,7 +7366,7 @@
       "pilar": "FUERZA",
       "grupo_muscular": "Fuerza",
       "equipamiento": "Bombona/Mochila",
-      "entornos": "CROSSFIT,GYM,PISTA,MIXTO",
+      "entornos": "CASA,MIXTO",
       "tipo_ilustracion": "SQUAT",
       "instrucciones_tecnicas": "Subir escaleras con mochila 15kg. 5 pisos × 5 reps. Específico bombero.",
       "modalidad": "convencional",
