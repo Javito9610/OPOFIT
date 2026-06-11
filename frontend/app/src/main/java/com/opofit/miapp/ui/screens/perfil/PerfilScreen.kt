@@ -50,8 +50,11 @@ import com.opofit.miapp.data.responsemodels.PerfilUsuarioData
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material.icons.automirrored.filled.DirectionsRun
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Height
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Terrain
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
 import com.opofit.miapp.ui.viewmodels.PerfilViewModel
@@ -221,29 +224,43 @@ fun PerfilScreen(
 
                             if (peso != null || altura != null || imc != null) {
                                 val pesoShown = if (peso != null && unitPeso == "lb") Units.kgToLb(peso) else peso
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(12.dp))
+                                // 3 mini-cards estilo Strong/Hevy: icono + label + valor en grande.
+                                // Antes era un Row pelado sin jerarquía visual y se veía "pobre".
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Column {
-                                        Text("Peso", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text(pesoShown?.let { String.format("%.1f %s", it, unitPeso) } ?: "-", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                                    }
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text("Altura", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text(
-                                            altura?.let { Units.formatAltura(it, unitDist) } ?: "-",
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-                                    Column(horizontalAlignment = Alignment.End) {
-                                        Text("IMC", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text(imc?.let { String.format("%.2f", it) } ?: "-", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                                    }
+                                    com.opofit.miapp.ui.components.PerfilMiniStatCard(
+                                        icono = androidx.compose.material.icons.Icons.Filled.MonitorWeight,
+                                        label = "Peso",
+                                        valor = pesoShown?.let { String.format("%.1f", it) } ?: "—",
+                                        unidad = if (pesoShown != null) unitPeso else "",
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    com.opofit.miapp.ui.components.PerfilMiniStatCard(
+                                        icono = androidx.compose.material.icons.Icons.Filled.Height,
+                                        label = "Altura",
+                                        valor = altura?.let { Units.formatAltura(it, unitDist) } ?: "—",
+                                        unidad = "",
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    com.opofit.miapp.ui.components.PerfilMiniStatCard(
+                                        icono = androidx.compose.material.icons.Icons.Filled.Calculate,
+                                        label = "IMC",
+                                        valor = imc?.let { String.format("%.1f", it) } ?: "—",
+                                        unidad = "",
+                                        // Color del IMC según rango (estilo apps fitness).
+                                        valorColor = imc?.let { v ->
+                                            when {
+                                                v < 18.5 -> androidx.compose.ui.graphics.Color(0xFF1976D2) // bajo
+                                                v < 25 -> androidx.compose.ui.graphics.Color(0xFF2E7D32)  // normal
+                                                v < 30 -> androidx.compose.ui.graphics.Color(0xFFEF6C00)  // sobrepeso
+                                                else -> androidx.compose.ui.graphics.Color(0xFFC62828)    // obesidad
+                                            }
+                                        } ?: MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.weight(1f)
+                                    )
                                 }
                             }
                         }

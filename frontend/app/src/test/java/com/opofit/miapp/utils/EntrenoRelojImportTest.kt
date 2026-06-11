@@ -83,6 +83,32 @@ class EntrenoRelojImportTest {
     }
 
     @Test
+    fun apply_laps_mapea_por_nombre_cuando_labels_coinciden() {
+        val activity = cardioRun().copy(
+            distanceM = 0.0,
+            durationSec = 600,
+            laps = listOf(
+                ActivityLap(1, 300, 0.0, label = "Plancha 5 min"),
+                ActivityLap(2, 300, 3000.0, label = "Trote suave 5 min")
+            )
+        )
+        val slots = listOf(
+            EntrenoRelojImport.Slot(0, "Plancha frontal 5 min", null, "CORE", 300, false, "", ""),
+            EntrenoRelojImport.Slot(1, "Trote continuo 5 min", "RUN", "RESISTENCIA", 300, false, "", "")
+        )
+        val result = EntrenoRelojImport.apply(
+            activity = activity,
+            slots = slots,
+            unidadFor = { idx -> if (idx == 0) "min" else "min" },
+            esGps = { it.tipo == "RUN" },
+            unitDist = "km"
+        )
+        assertEquals(2, result.updates.size)
+        assertEquals(5.0, result.updates[0].valor!!.toDouble(), 0.01)
+        assertEquals(3.0, result.updates[1].valor!!.toDouble(), 0.01)
+    }
+
+    @Test
     fun deduplicar_instrucciones_elimina_frases_repetidas() {
         val texto =
             "Codos apuntan al techo. Codos apuntan al techo. Mueve cada lado con simetría. Mueve cada lado con simetría."

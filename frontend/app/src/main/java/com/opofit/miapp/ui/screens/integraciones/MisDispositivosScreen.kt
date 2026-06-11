@@ -129,6 +129,21 @@ fun MisDispositivosScreen(
     val gfManager = remember { GoogleFitManager.get(context) }
     val activity = context as? Activity
 
+    // Refresca el estado de permisos CADA VEZ que vuelves a la pantalla.
+    // Bug previo: el usuario iba a Health Connect, concedía permisos, volvía
+    // a OpoFit y seguía viendo "Sin permisos" porque solo se cargaba el estado
+    // al entrar la primera vez. Ahora con un LifecycleEventObserver se recarga.
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                viewModel.refresh()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     val gfSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) {

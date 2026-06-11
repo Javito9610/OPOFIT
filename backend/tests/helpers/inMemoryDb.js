@@ -47,6 +47,7 @@ const state = {
   planes_generados_cache: [],
   banco_dias: [],
   fcm_tokens: [],
+  notificaciones_app: [],
   bbb_seed: false
 };
 
@@ -76,7 +77,8 @@ let nextId = {
   post_comentarios: 1,
   segmentos: 1,
   segmento_esfuerzos: 1,
-  baremos_puntuacion: 1
+  baremos_puntuacion: 1,
+  notificaciones_app: 1
 };
 
 function reset() {
@@ -1453,6 +1455,29 @@ function query(sql, params = []) {
       creado_en: new Date().toISOString()
     });
     return Promise.resolve([{ insertId: id }, []]);
+  }
+
+  // ---------- NOTIFICACIONES IN-APP ----------
+  if (s.startsWith('insert into notificaciones_app')) {
+    const id = nextId.notificaciones_app++;
+    state.notificaciones_app.push({
+      id_notificacion: id,
+      id_usuario: Number(params[0]),
+      tipo: params[1],
+      titulo: params[2],
+      cuerpo: params[3],
+      ref_id: params[4],
+      actor_id: params[5] != null ? Number(params[5]) : null,
+      leida: 0,
+      creada_en: new Date().toISOString()
+    });
+    return Promise.resolve([{ insertId: id, affectedRows: 1 }, []]);
+  }
+  if (s.startsWith('select count(*) as c from notificaciones_app')) {
+    const n = state.notificaciones_app.filter(
+      (x) => x.id_usuario === Number(params[0]) && x.leida === 0
+    ).length;
+    return Promise.resolve([[{ c: n }], []]);
   }
 
   // Por defecto no encontrada

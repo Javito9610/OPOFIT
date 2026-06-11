@@ -101,20 +101,34 @@ class HistorialAvanzadoService {
     // grupo muscular en el periodo. Equivalente a la "Muscle Distribution"
     // de Hevy. Solo cuenta ejercicios de fuerza/calistenia (excluye cardio
     // y movilidad para no inflar artificialmente).
-    const [porGrupoMuscular] = await db.query(
-      `SELECT COALESCE(e.grupo_muscular, 'General') AS grupo,
-              COUNT(r.id_registro) AS series,
-              COUNT(DISTINCT r.ejercicios_id_ejercicio) AS ejercicios_unicos
-         FROM registro_resultados r
-         JOIN historial_sesiones h ON r.historial_sesiones_id_historial_sesiones = h.id_historial_sesion
-         JOIN ejercicios e ON r.ejercicios_id_ejercicio = e.id_ejercicio
-        WHERE h.usuarios_id_usuario = ?
-          AND h.fecha_entreno >= ?
-          AND e.modalidad NOT IN ('cardio', 'movilidad')
-        GROUP BY COALESCE(e.grupo_muscular, 'General')
-        ORDER BY series DESC`,
-      [userId, desdeYmd]
-    );
+    // Nombre real de la PK es `id_resultado` (no `id_registro`). Antes esto
+    // fallaba con "Unknown column 'r.id_registro'" → caía al catch del cliente
+    // y el resumen no llegaba: la UI se quedaba cargando para siempre.
+    // Defensivo: si modalidad/grupo_muscular son nulos para algún ejercicio
+    // viejo, COALESCE evita filas fantasma.
+    let porGrupoMuscular = [];
+    try {
+      const [rows] = await db.query(
+        `SELECT COALESCE(e.grupo_muscular, 'General') AS grupo,
+                COUNT(r.id_resultado) AS series,
+                COUNT(DISTINCT r.ejercicios_id_ejercicio) AS ejercicios_unicos
+           FROM registro_resultados r
+           JOIN historial_sesiones h ON r.historial_sesiones_id_historial_sesiones = h.id_historial_sesion
+           JOIN ejercicios e ON r.ejercicios_id_ejercicio = e.id_ejercicio
+          WHERE h.usuarios_id_usuario = ?
+            AND h.fecha_entreno >= ?
+            AND COALESCE(e.modalidad, 'convencional') NOT IN ('cardio', 'movilidad')
+          GROUP BY COALESCE(e.grupo_muscular, 'General')
+          ORDER BY series DESC`,
+        [userId, desdeYmd]
+      );
+      porGrupoMuscular = rows;
+    } catch (e) {
+      // Si la migración aún no añadió `modalidad` o el esquema tiene otra PK,
+      // devolvemos vacío para no romper el resumen entero. El frontend ya
+      // oculta la card si está vacía.
+      console.warn('[historial] porGrupoMuscular fallback:', e.message);
+    }
 
     // Devolvemos modalidad + score_tipo para que el frontend muestre la unidad
     // correcta (kg, reps, seg, kcal, rondas, etc.) en lugar de "120,00" pelado.
@@ -136,7 +150,7 @@ class HistorialAvanzadoService {
         WHERE h.usuarios_id_usuario = ?
         GROUP BY e.id_ejercicio, e.nombre, e.pilar, e.modalidad, e.score_tipo
        HAVING COUNT(*) >= 2
-                AND e.modalidad NOT IN ('cardio', 'movilidad')
+                AND COALESCE(e.modalidad, 'convencional') NOT IN ('cardio', 'movilidad')
         ORDER BY (MAX(r.valor_conseguido) - MIN(r.valor_conseguido)) DESC, valor DESC
         LIMIT 5`,
       [userId]

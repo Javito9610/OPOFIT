@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -109,26 +110,40 @@ fun GpsRecordingScreen(
         startedSession = true
     }
 
-    // Zoom inicial: la primera vez que aparezca un punto, animamos la cámara
-    // hasta nivel 17 (calle visible). Antes mantenía el zoom de mundo (~3) y
-    // el usuario veía Europa entera. A partir de ahí respetamos el zoom
-    // manual, pero si baja de 10 (vista regional) lo subimos a 16.
+    // Zoom inicial: la primera vez que aparezca un punto centramos a nivel 17.
+    // Defensivo: `cameraPositionState.animate()` requiere el GoogleMap montado;
+    // si crashea (puede pasar la 1ª vez antes del compose), caemos al
+    // asignment síncrono que NUNCA falla. Antes el crash sacaba al usuario
+    // de la app al pulsar "Empezar carrera".
     var primerPunto by remember { mutableStateOf(true) }
     LaunchedEffect(state.points.lastOrNull()?.timestampMs) {
         val last = state.points.lastOrNull() ?: return@LaunchedEffect
-        val zoomActual = cameraPositionState.position.zoom
+        val zoomActual = runCatching { cameraPositionState.position.zoom }.getOrDefault(0f)
         val zoomDeseado = when {
             primerPunto -> 17f
             zoomActual < 10f -> 16f
             else -> zoomActual
         }
-        cameraPositionState.animate(
-            update = com.google.android.gms.maps.CameraUpdateFactory.newLatLngZoom(
-                LatLng(last.lat, last.lng),
-                zoomDeseado
-            ),
-            durationMs = if (primerPunto) 700 else 250
-        )
+        val targetLatLng = LatLng(last.lat, last.lng)
+        // Intento 1: animate (requiere mapa montado).
+        val animOk = runCatching {
+            cameraPositionState.animate(
+                update = com.google.android.gms.maps.CameraUpdateFactory.newLatLngZoom(
+                    targetLatLng,
+                    zoomDeseado
+                ),
+                durationMs = if (primerPunto) 700 else 250
+            )
+        }.isSuccess
+        // Intento 2 (fallback): asignación directa.
+        if (!animOk) {
+            runCatching {
+                cameraPositionState.position =
+                    com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(
+                        targetLatLng, zoomDeseado
+                    )
+            }
+        }
         primerPunto = false
     }
 
@@ -188,19 +203,33 @@ fun GpsRecordingScreen(
         androidx.compose.material3.SmallFloatingActionButton(
             onClick = {
                 val last = state.points.lastOrNull() ?: return@SmallFloatingActionButton
+                val target = LatLng(last.lat, last.lng)
                 coroutineScope.launch {
-                    cameraPositionState.animate(
-                        update = com.google.android.gms.maps.CameraUpdateFactory.newLatLngZoom(
-                            LatLng(last.lat, last.lng),
-                            17f
-                        ),
-                        durationMs = 400
-                    )
+                    // Mismo patrón defensivo: animate falla a veces si el
+                    // mapa aún no está completamente listo. Catch + fallback.
+                    val ok = runCatching {
+                        cameraPositionState.animate(
+                            update = com.google.android.gms.maps.CameraUpdateFactory.newLatLngZoom(
+                                target, 17f
+                            ),
+                            durationMs = 400
+                        )
+                    }.isSuccess
+                    if (!ok) {
+                        runCatching {
+                            cameraPositionState.position =
+                                com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(target, 17f)
+                        }
+                    }
                 }
             },
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(top = 16.dp, end = 14.dp),
+                // statusBarsPadding empuja el FAB POR DEBAJO del notch/cámara.
+                // Antes con padding fijo de 16dp se cortaba en móviles modernos
+                // con notch (Pixel, S22+, etc.). Ahora respeta el inset real.
+                .statusBarsPadding()
+                .padding(top = 8.dp, end = 14.dp),
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.primary
         ) {

@@ -1,6 +1,17 @@
 jest.mock('../src/config/db');
+jest.mock('../src/services/NotificationService', () => ({
+  notificarSolicitudAmistad: jest.fn().mockResolvedValue(undefined),
+  notificarAmistadAceptada: jest.fn().mockResolvedValue(undefined)
+}));
 const db = require('../src/config/db');
 const AmigosService = require('../src/services/AmigosService');
+
+function mockInAppNotifInsert() {
+  return { insertId: 99, affectedRows: 1 };
+}
+function mockNombreUsuario(nombre = 'Test') {
+  return [[{ nombre }]];
+}
 
 describe('AmigosService', () => {
   beforeEach(() => jest.clearAllMocks());
@@ -31,7 +42,8 @@ describe('AmigosService', () => {
       db.query
         .mockResolvedValueOnce([[{ id_usuario: 2, oposiciones_id_oposicion: 1, modo_uso: 'OPOSITOR' }]])
         .mockResolvedValueOnce([[{ oposiciones_id_oposicion: 1, modo_uso: 'OPOSITOR' }]])
-        .mockResolvedValueOnce([{ insertId: 1 }]);
+        .mockResolvedValueOnce([mockInAppNotifInsert()])
+        .mockResolvedValueOnce(mockNombreUsuario());
       const r = await AmigosService.enviarSolicitud(1, 2);
       expect(r).toEqual({ ok: true });
     });
@@ -40,7 +52,8 @@ describe('AmigosService', () => {
       db.query
         .mockResolvedValueOnce([[{ id_usuario: 2, oposiciones_id_oposicion: null, modo_uso: 'FITNESS' }]])
         .mockResolvedValueOnce([[{ oposiciones_id_oposicion: null, modo_uso: 'FITNESS' }]])
-        .mockResolvedValueOnce([{ insertId: 1 }]);
+        .mockResolvedValueOnce([mockInAppNotifInsert()])
+        .mockResolvedValueOnce(mockNombreUsuario());
       const r = await AmigosService.enviarSolicitud(1, 2);
       expect(r).toEqual({ ok: true });
     });
@@ -49,7 +62,8 @@ describe('AmigosService', () => {
       db.query
         .mockResolvedValueOnce([[{ id_usuario: 2, oposiciones_id_oposicion: null, modo_uso: 'FITNESS' }]])
         .mockResolvedValueOnce([[{ oposiciones_id_oposicion: 1, modo_uso: 'OPOSITOR' }]])
-        .mockResolvedValueOnce([{ insertId: 1 }]);
+        .mockResolvedValueOnce([mockInAppNotifInsert()])
+        .mockResolvedValueOnce(mockNombreUsuario());
       const r = await AmigosService.enviarSolicitud(1, 2);
       expect(r).toEqual({ ok: true });
     });
@@ -69,7 +83,9 @@ describe('AmigosService', () => {
     test('acepta solicitud entrante', async () => {
       db.query
         .mockResolvedValueOnce([[{ solicitante_id: 2, id_amistad: 7 }]])
-        .mockResolvedValueOnce([{ affectedRows: 1 }]);
+        .mockResolvedValueOnce([{ affectedRows: 1 }])
+        .mockResolvedValueOnce([mockInAppNotifInsert()])
+        .mockResolvedValueOnce(mockNombreUsuario());
       const r = await AmigosService.responderSolicitud(1, 7, true);
       expect(r).toEqual({ ok: true });
     });
