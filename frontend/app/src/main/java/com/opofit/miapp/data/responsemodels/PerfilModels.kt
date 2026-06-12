@@ -15,7 +15,8 @@ data class PerfilUsuarioData(
     val modoUso: String? = null,
     val oposicionId: Int? = null,
     val oposicionNombre: String? = null,
-    val ubicacionVisible: Boolean = false
+    val ubicacionVisible: Boolean = false,
+    val diasEntrenoSemana: Int? = null
 )
 
 data class PerfilUsuarioResponse(
@@ -33,7 +34,8 @@ data class ActualizarPerfilRequest(
     val nombre: String? = null,
     val avatarUrl: String? = null,
     val modoUso: String? = null,
-    val ubicacionVisible: Boolean? = null
+    val ubicacionVisible: Boolean? = null,
+    val diasEntrenoSemana: Int? = null
 )
 
 data class CambiarPasswordRequest(

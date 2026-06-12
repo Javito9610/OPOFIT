@@ -12,7 +12,7 @@ const obtenerPerfil = async (req, res) => {
     const [rows] = await db.query(
       `SELECT u.nombre, u.email, u.peso, u.altura, u.imc, u.avatar_url, u.modo_uso,
               u.oposiciones_id_oposicion AS oposicionId, o.nombre AS oposicionNombre,
-              u.ubicacion_visible
+              u.ubicacion_visible, u.dias_entreno_semana
        FROM usuarios u
        LEFT JOIN oposiciones o ON u.oposiciones_id_oposicion = o.id_oposicion
        WHERE u.id_usuario = ?`,
@@ -34,7 +34,8 @@ const obtenerPerfil = async (req, res) => {
         modoUso: u.modo_uso || 'OPOSITOR',
         oposicionId: u.oposicionId,
         oposicionNombre: u.oposicionNombre,
-        ubicacionVisible: !!u.ubicacion_visible
+        ubicacionVisible: !!u.ubicacion_visible,
+        diasEntrenoSemana: Number(u.dias_entreno_semana) || 5
       }
     });
   } catch (error) {
@@ -53,7 +54,8 @@ const actualizarPerfil = async (req, res) => {
       nombre,
       avatarUrl,
       modoUso,
-      ubicacionVisible
+      ubicacionVisible,
+      diasEntrenoSemana
     } = req.body;
     const userId = req.usuario?.id;
     if (userId == null) {
@@ -75,7 +77,9 @@ const actualizarPerfil = async (req, res) => {
     const hasAvatar = avatarUrl !== undefined && avatarUrl !== null;
     const hasModo = modoUso === 'OPOSITOR' || modoUso === 'FITNESS';
     const hasUbicVisible = ubicacionVisible !== undefined && ubicacionVisible !== null;
-    if (!hasPeso && !hasAltura && !hasMarcas && !hasNombre && !hasAvatar && !hasModo && !hasUbicVisible) {
+    const diasInt = Number(diasEntrenoSemana);
+    const hasDias = Number.isFinite(diasInt) && diasInt >= 1 && diasInt <= 7;
+    if (!hasPeso && !hasAltura && !hasMarcas && !hasNombre && !hasAvatar && !hasModo && !hasUbicVisible && !hasDias) {
       return res.status(400).json({
         ok: false,
         msg: 'Debes enviar al menos un campo para actualizar el perfil'
@@ -125,6 +129,12 @@ const actualizarPerfil = async (req, res) => {
     }
     if (hasUbicVisible) {
       await db.query('UPDATE usuarios SET ubicacion_visible = ? WHERE id_usuario = ?', [ubicacionVisible ? 1 : 0, userId]);
+    }
+    if (hasDias) {
+      await db.query('UPDATE usuarios SET dias_entreno_semana = ? WHERE id_usuario = ?', [diasInt, userId]);
+      // Cambiar los días de entreno invalida el plan cacheado: hay que
+      // regenerar con la nueva distribución semanal.
+      await db.query('DELETE FROM planes_generados_cache WHERE usuarios_id_usuario = ?', [userId]).catch(() => {});
     }
     if (hasMarcas) {
       // Coherencia: validamos TODAS las marcas antes de escribir ninguna,

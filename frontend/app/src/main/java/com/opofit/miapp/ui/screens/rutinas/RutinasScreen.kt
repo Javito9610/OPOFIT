@@ -69,7 +69,9 @@ import com.opofit.miapp.ui.components.PlanDiaCard
 import com.opofit.miapp.ui.components.PlanEjercicioRow
 import com.opofit.miapp.ui.components.PlanPersonalizacionCard
 import com.opofit.miapp.ui.components.PlanSemanaResumenRow
+import com.opofit.miapp.ui.components.PrimaryActionButton
 import com.opofit.miapp.ui.components.SectionHeader
+import androidx.compose.material.icons.filled.PlayArrow
 import com.opofit.miapp.ui.components.enfoqueLabel
 import java.time.YearMonth
 import com.opofit.miapp.ui.viewmodels.AuthViewModel
@@ -130,9 +132,9 @@ fun RutinasScreen(
 
     
     val enfoqueTabs = listOf(
-        "💪 Fuerza" to "FUERZA",
-        "🏃 Resistencia" to "RESISTENCIA",
-        "⚡ Velocidad" to "VELOCIDAD"
+        "Fuerza" to "FUERZA",
+        "Resistencia" to "RESISTENCIA",
+        "Velocidad" to "VELOCIDAD"
     )
     var selectedTab by remember { mutableIntStateOf(0) }
     var vistaPlan by remember { mutableIntStateOf(0) }
@@ -791,21 +793,20 @@ fun RutinasScreen(
                                         modifier = Modifier.fillMaxWidth(),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Button(
-                                            onClick = {
-                                                val sesion = uiState.planSemanal?.semana?.find {
-                                                    it.enfoque == selectedEnfoque
-                                                }
-                                                onNavigateToEntrenamientos(
-                                                    selectedEnfoque,
-                                                    sesion?.id_plan_dia,
-                                                    sesion?.id_rutina_opo
-                                                )
-                                            },
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text("💪 Comenzar Entrenamiento")
-                                    }
+                                    PrimaryActionButton(
+                                        text = "Comenzar Entrenamiento",
+                                        icon = Icons.Filled.PlayArrow,
+                                        onClick = {
+                                            val sesion = uiState.planSemanal?.semana?.find {
+                                                it.enfoque == selectedEnfoque
+                                            }
+                                            onNavigateToEntrenamientos(
+                                                selectedEnfoque,
+                                                sesion?.id_plan_dia,
+                                                sesion?.id_rutina_opo
+                                            )
+                                        }
+                                    )
                                     OutlinedButton(
                                         onClick = onNavigateToRutinasLibres,
                                         modifier = Modifier.fillMaxWidth()

@@ -47,14 +47,11 @@ fun PostFeedCard(
                         )
                     }
                 }
-                Text(
-                    when (post.fuente) {
-                        "GPS" -> "🏃"
-                        "ENTRENO" -> "💪"
-                        "SIMULACRO" -> "🎯"
-                        else -> "📌"
-                    },
-                    style = MaterialTheme.typography.headlineSmall
+                androidx.compose.material3.Icon(
+                    imageVector = EnfoqueIcons.forActividadTipo(post.fuente),
+                    contentDescription = post.fuente,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = androidx.compose.ui.Modifier.size(28.dp)
                 )
             }
             Text(post.titulo, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
@@ -67,7 +64,7 @@ fun PostFeedCard(
                     s.duracionSec?.takeIf { it > 0 }?.let { add(GpsMetrics.formatDuration(it)) }
                     s.ritmoMedioSpkm?.takeIf { it > 0 }?.let { add("${GpsMetrics.formatPace(it)}/km") }
                     s.desnivelM?.takeIf { it > 0 }?.let { add("+${it.toInt()} m") }
-                    s.avgHrBpm?.let { add("♥ $it") }
+                    s.avgHrBpm?.let { add("$it bpm") }
                     s.kcal?.takeIf { it > 0 }?.let { add("$it kcal") }
                 }
                 if (parts.isNotEmpty()) {

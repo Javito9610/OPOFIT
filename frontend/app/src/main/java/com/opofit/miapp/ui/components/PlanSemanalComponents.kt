@@ -48,12 +48,13 @@ import com.opofit.miapp.data.responsemodels.DiaPlan
 import com.opofit.miapp.data.responsemodels.EjercicioPlan
 import com.opofit.miapp.data.responsemodels.PersonalizacionPlan
 
-fun enfoqueEmoji(enfoque: String): String = when (enfoque.uppercase()) {
-    "FUERZA" -> "💪"
-    "RESISTENCIA" -> "🏃"
-    "VELOCIDAD" -> "⚡"
-    else -> "📋"
-}
+/**
+ * Mantenido temporalmente como wrapper de compatibilidad — el método nuevo
+ * `EnfoqueIcons.forEnfoque` devuelve un Material Icon. Los callsites que
+ * todavía piden un String se eliminarán al hacer la pasada de UI premium.
+ */
+@Deprecated("Usa EnfoqueIcons.forEnfoque para obtener un ImageVector.")
+fun enfoqueEmoji(enfoque: String): String = ""
 
 fun enfoqueLabel(enfoque: String): String = when (enfoque.uppercase()) {
     "FUERZA" -> "Fuerza"
@@ -128,9 +129,12 @@ fun PlanSemanaResumenRow(
         dias.forEach { dia ->
             val abbr = dia.nombre_dia.take(3)
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    enfoqueEmoji(dia.enfoque),
-                    style = MaterialTheme.typography.titleMedium
+                Icon(
+                    imageVector = EnfoqueIcons.forEnfoque(dia.enfoque),
+                    contentDescription = enfoqueLabel(dia.enfoque),
+                    tint = if (dia.es_hoy) MaterialTheme.colorScheme.primary
+                           else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
                 )
                 Text(
                     abbr,
@@ -139,12 +143,20 @@ fun PlanSemanaResumenRow(
                     color = if (dia.es_hoy) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Text(
-                    if (dia.completada) "✓" else "·",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (dia.completada) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.outline
-                )
+                if (dia.completada) {
+                    Icon(
+                        Icons.Filled.CheckCircle,
+                        contentDescription = "Completada",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(12.dp)
+                    )
+                } else {
+                    Text(
+                        "·",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
             }
         }
     }
@@ -189,7 +201,14 @@ fun PlanDiaCard(
                     )
                     AssistChip(
                         onClick = {},
-                        label = { Text("${enfoqueEmoji(dia.enfoque)} ${enfoqueLabel(dia.enfoque)}") }
+                        leadingIcon = {
+                            Icon(
+                                imageVector = EnfoqueIcons.forEnfoque(dia.enfoque),
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        label = { Text(enfoqueLabel(dia.enfoque)) }
                     )
                     Text(
                         dia.titulo,
@@ -401,7 +420,17 @@ fun PlanSesionActivaCard(
     ElevatedCard(modifier = modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(enfoqueEmoji(enfoque), style = MaterialTheme.typography.headlineMedium)
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Icon(
+                        imageVector = EnfoqueIcons.forEnfoque(enfoque),
+                        contentDescription = enfoqueLabel(enfoque),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(8.dp).size(28.dp)
+                    )
+                }
                 Column(Modifier.weight(1f)) {
                     AssistChip(
                         onClick = {},
@@ -465,11 +494,22 @@ fun EntrenoHoyHeroCard(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimary
             )
-            Text(
-                "${enfoqueEmoji(enfoque)} ${enfoqueLabel(enfoque)}",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = EnfoqueIcons.forEnfoque(enfoque),
+                    contentDescription = null,
+                    tint = AccentOrange,
+                    modifier = Modifier.size(22.dp)
+                )
+                Text(
+                    enfoqueLabel(enfoque),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                )
+            }
             Button(
                 onClick = onEmpezar,
                 modifier = Modifier.fillMaxWidth(),

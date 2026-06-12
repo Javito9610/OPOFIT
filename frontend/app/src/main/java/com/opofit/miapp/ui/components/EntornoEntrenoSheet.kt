@@ -43,38 +43,38 @@ private data class MaterialOpcion(val id: String, val label: String)
 
 private val MATERIAL_POR_ENTORNO: Map<String, List<MaterialOpcion>> = mapOf(
     "CASA" to listOf(
-        MaterialOpcion("MANCUERNAS", "🏋️ Mancuernas"),
-        MaterialOpcion("KB", "🔔 Kettlebell"),
-        MaterialOpcion("GOMAS", "🎀 Gomas elásticas"),
-        MaterialOpcion("BARRA_DOMINADAS", "🚪 Barra de dominadas (puerta)"),
-        MaterialOpcion("TRX", "🪢 TRX / suspensión"),
-        MaterialOpcion("COMBA", "➰ Comba"),
-        MaterialOpcion("BANCO", "🪑 Banco / step"),
-        MaterialOpcion("FOAM", "🛢 Foam roller"),
-        MaterialOpcion("CAJA", "📦 Cajón pliométrico"),
-        MaterialOpcion("BICI", "🚴 Bici estática / rodillo")
+        MaterialOpcion("MANCUERNAS", "Mancuernas"),
+        MaterialOpcion("KB", "Kettlebell"),
+        MaterialOpcion("GOMAS", "Gomas elásticas"),
+        MaterialOpcion("BARRA_DOMINADAS", "Barra de dominadas (puerta)"),
+        MaterialOpcion("TRX", "TRX / suspensión"),
+        MaterialOpcion("COMBA", "Comba"),
+        MaterialOpcion("BANCO", "Banco / step"),
+        MaterialOpcion("FOAM", "Foam roller"),
+        MaterialOpcion("CAJA", "Cajón pliométrico"),
+        MaterialOpcion("BICI", "Bici estática / rodillo")
     ),
     "PISTA" to listOf(
-        MaterialOpcion("COMBA", "➰ Comba"),
-        MaterialOpcion("GOMAS", "🎀 Gomas elásticas"),
-        MaterialOpcion("KB", "🔔 Kettlebell"),
-        MaterialOpcion("MANCUERNAS", "🏋️ Mancuernas"),
-        MaterialOpcion("BARRA_DOMINADAS", "🤸 Barras del parque"),
-        MaterialOpcion("CAJA", "📦 Cajón / banco"),
-        MaterialOpcion("BICI", "🚴 Bici")
+        MaterialOpcion("COMBA", "Comba"),
+        MaterialOpcion("GOMAS", "Gomas elásticas"),
+        MaterialOpcion("KB", "Kettlebell"),
+        MaterialOpcion("MANCUERNAS", "Mancuernas"),
+        MaterialOpcion("BARRA_DOMINADAS", "Barras del parque"),
+        MaterialOpcion("CAJA", "Cajón / banco"),
+        MaterialOpcion("BICI", "Bici")
     ),
     "MIXTO" to listOf(
-        MaterialOpcion("MANCUERNAS", "🏋️ Mancuernas"),
-        MaterialOpcion("KB", "🔔 Kettlebell"),
-        MaterialOpcion("GOMAS", "🎀 Gomas elásticas"),
-        MaterialOpcion("BARRA_DOMINADAS", "🚪 Barra de dominadas"),
-        MaterialOpcion("TRX", "🪢 TRX"),
-        MaterialOpcion("COMBA", "➰ Comba"),
-        MaterialOpcion("BANCO", "🪑 Banco"),
-        MaterialOpcion("ANILLAS", "⭕ Anillas"),
-        MaterialOpcion("BARRA_OLIMPICA", "🏋️‍♀️ Barra olímpica + discos"),
-        MaterialOpcion("BICI", "🚴 Bici"),
-        MaterialOpcion("PISCINA", "🏊 Piscina")
+        MaterialOpcion("MANCUERNAS", "Mancuernas"),
+        MaterialOpcion("KB", "Kettlebell"),
+        MaterialOpcion("GOMAS", "Gomas elásticas"),
+        MaterialOpcion("BARRA_DOMINADAS", "Barra de dominadas"),
+        MaterialOpcion("TRX", "TRX"),
+        MaterialOpcion("COMBA", "Comba"),
+        MaterialOpcion("BANCO", "Banco"),
+        MaterialOpcion("ANILLAS", "Anillas"),
+        MaterialOpcion("BARRA_OLIMPICA", "Barra olímpica + discos"),
+        MaterialOpcion("BICI", "Bici"),
+        MaterialOpcion("PISCINA", "Piscina")
     )
 )
 

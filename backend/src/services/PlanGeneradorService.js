@@ -23,7 +23,7 @@ function yearWeek() {
 class PlanGeneradorService {
   static async obtenerPrefsUsuario(userId) {
     const [rows] = await db.query(
-      'SELECT entorno_entreno, plan_variacion_seed FROM usuarios WHERE id_usuario = ?',
+      'SELECT entorno_entreno, plan_variacion_seed, dias_entreno_semana FROM usuarios WHERE id_usuario = ?',
       [userId]
     );
     const u = rows[0] || {};
@@ -43,10 +43,16 @@ class PlanGeneradorService {
     } catch (_) {
       // Columna no existe aún → seguimos con peso corporal.
     }
+    let diasEntreno = 5;
+    try {
+      const n = Number(u.dias_entreno_semana);
+      if (Number.isFinite(n) && n >= 1 && n <= 7) diasEntreno = n;
+    } catch (_) { /* columna puede no existir en tests antiguos */ }
     return {
       entorno: EntornoEntreno.normalizarEntorno(u.entorno_entreno),
       seed: Number(u.plan_variacion_seed || 0),
-      materialDisponible: material
+      materialDisponible: material,
+      diasEntrenoSemana: diasEntreno
     };
   }
 
@@ -394,6 +400,7 @@ class PlanGeneradorService {
 
     const { plan, sustituciones } = await PlanGeneradorService.generarSemana(planBase, userId, entorno, seed, { nivel });
     const ultimasSesiones = await PlanGeneradorService.obtenerUltimasSesiones(userId, 3);
+    const prefsFull = await PlanGeneradorService.obtenerPrefsUsuario(userId);
     const coaching = await PlanIaService.generarCoaching({
       entorno,
       resumen: plan.personalizacion?.resumen,
@@ -403,6 +410,7 @@ class PlanGeneradorService {
       rachaDias: plan.personalizacion?.racha_dias,
       sesionesSemana: plan.personalizacion?.sesiones_semana,
       nivel: plan.personalizacion?.nivel_usado,
+      diasEntrenoSemana: plan.dias_por_semana || prefsFull.diasEntrenoSemana,
       ultimasSesiones
     });
 

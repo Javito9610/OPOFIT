@@ -191,10 +191,10 @@ fun ComunidadScreen(
                         }
                     } else if (feed.isEmpty()) {
                         EmptyState(
-                            emoji = "🏃",
                             title = "Sin publicaciones aún",
                             message = "Cuando tú o tus amigos compartáis una actividad aparecerá aquí con stats, fotos y comentarios.",
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            icon = androidx.compose.material.icons.Icons.Outlined.Forum
                         )
                     } else {
                         LazyColumn(

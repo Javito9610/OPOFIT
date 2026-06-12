@@ -30,11 +30,27 @@ class PerfilViewModel(application: Application) : AndroidViewModel(application) 
         val nuevaNota: String? = null,
         val requisitos: List<RequisitoOposicion> = emptyList(),
         val infoPruebas: List<InfoPrueba> = emptyList(),
-        val marcasUsuario: List<MarcaUsuario> = emptyList()
+        val marcasUsuario: List<MarcaUsuario> = emptyList(),
+        val diasEntrenoSemana: Int? = null
     )
 
     private val _uiState = MutableStateFlow(PerfilUiState())
     val uiState: StateFlow<PerfilUiState> = _uiState.asStateFlow()
+
+    /** Lee /api/user/perfil para obtener campos no cacheados (como días/semana). */
+    fun cargarPreferenciasPerfil() {
+        viewModelScope.launch {
+            try {
+                val token = tokenManager.getToken().first() ?: ""
+                val response = RetrofitClient.usuarioApi.obtenerPerfil("Bearer $token")
+                if (response.ok && response.data != null) {
+                    _uiState.update { it.copy(diasEntrenoSemana = response.data.diasEntrenoSemana) }
+                }
+            } catch (_: Exception) {
+                // No bloqueamos el flujo si el perfil no carga: aplicamos default 5.
+            }
+        }
+    }
 
     fun cargarRequisitos(oposicionId: Int, genero: String) {
         viewModelScope.launch {
@@ -100,7 +116,8 @@ class PerfilViewModel(application: Application) : AndroidViewModel(application) 
         oposicionId: Int?,
         nuevasMarcas: List<MarcaActualizar>,
         nombre: String? = null,
-        avatarUrl: String? = null
+        avatarUrl: String? = null,
+        diasEntrenoSemana: Int? = null
     ) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = "", guardadoExitoso = false) }
@@ -113,7 +130,8 @@ class PerfilViewModel(application: Application) : AndroidViewModel(application) 
                     oposicionId = oposicionId,
                     nuevasMarcas = nuevasMarcas,
                     nombre = nombre,
-                    avatarUrl = avatarUrl
+                    avatarUrl = avatarUrl,
+                    diasEntrenoSemana = diasEntrenoSemana
                 )
                 val response = RetrofitClient.usuarioApi.actualizarPerfil("Bearer $token", body)
                 if (response.ok) {

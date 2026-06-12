@@ -605,9 +605,13 @@ fun HomeScreen(
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
-                                        Text(
-                                            if (f.tipo == "SIMULACRO") "🎯" else "💪",
-                                            style = MaterialTheme.typography.titleMedium
+                                        Icon(
+                                            imageVector = if (f.tipo == "SIMULACRO")
+                                                androidx.compose.material.icons.Icons.Outlined.EmojiEvents
+                                            else
+                                                androidx.compose.material.icons.Icons.Outlined.FitnessCenter,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary
                                         )
                                     }
                                 }

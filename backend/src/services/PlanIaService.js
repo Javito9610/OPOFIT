@@ -80,7 +80,7 @@ const SESIONES_BLOQUES = {
 function fallbackCoaching(ctx) {
   const {
     entorno, resumen, pilaresDebiles, pilaresFuertes, dias,
-    rachaDias, sesionesSemana, nivel, ultimasSesiones
+    rachaDias, sesionesSemana, nivel, ultimasSesiones, diasEntrenoSemana
   } = ctx;
   const meta = EntornoEntreno.ENTORNO_META[entorno] || EntornoEntreno.ENTORNO_META.MIXTO;
   const partes = [
@@ -88,6 +88,9 @@ function fallbackCoaching(ctx) {
     resumen || 'Priorizamos tus puntos débiles según el baremo.'
   ];
   if (nivel) partes.push(`Nivel de referencia: ${nivel}.`);
+  if (Number(diasEntrenoSemana) >= 1 && Number(diasEntrenoSemana) <= 7) {
+    partes.push(`Microciclo de ${diasEntrenoSemana} día(s) de entreno según tu disponibilidad.`);
+  }
   if (Number(rachaDias) > 0) {
     partes.push(`Llevas ${rachaDias} día(s) de racha — mantén el ritmo.`);
   } else if (Number(sesionesSemana) > 0) {
@@ -284,6 +287,7 @@ class PlanIaService {
     const meta = EntornoEntreno.ENTORNO_META[ctx.entorno] || EntornoEntreno.ENTORNO_META.MIXTO;
     const prompt = `Usuario opositor entrena en: ${meta.etiqueta}.
 Nivel: ${ctx.nivel || 'no indicado'}
+Días de entreno/semana elegidos: ${ctx.diasEntrenoSemana ?? 'no indicado'}
 Racha actual: ${ctx.rachaDias ?? 0} días
 Sesiones esta semana: ${ctx.sesionesSemana ?? 0}
 Resumen motor: ${ctx.resumen || 'sin datos'}

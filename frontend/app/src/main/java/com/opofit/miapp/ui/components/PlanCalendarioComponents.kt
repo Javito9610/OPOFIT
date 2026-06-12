@@ -98,13 +98,12 @@ private fun CalendarioCelda(
             fontWeight = if (esHoy) FontWeight.Bold else FontWeight.Normal
         )
         if (tiene) {
-            val emoji = when (info?.enfoque) {
-                "FUERZA" -> "💪"
-                "RESISTENCIA" -> "🏃"
-                "VELOCIDAD" -> "⚡"
-                else -> "•"
-            }
-            Text(emoji, style = MaterialTheme.typography.labelSmall)
+            androidx.compose.material3.Icon(
+                imageVector = EnfoqueIcons.forEnfoque(info?.enfoque),
+                contentDescription = info?.enfoque,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(14.dp)
+            )
             if (completada) {
                 Box(
                     Modifier

@@ -8,6 +8,23 @@ const EjercicioInteligenteService = require('./EjercicioInteligenteService');
 
 const NOMBRES_DIA = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
+/**
+ * Reparte N días de entreno a lo largo de la semana de la forma más
+ * equilibrada posible: 3 → L/X/V, 4 → L/M/J/V, 5 → L-V, etc.
+ */
+function repartirEnSemana(n) {
+  const mapa = {
+    1: [3],
+    2: [1, 4],
+    3: [1, 3, 5],
+    4: [1, 2, 4, 5],
+    5: [1, 2, 3, 4, 5],
+    6: [1, 2, 3, 4, 5, 6],
+    7: [1, 2, 3, 4, 5, 6, 7]
+  };
+  return mapa[n] || [1, 2, 3, 4, 5];
+}
+
 class PlanesService {
   static resolverUnidad(notas, nombre, pilar) {
     const validas = new Set(['reps', 'rep', 'min', 's', 'seg', 'km', 'm', 'amrap']);
@@ -127,6 +144,70 @@ class PlanesService {
     return `${y}-${m}-${day}`;
   }
 
+  /**
+   * Días/semana preferidos por el usuario. Si no está fijado, asumimos 5
+   * (comportamiento legacy del banco L-V).
+   */
+  static async obtenerDiasEntrenoSemana(userId) {
+    try {
+      const [rows] = await db.query(
+        'SELECT dias_entreno_semana FROM usuarios WHERE id_usuario = ?',
+        [userId]
+      );
+      const n = Number(rows[0]?.dias_entreno_semana);
+      if (!Number.isFinite(n) || n < 1 || n > 7) return 5;
+      return n;
+    } catch (_) {
+      return 5;
+    }
+  }
+
+  /**
+   * Adapta los días del plan a la preferencia del usuario (1-7).
+   * - Prioriza los enfoques en función de los pilares débiles del usuario.
+   * - Si el usuario pide menos días que el banco trae, conserva los más
+   *   prioritarios y reparte uniformemente L-D.
+   * - Si pide más, añade un día extra de movilidad/aeróbico ligero.
+   * Devuelve una lista de "slots" {dia_semana, sesion|null}. El día con
+   *   `sesion === null` representa descanso/recuperación.
+   */
+  static adaptarDiasSemana(diasOrig, diasObjetivo, pilaresDebiles = []) {
+    const dias = Array.isArray(diasOrig) ? [...diasOrig] : [];
+    if (!dias.length || !Number.isFinite(diasObjetivo) || diasObjetivo === dias.length) {
+      return { dias, diasObjetivo: dias.length };
+    }
+    const N = Math.min(7, Math.max(1, Math.round(diasObjetivo)));
+    const PRIO_BASE = { RESISTENCIA: 0, FUERZA: 1, VELOCIDAD: 2, CORE: 3, MOVILIDAD: 4 };
+    const debilSet = new Set((pilaresDebiles || []).map((p) => String(p.pilar || p).toUpperCase()));
+    const score = (d) => {
+      const enf = String(d.enfoque || '').toUpperCase();
+      const base = PRIO_BASE[enf] ?? 5;
+      const bonus = debilSet.has(enf) ? -10 : 0;
+      return base + bonus;
+    };
+
+    if (N < dias.length) {
+      const ordenadas = [...dias].sort((a, b) => score(a) - score(b)).slice(0, N);
+      const conservadasIds = new Set(ordenadas.map((d) => d.id_plan_dia));
+      const conservadas = dias.filter((d) => conservadasIds.has(d.id_plan_dia));
+      const slots = repartirEnSemana(N);
+      const reasignadas = conservadas.map((d, idx) => ({
+        ...d,
+        dia_semana: slots[idx],
+        nombre_dia: NOMBRES_DIA[slots[idx]] || d.nombre_dia
+      }));
+      return { dias: reasignadas, diasObjetivo: N };
+    }
+
+    // Si el usuario pide MÁS días que el banco trae, no inventamos sesiones
+    // vacías (rompería registro de entreno e historial). Mantenemos las
+    // sesiones reales del banco hasta que la IA genere días extra con
+    // ejercicios de verdad.
+    if (N > dias.length) {
+      return { dias, diasObjetivo: dias.length };
+    }
+  }
+
   static async obtenerPlanSemanal(userId, idOposicion, nivel, genero, opts = {}) {
     const idPlan = await PlanesService.obtenerPlanId(idOposicion, nivel, genero);
     if (!idPlan) return null;
@@ -167,18 +248,24 @@ class PlanesService {
       });
     }
 
-    const sesionHoy = semana.find((s) => s.es_hoy) || null;
+    const diasObjetivo = await PlanesService.obtenerDiasEntrenoSemana(userId);
+    const adaptado = PlanesService.adaptarDiasSemana(semana, diasObjetivo);
+    const semanaAdaptada = adaptado.dias
+      .map((s) => ({ ...s, es_hoy: s.dia_semana === hoy }))
+      .sort((a, b) => a.dia_semana - b.dia_semana);
+
+    const sesionHoy = semanaAdaptada.find((s) => s.es_hoy) || null;
     const proxima =
-      semana.find((s) => !s.completada && s.dia_semana >= hoy) ||
-      semana.find((s) => !s.completada) ||
+      semanaAdaptada.find((s) => !s.completada && s.dia_semana >= hoy && !s.es_recuperacion) ||
+      semanaAdaptada.find((s) => !s.completada && !s.es_recuperacion) ||
       null;
 
     const planBase = {
       id_plan: idPlan,
-      dias_por_semana: dias.length,
+      dias_por_semana: adaptado.diasObjetivo,
       dia_hoy: hoy,
       nombre_dia_hoy: NOMBRES_DIA[hoy],
-      semana,
+      semana: semanaAdaptada,
       sesion_hoy: sesionHoy,
       proxima_sesion: proxima
     };

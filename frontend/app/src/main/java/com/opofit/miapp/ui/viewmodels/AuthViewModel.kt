@@ -40,7 +40,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         val altura: Double? = null,
         val imc: Double? = null,
         val modoUso: String? = null,
-        val avatarUrl: String? = null
+        val avatarUrl: String? = null,
+        val diasEntrenoSemana: Int? = null
     )
 
     private val backendService = BackendAuthService()

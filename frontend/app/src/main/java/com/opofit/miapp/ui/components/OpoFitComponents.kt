@@ -17,6 +17,7 @@ import coil.compose.AsyncImage
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -204,6 +205,41 @@ fun StatCard(
     }
 }
 
+/** CTA principal estilo Nike/Hevy: naranja, altura generosa, icono opcional. */
+@Composable
+fun PrimaryActionButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    icon: ImageVector? = null
+) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(52.dp),
+        shape = MaterialTheme.shapes.large,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = AccentOrange,
+            contentColor = Color.White,
+            disabledContainerColor = AccentOrange.copy(alpha = 0.4f),
+            disabledContentColor = Color.White.copy(alpha = 0.7f)
+        ),
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 4.dp,
+            pressedElevation = 8.dp
+        )
+    ) {
+        if (icon != null) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(22.dp))
+            androidx.compose.foundation.layout.Spacer(Modifier.width(8.dp))
+        }
+        Text(text, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+    }
+}
+
 @Composable
 fun ProfileAvatar(
     name: String,
@@ -242,23 +278,47 @@ fun ProfileAvatar(
     }
 }
 
+/**
+ * Empty state premium con icono Material en un disco con tono de superficie.
+ * El parámetro `emoji` queda como compatibilidad con código legacy y se
+ * ignora; lo importante ahora es `icon`. Si llega un emoji legacy se mapea
+ * heurísticamente a un Material Icon coherente.
+ */
 @Composable
 fun EmptyState(
-    emoji: String,
     title: String,
     message: String,
     modifier: Modifier = Modifier,
+    icon: androidx.compose.ui.graphics.vector.ImageVector =
+        androidx.compose.material.icons.Icons.Outlined.Inbox,
+    emoji: String = "",
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null
 ) {
+    val effectiveIcon = if (emoji.isNotBlank()) emojiToMaterialIcon(emoji) ?: icon else icon
     Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Text(emoji, style = MaterialTheme.typography.displayMedium)
+        androidx.compose.foundation.layout.Box(
+            modifier = Modifier
+                .size(72.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                    shape = androidx.compose.foundation.shape.CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = effectiveIcon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(36.dp)
+            )
+        }
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
@@ -275,6 +335,22 @@ fun EmptyState(
             Button(onClick = onAction) { Text(actionLabel) }
         }
     }
+}
+
+/** Mapeo defensivo emoji → Material Icon para callsites legacy. */
+private fun emojiToMaterialIcon(emoji: String): androidx.compose.ui.graphics.vector.ImageVector? = when {
+    emoji.contains("🏃") || emoji.contains("🏋") -> androidx.compose.material.icons.Icons.Outlined.FitnessCenter
+    emoji.contains("🎯") -> androidx.compose.material.icons.Icons.Outlined.EmojiEvents
+    emoji.contains("📊") || emoji.contains("📈") -> androidx.compose.material.icons.Icons.Outlined.BarChart
+    emoji.contains("📅") -> androidx.compose.material.icons.Icons.Outlined.CalendarMonth
+    emoji.contains("👥") || emoji.contains("👤") -> androidx.compose.material.icons.Icons.Outlined.People
+    emoji.contains("💬") -> androidx.compose.material.icons.Icons.AutoMirrored.Outlined.Chat
+    emoji.contains("⏱") || emoji.contains("⏰") -> androidx.compose.material.icons.Icons.Outlined.Timer
+    emoji.contains("🗺") || emoji.contains("📍") -> androidx.compose.material.icons.Icons.Outlined.LocationOn
+    emoji.contains("🔥") || emoji.contains("⚡") -> androidx.compose.material.icons.Icons.Outlined.Whatshot
+    emoji.contains("🏆") || emoji.contains("⭐") -> androidx.compose.material.icons.Icons.Outlined.EmojiEvents
+    emoji.contains("❤") -> androidx.compose.material.icons.Icons.Outlined.FavoriteBorder
+    else -> null
 }
 
 @Composable

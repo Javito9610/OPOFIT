@@ -210,7 +210,7 @@ fun RankingScreen(
                     ) { CircularProgressIndicator() }
                     error.isNotBlank() && ranking.isEmpty() -> ErrorState(error, onRetry = { cargar() })
                     ranking.isEmpty() -> EmptyState(
-                        emoji = "🏆",
+                        icon = androidx.compose.material.icons.Icons.Outlined.EmojiEvents,
                         title = "Sin clasificación aún",
                         message = "Activa tu perfil público y registra las 3 marcas oficiales para aparecer y compararte con otros opositores.",
                         modifier = Modifier.weight(1f),

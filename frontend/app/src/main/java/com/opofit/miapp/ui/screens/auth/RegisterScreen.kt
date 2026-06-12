@@ -168,7 +168,7 @@ fun RegisterScreen(
                     .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
-                Text("🏋️", fontSize = 36.sp)
+                com.opofit.miapp.ui.components.OpoFitLogo(size = 48.dp)
             }
 
             Spacer(modifier = Modifier.height(12.dp))

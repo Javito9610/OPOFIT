@@ -129,9 +129,9 @@ fun ComunidadGruposTab(
         if (grupos.isEmpty()) {
             item {
                 EmptyState(
-                    "💬",
-                    "Sin grupos aún",
-                    "Crea el primero o únete cuando aparezcan grupos de tu comunidad."
+                    title = "Sin grupos aún",
+                    message = "Crea el primero o únete cuando aparezcan grupos de tu comunidad.",
+                    icon = androidx.compose.material.icons.Icons.AutoMirrored.Outlined.Chat
                 )
             }
         }

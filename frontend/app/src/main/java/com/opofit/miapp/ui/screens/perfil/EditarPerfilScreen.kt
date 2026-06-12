@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Card
@@ -33,6 +34,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -82,6 +85,11 @@ fun EditarPerfilScreen(
     var subiendoAvatar by remember { mutableStateOf(false) }
     var peso by remember { mutableStateOf("") }
     var altura by remember { mutableStateOf("") }
+    var diasSemana by remember { mutableStateOf(5) }
+    LaunchedEffect(Unit) { perfilViewModel.cargarPreferenciasPerfil() }
+    LaunchedEffect(perfilState.diasEntrenoSemana) {
+        perfilState.diasEntrenoSemana?.let { diasSemana = it.coerceIn(1, 7) }
+    }
 
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
@@ -283,6 +291,79 @@ fun EditarPerfilScreen(
                 }
             }
 
+            item {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Plan de entrenamiento",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            item {
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.CalendarMonth,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "Días de entreno por semana",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    "La IA reparte los enfoques en los días que elijas y deja el resto como descanso o movilidad.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Text(
+                                "$diasSemana",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Slider(
+                            value = diasSemana.toFloat(),
+                            onValueChange = { diasSemana = it.toInt().coerceIn(1, 7) },
+                            valueRange = 1f..7f,
+                            steps = 5,
+                            colors = SliderDefaults.colors(
+                                thumbColor = MaterialTheme.colorScheme.primary,
+                                activeTrackColor = MaterialTheme.colorScheme.primary
+                            )
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            for (n in 1..7) {
+                                Text(
+                                    "$n",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (n == diasSemana) MaterialTheme.colorScheme.primary
+                                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = if (n == diasSemana) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             if (!esFitness) {
             item {
                 Spacer(modifier = Modifier.height(4.dp))
@@ -406,7 +487,8 @@ fun EditarPerfilScreen(
                             }
                             perfilViewModel.actualizarPerfil(
                                 userId, p, a, oposicionId, nuevasMarcas,
-                                nombre = nombre.trim().ifBlank { null }
+                                nombre = nombre.trim().ifBlank { null },
+                                diasEntrenoSemana = diasSemana
                             )
                         },
                         modifier = Modifier.fillMaxWidth()

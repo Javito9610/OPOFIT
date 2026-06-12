@@ -153,7 +153,7 @@ describe('Auditoría E2E: plan → historial → GPS', () => {
       .set(auth())
       .send({
         tipoRutina: 'OPO',
-        idRutina: hoy.rutinas_opo_id || 1,
+        idRutina: hoy.id_rutina_opo || hoy.rutinas_opo_id || 1,
         duracion: 45,
         ejercicios
       });

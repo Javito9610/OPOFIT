@@ -106,6 +106,7 @@ function makeUser(overrides = {}) {
     recordatorio_entreno_activo: 0,
     entorno_entreno: null,
     plan_variacion_seed: 0,
+    dias_entreno_semana: 5,
     avatar_url: null,
     modo_uso: 'OPOSITOR',
     ubicacion_lat: null,
@@ -147,12 +148,25 @@ function query(sql, params = []) {
     const u = state.usuarios.find((x) => x.id_usuario === Number(params[0]));
     return Promise.resolve([u ? [{ genero: u.genero, peso: u.peso, altura: u.altura }] : [], []]);
   }
-  if (s.startsWith('select entorno_entreno, plan_variacion_seed from usuarios where id_usuario')) {
+  if (s.startsWith('select entorno_entreno, plan_variacion_seed')) {
     const u = state.usuarios.find((x) => x.id_usuario === Number(params[0]));
     return Promise.resolve([
-      u ? [{ entorno_entreno: u.entorno_entreno, plan_variacion_seed: u.plan_variacion_seed || 0 }] : [],
+      u ? [{
+        entorno_entreno: u.entorno_entreno,
+        plan_variacion_seed: u.plan_variacion_seed || 0,
+        dias_entreno_semana: u.dias_entreno_semana ?? 5
+      }] : [],
       []
     ]);
+  }
+  if (s.startsWith('select dias_entreno_semana from usuarios where id_usuario')) {
+    const u = state.usuarios.find((x) => x.id_usuario === Number(params[0]));
+    return Promise.resolve([u ? [{ dias_entreno_semana: u.dias_entreno_semana ?? 5 }] : [], []]);
+  }
+  if (s.startsWith('update usuarios set dias_entreno_semana = ?')) {
+    const u = state.usuarios.find((x) => x.id_usuario === Number(params[1]));
+    if (u) u.dias_entreno_semana = Number(params[0]);
+    return Promise.resolve([{ affectedRows: u ? 1 : 0 }, []]);
   }
   if (s.startsWith('update usuarios set entorno_entreno = ? where id_usuario')) {
     const u = state.usuarios.find((x) => x.id_usuario === Number(params[1]));
@@ -215,7 +229,8 @@ function query(sql, params = []) {
       modo_uso: u.modo_uso,
       oposicionId: u.oposiciones_id_oposicion,
       oposicionNombre: o?.nombre || null,
-      ubicacion_visible: u.ubicacion_visible
+      ubicacion_visible: u.ubicacion_visible,
+      dias_entreno_semana: u.dias_entreno_semana ?? 5
     }], []]);
   }
   if (s.startsWith('update usuarios set nombre = ?')) {

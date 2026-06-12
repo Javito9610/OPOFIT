@@ -347,6 +347,17 @@ class DbMigrationService {
         'INT NOT NULL DEFAULT 0'
       );
 
+      // v9-doctorado: el usuario decide cuántos días/semana quiere entrenar.
+      // La IA adapta el plan: si elige 3, mantenemos los 3 enfoques más
+      // críticos para su perfil y los repartimos L/X/V; si elige 6, añadimos
+      // un día extra de movilidad/aeróbico ligero. Default 5 = mantiene
+      // comportamiento legacy del banco de planes (L-V).
+      await DbMigrationService.addColumnIfMissing(
+        'usuarios',
+        'dias_entreno_semana',
+        'TINYINT NOT NULL DEFAULT 5'
+      );
+
       if (!(await DbMigrationService.tableExists('planes_generados_cache'))) {
         await db.query(`
           CREATE TABLE planes_generados_cache (

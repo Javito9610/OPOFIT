@@ -105,9 +105,9 @@ fun ComunidadCercaTab(
         if (usuarios.isEmpty()) {
             item {
                 EmptyState(
-                    "📍",
-                    "Nadie cerca por ahora",
-                    "Activa tu visibilidad y vuelve a buscar. En zonas con más usuarios verás opositores y personas fitness."
+                    title = "Nadie cerca por ahora",
+                    message = "Activa tu visibilidad y vuelve a buscar. En zonas con más usuarios verás opositores y personas fitness.",
+                    icon = androidx.compose.material.icons.Icons.Outlined.LocationOn
                 )
             }
         }
