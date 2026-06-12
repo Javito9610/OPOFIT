@@ -10,11 +10,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -27,13 +26,20 @@ val SplashNavy = Color(0xFF1B2A4A)
 @Composable
 fun OpoFitSplashScreen() {
     val view = LocalView.current
-    SideEffect {
+    // Forzamos iconos claros (sobre navy) mientras dura el splash, y los
+    // restauramos al modo claro normal cuando se desmonta. Sin esto, la app
+    // se quedaba con la barra de estado/gestos con apariencia de splash
+    // después de terminar el arranque.
+    DisposableEffect(Unit) {
         val window = (view.context as Activity).window
-        window.statusBarColor = SplashNavy.toArgb()
-        window.navigationBarColor = SplashNavy.toArgb()
-        WindowCompat.getInsetsController(window, view).apply {
-            isAppearanceLightStatusBars = false
-            isAppearanceLightNavigationBars = false
+        val controller = WindowCompat.getInsetsController(window, view)
+        val prevLightStatus = controller.isAppearanceLightStatusBars
+        val prevLightNav = controller.isAppearanceLightNavigationBars
+        controller.isAppearanceLightStatusBars = false
+        controller.isAppearanceLightNavigationBars = false
+        onDispose {
+            controller.isAppearanceLightStatusBars = prevLightStatus
+            controller.isAppearanceLightNavigationBars = prevLightNav
         }
     }
 

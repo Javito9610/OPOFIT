@@ -704,18 +704,18 @@ fun RutinasScreen(
                                     }
                                 }
                                 item {
-                                    ScrollableTabRow(
-                                        selectedTabIndex = selectedTab,
+                                ScrollableTabRow(
+                                    selectedTabIndex = selectedTab,
                                         edgePadding = 0.dp
-                                    ) {
-                                        enfoqueTabs.forEachIndexed { index, (label, _) ->
-                                            Tab(
-                                                selected = selectedTab == index,
-                                                onClick = { selectedTab = index },
-                                                text = { Text(label) }
-                                            )
-                                        }
+                                ) {
+                                    enfoqueTabs.forEachIndexed { index, (label, _) ->
+                                        Tab(
+                                            selected = selectedTab == index,
+                                            onClick = { selectedTab = index },
+                                            text = { Text(label) }
+                                        )
                                     }
+                                }
                                 }
                                     if (filteredBlocks.isEmpty()) {
                                         item {
@@ -787,11 +787,11 @@ fun RutinasScreen(
                                         }
                                     }
                                 item {
-                                    Column(
+                                Column(
                                         modifier = Modifier.fillMaxWidth(),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Button(
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Button(
                                             onClick = {
                                                 val sesion = uiState.planSemanal?.semana?.find {
                                                     it.enfoque == selectedEnfoque
@@ -802,20 +802,20 @@ fun RutinasScreen(
                                                     sesion?.id_rutina_opo
                                                 )
                                             },
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Text("💪 Comenzar Entrenamiento")
-                                        }
-                                        OutlinedButton(
-                                            onClick = onNavigateToRutinasLibres,
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Text("Ver rutinas libres")
-                                        }
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("💪 Comenzar Entrenamiento")
+                                    }
+                                    OutlinedButton(
+                                        onClick = onNavigateToRutinasLibres,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("Ver rutinas libres")
                                     }
                                 }
                             }
                         }
+                    }
                 }
             }
         }

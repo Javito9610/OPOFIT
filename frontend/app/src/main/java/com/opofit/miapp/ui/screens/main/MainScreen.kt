@@ -292,18 +292,18 @@ fun MainScreen(
         }
     ) {
         Scaffold(
-            // contentWindowInsets a 0 para que el contenido se pinte EDGE-TO-EDGE
-            // y el propio NavigationBar absorba el inset de los gestos. Sin esto
-            // quedaba un trozo blanco entre el contenido y la barra de gestos
-            // (reportado por el usuario).
+            // El contenido se pinta edge-to-edge; el NavigationBar absorbe el
+            // inset de la barra de gestos. Sin esto quedaba un trozo blanco
+            // entre el contenido y la barra de gestos.
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             bottomBar = {
                 NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 8.dp,
+                    // Usamos surfaceContainer para que la barra tenga un tono
+                    // limpio y sin franja blanca al pegarse al inset de gestos.
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    tonalElevation = 0.dp,
                     // El NavigationBar respeta el inset de la barra de gestos
-                    // de Android (botón blanco) extendiendo SU container hasta
-                    // el borde inferior real de la pantalla.
+                    // de Android extendiendo SU container hasta el borde inferior real.
                     windowInsets = androidx.compose.material3.NavigationBarDefaults.windowInsets
                 ) {
                     tabs.forEach { tab ->

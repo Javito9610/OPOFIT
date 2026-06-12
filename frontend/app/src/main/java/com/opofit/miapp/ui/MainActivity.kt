@@ -2,9 +2,11 @@ package com.opofit.miapp.ui
 
 import android.Manifest
 import android.content.Intent
+import android.graphics.Color as AndroidColor
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -41,7 +43,21 @@ class MainActivity : ComponentActivity() {
         installSplashScreen().setKeepOnScreenCondition { keepSystemSplash }
         super.onCreate(savedInstanceState)
 
-        enableEdgeToEdge()
+        // Sistema 100% transparente sin scrim. Si no se pasa SystemBarStyle
+        // explícito, enableEdgeToEdge() añade un velo blanco translúcido sobre
+        // la barra de gestos cuando el contenido es claro (la "franja blanca"
+        // reportada). Forzamos transparente puro y dejamos que la app dibuje
+        // edge-to-edge sin retoques del OS.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.auto(
+                AndroidColor.TRANSPARENT,
+                AndroidColor.TRANSPARENT
+            ),
+            navigationBarStyle = SystemBarStyle.auto(
+                AndroidColor.TRANSPARENT,
+                AndroidColor.TRANSPARENT
+            )
+        )
         setContent {
             val darkMode = TokenManager(this).getDarkMode().collectAsState(initial = false).value
             MiAppTheme(darkTheme = darkMode) {
