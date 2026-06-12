@@ -4,11 +4,11 @@ const db = require('../config/db');
 const EntornoEntreno = require('../utils/EntornoEntreno');
 const EjercicioMetadataService = require('./EjercicioMetadataService');
 
-// v9: material improvisado (mochila lastrada, garrafas, botellas, sillas)
-// restringido a CASA. Antes "Peso muerto con mochila" podía aparecer en un
-// plan de GIMNASIO, donde hay barras y discos de verdad. 7 ejercicios
-// corregidos + filtro defensivo en EntornoEntreno. Total ~1036 ejercicios.
-const BANCO_VERSION = 9;
+// v10: nombres y unidades coherentes. Renombrado "Conos en T 4 vueltas" →
+// "Conos en T" (el número fundido en el nombre confundía la prescripción
+// generada). Score de agilidad pasa a "vueltas" (no "reps"/"m" sin sentido).
+// Total ~1036 ejercicios.
+const BANCO_VERSION = 10;
 
 function resolveJsonPath() {
   const candidates = [

@@ -35,8 +35,8 @@ describe('EjerciciosBanco500Service', () => {
   });
 
   test('seedBanco500 omite si ya está sembrado y hay >= 500', async () => {
-    // Debe coincidir con BANCO_VERSION (actual: 9) para entrar en la rama de skip.
-    const BANCO_VERSION_ACTUAL = '9';
+    // Debe coincidir con BANCO_VERSION (actual: 10) para entrar en la rama de skip.
+    const BANCO_VERSION_ACTUAL = '10';
     db.query
       .mockResolvedValueOnce([[{ valor: BANCO_VERSION_ACTUAL }]])
       .mockResolvedValueOnce([[{ n: 1036 }]]);

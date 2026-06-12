@@ -485,9 +485,22 @@ fun HomeScreen(
                                                 }
                                             }
                                             uiState.noticiasRss.forEach { noticia ->
+                                                val context = androidx.compose.ui.platform.LocalContext.current
                                                 Row(
                                                     verticalAlignment = Alignment.Top,
-                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                                    // Click directo: abre el enlace si lo trae;
+                                                    // si no, lleva a la pantalla de Info.
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .clickable {
+                                                            if (noticia.enlace.isNotBlank()) {
+                                                                com.opofit.miapp.utils.UrlOpener.open(context, noticia.enlace)
+                                                            } else {
+                                                                onNavigateToInfoOposicion()
+                                                            }
+                                                        }
+                                                        .padding(vertical = 2.dp)
                                                 ) {
                                                     if (noticia.urgente) {
                                                         AssistChip(

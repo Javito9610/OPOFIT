@@ -15,6 +15,8 @@ object EntrenoValidation {
         "reps", "rep" -> "reps"
         "km" -> "km"
         "m", "metros" -> "m"
+        "vueltas", "vuelta" -> "vueltas"
+        "rondas", "ronda" -> "rondas"
         else -> unidad
     }
 

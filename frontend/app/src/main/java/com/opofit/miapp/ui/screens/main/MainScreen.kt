@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -291,10 +292,19 @@ fun MainScreen(
         }
     ) {
         Scaffold(
+            // contentWindowInsets a 0 para que el contenido se pinte EDGE-TO-EDGE
+            // y el propio NavigationBar absorba el inset de los gestos. Sin esto
+            // quedaba un trozo blanco entre el contenido y la barra de gestos
+            // (reportado por el usuario).
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             bottomBar = {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 8.dp
+                    tonalElevation = 8.dp,
+                    // El NavigationBar respeta el inset de la barra de gestos
+                    // de Android (botón blanco) extendiendo SU container hasta
+                    // el borde inferior real de la pantalla.
+                    windowInsets = androidx.compose.material3.NavigationBarDefaults.windowInsets
                 ) {
                     tabs.forEach { tab ->
                         val selected = currentDestination?.hierarchy?.any { it.route == tab.route } == true

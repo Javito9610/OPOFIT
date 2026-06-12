@@ -9,6 +9,9 @@ const PlanIaService = require('./PlanIaService');
 const PlanPersonalizadorService = require('./PlanPersonalizadorService');
 const EjercicioInteligenteService = require('./EjercicioInteligenteService');
 const RutinaService = require('./RutinasService');
+const Periodizacion = require('./PeriodizacionService');
+const Calentamiento = require('./CalentamientoService');
+const Patron = require('./PatronMovimientoService');
 
 function yearWeek() {
   const d = new Date();
@@ -169,12 +172,12 @@ class PlanGeneradorService {
     return { titulo, descripcion };
   }
 
-  static mapearEjercicio(ej, sustituto, entorno, nivel) {
+  static mapearEjercicio(ej, sustituto, entorno, nivel, weekIdx = 1, posicion = 1) {
     const base = EjercicioMetadataService.enriquecerEjercicio(ej);
     if (!sustituto) {
       return EjercicioInteligenteService.aplicarInteligencia(
         { ...base, entorno_aplicado: entorno, sustituido: false, nivel },
-        { seed: ej.orden || 1, nivel }
+        { seed: ej.orden || 1, nivel, weekIdx, posicion }
       );
     }
     const grupo = EjercicioMetadataService.inferirGrupoMuscular(
@@ -206,7 +209,7 @@ class PlanGeneradorService {
     });
     return EjercicioInteligenteService.aplicarInteligencia(
       { ...mapped, nivel: nivel ?? mapped.nivel },
-      { seed: ej.orden || 0, nivel }
+      { seed: ej.orden || 0, nivel, weekIdx, posicion }
     );
   }
 
@@ -221,9 +224,16 @@ class PlanGeneradorService {
     let sustituciones = 0;
     let idx = 0;
 
+    // Semana del mesociclo 3:1 (Israetel / Helms). El seed del usuario
+    // desplaza el ciclo: distintos usuarios viven semanas distintas, y al
+    // pedir "regenerar" se salta a la siguiente fase.
+    const semanaMeso = Periodizacion.plantillaSemana(
+      Periodizacion.semanaDelMesociclo(seed || 0)
+    );
+
     const semana = (planBase.semana || []).map((dia) => {
       if (soloDiaId != null && dia.id_plan_dia !== soloDiaId) return dia;
-      const ejercicios = (dia.ejercicios || []).map((ej) => {
+      const ejercicios = (dia.ejercicios || []).map((ej, posicionEnDia) => {
         idx += 1;
         const sust = PlanGeneradorService.buscarSustituto(
           { ...ej, pilar: ej.pilar || dia.enfoque },
@@ -233,10 +243,33 @@ class PlanGeneradorService {
           seed
         );
         if (sust) sustituciones += 1;
-        return PlanGeneradorService.mapearEjercicio(ej, sust, entorno, nivel);
+        return PlanGeneradorService.mapearEjercicio(
+          ej,
+          sust,
+          entorno,
+          nivel,
+          semanaMeso.idx,
+          posicionEnDia + 1
+        );
       });
       const resumen = PlanGeneradorService.resumenDiaDesdeEjercicios(dia, ejercicios);
-      return { ...dia, ejercicios, titulo: resumen.titulo, descripcion: resumen.descripcion };
+      // Warmup + cooldown específicos por enfoque del día.
+      // Balance push/pull: si algún día queda raro, lo dejamos como warning
+      // (el front puede pintar un aviso pequeño).
+      const calentamiento = Calentamiento.calentamiento(dia.enfoque);
+      const vuelta_a_calma = Calentamiento.vueltaACalma(dia.enfoque);
+      const balance = Patron.auditarBalance(
+        ejercicios.map((e) => Patron.clasificar(e))
+      );
+      return {
+        ...dia,
+        ejercicios,
+        titulo: resumen.titulo,
+        descripcion: resumen.descripcion,
+        calentamiento,
+        vuelta_a_calma,
+        balance_warnings: balance.warnings
+      };
     });
 
     const hoy = planBase.dia_hoy;
@@ -247,7 +280,23 @@ class PlanGeneradorService {
       null;
 
     return {
-      plan: { ...planBase, semana, sesion_hoy, proxima_sesion: proxima },
+      plan: {
+        ...planBase,
+        semana,
+        sesion_hoy,
+        proxima_sesion: proxima,
+        // Periodización: el front pinta una etiqueta "Semana 2/4 · Carga" o
+        // "Semana 4/4 · Deload" para que el usuario entienda la fase.
+        periodizacion: {
+          semana_idx: semanaMeso.idx,
+          fase: semanaMeso.fase,
+          fase_label: semanaMeso.label,
+          volumen_relativo: semanaMeso.vol,
+          intensidad_relativa: semanaMeso.int,
+          rpe_base: semanaMeso.rpe_base,
+          deload: semanaMeso.deload
+        }
+      },
       sustituciones
     };
   }

@@ -42,7 +42,42 @@ data class EjercicioPlan(
     // estos campos para mostrar el input correcto (timer/contador rondas).
     val modalidad: String? = null,
     val score_tipo: String? = null,
-    val time_cap_seg: Int? = null
+    val time_cap_seg: Int? = null,
+    // v10-pro: prescripción profesional (tempo, RPE, patrón, fase mesociclo,
+    // regresión/progresión). Todo opcional, retrocompatible con BD legacy.
+    val tempo: String? = null,
+    val rpe_objetivo: Int? = null,
+    val rango_rm: String? = null,
+    val nota_carga: String? = null,
+    val patron_movimiento: String? = null,
+    val objetivo: String? = null,
+    val fase_mesociclo: String? = null,
+    val fase_label: String? = null,
+    val deload: Boolean = false,
+    val regresion: AlternativaEjercicio? = null,
+    val progresion: AlternativaEjercicio? = null
+)
+
+data class AlternativaEjercicio(
+    val nombre: String,
+    val motivo: String? = null
+)
+
+data class BloqueCalentamiento(
+    val rampa: String? = null,        // R/A/M/P solo en warmup
+    val titulo: String,
+    val detalle: String? = null,
+    val duracion_s: Int = 0
+)
+
+data class PeriodizacionInfo(
+    val semana_idx: Int,
+    val fase: String,
+    val fase_label: String,
+    val volumen_relativo: Double = 1.0,
+    val intensidad_relativa: Double = 1.0,
+    val rpe_base: Int = 6,
+    val deload: Boolean = false
 )
 
 data class PilarResumen(
@@ -110,7 +145,11 @@ data class DiaPlan(
     val id_rutina_opo: Int,
     val es_hoy: Boolean = false,
     val completada: Boolean = false,
-    val ejercicios: List<EjercicioPlan> = emptyList()
+    val ejercicios: List<EjercicioPlan> = emptyList(),
+    // v10-pro: warmup RAMP + cooldown auto, balance de patrones.
+    val calentamiento: List<BloqueCalentamiento> = emptyList(),
+    val vuelta_a_calma: List<BloqueCalentamiento> = emptyList(),
+    val balance_warnings: List<String> = emptyList()
 )
 
 data class DiaCalendario(
@@ -145,7 +184,9 @@ data class PlanSemanal(
     val semana: List<DiaPlan> = emptyList(),
     val sesion_hoy: DiaPlan? = null,
     val proxima_sesion: DiaPlan? = null,
-    val personalizacion: PersonalizacionPlan? = null
+    val personalizacion: PersonalizacionPlan? = null,
+    // v10-pro: fase del mesociclo 3:1 (MEV→MAV→MRV→DELOAD) para etiqueta en cabecera.
+    val periodizacion: PeriodizacionInfo? = null
 )
 
 data class RutinasData(

@@ -52,10 +52,39 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     try {
                         val rss = RetrofitClient.oposicionesApi.getNoticiasRss("Bearer $token", oposicionId)
                         if (rss.ok) {
+                            // MISMO orden y filtro que Info para que coincidan
+                            // las 3 destacadas en Home con las primeras de Info.
+                            // Algoritmo: descarta >5 días, ordena por fecha DESC,
+                            // urgente como desempate. Sin esto Home priorizaba
+                            // por "relevancia" y descordinaba con Info.
+                            val ahora = System.currentTimeMillis()
+                            val cincoDiasMs = 5L * 24 * 60 * 60 * 1000
+                            val formatos = listOf(
+                                "yyyy-MM-dd'T'HH:mm:ss",
+                                "yyyy-MM-dd HH:mm:ss",
+                                "yyyy-MM-dd",
+                                "EEE, d MMM yyyy HH:mm:ss z"
+                            )
+                            fun parseFecha(s: String): Long {
+                                if (s.isBlank()) return Long.MAX_VALUE
+                                for (f in formatos) {
+                                    try {
+                                        val sdf = java.text.SimpleDateFormat(f, java.util.Locale.ENGLISH)
+                                        return sdf.parse(s)?.time ?: continue
+                                    } catch (_: Exception) {}
+                                }
+                                return Long.MAX_VALUE
+                            }
                             noticias = rss.data.orEmpty()
+                                .filter {
+                                    // Mantén las de últimos 5 días (fijas en Home)
+                                    // o las que no se sepa la fecha.
+                                    val t = parseFecha(it.fecha)
+                                    t == Long.MAX_VALUE || ahora - t <= cincoDiasMs
+                                }
                                 .sortedWith(
-                                    compareByDescending<NoticiaRss> { it.urgente }
-                                        .thenByDescending { it.relevancia == "alta" }
+                                    compareByDescending<NoticiaRss> { parseFecha(it.fecha) }
+                                        .thenByDescending { it.urgente }
                                 )
                                 .take(3)
                         }

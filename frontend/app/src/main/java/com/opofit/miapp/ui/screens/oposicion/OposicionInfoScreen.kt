@@ -411,13 +411,12 @@ private fun NoticiasTab(
             text.contains("ministerio del interior")
     }
 
-    // Auto-purga: cualquier noticia con más de 60 días se descarta silenciosamente.
-    // Antes la convocatoria de enero (4-5 meses) se quedaba fija arriba con la
-    // estrellita ⭐ aunque ya no era novedad. El usuario lo reportaba como
-    // "están ahí fijadas y no deberían estarlo".
+    // Auto-purga: las noticias caducan a los 5 días (alineado con el Home).
+    // El usuario pidió "fijadas 5 días o hasta que salga una nueva". Así Home
+    // e Info muestran lo mismo: lo del último mini-ciclo de novedades.
     val rssOrdenadas = remember(noticiasRss) {
         val ahora = System.currentTimeMillis()
-        val sieteDiasMs = 60L * 24L * 60L * 60L * 1000L
+        val sieteDiasMs = 5L * 24L * 60L * 60L * 1000L
         // Parser robusto: si la fecha viene en cualquier formato (ISO, YYYY-MM-DD,
         // RFC1123…) lo intentamos; si no se puede, lo dejamos pasar como reciente.
         fun parseFecha(s: String): Long {

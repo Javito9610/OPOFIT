@@ -127,6 +127,30 @@ describe('MapasService', () => {
       expect(res[0].nombre).toBe('AltaFit');
     });
 
+    test('CROSSFIT pilla gyms con "Box" o "CrossFit" en el nombre (caso El Espinar / Guadarrama)', async () => {
+      // Boxes reales de la sierra de Madrid que solo tienen amenity=gym.
+      // El usuario reportaba que no aparecían y exigía que sí lo hicieran.
+      global.fetch = jest.fn().mockResolvedValue(
+        fakeOverpass([
+          { id: 100, lat: 40.68, lon: -4.24, tags: { name: 'CrossFit El Espinar', amenity: 'gym' } },
+          { id: 101, lat: 40.67, lon: -4.09, tags: { name: 'Raiz Box', amenity: 'gym' } },
+          { id: 102, lat: 40.68, lon: -3.80, tags: { name: 'Colmenar Box', amenity: 'gym' } },
+          { id: 103, lat: 40.70, lon: -4.00, tags: { name: 'Gimnasio Boxeo La Roca', amenity: 'gym' } },
+          { id: 104, lat: 40.69, lon: -4.10, tags: { name: 'Brooklyn Fitboxing', amenity: 'gym' } },
+          { id: 105, lat: 40.71, lon: -4.05, tags: { name: 'Holiday Gym', amenity: 'gym' } }
+        ])
+      );
+      const res = await MapasService.buscarLugares(40.682, -4.241, 'CROSSFIT');
+      const nombres = res.map((r) => r.nombre);
+      expect(nombres).toContain('CrossFit El Espinar');
+      expect(nombres).toContain('Raiz Box');
+      expect(nombres).toContain('Colmenar Box');
+      // Los falsos positivos quedan fuera.
+      expect(nombres).not.toContain('Gimnasio Boxeo La Roca');
+      expect(nombres).not.toContain('Brooklyn Fitboxing');
+      expect(nombres).not.toContain('Holiday Gym');
+    });
+
     test('CROSSFIT acepta tag explícito sport=crossfit pero descarta yoga', async () => {
       global.fetch = jest.fn().mockResolvedValue(
         fakeOverpass([

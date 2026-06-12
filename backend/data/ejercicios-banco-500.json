@@ -4183,15 +4183,15 @@
       "score_tipo": "reps"
     },
     {
-      "nombre": "Conos en T 4 vueltas",
+      "nombre": "Conos en T",
       "pilar": "VELOCIDAD",
       "grupo_muscular": "Agilidad",
       "equipamiento": "Conos",
-      "instrucciones_tecnicas": "Cambios 90° y 180°.",
+      "instrucciones_tecnicas": "Recorre el patrón conos en t completo en cada vuelta. Cadera baja, pies rápidos, cambios de dirección con control. Anota cuántas vueltas completas haces.",
       "entornos": "GYM,CASA,CALISTENIA,PISTA,CROSSFIT,MIXTO",
       "tipo_ilustracion": "AGILITY",
       "modalidad": "calistenia",
-      "score_tipo": "reps"
+      "score_tipo": "vueltas"
     },
     {
       "nombre": "Conos en zigzag 6x",

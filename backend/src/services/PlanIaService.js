@@ -12,6 +12,9 @@
  * pilometría progresiva NSCA, factor por pilar débil, etc.).
  */
 const EntornoEntreno = require('../utils/EntornoEntreno');
+const Calentamiento = require('./CalentamientoService');
+const Patron = require('./PatronMovimientoService');
+const Periodizacion = require('./PeriodizacionService');
 
 // Traducción material código → descripción humana para el prompt de la IA.
 const MATERIAL_LABEL = {
@@ -239,8 +242,32 @@ function fallbackSesion(ctx) {
       ia_origen: 'reglas'
     });
   }
+  // Bloques pro de calentamiento (RAMP) y vuelta a la calma.
+  // Añadidos siempre: incluso un fallback por reglas merece warmup específico.
+  const calentamiento = Calentamiento.calentamiento(tpl.pilar);
+  const vuelta_a_calma = Calentamiento.vueltaACalma(tpl.pilar);
+  // Semana del mesociclo a partir del seed del usuario: cada usuario tiene
+  // su propio ciclo 3:1 desplazado por su seed.
+  const semana = Periodizacion.plantillaSemana(
+    Periodizacion.semanaDelMesociclo(ctx.seed || 0)
+  );
+  // Auditoría de balance push/pull: si el fallback genera 3 push y 0 pull
+  // exponemos el aviso en la propia sesión (los logs y el front lo verán).
+  const balance = Patron.auditarBalance(ejercicios.map((e) => Patron.clasificar(e)));
+
   return {
-    sesion: { enfoque: tpl.pilar, refuerzo_debil: tpl.refuerzo, ejercicios },
+    sesion: {
+      enfoque: tpl.pilar,
+      refuerzo_debil: tpl.refuerzo,
+      ejercicios,
+      calentamiento,
+      vuelta_a_calma,
+      fase_mesociclo: semana.fase,
+      fase_label: semana.label,
+      semana_idx: semana.idx,
+      deload: semana.deload,
+      balance_warnings: balance.warnings
+    },
     fuente: 'reglas'
   };
 }
@@ -341,6 +368,13 @@ RESTRICCIONES DURAS:
   * Resistencia intervalos: 60-120s
 - Empieza por el ejercicio MÁS DEMANDANTE del pilar principal (multiarticular pesado).
 - Acaba con ejercicios accesorios o core.
+- BALANCE PUSH/PULL (Vladimir Janda, Eric Cressey): si propones 2 empujes,
+  pon al menos 1 tirón. Si propones SQUAT, pon también HINGE. Sin balance →
+  hombros rotos a los 3 meses. Esta es regla DURA, no opcional.
+- TEMPO: el primer ejercicio pesado lleva tempo controlado (3-1-X-0 o
+  3-0-X-0). Accesorios 2-0-1-0. No prescribas tempo en HIIT/sprints.
+- RPE objetivo por bloque: fuerza 7-9, hipertrofia 7-8, resistencia 5-7,
+  pliometría 6-7 (calidad, no fatiga).
 - WODs / CrossFit / Calistenia: si el usuario tiene material apropiado y nivel
   intermedio o superior, puedes proponer 1 WOD benchmark (AMRAP, EMOM, For Time,
   Tabata) como el "ejercicio principal" — incluye time_cap en lugar de series.
@@ -356,7 +390,24 @@ FORMATO RESPUESTA: SOLO JSON válido (sin markdown, sin texto antes/después).`;
 
     // Material disponible del usuario: lo usa la IA para filtrar.
     const materialHumano = mapearMaterialAHumano(ctx.materialDisponible);
-    const prompt = `CONTEXTO DEL ASPIRANTE:
+    // Periodización: semana del mesociclo 3:1. La IA usa esto para ajustar
+    // volumen e intensidad (peak en MRV, descarga en DELOAD).
+    const semanaMeso = Periodizacion.plantillaSemana(
+      Periodizacion.semanaDelMesociclo(ctx.seed || 0)
+    );
+    const fasePromptLines = semanaMeso.deload
+      ? `FASE DEL MESOCICLO: SEMANA ${semanaMeso.idx}/4 — DELOAD.
+- Reduce 30-40% el volumen (menos series).
+- Baja la intensidad ~10% (RPE 5-6).
+- Sin pliometría máxima, sin sprints al 100%, sin AMRAPs duros.
+- Objetivo: supercompensación, dejar al usuario fresco para el siguiente ciclo.`
+      : `FASE DEL MESOCICLO: SEMANA ${semanaMeso.idx}/4 — ${semanaMeso.label.toUpperCase()}.
+- Volumen relativo: ${(semanaMeso.vol * 100).toFixed(0)}% (base = 100%).
+- Intensidad relativa: ${(semanaMeso.int * 100).toFixed(0)}%.
+- RPE base: ${semanaMeso.rpe_base}/10. Progresión SEMANAL +5-10% volumen vs semana anterior.`;
+    const prompt = `${fasePromptLines}
+
+CONTEXTO DEL ASPIRANTE:
 - Entorno entreno: ${meta.etiqueta} (${meta.descripcion || ''})
 - Material disponible REAL: ${materialHumano}
 - Nivel global: ${ctx.nivel || 'INTERMEDIO'}
@@ -434,11 +485,27 @@ REGLAS DE COMPOSICIÓN:
         // Validación insuficiente → fallback
         return fallbackSesion(ctx);
       }
+      // Balance push/pull: si la IA escupe algo desbalanceado, lo registramos.
+      const balance = Patron.auditarBalance(
+        ejerciciosValidados.map((e) => Patron.clasificar(e))
+      );
+      const calentamiento = Calentamiento.calentamiento(tpl.pilar);
+      const vuelta_a_calma = Calentamiento.vueltaACalma(tpl.pilar);
+      const semana = Periodizacion.plantillaSemana(
+        Periodizacion.semanaDelMesociclo(ctx.seed || 0)
+      );
       return {
         sesion: {
           enfoque: tpl.pilar,
           refuerzo_debil: tpl.refuerzo,
-          ejercicios: ejerciciosValidados
+          ejercicios: ejerciciosValidados,
+          calentamiento,
+          vuelta_a_calma,
+          fase_mesociclo: semana.fase,
+          fase_label: semana.label,
+          semana_idx: semana.idx,
+          deload: semana.deload,
+          balance_warnings: balance.warnings
         },
         fuente: openaiKey ? 'openai' : 'gemini'
       };

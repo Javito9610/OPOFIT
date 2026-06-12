@@ -34,16 +34,20 @@ const TIPOS_LUGAR = {
     keywordsAlt: ['crossfit box', 'box crossfit', 'affiliate crossfit'],
     textQueries: ['crossfit box', 'crossfit gym', 'crossfit affiliate'],
     // Radio default amplio: en pueblos el box CrossFit más cercano puede
-    // estar a 15-25 km. Antes 5 km dejaba fuera al box del pueblo según
+    // estar a 30-40 km. Antes 5 km dejaba fuera al box del pueblo según
     // reportaba el usuario.
-    radioDefault: 25000,
+    radioDefault: 40000,
     etiqueta: 'CrossFit / Box',
-    // CrossFit DEBE aparecer en el nombre o dirección — si no, no es un box
-    // CrossFit (era un gym normal capturado por keyword).
-    mustMatch: /(cross\s*fit|crossfit|cf\b|box\s+cf|wod|functional\s+fitness)/i,
+    // Regex MÁS amplio que admite variantes reales en España:
+    //   "CrossFit Espinar", "Box CrossFit Guadarrama", "CF Box Madrid",
+    //   "Raiz Box", "Colmenar Box", "WOD Studio", "Athletic Box".
+    // OJO: "box" como palabra suelta acepta "Raiz Box" / "Colmenar Box" pero
+    // el mustNotMatch descarta "Boxeo" y "Fitboxing" (que son boxeo, no CF).
+    mustMatch: /(cross\s*fit|crossfit|\bcf\b|wod|functional\s+(fitness|training|box)|athletic\s+box|\bbox\b)/i,
     // Excluimos "CrossFit Wellness", franquicias yoga que usan la palabra,
-    // físios que ofrecen "crossfit rehabilitation".
-    mustNotMatch: /(yoga|pilates|fisioterap|fisio\s|spa|wellness\s+only)/i
+    // físios que ofrecen "crossfit rehabilitation", y boxeo (que también
+    // tiene "box" en el nombre pero es un deporte distinto).
+    mustNotMatch: /(yoga|pilates|fisioterap|fisio\s|spa|wellness\s+only|boxeo|fitboxing|kick\s*box|muay\s*thai|mma\b)/i
   },
   PISTA: {
     placeType: null,
@@ -110,8 +114,17 @@ const OVERPASS_TAGS = {
     'way["leisure"="fitness_centre"]'
   ],
   CROSSFIT: [
+    // Tag explícito (lo ideal, pero pocos boxes lo tienen en España).
     'node["sport"="crossfit"]',
-    'way["sport"="crossfit"]'
+    'way["sport"="crossfit"]',
+    // Mayoría de boxes en España: están como amenity=gym SIN sport=crossfit.
+    // Pedimos TODOS los gyms y luego el filtro mustMatch local los criba por
+    // nombre ("CrossFit Espinar", "CF Box Guadarrama", etc.). Es más rápido
+    // en Overpass que el regex y captura todos los boxes mal etiquetados.
+    'node["amenity"="gym"]',
+    'way["amenity"="gym"]',
+    'node["leisure"="fitness_centre"]',
+    'way["leisure"="fitness_centre"]'
   ],
   PISTA: [
     'node["leisure"="track"]["sport"~"running|athletics|athletic"]',

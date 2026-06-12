@@ -1,8 +1,18 @@
 /**
  * Motor inteligente de prescripción e instrucciones por ejercicio.
  * Cada movimiento recibe series/reps realistas (variadas por nombre) y texto técnico propio.
+ *
+ * Capa PRO (acoplada arriba de la base, no la sustituye):
+ *  - Periodización 3:1 (PeriodizacionService): ajusta volumen por semana del mesociclo.
+ *  - Patrón de movimiento (PatronMovimientoService): etiqueta semántica para balancear sesiones.
+ *  - Prescripción enriquecida (PrescripcionProService): tempo + RPE objetivo + nota de carga.
+ *  Estos servicios solo añaden metadatos: no rompen la prescripción heredada.
  */
 const EntornoEntreno = require('../utils/EntornoEntreno');
+const Periodizacion = require('./PeriodizacionService');
+const Patron = require('./PatronMovimientoService');
+const PrescripcionPro = require('./PrescripcionProService');
+const Progresion = require('./ProgresionService');
 
 const { hashSeed } = EntornoEntreno;
 
@@ -79,7 +89,9 @@ function clasificarPerfil(ej) {
   if (pilar === 'VELOCIDAD') {
     if (/sprint|arranque|skipping/.test(nombre)) return { perfil: 'SPRINT', unidad: 'm' };
     if (/salt|pliometr|cmj|box jump|salto/.test(nombre)) return { perfil: 'PLIOMETRIA', unidad: 'reps' };
-    if (/agilidad|conos|carioca|vallas|escalera|propiocept/.test(nombre)) return { perfil: 'AGILIDAD', unidad: 'm' };
+    // Agilidad: la unidad natural son "vueltas" (recorridos completos del
+     // patrón). Antes salía "m" → "3×38 reps Conos en T 4 vueltas" sin sentido.
+     if (/agilidad|conos|carioca|vallas|escalera|propiocept/.test(nombre)) return { perfil: 'AGILIDAD', unidad: 'vueltas' };
     return { perfil: 'SPRINT', unidad: 'm' };
   }
   if (pilar === 'MOVILIDAD') return { perfil: 'MOVILIDAD', unidad: 's' };
@@ -132,7 +144,10 @@ const RANGOS = {
   CARDIO_CONTINUO: { series: [1, 1], reps: [20, 45], descanso: [0, 0] },
   SPRINT: { series: [4, 8], reps: [30, 80], descanso: [90, 150] },
   PLIOMETRIA: { series: [3, 5], reps: [5, 10], descanso: [90, 120] },
-  AGILIDAD: { series: [3, 6], reps: [20, 40], descanso: [60, 90] },
+  // Agilidad (conos, vallas, escalera, T-test): se mide en VUELTAS/PASADAS
+  // no en metros. Antes prescribía "3×38 reps" sin unidad clara y al usuario
+  // le parecía absurdo. Ahora 3-5 series de 4-8 vueltas.
+  AGILIDAD: { series: [3, 5], reps: [4, 8], descanso: [60, 90] },
   MOVILIDAD: { series: [2, 3], reps: [30, 60], descanso: [30, 45] },
   ISOMETRICO: { series: [3, 4], reps: [25, 50], descanso: [45, 75] },
   WRIST: { series: [2, 3], reps: [12, 18], descanso: [45, 60] },
@@ -427,14 +442,45 @@ function aplicarInteligencia(ej, ctx = {}) {
   const nivel = String(ctx.nivel || ej.nivel || '').toUpperCase();
   const instruccionesAjustadas = ajustarRitmoSegunNivel(instrucciones, nombre, nivel);
 
+  // ========== CAPA PRO ==========
+  // 1) Periodización: ajusta volumen + RPE según semana del mesociclo (1-4).
+  //    Si no llega weekIdx, queda como base (semana 1) = idéntica al
+  //    comportamiento previo (no rompe tests).
+  // 2) Patrón de movimiento y prescripción pro: añade tempo, rpe_objetivo,
+  //    rango_rm, nota_carga. Son metadatos aditivos.
+  const weekIdx = ctx.weekIdx || ctx.semanaMesociclo || 1;
+  const posicion = ctx.posicion || ej.orden || 1;
+
+  const base = {
+    series: prescripcion.series,
+    repeticiones,
+    descanso: prescripcion.descanso ?? ej.descanso ?? 90,
+    unidad,
+    rpe_objetivo: null
+  };
+
+  const enriquecida = PrescripcionPro.enriquecer(base, { ...ej, nombre }, { posicion, weekIdx });
+  const periodizada = Periodizacion.ajustarPorSemana(enriquecida, weekIdx);
+
   return {
     ...ej,
     nombre: ajustarNombreRitmoSegunNivel(nombre, nivel),
     grupo_muscular: grupo,
-    series: prescripcion.series,
-    repeticiones,
-    unidad,
-    descanso: prescripcion.descanso ?? ej.descanso ?? 90,
+    series: periodizada.series,
+    repeticiones: periodizada.repeticiones,
+    unidad: periodizada.unidad,
+    descanso: periodizada.descanso,
+    rpe_objetivo: periodizada.rpe_objetivo,
+    tempo: periodizada.tempo,
+    rango_rm: periodizada.rango_rm,
+    nota_carga: periodizada.nota_carga,
+    patron_movimiento: periodizada.patron_movimiento,
+    objetivo: periodizada.objetivo,
+    fase_mesociclo: periodizada.fase_mesociclo,
+    fase_label: periodizada.fase_label,
+    deload: periodizada.deload,
+    regresion: Progresion.regresionDe(nombre),
+    progresion: Progresion.progresionDe(nombre),
     instrucciones_tecnicas: instruccionesAjustadas,
     prescripcion_inteligente: true,
     instrucciones_inteligentes: true
@@ -477,5 +523,10 @@ module.exports = {
   generarInstrucciones,
   deduplicarInstrucciones,
   aplicarInteligencia,
-  variar
+  variar,
+  // capa PRO: re-exporta para tests + uso desde otros servicios.
+  clasificarPatron: Patron.clasificar,
+  enriquecerPro: PrescripcionPro.enriquecer,
+  ajustarPorSemana: Periodizacion.ajustarPorSemana,
+  semanaDelMesociclo: Periodizacion.semanaDelMesociclo
 };
