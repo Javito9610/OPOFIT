@@ -100,6 +100,15 @@ const TIPOS_LUGAR = {
     keyword: null,
     etiqueta: 'Parque',
     mustNotMatch: /(industrial|empresarial|aparcamient|parking)/i
+  },
+  PISCINA: {
+    placeType: 'swimming_pool',
+    keyword: 'piscina',
+    keywordsAlt: ['piscina municipal', 'piscina cubierta', 'centro acuático', 'natación'],
+    textQueries: ['piscina municipal', 'piscina cubierta', 'centro acuático natación', 'swimming pool'],
+    radioDefault: 15000,
+    etiqueta: 'Piscina',
+    mustNotMatch: /(privada\s+exclusiva|hotel\s+privado|resort\s+privado)/i
   }
 };
 
@@ -157,6 +166,16 @@ const OVERPASS_TAGS = {
   PARQUE: [
     'node["leisure"="park"]',
     'way["leisure"="park"]'
+  ],
+  PISCINA: [
+    'node["leisure"="swimming_pool"]["access"!="private"]',
+    'way["leisure"="swimming_pool"]["access"!="private"]',
+    'node["amenity"="swimming_pool"]',
+    'way["amenity"="swimming_pool"]',
+    'node["sport"="swimming"]',
+    'way["sport"="swimming"]',
+    'node["leisure"="sports_centre"]["sport"="swimming"]',
+    'way["leisure"="sports_centre"]["sport"="swimming"]'
   ]
 };
 
@@ -411,6 +430,11 @@ class MapasService {
       PARQUE: [
         [0.008, 0.005, 'Parque municipal'],
         [-0.005, -0.007, 'Parque urbano']
+      ],
+      PISCINA: [
+        [0.007, -0.005, 'Piscina municipal'],
+        [-0.009, 0.008, 'Centro acuático'],
+        [0.003, 0.011, 'Piscina cubierta']
       ]
     };
     const offsets = porTipo[tipo] || porTipo.PARQUE;

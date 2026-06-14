@@ -160,11 +160,15 @@ object GpxImport {
     private fun inferType(trackType: String?, points: List<GpsPoint>): ActivityType {
         val t = trackType?.lowercase(Locale.US).orEmpty()
         when {
-            t.contains("cycl") || t.contains("bike") || t.contains("bici") -> return ActivityType.BIKE
-            t.contains("walk") || t.contains("hike") || t.contains("andar") -> return ActivityType.WALK
-            t.contains("run") || t.contains("corr") -> return ActivityType.RUN
+            t.contains("cycl") || t.contains("bike") || t.contains("bici") ||
+            t.contains("biking") || t.contains("cycling") || t.contains("ciclismo") ||
+            t.contains("mtb") || t.contains("ride") -> return ActivityType.BIKE
+            t.contains("walk") || t.contains("hike") || t.contains("andar") ||
+            t.contains("hiking") || t.contains("caminar") -> return ActivityType.WALK
+            t.contains("run") || t.contains("corr") || t.contains("running") -> return ActivityType.RUN
         }
         // Heuristica por velocidad media si no hay tipo en el GPX.
+        // Umbral bici: 3.5 m/s (12.6 km/h) para cubrir bici de montaña y ritmos tranquilos.
         if (points.size >= 2) {
             val start = points.first().timestampMs
             val end = points.last().timestampMs
@@ -174,7 +178,7 @@ object GpxImport {
                 for (i in 1 until points.size) dist += GpsMetrics.haversineMeters(points[i - 1], points[i])
                 val mps = dist / dur
                 return when {
-                    mps >= 4.5 -> ActivityType.BIKE
+                    mps >= 3.5 -> ActivityType.BIKE
                     mps >= 2.2 -> ActivityType.RUN
                     else -> ActivityType.WALK
                 }

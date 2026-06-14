@@ -5,6 +5,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,13 +16,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.PlayArrow
@@ -43,6 +49,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -237,6 +244,7 @@ fun MapaEntrenoScreen(
                     "PISTA" -> 18000
                     "PARQUE" -> 15000
                     "CROSSFIT" -> 15000
+                    "PISCINA" -> 15000
                     else -> 12000
                 }
                 suspend fun buscar(tipo: String, r: Int) =
@@ -560,6 +568,7 @@ fun MapaEntrenoScreen(
                                 "PISTA" -> "Pistas de atletismo y estadios"
                                 "CROSSFIT" -> "Boxes y centros CrossFit"
                                 "PARQUE" -> "Parques para entrenar al aire libre"
+                                "PISCINA" -> "Piscinas municipales y centros acuáticos"
                                 else -> "Gimnasios y centros deportivos"
                             },
                             style = MaterialTheme.typography.labelMedium,
@@ -571,7 +580,8 @@ fun MapaEntrenoScreen(
                                 "CROSSFIT" to "CrossFit",
                                 "PISTA" to "Pista",
                                 "CALISTENIA" to "Calistenia",
-                                "PARQUE" to "Parque"
+                                "PARQUE" to "Parque",
+                                "PISCINA" to "Piscina"
                             )) { (id, label) ->
                                 FilterChip(
                                     selected = tipoLugar == id,
@@ -585,13 +595,13 @@ fun MapaEntrenoScreen(
                                 )
                             }
                         }
-                        if (!ubicacionLista) {
+                        if (!ubicacionLista && !loading && lugares.isEmpty()) {
                             Text(
                                 "Activa la ubicación para buscar lugares cerca de ti.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                        } else if (!loading && lugares.isEmpty()) {
+                        } else if (ubicacionLista && !loading && lugares.isEmpty()) {
                             Text(
                                 when (tipoLugar) {
                                     "CALISTENIA" ->
@@ -600,6 +610,8 @@ fun MapaEntrenoScreen(
                                         "No hay pistas de atletismo cerca en esta zona."
                                     "CROSSFIT" ->
                                         "No hay boxes de CrossFit cerca. Prueba Gym."
+                                    "PISCINA" ->
+                                        "No hay piscinas cerca. Prueba ampliar la búsqueda o comprueba que el GPS esté activo."
                                     else ->
                                         "No hay lugares de este tipo cerca. Prueba otro filtro."
                                 },
@@ -741,38 +753,133 @@ fun MapaEntrenoScreen(
                             )
                         }
                         if (modoPersonalizado) {
-                            Text(
-                                "Toca el mapa para trazar tu ruta (${waypoints.size} puntos)",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (waypoints.size < 2) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            // El botón SIEMPRE visible en modo personalizado:
-                            // antes solo aparecía al tener 2 puntos y el usuario
-                            // creía que el modo no funcionaba. Ahora disabled
-                            // con tooltip claro cuando faltan puntos.
-                            Button(
-                                onClick = { generarRuta() },
+                            // Panel de creación manual de ruta estilo Garmin/Komoot
+                            Surface(
                                 modifier = Modifier.fillMaxWidth(),
-                                enabled = !loading && waypoints.size >= 2,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary,
-                                    contentColor = MaterialTheme.colorScheme.onPrimary
-                                )
+                                shape = MaterialTheme.shapes.medium,
+                                color = if (waypoints.isEmpty())
+                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                                else MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
                             ) {
-                                Icon(Icons.Filled.TouchApp, null, Modifier.size(16.dp))
-                                Spacer(Modifier.size(4.dp))
+                                Column(
+                                    Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Filled.Edit,
+                                            null,
+                                            Modifier.size(16.dp),
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                        Text(
+                                            "Traza tu ruta tocando el mapa",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                    if (waypoints.isEmpty()) {
+                                        Text(
+                                            "Toca cualquier punto del mapa para añadir el inicio de tu ruta. Puedes añadir tantos puntos como quieras.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    } else {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            // Chips de puntos
+                                            waypoints.takeLast(4).forEachIndexed { i, _ ->
+                                                val idx = if (waypoints.size > 4) waypoints.size - 4 + i else i
+                                                Box(
+                                                    Modifier
+                                                        .size(24.dp)
+                                                        .background(
+                                                            if (idx == waypoints.lastIndex)
+                                                                MaterialTheme.colorScheme.primary
+                                                            else MaterialTheme.colorScheme.surfaceVariant,
+                                                            CircleShape
+                                                        ),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(
+                                                        "${idx + 1}",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = if (idx == waypoints.lastIndex)
+                                                            MaterialTheme.colorScheme.onPrimary
+                                                        else MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            }
+                                            if (waypoints.size > 4) {
+                                                Text("…", style = MaterialTheme.typography.labelMedium)
+                                            }
+                                            Spacer(Modifier.weight(1f))
+                                            Text(
+                                                "${waypoints.size} puntos",
+                                                style = MaterialTheme.typography.labelMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            // Instrucción dinámica según estado
+                            if (waypoints.size in 1..1) {
                                 Text(
-                                    if (waypoints.size >= 2) "Crear mi ruta (${waypoints.size} puntos)"
-                                    else "Crear mi ruta (toca el mapa)"
+                                    "Buen inicio. Añade al menos 1 punto más para trazar la ruta.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary
                                 )
                             }
-                            if (waypoints.isNotEmpty()) {
-                                OutlinedButton(onClick = { waypoints.clear(); ruta = null }, modifier = Modifier.fillMaxWidth()) {
-                                    Text("Limpiar puntos")
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Button(
+                                    onClick = { generarRuta() },
+                                    modifier = Modifier.weight(1f),
+                                    enabled = !loading && waypoints.size >= 2,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                ) {
+                                    Icon(Icons.Filled.Route, null, Modifier.size(16.dp))
+                                    Spacer(Modifier.size(4.dp))
+                                    Text(
+                                        if (waypoints.size >= 2) "Crear ruta" else "Añade puntos",
+                                        maxLines = 1
+                                    )
+                                }
+                                if (waypoints.isNotEmpty()) {
+                                    IconButton(
+                                        onClick = {
+                                            if (waypoints.isNotEmpty()) {
+                                                waypoints.removeAt(waypoints.lastIndex)
+                                            }
+                                        }
+                                    ) {
+                                        Icon(
+                                            Icons.Filled.Delete,
+                                            "Deshacer último punto",
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
                                 }
                             }
                             if (waypoints.size >= 2) {
+                                OutlinedButton(
+                                    onClick = { waypoints.clear(); ruta = null },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Limpiar todos los puntos")
+                                }
                                 OutlinedButton(
                                     onClick = {
                                         scope.launch {

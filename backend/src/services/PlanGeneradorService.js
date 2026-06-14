@@ -124,6 +124,7 @@ class PlanGeneradorService {
   }
 
   static async cargarCatalogo(entorno) {
+    const EjercicioVideoService = require('./EjercicioVideoService');
     const [rows] = await db.query(
       `SELECT id_ejercicio, nombre, pilar, grupo_muscular, equipamiento,
               entornos, tipo_ilustracion, video_url, animacion_url, instrucciones_tecnicas
@@ -137,10 +138,12 @@ class PlanGeneradorService {
       .map((e) => {
         const nombre = EjercicioMetadataService.normalizarNombreEjercicio(e.nombre);
         const pilar = EntornoEntreno.normalizarPilar(e.pilar || 'FUERZA');
+        const videoFallback = e.video_url || EjercicioVideoService.getVideoUrl(nombre)?.url || null;
         return {
           ...e,
           nombre,
           pilar,
+          video_url: videoFallback,
           grupo_muscular: EjercicioMetadataService.inferirGrupoMuscular(
             e.grupo_muscular,
             nombre,

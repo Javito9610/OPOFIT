@@ -222,9 +222,15 @@ object TcxImport {
     private fun inferType(sport: String?, points: List<GpsPoint>): ActivityType {
         val s = sport?.lowercase(Locale.US).orEmpty()
         when {
-            s.contains("bik") || s.contains("cycl") -> return ActivityType.BIKE
-            s.contains("walk") || s.contains("hike") -> return ActivityType.WALK
-            s.contains("run") -> return ActivityType.RUN
+            s.contains("bik") || s.contains("cycl") || s.contains("biking") ||
+            s.contains("cycling") || s.contains("ciclismo") || s.contains("mtb") ||
+            s.contains("ride") || s == "other" && points.size >= 2 && run {
+                // "Other" en Garmin a veces es ciclismo — deja caer a la heuristica
+                false
+            } -> return ActivityType.BIKE
+            s.contains("walk") || s.contains("hike") || s.contains("hiking") ||
+            s.contains("caminar") -> return ActivityType.WALK
+            s.contains("run") || s.contains("running") -> return ActivityType.RUN
         }
         if (points.size >= 2) {
             val dur = (points.last().timestampMs - points.first().timestampMs) / 1000.0
@@ -233,7 +239,7 @@ object TcxImport {
                 for (i in 1 until points.size) dist += GpsMetrics.haversineMeters(points[i - 1], points[i])
                 val mps = dist / dur
                 return when {
-                    mps >= 4.5 -> ActivityType.BIKE
+                    mps >= 3.5 -> ActivityType.BIKE
                     mps >= 2.2 -> ActivityType.RUN
                     else -> ActivityType.WALK
                 }

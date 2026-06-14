@@ -534,7 +534,17 @@ REGLAS DE COMPOSICIÓN:
         seed: (ctx.seed || 1) + i * 13
       });
       if (fSes !== 'reglas') fuente = fSes;
-      semana.push({ ...dia, ejercicios: sesion.ejercicios });
+      semana.push({
+        ...dia,
+        ejercicios: sesion.ejercicios,
+        calentamiento: sesion.calentamiento || [],
+        vuelta_a_calma: sesion.vuelta_a_calma || [],
+        balance_warnings: sesion.balance_warnings || [],
+        fase_mesociclo: sesion.fase_mesociclo,
+        fase_label: sesion.fase_label,
+        semana_idx: sesion.semana_idx,
+        deload: sesion.deload || false
+      });
     }
     return { semana, fuente };
   }
