@@ -493,7 +493,7 @@ fun EntrenamientosScreen(
 
     LaunchedEffect(cronometroActivo, cronometroIniciadoAlgunaVez) {
         if (cronometroActivo || cronometroIniciadoAlgunaVez) {
-            com.opofit.miapp.gps.service.HrBleManager.get(context).autoConnectSavedDevice()
+            runCatching { com.opofit.miapp.gps.service.HrBleManager.get(context).autoConnectSavedDevice() }
         }
     }
 
@@ -613,8 +613,8 @@ fun EntrenamientosScreen(
     }
 
     androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
-    val hrLive by com.opofit.miapp.gps.service.HrBleManager.get(context).heartRate.collectAsState()
-    val hrState by com.opofit.miapp.gps.service.HrBleManager.get(context).state.collectAsState()
+    val hrLive by (runCatching { com.opofit.miapp.gps.service.HrBleManager.get(context).heartRate }.getOrDefault(kotlinx.coroutines.flow.MutableStateFlow<Int?>(null))).collectAsState()
+    val hrState by (runCatching { com.opofit.miapp.gps.service.HrBleManager.get(context).state }.getOrDefault(kotlinx.coroutines.flow.MutableStateFlow<com.opofit.miapp.gps.service.HrBleManager.State>(com.opofit.miapp.gps.service.HrBleManager.State.Idle))).collectAsState()
     val hrConnected = hrState is com.opofit.miapp.gps.service.HrBleManager.State.Connected
 
     Scaffold(

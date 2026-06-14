@@ -26,6 +26,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
@@ -81,6 +82,7 @@ import com.opofit.miapp.gps.service.EntrenoFlowContext
 import com.opofit.miapp.gps.service.GpsRecordingContext
 import com.opofit.miapp.gps.service.HrBleManager
 import com.opofit.miapp.gps.util.GpsMetrics
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -121,7 +123,7 @@ fun GpsHubScreen(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { _ ->
         // Después de la solicitud relanzamos el escaneo.
-        if (viewModel.hrManager().hasPermissions()) {
+        if (viewModel.hrManager()?.hasPermissions() == true) {
             showHrDialog = true
             viewModel.startHrScan()
         } else {
@@ -150,7 +152,7 @@ fun GpsHubScreen(
     }
 
     fun openHrDialog() {
-        if (viewModel.hrManager().hasPermissions()) {
+        if (viewModel.hrManager()?.hasPermissions() == true) {
             showHrDialog = true
             viewModel.startHrScan()
         } else {
@@ -176,7 +178,7 @@ fun GpsHubScreen(
     LaunchedEffect(Unit) {
         viewModel.loadHistory()
         try {
-            viewModel.hrManager().autoConnectSavedDevice()
+            viewModel.hrManager()?.autoConnectSavedDevice()
         } catch (_: Exception) { }
     }
 
@@ -537,26 +539,50 @@ private fun ActivityRow(activity: ActivitySummary, onClick: () -> Unit) {
     val date = SimpleDateFormat("d MMM · HH:mm", Locale.forLanguageTag("es-ES"))
         .format(Date(activity.startedAtMs))
     ElevatedCard(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
-        Row(
-            Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(activity.type.emoji, style = MaterialTheme.typography.headlineMedium)
-            Column(Modifier.weight(1f)) {
-                Text(
-                    "${activity.type.display} · $date",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(activity.type.emoji, style = MaterialTheme.typography.headlineSmall)
+                    Column {
+                        Text(
+                            activity.type.display,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            date,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp)
                 )
-                Text(
-                    "${GpsMetrics.formatDistance(activity.distanceM)}  ·  " +
-                        "${GpsMetrics.formatDuration(activity.durationSec)}  ·  " +
-                        "${GpsMetrics.formatPace(activity.avgPaceSecPerKm)}/km",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            }
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                MetricColumn("Distancia", GpsMetrics.formatDistance(activity.distanceM))
+                MetricColumn("Tiempo", GpsMetrics.formatDuration(activity.durationSec))
+                MetricColumn("Ritmo", "${GpsMetrics.formatPace(activity.avgPaceSecPerKm)}/km")
+            }
+            if (activity.elevationGainM > 0 || activity.avgHrBpm != null || activity.kcal?.let { it > 0 } == true) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                     if (activity.elevationGainM > 0) {
                         Text(
                             "+${activity.elevationGainM.toInt()} m",
@@ -565,14 +591,38 @@ private fun ActivityRow(activity: ActivitySummary, onClick: () -> Unit) {
                         )
                     }
                     activity.kcal?.takeIf { it > 0 }?.let {
-                        Text("$it kcal", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            "$it kcal",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                     activity.avgHrBpm?.let {
-                        Text("♥ $it", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                        Text(
+                            "$it bpm",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MetricColumn(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -584,7 +634,7 @@ private fun HrConnectDialog(
     onOpenHealthConnect: () -> Unit = {}
 ) {
     val found by viewModel.hrFound.collectAsState()
-    val liveHr by viewModel.hrManager().heartRate.collectAsState()
+    val liveHr by (viewModel.hrManager()?.heartRate ?: MutableStateFlow<Int?>(null)).collectAsState()
     val connectingAddress = (hrState as? HrBleManager.State.Connecting)?.device?.address
     val connectedAddress = (hrState as? HrBleManager.State.Connected)?.device?.address
 

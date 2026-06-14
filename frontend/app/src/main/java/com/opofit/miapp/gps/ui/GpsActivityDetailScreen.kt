@@ -225,7 +225,12 @@ fun GpsActivityDetailScreen(
 
 @Composable
 private fun RouteMap(activity: ActivitySummary) {
-    val pts = remember(activity.id) { activity.points.map { LatLng(it.lat, it.lng) } }
+    val pts = remember(activity.id) {
+        activity.points.mapNotNull { p ->
+            if (p.lat.isNaN() || p.lng.isNaN() || p.lat.isInfinite() || p.lng.isInfinite()) null
+            else LatLng(p.lat, p.lng)
+        }
+    }
     val buckets = remember(activity.id) { GpsMetrics.colorBucketsBySpeed(activity.points) }
     val cameraPositionState = rememberCameraPositionState {
         val first = pts.firstOrNull() ?: LatLng(40.4168, -3.7038)
@@ -325,25 +330,45 @@ private fun RouteMap(activity: ActivitySummary) {
 @Composable
 private fun OverviewCard(a: ActivitySummary) {
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
                 GpsMetrics.formatDistance(a.distanceM),
                 style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
             )
-            Text(
-                "${GpsMetrics.formatDuration(a.durationSec)} · ${GpsMetrics.formatPace(a.avgPaceSecPerKm)}/km",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                OverviewStat("Tiempo", GpsMetrics.formatDuration(a.durationSec))
+                OverviewStat("Ritmo", "${GpsMetrics.formatPace(a.avgPaceSecPerKm)}/km")
+                OverviewStat("Vel. media", GpsMetrics.formatSpeedKmh(a.avgSpeedMps))
+            }
             a.kcal?.takeIf { it > 0 }?.let {
                 Text(
                     "$it kcal estimadas",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.secondary
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun OverviewStat(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold
+        )
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

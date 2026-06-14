@@ -37,24 +37,17 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repo = GpsRepository.get(application)
     private val tokenManager = TokenManager(application)
-    private val hrBle: HrBleManager by lazy {
-        try {
-            HrBleManager.get(application)
-        } catch (_: Exception) {
-            HrBleManager.get(application)
-        }
+    private val hrBle: HrBleManager? by lazy {
+        runCatching { HrBleManager.get(application) }.getOrNull()
     }
 
-    val hrState: StateFlow<HrBleManager.State> = try {
-        HrBleManager.get(application).state
-    } catch (_: Exception) {
-        MutableStateFlow(HrBleManager.State.Idle)
-    }
-    val hrFound: StateFlow<List<HrBleManager.FoundDevice>> = try {
-        HrBleManager.get(application).found
-    } catch (_: Exception) {
-        MutableStateFlow(emptyList())
-    }
+    private val _fallbackHrState = MutableStateFlow(HrBleManager.State.Idle)
+    private val _fallbackHrFound = MutableStateFlow<List<HrBleManager.FoundDevice>>(emptyList())
+
+    val hrState: StateFlow<HrBleManager.State> =
+        runCatching { HrBleManager.get(application).state }.getOrDefault(_fallbackHrState)
+    val hrFound: StateFlow<List<HrBleManager.FoundDevice>> =
+        runCatching { HrBleManager.get(application).found }.getOrDefault(_fallbackHrFound)
 
     data class HistoryState(
         val loading: Boolean = false,
@@ -229,14 +222,14 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
         GpsTrackingService.stop(getApplication())
     }
 
-    fun startHrScan() = hrBle.startScan(broad = false)
+    fun startHrScan() { hrBle?.startScan(broad = false) }
 
-    fun startHrScanBroad() = hrBle.startScan(broad = true)
-    fun stopHrScan() = hrBle.stopScan()
-    fun connectHr(device: HrBleManager.FoundDevice) = hrBle.connect(device)
-    fun disconnectHr() = hrBle.disconnect()
-    fun hrManager(): HrBleManager = hrBle
-    fun pairedHrDevices(): List<HrBleManager.FoundDevice> = hrBle.pairedDevices()
+    fun startHrScanBroad() { hrBle?.startScan(broad = true) }
+    fun stopHrScan() { hrBle?.stopScan() }
+    fun connectHr(device: HrBleManager.FoundDevice) { hrBle?.connect(device) }
+    fun disconnectHr() { hrBle?.disconnect() }
+    fun hrManager(): HrBleManager? = hrBle
+    fun pairedHrDevices(): List<HrBleManager.FoundDevice> = hrBle?.pairedDevices() ?: emptyList()
 
     fun loadHistory() {
         viewModelScope.launch {

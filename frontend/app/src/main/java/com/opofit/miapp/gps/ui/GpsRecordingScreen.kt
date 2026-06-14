@@ -79,7 +79,7 @@ fun GpsRecordingScreen(
     viewModel: GpsViewModel = viewModel()
 ) {
     val state by viewModel.tracking.collectAsState()
-    val liveHr by viewModel.hrManager().heartRate.collectAsState()
+    val liveHr by (viewModel.hrManager()?.heartRate ?: kotlinx.coroutines.flow.MutableStateFlow<Int?>(null)).collectAsState()
     val displayHr = state.currentHrBpm ?: liveHr
     val context = LocalContext.current
     val cameraPositionState = rememberCameraPositionState()

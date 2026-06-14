@@ -98,6 +98,7 @@ import com.opofit.miapp.data.responsemodels.RutaPersonalizadaBody
 import com.opofit.miapp.gps.service.EntrenoFlowContext
 import com.opofit.miapp.gps.service.GpsRecordingContext
 import com.opofit.miapp.gps.service.HrBleManager
+import kotlinx.coroutines.flow.MutableStateFlow
 import com.opofit.miapp.gps.service.PlannedRoute
 import com.opofit.miapp.gps.service.RoutePoint
 import com.opofit.miapp.gps.service.RoutePreferences
@@ -159,19 +160,19 @@ fun MapaEntrenoScreen(
         position = CameraPosition.fromLatLngZoom(LatLng(lat, lng), 14f)
     }
 
-    val hrManager = remember { HrBleManager.get(context) }
-    val hrState by hrManager.state.collectAsState()
-    val liveHr by hrManager.heartRate.collectAsState()
+    val hrManager = remember { runCatching { HrBleManager.get(context) }.getOrNull() }
+    val hrState by (hrManager?.state ?: MutableStateFlow(HrBleManager.State.Idle)).collectAsState()
+    val liveHr by (hrManager?.heartRate ?: MutableStateFlow<Int?>(null)).collectAsState()
     val hrConnected = hrState is HrBleManager.State.Connected
     val hrLabel = when {
         liveHr != null -> "♥ $liveHr bpm"
         hrConnected -> "♥ Conectado"
-        hrManager.savedDeviceAddress() != null -> "♥ Reconectando…"
+        hrManager?.savedDeviceAddress() != null -> "♥ Reconectando…"
         else -> "♥ Sin reloj"
     }
 
     LaunchedEffect(Unit) {
-        hrManager.autoConnectSavedDevice()
+        hrManager?.autoConnectSavedDevice()
     }
 
     val titulo = if (esModoLugares) {

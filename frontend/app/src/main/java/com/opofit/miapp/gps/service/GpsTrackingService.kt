@@ -60,7 +60,7 @@ class GpsTrackingService : Service() {
         // El puente HrBleManager → GpsTracker lo establece OpoFitApp via Flows.
         // Aquí solo nos aseguramos de reintentar la auto-reconexión por si la sesión
         // se inicia con el reloj recién encendido.
-        hrBle = HrBleManager.get(this).also { it.autoConnectSavedDevice() }
+        hrBle = runCatching { HrBleManager.get(this).also { it.autoConnectSavedDevice() } }.getOrNull()
         ensureChannel()
     }
 

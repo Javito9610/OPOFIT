@@ -37,7 +37,7 @@ fun EntrenoLiveMetricsBar(
 ) {
     val context = LocalContext.current
     val gps by GpsTracker.state.collectAsState()
-    val liveHr by HrBleManager.get(context).heartRate.collectAsState()
+    val liveHr by (runCatching { HrBleManager.get(context).heartRate }.getOrDefault(kotlinx.coroutines.flow.MutableStateFlow<Int?>(null))).collectAsState()
     val g = gpsState ?: gps
     val gpsActivo = g.active && !g.paused
     val esCardio = tipoCardio != null || gpsActivo

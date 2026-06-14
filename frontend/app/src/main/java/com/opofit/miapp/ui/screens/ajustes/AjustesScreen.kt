@@ -271,20 +271,16 @@ fun AjustesScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Modo oscuro",
+                            text = "Tema Dark Pro",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            text = "Cambia el tema de la aplicación",
+                            text = "Modo oscuro profesional siempre activo",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    Switch(
-                        checked = uiState.darkMode,
-                        onCheckedChange = { enabled -> ajustesViewModel.setDarkMode(enabled) }
-                    )
                 }
             }
 

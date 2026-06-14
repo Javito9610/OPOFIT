@@ -15,14 +15,8 @@ class OpoFitApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // HR BLE: una sola fuente de verdad para todos los consumidores.
-        // - Auto-reconecta al último dispositivo guardado al arrancar la app
-        //   (antes solo lo hacía GpsTrackingService.onCreate → no reconectaba
-        //    si el usuario entraba a la app sin iniciar una sesión GPS).
-        // - Conecta los flows del manager a GpsTracker UNA vez aquí, en lugar
-        //   de cada ViewModel/Service haciendo setListeners y pisándose.
-        val hrBle = HrBleManager.get(this)
-        hrBle.autoConnectSavedDevice()
+        val hrBle = runCatching { HrBleManager.get(this) }.getOrNull() ?: return
+        runCatching { hrBle.autoConnectSavedDevice() }
 
         appScope.launch {
             hrBle.heartRate.collect { bpm ->
