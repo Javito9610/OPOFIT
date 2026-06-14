@@ -8,9 +8,12 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Timer
@@ -63,44 +66,120 @@ fun ExerciseDetailSheet(
                 .padding(bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            // === HERO VISUAL DEL EJERCICIO ===
+            // Card grande con icono ENORME del patrón de movimiento (96dp)
+            // sobre gradient brand. Estilo Nike Training Club / Caliber:
+            // ver el ejercicio antes que leer.
+            val ctxLocal = androidx.compose.ui.platform.LocalContext.current
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 140.dp),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.primary
             ) {
-                Surface(
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                androidx.compose.foundation.layout.Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Brush.linearGradient(
+                                listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.tertiary
+                                )
+                            )
+                        )
+                        .padding(20.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        EnfoqueIcons.forEnfoque(ejercicio.pilar),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .padding(10.dp)
-                            .size(24.dp)
-                    )
-                }
-                Column {
-                    Text(
-                        tipoLabel,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    ejercicio.fase_label?.takeIf { it.isNotBlank() }?.let { fase ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            EnfoqueIcons.forEnfoque(ejercicio.pilar),
+                            contentDescription = ejercicio.nombre,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(72.dp)
+                        )
                         Text(
-                            fase,
+                            tipoLabel.uppercase(),
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.tertiary
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
             }
 
+            // Nombre del ejercicio bajo el hero.
             Text(
                 ejercicio.nombre,
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
+
+            // === BOTONES VISUALES: VÍDEO + ANIMACIÓN ===
+            // El usuario pidió ver el ejercicio (vídeo o GIF). Aquí 2 CTAs
+            // GRANDES, lado a lado, sin necesidad de scroll para encontrarlos.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Vídeo YouTube (rojo de marca YouTube).
+                androidx.compose.material3.Button(
+                    onClick = {
+                        val q = java.net.URLEncoder.encode(
+                            "${ejercicio.nombre} técnica correcta",
+                            "UTF-8"
+                        )
+                        com.opofit.miapp.utils.UrlOpener.open(
+                            ctxLocal,
+                            "https://www.youtube.com/results?search_query=$q"
+                        )
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 52.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = androidx.compose.ui.graphics.Color(0xFFCC0000),
+                        contentColor = androidx.compose.ui.graphics.Color.White
+                    )
+                ) {
+                    Icon(Icons.Outlined.Speed, null, Modifier.size(20.dp))
+                    androidx.compose.foundation.layout.Spacer(Modifier.size(8.dp))
+                    Text(
+                        "Vídeo",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                // Animación / GIF (azul Wger, banco gratuito de ejercicios
+                // con animaciones de muñecos).
+                androidx.compose.material3.OutlinedButton(
+                    onClick = {
+                        val q = java.net.URLEncoder.encode(ejercicio.nombre, "UTF-8")
+                        com.opofit.miapp.utils.UrlOpener.open(
+                            ctxLocal,
+                            "https://wger.de/en/exercise/overview/?term=$q"
+                        )
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 52.dp),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Icon(Icons.Outlined.Timer, null, Modifier.size(20.dp))
+                    androidx.compose.foundation.layout.Spacer(Modifier.size(8.dp))
+                    Text(
+                        "Animación",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -167,165 +246,122 @@ fun ExerciseDetailSheet(
                 }
             }
 
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                if (grupo != "General") {
-                    AssistChip(onClick = {}, label = { Text(grupo) }, enabled = false)
-                }
-                AssistChip(onClick = {}, label = { Text(tipoLabel) }, enabled = false)
-                ejercicio.pilar?.takeIf { it.isNotBlank() }?.let { pilar ->
-                    AssistChip(onClick = {}, label = { Text(pilar) }, enabled = false)
-                }
-                ejercicio.equipamiento?.takeIf { it.isNotBlank() && it != "—" && it != "Variable" }?.let { eq ->
-                    AssistChip(onClick = {}, label = { Text(eq) }, enabled = false)
-                }
-                ejercicio.patron_movimiento?.takeIf { it.isNotBlank() }?.let { patron ->
-                    AssistChip(onClick = {}, label = { Text(patron) }, enabled = false)
-                }
-            }
-
             HorizontalDivider()
 
-            // Coach Pro: explicación en 5 bloques jerarquizados (Setup,
-            // Ejecución, Cues, Errores, Por qué). Antes solo había un
-            // párrafo plano de "Cómo hacerlo" + texto del banco — el usuario
-            // se quejó de que "es una mierda". Ahora Strava/Caliber level.
+            // Tabs en lugar de scroll vertical infinito. El usuario decía
+            // "es una mierda, tanto scroll". Ahora 3 pestañas: cada una cabe
+            // en una pantalla.
+            //   • TÉCNICA — setup + ejecución + cues + errores
+            //   • POR QUÉ — porque + objetivo
+            //   • DETALLES — chips + sustitución + ajuste + regresión/progresión
+            val tabSelState = androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(0) }
+            val tabSel = tabSelState.intValue
             val exp = ejercicio.explicacion
-            if (exp != null) {
-                CoachSection(
-                    titulo = "Setup",
-                    contenido = exp.setup,
-                    accent = MaterialTheme.colorScheme.primary
+            androidx.compose.material3.TabRow(selectedTabIndex = tabSel) {
+                androidx.compose.material3.Tab(
+                    selected = tabSel == 0, onClick = { tabSelState.intValue = 0 },
+                    text = { Text("Técnica", style = MaterialTheme.typography.labelLarge) }
                 )
-                CoachSection(
-                    titulo = "Ejecución",
-                    contenido = exp.ejecucion,
-                    accent = MaterialTheme.colorScheme.tertiary
+                androidx.compose.material3.Tab(
+                    selected = tabSel == 1, onClick = { tabSelState.intValue = 1 },
+                    text = { Text("Por qué", style = MaterialTheme.typography.labelLarge) }
                 )
-                if (exp.coaching_cues.isNotEmpty()) {
-                    CoachSectionLista(
-                        titulo = "Claves del entrenador",
-                        items = exp.coaching_cues,
-                        accent = MaterialTheme.colorScheme.primary
-                    )
-                }
-                if (exp.errores_comunes.isNotEmpty()) {
-                    CoachSectionLista(
-                        titulo = "Errores a evitar",
-                        items = exp.errores_comunes,
-                        accent = MaterialTheme.colorScheme.error
-                    )
-                }
-                CoachSection(
-                    titulo = "Por qué entrenas esto",
-                    contenido = exp.porque,
-                    accent = MaterialTheme.colorScheme.secondary
-                )
-            } else {
-                // Fallback retrocompat: ejercicios del banco legacy sin la
-                // explicación nueva del backend.
-                Text(
-                    "Cómo hacerlo",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    EntrenoExerciseUtil.deduplicarInstrucciones(ejercicio.instrucciones_tecnicas)
-                        ?.takeIf { it.isNotBlank() }
-                        ?: "Ejecuta el movimiento con técnica controlada y progresión según tu nivel.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
+                androidx.compose.material3.Tab(
+                    selected = tabSel == 2, onClick = { tabSelState.intValue = 2 },
+                    text = { Text("Detalles", style = MaterialTheme.typography.labelLarge) }
                 )
             }
 
-            ejercicio.objetivo?.takeIf { it.isNotBlank() }?.let { objetivo ->
-                Text(
-                    objetivo,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            val motivoSust = ejercicio.motivo_sustitucion?.takeIf { it.isNotBlank() }
-            if (motivoSust != null) {
-                Text(
-                    motivoSust,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.tertiary
-                )
-            } else if (ejercicio.sustituido && !ejercicio.nombre_original.isNullOrBlank()) {
-                val orig = ejercicio.nombre_original!!.trim()
-                val actual = ejercicio.nombre.trim()
-                if (!orig.equals(actual, ignoreCase = true)) {
-                    Text(
-                        "Alternativa a: $orig",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.tertiary
-                    )
-                }
-            }
-
-            ejercicio.motivo_ajuste?.takeIf { it.isNotBlank() && !esMotivoAjusteInterno(it) }?.let { ajuste ->
-                Text(
-                    ajuste,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            ejercicio.regresion?.let { reg ->
-                Text(
-                    "Regresión: ${reg.nombre}${reg.motivo?.let { " — $it" } ?: ""}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            ejercicio.progresion?.let { prog ->
-                Text(
-                    "Progresión: ${prog.nombre}${prog.motivo?.let { " — $it" } ?: ""}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            // Botón "Ver vídeo": el usuario pidió poder ver el ejercicio en
-            // movimiento. Abrimos YouTube con búsqueda del nombre del
-            // ejercicio + "técnica correcta" para que aparezcan tutoriales
-            // españoles primero. Es la solución pro sin coste de mantener
-            // un banco propio de vídeos.
-            val context = androidx.compose.ui.platform.LocalContext.current
-            androidx.compose.material3.Button(
-                onClick = {
-                    val q = java.net.URLEncoder.encode(
-                        "${ejercicio.nombre} técnica correcta",
-                        "UTF-8"
-                    )
-                    val url = "https://www.youtube.com/results?search_query=$q"
-                    com.opofit.miapp.utils.UrlOpener.open(context, url)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = androidx.compose.ui.graphics.Color(0xFFCC0000),
-                    contentColor = androidx.compose.ui.graphics.Color.White
-                )
+            Column(
+                Modifier
+                    .heightIn(min = 200.dp, max = 360.dp)
+                    .verticalScroll(androidx.compose.foundation.rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(
-                    imageVector = androidx.compose.material.icons.Icons.Outlined.Speed,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(8.dp))
-                Text(
-                    "Ver vídeo en YouTube",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold
-                )
+                when (tabSel) {
+                    0 -> {
+                        if (exp != null) {
+                            CoachSection("Setup", exp.setup, MaterialTheme.colorScheme.primary)
+                            CoachSection("Ejecución", exp.ejecucion, MaterialTheme.colorScheme.tertiary)
+                            if (exp.coaching_cues.isNotEmpty()) {
+                                CoachSectionLista("Claves del entrenador", exp.coaching_cues, MaterialTheme.colorScheme.primary)
+                            }
+                            if (exp.errores_comunes.isNotEmpty()) {
+                                CoachSectionLista("Errores a evitar", exp.errores_comunes, MaterialTheme.colorScheme.error)
+                            }
+                        } else {
+                            Text(
+                                EntrenoExerciseUtil.deduplicarInstrucciones(ejercicio.instrucciones_tecnicas)
+                                    ?.takeIf { it.isNotBlank() }
+                                    ?: "Ejecuta el movimiento con técnica controlada y progresión según tu nivel.",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                    1 -> {
+                        exp?.porque?.takeIf { it.isNotBlank() }?.let { por ->
+                            CoachSection("Por qué entrenas esto", por, MaterialTheme.colorScheme.secondary)
+                        }
+                        ejercicio.objetivo?.takeIf { it.isNotBlank() }?.let { obj ->
+                            Text(
+                                "Objetivo: $obj",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        ejercicio.regresion?.let { reg ->
+                            Text(
+                                "↘ Regresión: ${reg.nombre}${reg.motivo?.let { " — $it" } ?: ""}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        ejercicio.progresion?.let { prog ->
+                            Text(
+                                "↗ Progresión: ${prog.nombre}${prog.motivo?.let { " — $it" } ?: ""}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    else -> {
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            if (grupo != "General") {
+                                AssistChip(onClick = {}, label = { Text(grupo) }, enabled = false)
+                            }
+                            AssistChip(onClick = {}, label = { Text(tipoLabel) }, enabled = false)
+                            ejercicio.pilar?.takeIf { it.isNotBlank() }?.let { pilar ->
+                                AssistChip(onClick = {}, label = { Text(pilar) }, enabled = false)
+                            }
+                            ejercicio.equipamiento?.takeIf { it.isNotBlank() && it != "—" && it != "Variable" }?.let { eq ->
+                                AssistChip(onClick = {}, label = { Text(eq) }, enabled = false)
+                            }
+                            ejercicio.patron_movimiento?.takeIf { it.isNotBlank() }?.let { patron ->
+                                AssistChip(onClick = {}, label = { Text(patron) }, enabled = false)
+                            }
+                        }
+                        val motivoSust = ejercicio.motivo_sustitucion?.takeIf { it.isNotBlank() }
+                        if (motivoSust != null) {
+                            Text(motivoSust, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary)
+                        } else if (ejercicio.sustituido && !ejercicio.nombre_original.isNullOrBlank()) {
+                            val orig = ejercicio.nombre_original!!.trim()
+                            if (!orig.equals(ejercicio.nombre.trim(), ignoreCase = true)) {
+                                Text("Alternativa a: $orig", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary)
+                            }
+                        }
+                        ejercicio.motivo_ajuste?.takeIf { it.isNotBlank() && !esMotivoAjusteInterno(it) }?.let { aj ->
+                            Text(aj, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
             }
+
+            // Los botones de vídeo y animación están AHORA en el hero
+            // (arriba del sheet), donde se ven antes de cualquier texto.
         }
     }
 }

@@ -17,9 +17,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.outlined.Timer
@@ -115,103 +117,81 @@ fun PlanEjercicioRow(
     rpe: Int? = null,
     faseLabel: String? = null
 ) {
-    val iconTint = if (destacado) MaterialTheme.colorScheme.primary
-    else MaterialTheme.colorScheme.onSurfaceVariant
+    // Card COMPACTA estilo Hevy/Strong: 1 sola línea con prescripción a la
+    // izquierda + nombre + descanso a la derecha. Altura ~56dp. Antes era
+    // ~120dp por ejercicio (icono + badge + nombre 2 líneas + 4 chips meta)
+    // → el usuario decía "tanto scroll, es una mierda". Ahora la lista de un
+    // día de 6 ejercicios cabe en una sola pantalla. Tap para info detallada.
+    val borderColor = if (destacado) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+    else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onInfoClick),
         shape = MaterialTheme.shapes.medium,
-        color = if (destacado) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
-        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
-        border = if (destacado) BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f))
-        else null
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, borderColor),
+        tonalElevation = 0.dp
     ) {
         Row(
-            Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            // Badge prescripción a la izquierda: "4×8", "3×12", etc.
             Surface(
                 shape = MaterialTheme.shapes.small,
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
+                color = if (destacado) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
+                modifier = Modifier.widthIn(min = 56.dp)
             ) {
-                Icon(
-                    imageVector = EnfoqueIcons.forEnfoque(pilar),
-                    contentDescription = null,
-                    tint = iconTint,
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .size(20.dp)
+                Text(
+                    prescripcion,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = if (destacado) MaterialTheme.colorScheme.onPrimary
+                    else MaterialTheme.colorScheme.onPrimaryContainer,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    maxLines = 1
                 )
             }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            // Nombre del ejercicio: 1 línea, ellipsis si no cabe.
+            Text(
+                nombre,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (destacado) FontWeight.SemiBold else FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+            // Descanso a la derecha (lo más visual de la fila).
+            descanso?.takeIf { it > 0 }?.let { d ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(3.dp)
                 ) {
-                    Surface(
-                        shape = MaterialTheme.shapes.small,
-                        color = if (destacado) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.secondaryContainer
-                    ) {
-                        Text(
-                            prescripcion,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = if (destacado) MaterialTheme.colorScheme.onPrimary
-                            else MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    }
-                    if (destacado) {
-                        Icon(
-                            Icons.Filled.SwapHoriz,
-                            contentDescription = "Ajustado",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                }
-                Text(
-                    nombre,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = if (destacado) FontWeight.SemiBold else FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 2
-                )
-                val meta = buildList {
-                    descanso?.takeIf { it > 0 }?.let { add("${it}s desc.") }
-                    tempo?.takeIf { it.isNotBlank() }?.let { add("Tempo $it") }
-                    rpe?.let { add("RPE $it") }
-                    faseLabel?.takeIf { it.isNotBlank() }?.let { add(it) }
-                }
-                if (meta.isNotEmpty()) {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        meta.forEach { chip ->
-                            AssistChip(
-                                onClick = onInfoClick,
-                                label = {
-                                    Text(chip, style = MaterialTheme.typography.labelSmall)
-                                },
-                                leadingIcon = if (chip.contains("desc")) {
-                                    {
-                                        Icon(
-                                            Icons.Outlined.Timer,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                    }
-                                } else null
-                            )
-                        }
-                    }
+                    Icon(
+                        Icons.Outlined.Timer,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(
+                        "${d}s",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
-            ExerciseInfoButton(onClick = onInfoClick, size = 34.dp)
+            // Chevron sutil indicando que es tappable.
+            Icon(
+                Icons.Filled.ChevronRight,
+                contentDescription = "Ver detalle",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }
