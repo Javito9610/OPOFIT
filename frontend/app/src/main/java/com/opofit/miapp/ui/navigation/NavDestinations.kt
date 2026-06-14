@@ -7,8 +7,6 @@ object NavDestinations {
     const val MAIN = "main"
     const val HOME = "home"
 
-    const val RUTINAS = "rutinas"
-    const val RUTINAS_POR_NIVEL = "rutinas_nivel/{nivel}"
     const val CREAR_EDITAR_RUTINA = "crear_editar_rutina"
     const val CREAR_RUTINA = "crear_rutina"
     const val RUTINAS_LIBRES = "rutinas_libres"

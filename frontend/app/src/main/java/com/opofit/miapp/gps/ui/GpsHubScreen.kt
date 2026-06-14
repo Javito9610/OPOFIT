@@ -175,7 +175,9 @@ fun GpsHubScreen(
 
     LaunchedEffect(Unit) {
         viewModel.loadHistory()
-        viewModel.hrManager().autoConnectSavedDevice()
+        try {
+            viewModel.hrManager().autoConnectSavedDevice()
+        } catch (_: Exception) { }
     }
 
     LaunchedEffect(importMsg) {

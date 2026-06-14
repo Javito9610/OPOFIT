@@ -37,10 +37,24 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repo = GpsRepository.get(application)
     private val tokenManager = TokenManager(application)
-    private val hrBle = HrBleManager.get(application)
+    private val hrBle: HrBleManager by lazy {
+        try {
+            HrBleManager.get(application)
+        } catch (_: Exception) {
+            HrBleManager.get(application)
+        }
+    }
 
-    val hrState: StateFlow<HrBleManager.State> = hrBle.state
-    val hrFound: StateFlow<List<HrBleManager.FoundDevice>> = hrBle.found
+    val hrState: StateFlow<HrBleManager.State> = try {
+        HrBleManager.get(application).state
+    } catch (_: Exception) {
+        MutableStateFlow(HrBleManager.State.Idle)
+    }
+    val hrFound: StateFlow<List<HrBleManager.FoundDevice>> = try {
+        HrBleManager.get(application).found
+    } catch (_: Exception) {
+        MutableStateFlow(emptyList())
+    }
 
     data class HistoryState(
         val loading: Boolean = false,

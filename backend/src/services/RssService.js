@@ -54,48 +54,41 @@ const KEYWORDS_BY_OPO = {
 // y 2B = oposiciones) suele actualizarse a diario.
 const RSS_FEEDS = {
   1: [
-    { url: 'https://www.boe.es/rss/canal.php?c=policia', nombre: 'BOE - Policía Nacional' },
     { url: 'https://www.boe.es/rss/boe.php?s=2A', nombre: 'BOE Sección II-A (oposiciones)' },
     { url: 'https://www.boe.es/rss/boe.php?s=2B', nombre: 'BOE Sección II-B (oposiciones)' },
-    { url: 'https://www.policia.es/rss/noticias.xml', nombre: 'Policía Nacional - Noticias' }
+    { url: 'https://www.boe.es/rss/boe.php?s=3', nombre: 'BOE Sección III (otras disposiciones)' }
   ],
   2: [
-    { url: 'https://www.boe.es/rss/canal.php?c=defensa', nombre: 'BOE - Defensa' },
     { url: 'https://www.boe.es/rss/boe.php?s=2A', nombre: 'BOE Sección II-A (oposiciones)' },
-    { url: 'https://web.guardiacivil.es/es/administracion/atom_noticias.html',
-      nombre: 'Guardia Civil - Noticias' },
-    { url: 'https://www.boe.es/rss/canal.php?c=empleo_publico', nombre: 'BOE - Empleo público' }
+    { url: 'https://www.boe.es/rss/boe.php?s=2B', nombre: 'BOE Sección II-B (oposiciones)' },
+    { url: 'https://www.boe.es/rss/boe.php?s=3', nombre: 'BOE Sección III (otras disposiciones)' }
   ],
   3: [
-    { url: 'https://www.boe.es/rss/canal.php?c=empleo_publico', nombre: 'BOE - Empleo público' },
     { url: 'https://www.boe.es/rss/boe.php?s=2A', nombre: 'BOE Sección II-A (oposiciones)' },
-    { url: 'https://www.bocm.es/boletin/rss/bocm.xml', nombre: 'BOCM - Comunidad de Madrid' },
-    { url: 'https://dogc.gencat.cat/ca/rss/dogc.xml', nombre: 'DOGC - Catalunya' }
+    { url: 'https://www.boe.es/rss/boe.php?s=2B', nombre: 'BOE Sección II-B (oposiciones)' },
+    { url: 'https://www.boe.es/rss/boe.php?s=3', nombre: 'BOE Sección III' }
   ],
   4: [
-    { url: 'https://www.boe.es/rss/canal.php?c=empleo_publico', nombre: 'BOE - Empleo público' },
     { url: 'https://www.boe.es/rss/boe.php?s=2A', nombre: 'BOE Sección II-A' },
     { url: 'https://www.boe.es/rss/boe.php?s=2B', nombre: 'BOE Sección II-B' },
-    { url: 'https://www.bocm.es/boletin/rss/bocm.xml', nombre: 'BOCM - Madrid' }
+    { url: 'https://www.boe.es/rss/boe.php?s=3', nombre: 'BOE Sección III' }
   ],
   5: [
-    { url: 'https://www.boe.es/rss/canal.php?c=personal', nombre: 'BOE - Personal' },
-    { url: 'https://www.boe.es/rss/canal.php?c=empleo_publico', nombre: 'BOE - Empleo público' },
-    { url: 'https://www.boe.es/rss/boe.php?s=2A', nombre: 'BOE Sección II-A' }
+    { url: 'https://www.boe.es/rss/boe.php?s=2A', nombre: 'BOE Sección II-A' },
+    { url: 'https://www.boe.es/rss/boe.php?s=2B', nombre: 'BOE Sección II-B' },
+    { url: 'https://www.boe.es/rss/boe.php?s=3', nombre: 'BOE Sección III' }
   ],
   6: [
-    { url: 'https://www.boe.es/rss/canal.php?c=defensa', nombre: 'BOE - Defensa' },
-    { url: 'https://www.boe.es/rss/canal.php?c=empleo_publico', nombre: 'BOE - Empleo público' },
     { url: 'https://www.boe.es/rss/boe.php?s=2A', nombre: 'BOE Sección II-A' },
-    { url: 'https://www.defensa.gob.es/sindicacion/rss/noticias.xml',
-      nombre: 'Ministerio de Defensa' }
+    { url: 'https://www.boe.es/rss/boe.php?s=2B', nombre: 'BOE Sección II-B' },
+    { url: 'https://www.boe.es/rss/boe.php?s=3', nombre: 'BOE Sección III' }
   ]
 };
 
 const FEEDS_GENERICOS_FILTRAR = new Set([
+  'https://www.boe.es/rss/boe.php?s=2A',
   'https://www.boe.es/rss/boe.php?s=2B',
-  'https://www.boe.es/rss/canal.php?c=empleo_publico',
-  'https://www.boe.es/rss/canal.php?c=personal'
+  'https://www.boe.es/rss/boe.php?s=3'
 ]);
 
 /** Títulos ya notificados por push (persistencia ligera en memoria + hash) */
