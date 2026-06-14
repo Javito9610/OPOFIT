@@ -106,9 +106,9 @@ fun RutinasLibresScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         },
@@ -117,7 +117,7 @@ fun RutinasLibresScreen(
             // del móvil (gesture bar de Android 10+).
             FloatingActionButton(
                 onClick = onNavigateToCrearRutina,
-                containerColor = MaterialTheme.colorScheme.surface,
+                containerColor = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
                     .navigationBarsPadding()
                     .padding(bottom = 12.dp)

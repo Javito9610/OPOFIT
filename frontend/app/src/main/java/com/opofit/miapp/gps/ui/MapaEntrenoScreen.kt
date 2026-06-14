@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -496,7 +497,22 @@ fun MapaEntrenoScreen(
                         zoomControlsEnabled = true
                     ),
                     onMapClick = { click ->
-                        if (mostrarRuta && modoPersonalizado) waypoints.add(click)
+                        if (mostrarRuta && modoPersonalizado) {
+                            waypoints.add(click)
+                            // Feedback inmediato: el usuario veía que tocaba
+                            // y "no pasaba nada" porque el contador estaba en
+                            // texto pequeño. Snackbar le confirma el tap y le
+                            // recuerda el mínimo de 2 puntos para crear la ruta.
+                            scope.launch {
+                                val tot = waypoints.size
+                                val msg = if (tot < 2) {
+                                    "Punto $tot añadido. Añade al menos 1 más para crear la ruta."
+                                } else {
+                                    "Punto $tot añadido. Pulsa \"Crear mi ruta\" cuando hayas terminado."
+                                }
+                                snackbar.showSnackbar(msg)
+                            }
+                        }
                     }
                 ) {
                     // La ubicación del usuario YA se muestra con el punto azul
@@ -727,18 +743,29 @@ fun MapaEntrenoScreen(
                         if (modoPersonalizado) {
                             Text(
                                 "Toca el mapa para trazar tu ruta (${waypoints.size} puntos)",
-                                style = MaterialTheme.typography.bodySmall
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (waypoints.size < 2) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            if (waypoints.size >= 2) {
-                                OutlinedButton(
-                                    onClick = { generarRuta() },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    enabled = !loading
-                                ) {
-                                    Icon(Icons.Filled.TouchApp, null, Modifier.size(16.dp))
-                                    Spacer(Modifier.size(4.dp))
-                                    Text("Crear mi ruta")
-                                }
+                            // El botón SIEMPRE visible en modo personalizado:
+                            // antes solo aparecía al tener 2 puntos y el usuario
+                            // creía que el modo no funcionaba. Ahora disabled
+                            // con tooltip claro cuando faltan puntos.
+                            Button(
+                                onClick = { generarRuta() },
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !loading && waypoints.size >= 2,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                )
+                            ) {
+                                Icon(Icons.Filled.TouchApp, null, Modifier.size(16.dp))
+                                Spacer(Modifier.size(4.dp))
+                                Text(
+                                    if (waypoints.size >= 2) "Crear mi ruta (${waypoints.size} puntos)"
+                                    else "Crear mi ruta (toca el mapa)"
+                                )
                             }
                             if (waypoints.isNotEmpty()) {
                                 OutlinedButton(onClick = { waypoints.clear(); ruta = null }, modifier = Modifier.fillMaxWidth()) {

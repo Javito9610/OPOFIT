@@ -142,7 +142,14 @@ class HealthConnectManager(private val context: Context) {
             val avgSpeedMps = if (totalDistance > 0) totalDistance / durSec else speedSamples.average().takeIf { it.isFinite() } ?: 0.0
             val maxSpeed = speedSamples.maxOrNull() ?: avgSpeedMps
             val avgPace = if (totalDistance >= 10.0) durSec / (totalDistance / 1000.0) else 0.0
-            val tipo = mapExerciseType(s.exerciseType)
+            // Heurística pro: si el reloj manda un código desconocido o el
+            // tipo está mal etiquetado, usamos velocidad media para
+            // desambiguar. Un usuario reportó que su salida en bici se
+            // guardó como caminar; aquí lo corregimos.
+            //   v < 2.2 m/s (~8 km/h) → WALK
+            //   2.2-4.4 m/s (8-16 km/h) → RUN
+            //   > 4.4 m/s (>16 km/h) → BIKE
+            val tipo = inferirTipoActividad(s.exerciseType, avgSpeedMps, maxSpeed)
 
             val summary = ActivitySummary(
                 id = hcId,
@@ -175,7 +182,7 @@ class HealthConnectManager(private val context: Context) {
         return SyncResult(importadas, saltadas, null)
     }
 
-    private fun mapExerciseType(code: Int): ActivityType {
+    private fun mapExerciseType(code: Int): ActivityType? {
         return when (code) {
             ExerciseSessionRecord.EXERCISE_TYPE_RUNNING,
             ExerciseSessionRecord.EXERCISE_TYPE_RUNNING_TREADMILL -> ActivityType.RUN
@@ -183,8 +190,35 @@ class HealthConnectManager(private val context: Context) {
             ExerciseSessionRecord.EXERCISE_TYPE_HIKING -> ActivityType.WALK
             ExerciseSessionRecord.EXERCISE_TYPE_BIKING,
             ExerciseSessionRecord.EXERCISE_TYPE_BIKING_STATIONARY -> ActivityType.BIKE
-            else -> ActivityType.RUN
+            else -> null  // desconocido: que el caller infiera por velocidad
         }
+    }
+
+    /**
+     * Combina el código declarado por el reloj con una heurística de
+     * velocidad media. Si el reloj NO declara tipo (other_workout, etc.) o
+     * el código no encaja con la velocidad medida, prevalece la velocidad.
+     *
+     * Tablas (UCI, World Athletics, manual andador):
+     *   - Caminar: 3-6 km/h (0.8-1.7 m/s)
+     *   - Trotar: 6-10 km/h (1.7-2.8 m/s)
+     *   - Correr: 8-22 km/h (2.2-6.1 m/s)
+     *   - Bici recreativa: 12-25 km/h (3.3-7 m/s)
+     *   - Bici deportiva: 25-45 km/h (7-12 m/s)
+     */
+    private fun inferirTipoActividad(code: Int, avgSpeedMps: Double, maxSpeedMps: Double): ActivityType {
+        val declarado = mapExerciseType(code)
+        // Si la velocidad media supera 5.5 m/s (~20 km/h) es BICI seguro,
+        // aunque el reloj dijera "caminar/correr": un humano no corre a 20.
+        if (avgSpeedMps >= 5.5) return ActivityType.BIKE
+        // Si la velocidad media está por debajo de 1.9 m/s (~7 km/h) es WALK,
+        // aunque el reloj dijera "correr".
+        if (avgSpeedMps in 0.1..1.9) return ActivityType.WALK
+        // Si el reloj ya declaró un tipo válido, respetamos su decisión
+        // (siempre que no esté en los rangos extremos de arriba).
+        if (declarado != null) return declarado
+        // Sin declaración: 1.9-5.5 m/s = correr/trotar.
+        return ActivityType.RUN
     }
 
     data class SyncResult(val importadas: Int, val saltadas: Int, val error: String?)

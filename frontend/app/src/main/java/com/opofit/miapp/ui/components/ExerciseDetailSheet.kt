@@ -290,6 +290,42 @@ fun ExerciseDetailSheet(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+
+            // Botón "Ver vídeo": el usuario pidió poder ver el ejercicio en
+            // movimiento. Abrimos YouTube con búsqueda del nombre del
+            // ejercicio + "técnica correcta" para que aparezcan tutoriales
+            // españoles primero. Es la solución pro sin coste de mantener
+            // un banco propio de vídeos.
+            val context = androidx.compose.ui.platform.LocalContext.current
+            androidx.compose.material3.Button(
+                onClick = {
+                    val q = java.net.URLEncoder.encode(
+                        "${ejercicio.nombre} técnica correcta",
+                        "UTF-8"
+                    )
+                    val url = "https://www.youtube.com/results?search_query=$q"
+                    com.opofit.miapp.utils.UrlOpener.open(context, url)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = androidx.compose.ui.graphics.Color(0xFFCC0000),
+                    contentColor = androidx.compose.ui.graphics.Color.White
+                )
+            ) {
+                Icon(
+                    imageVector = androidx.compose.material.icons.Icons.Outlined.Speed,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    "Ver vídeo en YouTube",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
     }
 }

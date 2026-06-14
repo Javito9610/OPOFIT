@@ -24,9 +24,15 @@ const TIPOS_LUGAR = {
     placeType: 'gym',
     keyword: null,
     etiqueta: 'Gimnasio',
-    // Excluimos lo que NO es un gimnasio real (yoga, pilates, fisio, spa,
-    // pole dance, etc.) — Google los clasifica como "gym" alegremente.
-    mustNotMatch: /(yoga|pilates|fisio|fisioterap|osteopat|spa|wellness|estetic|peluquer|nutrici|nail|tattoo|fisiocross|pole\s*dance|kine[sz]i|psico|cli[ní]nica|salud\s+mental|odonto|dental|barber)/i
+    // Excluimos lo que NO es un gimnasio cerrado real:
+    //  - Servicios de salud/belleza que Google clasifica como "gym" (yoga,
+    //    pilates, fisio, spa, pole dance, peluquerías).
+    //  - PARQUES DE CALISTENIA / outdoor (eso va en su propia categoría):
+    //    "calistenia", "street workout", "biosaludable", "parque", "park",
+    //    "outdoor", "al aire libre", "fitness station". El usuario reportaba
+    //    que pedía "gym" y le aparecían parques con barras.
+    //  - Boxes CrossFit (van en su categoría): "box", "cf box", "crossfit".
+    mustNotMatch: /(yoga|pilates|fisio|fisioterap|osteopat|spa|wellness|estetic|peluquer|nutrici|nail|tattoo|fisiocross|pole\s*dance|kine[sz]i|psico|cli[ní]nica|salud\s+mental|odonto|dental|barber|calistenia|street\s*workout|biosaludable|outdoor\s*(gym|fitness)|al\s+aire\s+libre|fitness\s*station|parque\s+de\s+barras|crossfit|\bcf\s*box\b|\bwod\b)/i
   },
   CROSSFIT: {
     placeType: null,
@@ -38,15 +44,15 @@ const TIPOS_LUGAR = {
     // reportaba el usuario.
     radioDefault: 40000,
     etiqueta: 'CrossFit / Box',
-    // Regex MÁS amplio que admite variantes reales en España:
+    // Regex que admite variantes reales en España:
     //   "CrossFit Espinar", "Box CrossFit Guadarrama", "CF Box Madrid",
-    //   "Raiz Box", "Colmenar Box", "WOD Studio", "Athletic Box".
-    // OJO: "box" como palabra suelta acepta "Raiz Box" / "Colmenar Box" pero
-    // el mustNotMatch descarta "Boxeo" y "Fitboxing" (que son boxeo, no CF).
-    mustMatch: /(cross\s*fit|crossfit|\bcf\b|wod|functional\s+(fitness|training|box)|athletic\s+box|\bbox\b)/i,
-    // Excluimos "CrossFit Wellness", franquicias yoga que usan la palabra,
-    // físios que ofrecen "crossfit rehabilitation", y boxeo (que también
-    // tiene "box" en el nombre pero es un deporte distinto).
+    //   "WOD Studio", "Athletic Box", "Functional Box".
+    // OJO: la palabra "box" SOLO se acepta cuando va junto a otra clave
+    // (cross/cf/athletic/functional/wod). Antes "box" suelto admitía gyms
+    // tipo "Raiz Box" o "Colmenar Box" — pero también "Sport Box", "X-Box",
+    // etc. Se quitó para reducir falsos positivos.
+    mustMatch: /(cross\s*fit|crossfit|\bcf\b|\bwod\b|functional\s+(fitness|training|box)|athletic\s+box|\bbox\b)/i,
+    // Excluimos boxeo, fitboxing, kickbox, muay thai, mma, salud, wellness.
     mustNotMatch: /(yoga|pilates|fisioterap|fisio\s|spa|wellness\s+only|boxeo|fitboxing|kick\s*box|muay\s*thai|mma\b)/i
   },
   PISTA: {
@@ -108,10 +114,16 @@ const TIPOS_LUGAR = {
 //   - CALISTENIA: solo tags específicos de calistenia / outdoor gym.
 const OVERPASS_TAGS = {
   GYM: [
+    // Gimnasios cerrados de OSM. EXCLUIMOS leisure=fitness_station y
+    // leisure=outdoor_gym porque esos son parques de calistenia.
     'node["amenity"="gym"]',
     'way["amenity"="gym"]',
-    'node["leisure"="fitness_centre"]',
-    'way["leisure"="fitness_centre"]'
+    'node["leisure"="fitness_centre"]["fitness_station"!~".*"]',
+    'way["leisure"="fitness_centre"]["fitness_station"!~".*"]',
+    // McFit / Basic-Fit / DiR aparecen como shop=sports_centre o
+    // shop=fitness en algunos OSM exports. Los pedimos también.
+    'node["shop"="sports_centre"]',
+    'way["shop"="sports_centre"]'
   ],
   CROSSFIT: [
     // Tag explícito (lo ideal, pero pocos boxes lo tienen en España).

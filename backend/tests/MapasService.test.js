@@ -127,6 +127,29 @@ describe('MapasService', () => {
       expect(res[0].nombre).toBe('AltaFit');
     });
 
+    test('GYM no devuelve parques de calistenia ni boxes CrossFit (bug usuario)', async () => {
+      // El usuario reportó que pedir GYM le devolvía parques con barras y
+      // boxes CrossFit mezclados. Esos deben ir a su propia categoría.
+      global.fetch = jest.fn().mockResolvedValue(
+        fakeOverpass([
+          { id: 1, lat: 41.4, lon: 2.16, tags: { name: 'AltaFit', amenity: 'gym' } },
+          { id: 2, lat: 41.41, lon: 2.17, tags: { name: 'McFit Barcelona', amenity: 'gym' } },
+          { id: 3, lat: 41.42, lon: 2.18, tags: { name: 'Parque de calistenia Sant Cugat', amenity: 'gym' } },
+          { id: 4, lat: 41.43, lon: 2.19, tags: { name: 'CrossFit El Espinar', amenity: 'gym' } },
+          { id: 5, lat: 41.44, lon: 2.20, tags: { name: 'Outdoor Gym Diagonal Mar', amenity: 'gym' } },
+          { id: 6, lat: 41.45, lon: 2.21, tags: { name: 'Parque biosaludable', amenity: 'gym' } }
+        ])
+      );
+      const res = await MapasService.buscarLugares(41.4, 2.16, 'GYM');
+      const nombres = res.map((r) => r.nombre);
+      expect(nombres).toContain('AltaFit');
+      expect(nombres).toContain('McFit Barcelona');
+      expect(nombres).not.toContain('Parque de calistenia Sant Cugat');
+      expect(nombres).not.toContain('CrossFit El Espinar');
+      expect(nombres).not.toContain('Outdoor Gym Diagonal Mar');
+      expect(nombres).not.toContain('Parque biosaludable');
+    });
+
     test('CROSSFIT pilla gyms con "Box" o "CrossFit" en el nombre (caso El Espinar / Guadarrama)', async () => {
       // Boxes reales de la sierra de Madrid que solo tienen amenity=gym.
       // El usuario reportaba que no aparecían y exigía que sí lo hicieran.
