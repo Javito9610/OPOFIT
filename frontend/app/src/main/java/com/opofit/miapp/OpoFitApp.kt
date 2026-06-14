@@ -1,6 +1,11 @@
 package com.opofit.miapp
 
 import android.app.Application
+import android.os.Build
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
 import com.opofit.miapp.gps.service.GpsTracker
 import com.opofit.miapp.gps.service.HrBleManager
 import kotlinx.coroutines.CoroutineScope
@@ -8,7 +13,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-class OpoFitApp : Application() {
+class OpoFitApp : Application(), ImageLoaderFactory {
+
+    override fun newImageLoader(): ImageLoader {
+        // ImageLoader con soporte de GIFs animados: necesario para mostrar
+        // las animaciones de ejercicios (musclewiki, wger, etc.) en el sheet.
+        return ImageLoader.Builder(this)
+            .components {
+                if (Build.VERSION.SDK_INT >= 28) add(ImageDecoderDecoder.Factory())
+                else add(GifDecoder.Factory())
+            }
+            .build()
+    }
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 

@@ -443,6 +443,31 @@ function query(sql, params = []) {
     const st = state.settings.find((x) => x.usuarios_id_usuario === id);
     return Promise.resolve([st ? [st] : [], []]);
   }
+  // INSERT del wizard de Onboarding Freeletics (upsert con objetivo_fitness).
+  // Firma: (usuarios_id_usuario, 'kg', 'km', objetivo, tiempo, lesiones, NULL)
+  // → params [userId, objetivo, tiempo, lesiones]
+  if (s.startsWith('insert into settings') && /objetivo_fitness/.test(s)) {
+    const uid = Number(params[0]);
+    const existing = state.settings.find((x) => x.usuarios_id_usuario === uid);
+    if (existing) {
+      existing.objetivo_fitness = params[1];
+      existing.tiempo_disponible_min = params[2];
+      existing.lesiones = params[3];
+    } else {
+      const id = nextId.settings++;
+      state.settings.push({
+        id_setting: id,
+        usuarios_id_usuario: uid,
+        unidad_peso: 'kg',
+        unidad_distancia: 'km',
+        objetivo_fitness: params[1],
+        tiempo_disponible_min: params[2],
+        lesiones: params[3],
+        fatiga_previa: null
+      });
+    }
+    return Promise.resolve([{ insertId: 0, affectedRows: 1 }, []]);
+  }
   if (s.startsWith('insert into settings')) {
     const id = nextId.settings++;
     state.settings.push({

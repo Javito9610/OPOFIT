@@ -123,16 +123,22 @@ const TIPOS_LUGAR = {
 //   - CALISTENIA: solo tags específicos de calistenia / outdoor gym.
 const OVERPASS_TAGS = {
   GYM: [
-    // Gimnasios cerrados de OSM. EXCLUIMOS leisure=fitness_station y
-    // leisure=outdoor_gym porque esos son parques de calistenia.
+    // Gimnasios cerrados de OSM. Ampliamos tags para capturar TODOS los gym
+    // reales de la zona (McFit, Basic-Fit, DiR, Synergym, Anytime Fitness):
     'node["amenity"="gym"]',
     'way["amenity"="gym"]',
-    'node["leisure"="fitness_centre"]["fitness_station"!~".*"]',
-    'way["leisure"="fitness_centre"]["fitness_station"!~".*"]',
-    // McFit / Basic-Fit / DiR aparecen como shop=sports_centre o
-    // shop=fitness en algunos OSM exports. Los pedimos también.
+    'node["leisure"="fitness_centre"]',
+    'way["leisure"="fitness_centre"]',
+    // Shop tags: gimnasios comerciales se taggean como shop.
     'node["shop"="sports_centre"]',
-    'way["shop"="sports_centre"]'
+    'way["shop"="sports_centre"]',
+    'node["shop"="fitness"]',
+    'way["shop"="fitness"]',
+    // Sport tags: fitness o weightlifting (musculación pura).
+    'node["sport"="fitness"]',
+    'way["sport"="fitness"]',
+    'node["sport"="weightlifting"]',
+    'way["sport"="weightlifting"]'
   ],
   CROSSFIT: [
     // Tag explícito (lo ideal, pero pocos boxes lo tienen en España).

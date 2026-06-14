@@ -14,6 +14,26 @@ import retrofit2.http.Query
 
 data class EntornoBody(val entorno: String)
 
+data class OnboardingBody(
+    val objetivo: String,         // perder_grasa | ganar_musculo | resistencia | rendimiento
+    val diasSemana: Int,
+    val tiempoMin: Int,
+    val lesiones: List<String> = emptyList()
+)
+
+data class OnboardingDataResponse(
+    val objetivo: String? = null,
+    val diasSemana: Int = 0,
+    val tiempoMin: Int = 0,
+    val lesiones: List<String> = emptyList()
+)
+
+data class OnboardingResponse(
+    val ok: Boolean = false,
+    val msg: String? = null,
+    val data: OnboardingDataResponse? = null
+)
+
 interface PlanesApi {
     @GET("/api/planes/calendario/{idOposicion}")
     suspend fun getCalendario(
@@ -34,6 +54,12 @@ interface PlanesApi {
         @Header("Authorization") token: String,
         @Body body: EntornoBody
     ): EntornoUsuarioResponse
+
+    @PUT("/api/planes/onboarding")
+    suspend fun putOnboarding(
+        @Header("Authorization") token: String,
+        @Body body: OnboardingBody
+    ): OnboardingResponse
 
     @POST("/api/planes/regenerar/{idOposicion}")
     suspend fun regenerarPlan(

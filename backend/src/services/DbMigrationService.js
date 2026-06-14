@@ -89,6 +89,35 @@ class DbMigrationService {
         "VARCHAR(500) NULL DEFAULT 'NADA'"
       );
 
+      // v12: Onboarding Freeletics-style. Cuatro campos opcionales que el
+      // PlanGenerador lee para personalizar la sesión al usuario REAL:
+      //   - lesiones: csv ('rodilla,hombro,lumbar,tobillo,codo,muneca')
+      //   - tiempo_disponible_min: int 15-180
+      //   - fatiga_previa: int 1-5 (autoregulación)
+      //   - objetivo_fitness: enum ('perder_grasa','ganar_musculo','resistencia','rendimiento')
+      // Todos NULL por defecto → comportamiento previo intacto si el usuario
+      // no completa el onboarding.
+      await DbMigrationService.addColumnIfMissing(
+        'settings',
+        'lesiones',
+        "VARCHAR(200) NULL DEFAULT NULL"
+      );
+      await DbMigrationService.addColumnIfMissing(
+        'settings',
+        'tiempo_disponible_min',
+        "INT NULL DEFAULT NULL"
+      );
+      await DbMigrationService.addColumnIfMissing(
+        'settings',
+        'fatiga_previa',
+        "TINYINT NULL DEFAULT NULL"
+      );
+      await DbMigrationService.addColumnIfMissing(
+        'settings',
+        'objetivo_fitness',
+        "VARCHAR(32) NULL DEFAULT NULL"
+      );
+
       // v8: comunidad — grupos con tipo (PRIVADO estilo WhatsApp, COMUNIDAD
       // estilo Strava clubs). Antes solo había un tipo y los privados no
       // existían como concepto.

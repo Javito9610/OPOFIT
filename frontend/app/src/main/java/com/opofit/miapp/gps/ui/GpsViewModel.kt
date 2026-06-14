@@ -264,7 +264,7 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
         return merged.sortedByDescending { it.startedAtMs }
     }
 
-    fun get(id: String): ActivitySummary? = repo.get(id)
+    fun get(id: String): ActivitySummary? = runCatching { repo.get(id) }.getOrNull()
 
     fun delete(id: String) {
         repo.delete(id)

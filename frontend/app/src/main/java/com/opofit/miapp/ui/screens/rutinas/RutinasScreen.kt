@@ -484,26 +484,32 @@ fun RutinasScreen(
                                     plan.sesion_hoy?.let { hoy ->
                                         if (!hoy.completada) {
                                             item {
-                                                EntrenoHoyHeroCard(
-                                                    titulo = hoy.nombre_dia,
-                                                    subtitulo = hoy.titulo,
-                                                    enfoque = hoy.enfoque,
-                                                    onEmpezar = {
+                                                // FreeleticsHeroCard: card dominante con
+                                                // gradient oscuro→naranja brand, titular
+                                                // grande, chips (ejercicios, min, fase) y
+                                                // CTA naranja gigante "EMPEZAR AHORA".
+                                                val chips = buildList {
+                                                    add("${hoy.ejercicios.size} ejercicios")
+                                                    val totalMin = hoy.ejercicios.sumOf {
+                                                        ((it.series * (60 + it.descanso)) / 60)
+                                                    }
+                                                    if (totalMin > 0) add("${totalMin} min")
+                                                    hoy.balance_warnings.firstOrNull()?.let { add(it) }
+                                                }
+                                                com.opofit.miapp.ui.components.FreeleticsHeroCard(
+                                                    label = "Entrenamiento de hoy",
+                                                    titulo = hoy.titulo,
+                                                    subtitulo = hoy.descripcion,
+                                                    chips = chips,
+                                                    ctaTexto = "Empezar ahora",
+                                                    onStart = {
                                                         onNavigateToEntrenamientos(
                                                             hoy.enfoque,
                                                             hoy.id_plan_dia,
                                                             hoy.id_rutina_opo
                                                         )
                                                     },
-                                                    onPrepararRuta = if (hoy.enfoque.equals("RESISTENCIA", ignoreCase = true)) {
-                                                        {
-                                                            onNavigateToEntrenamientos(
-                                                                hoy.enfoque,
-                                                                hoy.id_plan_dia,
-                                                                hoy.id_rutina_opo
-                                                            )
-                                                        }
-                                                    } else null
+                                                    icono = com.opofit.miapp.ui.components.EnfoqueIcons.forEnfoque(hoy.enfoque)
                                                 )
                                             }
                                         }

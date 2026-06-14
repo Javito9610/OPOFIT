@@ -115,6 +115,10 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
     implementation("io.coil-kt:coil-compose:2.6.0")
+    // coil-gif: soporte de GIFs animados para mostrar las animaciones de
+    // ejercicios in-line en el sheet (el usuario pedía verlas directamente
+    // sin abrir navegador externo).
+    implementation("io.coil-kt:coil-gif:2.6.0")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 

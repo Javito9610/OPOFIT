@@ -55,9 +55,11 @@ class PlanGeneradorService {
     let lesiones = [];
     let tiempoDisponibleMin = null;
     let fatigaPrevia = null;
+    let objetivoFitness = null;
     try {
       const [adRows] = await db.query(
-        'SELECT lesiones, tiempo_disponible_min, fatiga_previa FROM settings WHERE usuarios_id_usuario = ?',
+        `SELECT lesiones, tiempo_disponible_min, fatiga_previa, objetivo_fitness
+         FROM settings WHERE usuarios_id_usuario = ?`,
         [userId]
       );
       const raw = adRows[0] || {};
@@ -68,6 +70,12 @@ class PlanGeneradorService {
       if (Number.isFinite(t) && t >= 15 && t <= 180) tiempoDisponibleMin = t;
       const f = Number(raw.fatiga_previa);
       if (Number.isFinite(f) && f >= 1 && f <= 5) fatigaPrevia = f;
+      // Objetivo Freeletics-style: solo aplica a usuarios FITNESS. Valores
+      // válidos: perder_grasa | ganar_musculo | resistencia | rendimiento.
+      const objVal = String(raw.objetivo_fitness || '').trim().toLowerCase();
+      if (['perder_grasa', 'ganar_musculo', 'resistencia', 'rendimiento'].includes(objVal)) {
+        objetivoFitness = objVal;
+      }
     } catch (_) { /* columnas pueden no existir aún */ }
 
     return {
@@ -77,7 +85,8 @@ class PlanGeneradorService {
       diasEntrenoSemana: diasEntreno,
       lesiones,
       tiempoDisponibleMin,
-      fatigaPrevia
+      fatigaPrevia,
+      objetivoFitness
     };
   }
 

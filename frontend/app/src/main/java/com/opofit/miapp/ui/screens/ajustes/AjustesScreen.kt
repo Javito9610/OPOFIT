@@ -105,6 +105,7 @@ fun AjustesScreen(
     var entornoSeleccionado by remember { mutableStateOf<String?>(null) }
     var entornosOpciones by remember { mutableStateOf<List<EntornoEntrenoOpcion>>(emptyList()) }
     var mostrarSheetEntorno by remember { mutableStateOf(false) }
+    var mostrarSheetOnboarding by remember { mutableStateOf(false) }
     var perfilPublico by remember { mutableStateOf(false) }
 
     LaunchedEffect(userId, oposicionId, esFitness) {
@@ -141,6 +142,38 @@ fun AjustesScreen(
                     }
                 } catch (_: Exception) { }
                 mostrarSheetEntorno = false
+            }
+        }
+    )
+
+    // Onboarding Freeletics: wizard de 4 pasos que el usuario lanza desde
+    // Ajustes. Persiste vía PUT /api/planes/onboarding y muestra snackbar.
+    com.opofit.miapp.ui.components.OnboardingFreeleticsSheet(
+        visible = mostrarSheetOnboarding,
+        onDismiss = { mostrarSheetOnboarding = false },
+        onConfirm = { result ->
+            scope.launch {
+                try {
+                    val token = tokenManager.getToken().first().orEmpty()
+                    val res = RetrofitClient.planesApi.putOnboarding(
+                        "Bearer $token",
+                        com.opofit.miapp.data.api.OnboardingBody(
+                            objetivo = result.objetivo,
+                            diasSemana = result.diasSemana,
+                            tiempoMin = result.tiempoMin,
+                            lesiones = result.lesiones
+                        )
+                    )
+                    if (res.ok) {
+                        snackbarHostState.showSnackbar("Plan personalizado. La próxima carga lo aplicará.")
+                    } else {
+                        snackbarHostState.showSnackbar(res.msg ?: "Error guardando")
+                    }
+                } catch (e: Exception) {
+                    com.opofit.miapp.utils.SafeLog.w("AjustesScreen", "onboarding", e)
+                    snackbarHostState.showSnackbar("Error de red: ${e.message ?: "?"}")
+                }
+                mostrarSheetOnboarding = false
             }
         }
     )
@@ -365,6 +398,13 @@ fun AjustesScreen(
                             "Cambiar entorno de entreno"
                         )
                     }
+                    Spacer(Modifier.height(8.dp))
+                    // CTA Freeletics-style: abre el wizard de 4 pasos que
+                    // ajusta objetivo + días + tiempo + lesiones de una vez.
+                    com.opofit.miapp.ui.components.FreeleticsBigButton(
+                        text = "Personalizar mi plan",
+                        onClick = { mostrarSheetOnboarding = true }
+                    )
                 }
             }
 

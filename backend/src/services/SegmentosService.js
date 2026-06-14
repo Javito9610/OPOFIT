@@ -179,14 +179,24 @@ class SegmentosService {
     );
     if (!seg) throw new Error('SEGMENTO_NO_ENCONTRADO');
 
+    // BUG fix: el ranking mostraba TODOS los intentos del mismo usuario.
+    // Si Rafa hizo el segmento 9 veces, aparecía 9 veces como #1, #2…
+    // Ahora agrupamos por id_usuario y nos quedamos con su MEJOR tiempo
+    // (MIN/MAX según mejor_si_menor) → 1 fila por usuario.
     const orden = seg.mejor_si_menor ? 'ASC' : 'DESC';
+    const aggFn = seg.mejor_si_menor ? 'MIN' : 'MAX';
     const [rows] = await db.query(
-      `SELECT e.id_esfuerzo, e.duracion_ms, e.creado_en, e.gps_uuid,
-              u.id_usuario, u.nombre AS usuario_nombre, u.avatar_url
+      `SELECT e.id_usuario,
+              ${aggFn}(e.duracion_ms) AS duracion_ms,
+              MIN(e.creado_en) AS creado_en,
+              MAX(e.gps_uuid) AS gps_uuid,
+              u.nombre AS usuario_nombre,
+              u.avatar_url
        FROM segmento_esfuerzos e
        JOIN usuarios u ON e.id_usuario = u.id_usuario
        WHERE e.id_segmento = ?
-       ORDER BY e.duracion_ms ${orden}, e.creado_en ASC
+       GROUP BY e.id_usuario, u.nombre, u.avatar_url
+       ORDER BY duracion_ms ${orden}, creado_en ASC
        LIMIT ?`,
       [idSegmento, Number(limite)]
     );

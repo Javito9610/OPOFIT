@@ -67,14 +67,20 @@ fun ExerciseDetailSheet(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // === HERO VISUAL DEL EJERCICIO ===
-            // Card grande con icono ENORME del patrón de movimiento (96dp)
-            // sobre gradient brand. Estilo Nike Training Club / Caliber:
-            // ver el ejercicio antes que leer.
+            // Si el backend tiene animacion_url o video_url con un GIF,
+            // lo cargamos IN-LINE con Coil (soporte GIF activado en el
+            // ImageLoader global). El usuario decía "yo quiero que salga
+            // directamente, no que abra el navegador" — ahora se ve aquí.
+            // Fallback: icono grande sobre gradient brand.
             val ctxLocal = androidx.compose.ui.platform.LocalContext.current
+            val animUrl = ejercicio.animacion_url
+                ?.takeIf { it.startsWith("http") }
+                ?: ejercicio.video_url?.takeIf { it.startsWith("http") && (it.endsWith(".gif") || it.endsWith(".png") || it.endsWith(".jpg") || it.endsWith(".webp")) }
+
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 140.dp),
+                    .heightIn(min = if (animUrl != null) 220.dp else 140.dp),
                 shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.primary
             ) {
@@ -89,25 +95,37 @@ fun ExerciseDetailSheet(
                                 )
                             )
                         )
-                        .padding(20.dp),
+                        .padding(if (animUrl != null) 0.dp else 20.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            EnfoqueIcons.forEnfoque(ejercicio.pilar),
+                    if (animUrl != null) {
+                        // Animación / GIF in-line del banco de ejercicios.
+                        coil.compose.AsyncImage(
+                            model = animUrl,
                             contentDescription = ejercicio.nombre,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(72.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 220.dp),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Fit
                         )
-                        Text(
-                            tipoLabel.uppercase(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
-                            fontWeight = FontWeight.SemiBold
-                        )
+                    } else {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                EnfoqueIcons.forEnfoque(ejercicio.pilar),
+                                contentDescription = ejercicio.nombre,
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(72.dp)
+                            )
+                            Text(
+                                tipoLabel.uppercase(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                 }
             }
