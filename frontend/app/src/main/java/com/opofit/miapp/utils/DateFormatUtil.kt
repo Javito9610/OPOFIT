@@ -8,10 +8,12 @@ import java.util.Locale
 
 object DateFormatUtil {
     private val zona = ZoneId.of("Europe/Madrid")
+    // Locale(es, ES) está deprecado en Java 21+: usamos forLanguageTag.
+    private val localeEs = Locale.forLanguageTag("es-ES")
     private val fechaHora =
-        DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale("es", "ES"))
+        DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", localeEs)
     private val soloFecha =
-        DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale("es", "ES"))
+        DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", localeEs)
 
     fun formatearFechaHora(isoOrSql: String?): String {
         if (isoOrSql.isNullOrBlank()) return "—"

@@ -19,15 +19,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.outlined.FactCheck
+import androidx.compose.material.icons.automirrored.outlined.FactCheck
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -178,13 +178,13 @@ fun RutinasScreen(
                 title = { Text("Plan de entrenamiento") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -266,7 +266,7 @@ fun RutinasScreen(
                                                 horizontalAlignment = Alignment.CenterHorizontally
                                             ) {
                                                 Icon(
-                                                    imageVector = Icons.Outlined.FactCheck,
+                                                    imageVector = Icons.AutoMirrored.Outlined.FactCheck,
                                                     contentDescription = null,
                                                     modifier = Modifier.size(44.dp),
                                                     tint = MaterialTheme.colorScheme.onSecondaryContainer
@@ -590,9 +590,8 @@ fun RutinasScreen(
                                                         dia.ejercicios.take(4).forEach { ej ->
                                                             val prescripcion = "${ej.series}×${PrescripcionFormat.formatRepeticiones(ej.repeticiones, ej.unidad, ej.nombre)}"
                                                             PlanEjercicioRow(
+                                                                ejercicio = ej,
                                                                 prescripcion = prescripcion,
-                                                                nombre = ej.nombre,
-                                                                destacado = ej.personalizado || ej.sustituido,
                                                                 onInfoClick = {
                                                                     ejercicioDetalle = ej
                                                                     prescripcionDetalle = prescripcion
@@ -750,7 +749,7 @@ fun RutinasScreen(
                                                 )
                                                 Spacer(modifier = Modifier.height(8.dp))
                                                 bloque.ejercicios.forEachIndexed { index, ejercicio ->
-                                                    if (index > 0) Divider(modifier = Modifier.padding(vertical = 4.dp))
+                                                    if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                                                     val nombreEj = Units.nombreConEquivalenciaDistancia(
                                                         ejercicio.nombre,
                                                         unitDist

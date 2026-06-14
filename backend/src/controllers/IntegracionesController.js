@@ -3,13 +3,27 @@ const StravaService = require('../services/StravaService');
 const PolarService = require('../services/PolarService');
 const IntegracionesStore = require('../services/IntegracionesStore');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'opofit-dev';
+// SEGURIDAD: JWT_SECRET es OBLIGATORIO. Antes existía un fallback
+// `'opofit-dev'` que en producción permitía firmar tokens con un secret
+// público — vulnerabilidad de auth bypass. Ahora fail-fast: si la env no
+// está definida, signState/verifyState devuelven null y el callback OAuth
+// falla limpiamente en vez de aceptar tokens falsificados.
+function getSecret() {
+  return process.env.JWT_SECRET || null;
+}
 
 function signState(payload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '10m' });
+  const secret = getSecret();
+  if (!secret) {
+    console.error('[Integraciones] JWT_SECRET no definido — abortando OAuth state');
+    return null;
+  }
+  return jwt.sign(payload, secret, { expiresIn: '10m' });
 }
 function verifyState(token) {
-  try { return jwt.verify(token, JWT_SECRET); } catch { return null; }
+  const secret = getSecret();
+  if (!secret) return null;
+  try { return jwt.verify(token, secret); } catch { return null; }
 }
 
 function htmlPage(ok, providerLabel) {
@@ -66,6 +80,9 @@ const stravaStart = async (req, res) => {
     return res.status(503).json({ ok: false, msg: 'Strava no está configurado en el servidor' });
   }
   const state = signState({ userId, provider: 'STRAVA' });
+  if (!state) {
+    return res.status(500).json({ ok: false, msg: 'JWT_SECRET no configurado en el servidor' });
+  }
   const url = StravaService.buildAuthorizeUrl(userId);
   const finalUrl = url.replace(/state=[^&]+/, `state=${encodeURIComponent(state)}`);
   res.redirect(finalUrl);
@@ -110,6 +127,9 @@ const polarStart = async (req, res) => {
     return res.status(503).json({ ok: false, msg: 'Polar no está configurado en el servidor' });
   }
   const state = signState({ userId, provider: 'POLAR' });
+  if (!state) {
+    return res.status(500).json({ ok: false, msg: 'JWT_SECRET no configurado en el servidor' });
+  }
   const url = PolarService.buildAuthorizeUrl(userId);
   const finalUrl = url.replace(/state=[^&]+/, `state=${encodeURIComponent(state)}`);
   res.redirect(finalUrl);

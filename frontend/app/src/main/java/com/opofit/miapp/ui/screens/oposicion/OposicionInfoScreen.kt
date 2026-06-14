@@ -6,7 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -53,7 +54,7 @@ fun OposicionInfoScreen(
     var infoPruebas by remember { mutableStateOf<List<InfoPrueba>>(emptyList()) }
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    val tabs = listOf("📋 Info", "💡 Trucos", "📰 Noticias", "📊 Baremos")
+    val tabs = listOf("Info", "Trucos", "Noticias", "Baremos")
 
     LaunchedEffect(oposicionId) {
         isLoading = true
@@ -111,7 +112,7 @@ fun OposicionInfoScreen(
                 title = { Text(nombreOposicion, maxLines = 1) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
                 actions = {
@@ -126,10 +127,11 @@ fun OposicionInfoScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -245,7 +247,7 @@ private fun InfoTab(
         if (pruebas.isNotEmpty()) {
             item {
                 Text(
-                    text = "📋 Pruebas Físicas Oficiales",
+                    text = "Pruebas físicas oficiales",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -317,11 +319,11 @@ private fun TrucosTab(
 
     
     val consejosGenerales = listOf(
-        "🏃 Calentamiento" to "Dedica al menos 10-15 minutos a calentar antes de cada entrenamiento y especialmente el día de la prueba. Incluye carrera suave, movilidad articular y estiramientos dinámicos.",
-        "🍎 Nutrición" to "Mantén una dieta equilibrada rica en proteínas, carbohidratos complejos y grasas saludables. Hidrátate correctamente: al menos 2 litros de agua al día.",
-        "😴 Descanso" to "Duerme entre 7-9 horas diarias. El descanso es fundamental para la recuperación muscular y el rendimiento. Evita entrenar los mismos grupos musculares en días consecutivos.",
-        "📅 Planificación" to "Organiza tus entrenamientos alternando entre fuerza, resistencia y velocidad. Incluye al menos un día de descanso activo a la semana.",
-        "🧠 Mentalidad" to "Visualiza las pruebas antes del día del examen. Practica con las condiciones reales (pista, circuito, piscina). La confianza se construye con la preparación."
+        "Calentamiento" to "Dedica al menos 10-15 minutos a calentar antes de cada entrenamiento y especialmente el día de la prueba. Incluye carrera suave, movilidad articular y estiramientos dinámicos.",
+        "Nutrición" to "Mantén una dieta equilibrada rica en proteínas, carbohidratos complejos y grasas saludables. Hidrátate correctamente: al menos 2 litros de agua al día.",
+        "Descanso" to "Duerme entre 7-9 horas diarias. El descanso es fundamental para la recuperación muscular y el rendimiento. Evita entrenar los mismos grupos musculares en días consecutivos.",
+        "Planificación" to "Organiza tus entrenamientos alternando entre fuerza, resistencia y velocidad. Incluye al menos un día de descanso activo a la semana.",
+        "Mentalidad" to "Visualiza las pruebas antes del día del examen. Practica con las condiciones reales (pista, circuito, piscina). La confianza se construye con la preparación."
     )
 
     LazyColumn(
@@ -334,7 +336,7 @@ private fun TrucosTab(
         if (allTrucos.isNotEmpty()) {
             item {
                 Text(
-                    text = "💡 Trucos por Prueba",
+                    text = "Trucos por prueba",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -346,7 +348,7 @@ private fun TrucosTab(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "🎯 $nombrePrueba",
+                            text = nombrePrueba,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -366,7 +368,7 @@ private fun TrucosTab(
         item {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "🏋️ Consejos Generales para las Físicas",
+                text = "Consejos generales para las físicas",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -452,10 +454,10 @@ private fun NoticiasTab(
     }
 
     fun etiquetaCategoria(cat: String): String = when (cat) {
-        "convocatoria" -> "📢 Convocatoria"
-        "plazo" -> "⏰ Plazo"
-        "noticia" -> "📰 Noticia"
-        else -> "📋 Info"
+        "convocatoria" -> "Convocatoria"
+        "plazo" -> "Plazo"
+        "noticia" -> "Noticia"
+        else -> "Info"
     }
 
     LazyColumn(
@@ -621,11 +623,11 @@ private fun FitnessInfoContent(modifier: Modifier = Modifier) {
         item {
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("💪 Plan y entrenos", fontWeight = FontWeight.SemiBold)
+                    Text("Plan y entrenos", fontWeight = FontWeight.SemiBold)
                     Text("Plan personalizado de fuerza, resistencia y velocidad sin pruebas oficiales.")
-                    Text("🏃 Rutas GPS", fontWeight = FontWeight.SemiBold)
+                    Text("Rutas GPS", fontWeight = FontWeight.SemiBold)
                     Text("Registra carreras y rutas con mapa y exportación.")
-                    Text("👥 Comunidad", fontWeight = FontWeight.SemiBold)
+                    Text("Comunidad", fontWeight = FontWeight.SemiBold)
                     Text("Grupos, chat, quedadas y buscar usuarios fitness cerca de ti.")
                 }
             }
@@ -680,7 +682,7 @@ private fun BaremosTab(
         if (infoPruebas.isNotEmpty()) {
             item {
                 Text(
-                    text = "📊 Baremos de Puntuación",
+                    text = "Baremos de puntuación",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -760,7 +762,12 @@ private fun BaremosTab(
                     modifier = Modifier.fillMaxWidth().padding(32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("📊", style = MaterialTheme.typography.displayMedium)
+                    Icon(
+                        Icons.Outlined.BarChart,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "No hay baremos disponibles.",

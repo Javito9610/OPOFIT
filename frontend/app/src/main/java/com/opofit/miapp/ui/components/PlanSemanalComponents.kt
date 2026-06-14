@@ -1,7 +1,9 @@
 package com.opofit.miapp.ui.components
 
 import com.opofit.miapp.ui.components.ElevatedCard
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +22,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
@@ -79,41 +82,137 @@ fun PlanMetricMini(label: String, value: String, modifier: Modifier = Modifier) 
 
 @Composable
 fun PlanEjercicioRow(
+    ejercicio: EjercicioPlan,
+    prescripcion: String,
+    onInfoClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    PlanEjercicioRow(
+        prescripcion = prescripcion,
+        nombre = ejercicio.nombre,
+        destacado = ejercicio.personalizado || ejercicio.sustituido,
+        onInfoClick = onInfoClick,
+        pilar = ejercicio.pilar,
+        descanso = ejercicio.descanso,
+        tempo = ejercicio.tempo,
+        rpe = ejercicio.rpe_objetivo,
+        faseLabel = ejercicio.fase_label,
+        modifier = modifier
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun PlanEjercicioRow(
     prescripcion: String,
     nombre: String,
     destacado: Boolean,
     onInfoClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    pilar: String? = null,
+    descanso: Int? = null,
+    tempo: String? = null,
+    rpe: Int? = null,
+    faseLabel: String? = null
 ) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    val iconTint = if (destacado) MaterialTheme.colorScheme.primary
+    else MaterialTheme.colorScheme.onSurfaceVariant
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onInfoClick),
+        shape = MaterialTheme.shapes.medium,
+        color = if (destacado) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+        border = if (destacado) BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f))
+        else null
     ) {
-        ExerciseInfoButton(onClick = onInfoClick, size = 36.dp)
-        Surface(
-            shape = MaterialTheme.shapes.small,
-            color = if (destacado) MaterialTheme.colorScheme.primaryContainer
-            else MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+        Row(
+            Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text(
-                prescripcion,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = if (destacado) MaterialTheme.colorScheme.onPrimaryContainer
-                else MaterialTheme.colorScheme.onSecondaryContainer
-            )
+            Surface(
+                shape = MaterialTheme.shapes.small,
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
+            ) {
+                Icon(
+                    imageVector = EnfoqueIcons.forEnfoque(pilar),
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .size(20.dp)
+                )
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = if (destacado) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.secondaryContainer
+                    ) {
+                        Text(
+                            prescripcion,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (destacado) MaterialTheme.colorScheme.onPrimary
+                            else MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                    if (destacado) {
+                        Icon(
+                            Icons.Filled.SwapHoriz,
+                            contentDescription = "Ajustado",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+                Text(
+                    nombre,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = if (destacado) FontWeight.SemiBold else FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2
+                )
+                val meta = buildList {
+                    descanso?.takeIf { it > 0 }?.let { add("${it}s desc.") }
+                    tempo?.takeIf { it.isNotBlank() }?.let { add("Tempo $it") }
+                    rpe?.let { add("RPE $it") }
+                    faseLabel?.takeIf { it.isNotBlank() }?.let { add(it) }
+                }
+                if (meta.isNotEmpty()) {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        meta.forEach { chip ->
+                            AssistChip(
+                                onClick = onInfoClick,
+                                label = {
+                                    Text(chip, style = MaterialTheme.typography.labelSmall)
+                                },
+                                leadingIcon = if (chip.contains("desc")) {
+                                    {
+                                        Icon(
+                                            Icons.Outlined.Timer,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
+                                } else null
+                            )
+                        }
+                    }
+                }
+            }
+            ExerciseInfoButton(onClick = onInfoClick, size = 34.dp)
         }
-        Text(
-            nombre,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = if (destacado) FontWeight.Medium else FontWeight.Normal,
-            color = if (destacado) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.onSurface,
-            maxLines = 2
-        )
     }
 }
 

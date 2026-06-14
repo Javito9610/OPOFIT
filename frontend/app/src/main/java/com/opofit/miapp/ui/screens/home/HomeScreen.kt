@@ -33,7 +33,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Watch
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
@@ -189,8 +189,8 @@ fun HomeScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
                     scrolledContainerColor = MaterialTheme.colorScheme.primary
                 ),
                 navigationIcon = {
@@ -441,7 +441,7 @@ fun HomeScreen(
                                         label = "Simulacro",
                                         value = resumen?.ultimoSimulacro?.notaMedia?.let { "$it" } ?: "—",
                                         supporting = "toca para repetir",
-                                        icon = Icons.Filled.TrendingUp,
+                                        icon = Icons.AutoMirrored.Filled.TrendingUp,
                                         accentColor = MaterialTheme.colorScheme.secondary,
                                         modifier = Modifier.weight(1f),
                                         onClick = onNavigateToSimulacro
@@ -530,45 +530,41 @@ fun HomeScreen(
                         }
 
                         item {
+                            // Botonera pro: PrimaryButton para la acción principal
+                            // (entrenar) y TertiaryButton para la secundaria
+                            // (comunidad/ranking). Altura 52dp, font semibold,
+                            // estilo Caliber/Hevy. Antes: dos Button M3 con
+                            // tamaño no consistente.
                             Row(
                                 Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                Button(
+                                com.opofit.miapp.ui.components.PrimaryButton(
+                                    text = "Entrenar",
+                                    leadingIcon = Icons.Filled.PlayArrow,
                                     onClick = {
                                         val h = resumen?.entrenoHoy
                                         onNavigateToEntrenamientos(h?.enfoque, h?.id_plan_dia, h?.id_rutina_opo)
                                     },
                                     modifier = Modifier.weight(1f),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary
-                                    )
-                                ) {
-                                    Icon(Icons.Filled.PlayArrow, null, Modifier.size(20.dp))
-                                    Text("Entrenar", modifier = Modifier.padding(start = 8.dp))
-                                }
+                                    fillMaxWidth = false
+                                )
                                 if (esFitness) {
-                                    Button(
+                                    com.opofit.miapp.ui.components.TertiaryButton(
+                                        text = "Comunidad",
+                                        leadingIcon = Icons.Filled.Groups,
                                         onClick = onNavigateToComunidad,
                                         modifier = Modifier.weight(1f),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.secondary
-                                        )
-                                    ) {
-                                        Icon(Icons.Filled.Groups, null, Modifier.size(20.dp))
-                                        Text("Comunidad", modifier = Modifier.padding(start = 8.dp))
-                                    }
+                                        fillMaxWidth = false
+                                    )
                                 } else {
-                                    Button(
+                                    com.opofit.miapp.ui.components.TertiaryButton(
+                                        text = "Ranking",
+                                        leadingIcon = Icons.Filled.Leaderboard,
                                         onClick = onNavigateToRanking,
                                         modifier = Modifier.weight(1f),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.secondary
-                                        )
-                                    ) {
-                                        Icon(Icons.Filled.Leaderboard, null, Modifier.size(20.dp))
-                                        Text("Ranking", modifier = Modifier.padding(start = 8.dp))
-                                    }
+                                        fillMaxWidth = false
+                                    )
                                 }
                             }
                         }
@@ -607,9 +603,9 @@ fun HomeScreen(
                                         }
                                         Icon(
                                             imageVector = if (f.tipo == "SIMULACRO")
-                                                androidx.compose.material.icons.Icons.Outlined.EmojiEvents
+                                                Icons.Filled.Star
                                             else
-                                                androidx.compose.material.icons.Icons.Outlined.FitnessCenter,
+                                                Icons.Filled.FitnessCenter,
                                             contentDescription = null,
                                             tint = MaterialTheme.colorScheme.primary
                                         )

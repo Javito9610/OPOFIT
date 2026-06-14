@@ -1,5 +1,6 @@
 package com.opofit.miapp.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import com.opofit.miapp.ui.theme.OpoElevation
+import com.opofit.miapp.ui.theme.OpoRadii
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -53,16 +56,20 @@ fun MetricBig(
     onClick: (() -> Unit)? = null,
     backgroundColor: Color = MaterialTheme.colorScheme.surface
 ) {
+    // Pro look (Caliber/Whoop): borde sutil 1dp + esquina radio xl + elevación
+    // discreta. Antes elevation 2dp sin borde se sentía "flat", ahora tiene
+    // profundidad y bordes definidos.
     Card(
         modifier = modifier.heightIn(min = 110.dp),
-        shape = MaterialTheme.shapes.large,
+        shape = OpoRadii.lg,
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = OpoElevation.l1),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)),
         onClick = onClick ?: {}
     ) {
         Column(
             modifier = Modifier
-                .padding(14.dp)
+                .padding(16.dp)
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
@@ -130,9 +137,12 @@ fun MetricCompact(
 ) {
     Card(
         modifier = modifier.widthIn(min = 92.dp),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        shape = OpoRadii.md,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = OpoElevation.l0),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
     ) {
         Column(
             modifier = Modifier

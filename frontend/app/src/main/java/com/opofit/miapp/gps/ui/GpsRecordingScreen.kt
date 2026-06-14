@@ -365,7 +365,7 @@ fun GpsRecordingScreen(
                     Text(
                         state.lastErrorMsg
                             ?: buildString {
-                                append("${state.type.emoji} ${state.type.display}")
+                                append(state.type.display)
                                 if (plannedNombre != null) append(" · Ruta: $plannedNombre")
                                 else append(" · Libre")
                                 if (state.hrDeviceConnected) append(" · ${state.hrDeviceName ?: "Banda BLE"}")

@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -118,7 +118,7 @@ fun SimulacroScreen(
                 title = { Text("Simulacro oficial") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
                 actions = {
@@ -134,10 +134,10 @@ fun SimulacroScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -278,15 +278,18 @@ fun SimulacroScreen(
                         )
                     }
                     item {
+                        // Guard: si por race condition pruebas cambia y paso queda
+                        // fuera de rango, no crasheamos — simplemente no pintamos.
+                        val actual = pruebaActual ?: return@item
                         ElevatedCard(Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(pruebaActual!!.nombre_prueba, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                                pruebaActual.descripcion?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-                                pruebaActual.convocatoria_ref?.let {
+                                Text(actual.nombre_prueba, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                                actual.descripcion?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                                actual.convocatoria_ref?.let {
                                     Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 if (esTiempo) {
-                                    val idPrueba = pruebaActual.id_pruebas_oficiales
+                                    val idPrueba = actual.id_pruebas_oficiales
                                     Text("Modo cronómetro", fontWeight = FontWeight.SemiBold)
                                     Text(TimeFormatUtil.formatElapsedMs(elapsedMs), style = MaterialTheme.typography.displayMedium)
                                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -324,12 +327,12 @@ fun SimulacroScreen(
                                     }
                                 } else {
                                     OutlinedTextField(
-                                        value = valores[pruebaActual.id_pruebas_oficiales] ?: "",
+                                        value = valores[actual.id_pruebas_oficiales] ?: "",
                                         onValueChange = { v ->
-                                            simulacroViewModel.setValor(pruebaActual.id_pruebas_oficiales, v)
+                                            simulacroViewModel.setValor(actual.id_pruebas_oficiales, v)
                                             errorCampo = ""
                                         },
-                                        label = { Text(etiquetaEntrada(pruebaActual)) },
+                                        label = { Text(etiquetaEntrada(actual)) },
                                         modifier = Modifier.fillMaxWidth(),
                                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                         isError = errorCampo.isNotEmpty(),
@@ -354,7 +357,7 @@ fun SimulacroScreen(
                             }
                             Button(
                                 onClick = {
-                                    val id = pruebaActual!!.id_pruebas_oficiales
+                                    val id = pruebaActual?.id_pruebas_oficiales ?: return@Button
                                     val v = if (esTiempo) {
                                         simulacroViewModel.stopTimer()
                                         if (elapsedMs > 0L) {

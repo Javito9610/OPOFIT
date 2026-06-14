@@ -56,6 +56,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.opofit.miapp.data.responsemodels.HistorialEjercicio
 import com.opofit.miapp.data.responsemodels.PuntoEjercicio
 import com.opofit.miapp.gps.util.GpsMetrics
+import com.opofit.miapp.ui.components.ChartSection
 import com.opofit.miapp.ui.components.LineAreaChart
 import com.opofit.miapp.ui.components.MetricBadge
 import com.opofit.miapp.ui.viewmodels.HistorialAvanzadoViewModel
@@ -89,9 +90,9 @@ fun EjercicioHistorialScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -338,55 +339,39 @@ private fun fechaCorta(iso: String?): String {
 @Composable
 private fun ChartCard(h: HistorialEjercicio) {
     val (titulo, subtitulo) = tituloGrafica(h)
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.Timeline, null, tint = colorPilar(h.pilar))
-                Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
-                    Text(
-                        titulo,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        subtitulo,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                if (h.menorEsMejor) {
-                    AssistChip(
-                        onClick = {},
-                        label = { Text("Menos tiempo = mejor") },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                        )
-                    )
-                }
-            }
-            Text(
-                "Toca o desliza la gráfica para ver el dato exacto y la fecha de cada sesión",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            LineAreaChart(
-                values = h.puntos.map { it.valor },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                showDots = true,
-                yFormatter = { v -> "%.2f %s".format(v, unidadCorta(h.unidad)) },
-                yAxisLabel = "${tituloEjeY(h)} (${unidadCorta(h.unidad)})",
-                xLabels = if (h.puntos.size >= 3) listOf(
-                    fechaCorta(h.puntos.first().fechaEntreno),
-                    fechaCorta(h.puntos[h.puntos.size / 2].fechaEntreno),
-                    fechaCorta(h.puntos.last().fechaEntreno)
-                ) else h.puntos.map { fechaCorta(it.fechaEntreno) },
-                pointLabels = h.puntos.map { fechaCorta(it.fechaEntreno) },
-                invertY = h.menorEsMejor,
-                lineColor = colorPilar(h.pilar)
+    ChartSection(
+        title = titulo,
+        subtitle = subtitulo,
+        icon = Icons.Filled.Timeline,
+        iconTint = colorPilar(h.pilar),
+        hint = "Toca o desliza la gráfica para ver el dato exacto y la fecha de cada sesión"
+    ) {
+        if (h.menorEsMejor) {
+            AssistChip(
+                onClick = {},
+                label = { Text("Menos tiempo = mejor") },
+                colors = AssistChipDefaults.assistChipColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                )
             )
         }
+        LineAreaChart(
+            values = h.puntos.map { it.valor },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp),
+            showDots = true,
+            yFormatter = { v -> "%.2f %s".format(v, unidadCorta(h.unidad)) },
+            yAxisLabel = "${tituloEjeY(h)} (${unidadCorta(h.unidad)})",
+            xLabels = if (h.puntos.size >= 3) listOf(
+                fechaCorta(h.puntos.first().fechaEntreno),
+                fechaCorta(h.puntos[h.puntos.size / 2].fechaEntreno),
+                fechaCorta(h.puntos.last().fechaEntreno)
+            ) else h.puntos.map { fechaCorta(it.fechaEntreno) },
+            pointLabels = h.puntos.map { fechaCorta(it.fechaEntreno) },
+            invertY = h.menorEsMejor,
+            lineColor = colorPilar(h.pilar)
+        )
     }
 }
 
@@ -420,19 +405,13 @@ private fun ChartRitmoCard(h: HistorialEjercicio) {
             if (dist <= 0 || secs <= 0) null else secs.toDouble() / dist
         }
     }
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                "Ritmo por sesión (min/km)",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
-            )
+    ChartSection(
+        title = "Ritmo por sesión (min/km)",
+        subtitle = "Evolución del ritmo medio",
+        icon = Icons.Filled.Speed,
+        hint = if (ritmos.size >= 2) "Más bajo = más rápido. Toca para ver el ritmo exacto." else null
+    ) {
             if (ritmos.size >= 2) {
-                Text(
-                    "Más bajo = más rápido. Toca para ver el ritmo exacto.",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
                 LineAreaChart(
                     values = ritmos,
                     modifier = Modifier
@@ -457,7 +436,6 @@ private fun ChartRitmoCard(h: HistorialEjercicio) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        }
     }
 }
 

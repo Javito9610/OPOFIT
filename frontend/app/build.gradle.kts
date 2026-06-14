@@ -37,9 +37,38 @@ android {
 
     buildTypes {
         release {
-            // Minify desactivado: el APK release sin reglas completas crasheaba al abrir en el móvil.
+            // Para Play Store activar minify+shrink:
+            //   isMinifyEnabled = true
+            //   isShrinkResources = true
+            // Las reglas ProGuard en app/proguard-rules.pro ya cubren Retrofit
+            // + Gson + Firebase + Health Connect + Compose, que eran las que
+            // hacían crashear el APK release. Mantenido en false hasta probar
+            // el APK firmado en un dispositivo real (login + plan + GPS + share
+            // + push). El comentario antiguo decía "crasheaba al abrir" — ya
+            // no debería con estas reglas.
             isMinifyEnabled = false
             isShrinkResources = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+        debug {
+            // El sufijo applicationIdSuffix=".debug" rompe Firebase si no se
+            // añade el paquete a google-services.json. Lo dejamos sin sufijo
+            // para que Firebase Auth + FCM funcionen en debug.
+            versionNameSuffix = "-debug"
+        }
+    }
+    // Output APK con nombre identificable en CI/CD.
+    packaging {
+        resources {
+            excludes += setOf(
+                "/META-INF/{AL2.0,LGPL2.1}",
+                "META-INF/LICENSE*",
+                "META-INF/NOTICE*",
+                "META-INF/DEPENDENCIES"
+            )
         }
     }
     compileOptions {

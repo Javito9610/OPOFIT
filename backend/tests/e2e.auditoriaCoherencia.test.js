@@ -100,7 +100,10 @@ beforeAll(async () => {
   token = login.body.token;
   userId = login.body.user?.id_usuario;
   const u = memDb.state.usuarios.find((x) => x.id_usuario === userId);
-  if (u) u.es_premium = 0;
+  if (u) {
+    u.es_premium = 0;
+    u.dias_entreno_semana = 2;
+  }
 
   await request(app)
     .put('/api/planes/entorno')
@@ -140,24 +143,40 @@ describe('Auditoría E2E: plan → historial → GPS', () => {
     const plan = await request(app)
       .get(`/api/rutinas/mi-entrenamiento/${userId}/1`)
       .set(auth());
-    const hoy =
-      plan.body.data.planSemanal.semana.find((d) => d.es_hoy) ||
-      plan.body.data.planSemanal.semana[0];
-    const ejercicios = hoy.ejercicios.slice(0, 2).map((e) => ({
-      id_ejercicio: e.id_ejercicio,
-      valor: e.pilar === 'RESISTENCIA' ? 25 : 10
-    }));
+    expect(plan.status).toBe(200);
+    const semana = plan.body.data.planSemanal?.semana || [];
+    const diaConEj = semana.find((d) => (d.ejercicios || []).some((e) => Number(e.id_ejercicio) > 0))
+      || semana[0];
+    expect(diaConEj).toBeTruthy();
+
+    const ejercicios = (diaConEj.ejercicios || [])
+      .filter((e) => Number(e.id_ejercicio) > 0)
+      .slice(0, 2)
+      .map((e) => {
+        const unidad = String(e.unidad || '').toLowerCase();
+        const valor =
+          unidad === 'min' ? 20
+          : unidad === 'km' ? 3
+          : unidad === 's' ? 12
+          : e.pilar === 'RESISTENCIA' ? 20
+          : 10;
+        return { id_ejercicio: e.id_ejercicio, nombre: e.nombre, valor };
+      });
+    expect(ejercicios.length).toBeGreaterThan(0);
 
     const reg = await request(app)
       .post('/api/historial/registrar')
       .set(auth())
       .send({
         tipoRutina: 'OPO',
-        idRutina: hoy.id_rutina_opo || hoy.rutinas_opo_id || 1,
-        duracion: 45,
+        idRutina: diaConEj.id_rutina_opo || diaConEj.rutinas_opo_id || 1,
+        duracion: 2700,
         ejercicios
       });
     expect(reg.status).toBe(200);
+    if (!reg.body.ok) {
+      throw new Error(`registrar: ${JSON.stringify(reg.body)}`);
+    }
 
     const hist = await request(app).get(`/api/historial/sesiones/${userId}`).set(auth());
     expect(hist.status).toBe(200);

@@ -48,11 +48,36 @@ class PlanGeneradorService {
       const n = Number(u.dias_entreno_semana);
       if (Number.isFinite(n) && n >= 1 && n <= 7) diasEntreno = n;
     } catch (_) { /* columna puede no existir en tests antiguos */ }
+
+    // Adaptación profesional (v12): lesiones, tiempo disponible y fatiga
+    // previa para que el plan respete al usuario en tiempo real. Columnas
+    // opcionales en `settings` — si no existen, comportamiento previo.
+    let lesiones = [];
+    let tiempoDisponibleMin = null;
+    let fatigaPrevia = null;
+    try {
+      const [adRows] = await db.query(
+        'SELECT lesiones, tiempo_disponible_min, fatiga_previa FROM settings WHERE usuarios_id_usuario = ?',
+        [userId]
+      );
+      const raw = adRows[0] || {};
+      if (raw.lesiones) {
+        lesiones = String(raw.lesiones).split(',').map((l) => l.trim().toLowerCase()).filter(Boolean);
+      }
+      const t = Number(raw.tiempo_disponible_min);
+      if (Number.isFinite(t) && t >= 15 && t <= 180) tiempoDisponibleMin = t;
+      const f = Number(raw.fatiga_previa);
+      if (Number.isFinite(f) && f >= 1 && f <= 5) fatigaPrevia = f;
+    } catch (_) { /* columnas pueden no existir aún */ }
+
     return {
       entorno: EntornoEntreno.normalizarEntorno(u.entorno_entreno),
       seed: Number(u.plan_variacion_seed || 0),
       materialDisponible: material,
-      diasEntrenoSemana: diasEntreno
+      diasEntrenoSemana: diasEntreno,
+      lesiones,
+      tiempoDisponibleMin,
+      fatigaPrevia
     };
   }
 
@@ -139,7 +164,7 @@ class PlanGeneradorService {
     return { porClave, porPilar };
   }
 
-  static buscarSustituto(ejBase, idx, { porClave, porPilar }, entorno, seed) {
+  static buscarSustituto(ejBase, idx, { porClave, porPilar }, entorno, seed, yaUsadosEnDia) {
     const pilar = EntornoEntreno.normalizarPilar(ejBase.pilar || ejBase.categoria || 'FUERZA');
     const nombreLimpio = EjercicioMetadataService.normalizarNombreEjercicio(ejBase.nombre);
     const grupo = EjercicioMetadataService.inferirGrupoMuscular(
@@ -148,9 +173,14 @@ class PlanGeneradorService {
       pilar
     );
     const clave = EntornoEntreno.grupoClave(pilar, grupo, nombreLimpio);
-    const distinto = (c) =>
-      EjercicioMetadataService.normalizarNombreEjercicio(c.nombre).toLowerCase() !==
-      nombreLimpio.toLowerCase();
+    // ANTI-REDUNDANCIA: nunca repite un ejercicio que YA aparece en el mismo
+    // día. Antes podía salir "Sentadilla con barra" + "Sentadilla con
+    // mancuernas" como sustitutos consecutivos → trabajo redundante.
+    const usados = yaUsadosEnDia instanceof Set ? yaUsadosEnDia : new Set();
+    const distinto = (c) => {
+      const n = EjercicioMetadataService.normalizarNombreEjercicio(c.nombre).toLowerCase();
+      return n !== nombreLimpio.toLowerCase() && !usados.has(n);
+    };
 
     let candidatos = [...(porClave.get(clave) || [])].filter(distinto);
     if (!candidatos.length) {
@@ -159,7 +189,13 @@ class PlanGeneradorService {
     if (!candidatos.length) return null;
 
     const key = `${entorno}|${idx}|${nombreLimpio}|${clave}|v${seed}`;
-    return EntornoEntreno.seededPick(candidatos, seed, key);
+    const elegido = EntornoEntreno.seededPick(candidatos, seed, key);
+    if (elegido) {
+      usados.add(
+        EjercicioMetadataService.normalizarNombreEjercicio(elegido.nombre).toLowerCase()
+      );
+    }
+    return elegido;
   }
 
   static resumenDiaDesdeEjercicios(dia, ejercicios) {
@@ -220,7 +256,7 @@ class PlanGeneradorService {
   }
 
   static async generarSemana(planBase, userId, entorno, seed, opts = {}) {
-    const { soloDiaId, nivel } = opts;
+    const { soloDiaId, nivel, lesiones, tiempoDisponibleMin, fatigaPrevia } = opts;
     if (!entorno || entorno === 'MIXTO') {
       return { plan: planBase, sustituciones: 0 };
     }
@@ -237,8 +273,22 @@ class PlanGeneradorService {
       Periodizacion.semanaDelMesociclo(seed || 0)
     );
 
+    // VARIACIÓN SEMANAL: el seed efectivo del selector de sustitutos incluye
+    // la semana ISO del año. Resultado: cada semana del calendario propone
+    // ejercicios DISTINTOS dentro del mismo patrón (rotación). Antes el plan
+    // semanal era idéntico semana tras semana → aburrido y poco efectivo
+    // (los músculos se adaptan en 2-3 semanas al mismo estímulo).
+    // En deload (semana 4) NO rotamos: mantenemos los mismos pero con menos
+    // volumen para coherencia con la fase.
+    const semanaIso = Periodizacion.semanaIso(new Date());
+    const seedEfectivo = semanaMeso.deload ? seed : seed + semanaIso * 13;
+
     const semana = (planBase.semana || []).map((dia) => {
       if (soloDiaId != null && dia.id_plan_dia !== soloDiaId) return dia;
+      // Set por DÍA: evita que un sustituto se repita dentro de la misma
+      // sesión (ver buscarSustituto). Antes podían salir 2 sentadillas
+      // distintas en el mismo día.
+      const usadosEnDia = new Set();
       const ejercicios = (dia.ejercicios || []).map((ej, posicionEnDia) => {
         idx += 1;
         const sust = PlanGeneradorService.buscarSustituto(
@@ -246,7 +296,8 @@ class PlanGeneradorService {
           idx,
           indice,
           entorno,
-          seed
+          seedEfectivo,
+          usadosEnDia
         );
         if (sust) sustituciones += 1;
         return PlanGeneradorService.mapearEjercicio(
@@ -258,23 +309,38 @@ class PlanGeneradorService {
           posicionEnDia + 1
         );
       });
-      const resumen = PlanGeneradorService.resumenDiaDesdeEjercicios(dia, ejercicios);
+      // ADAPTACIÓN AL USUARIO (v12): aplica filtro por lesiones, autoregula
+      // por fatiga reportada y comprime por tiempo disponible. Si no hay
+      // ninguno de los tres, devuelve la lista intacta.
+      const Adaptacion = require('./AdaptacionUsuarioService');
+      const adapt = Adaptacion.adaptarSesion(ejercicios, {
+        lesiones,
+        tiempoDisponibleMin,
+        fatigaPrevia
+      });
+      const ejerciciosAdaptados = adapt.ejercicios;
+
+      const resumen = PlanGeneradorService.resumenDiaDesdeEjercicios(dia, ejerciciosAdaptados);
       // Warmup + cooldown específicos por enfoque del día.
       // Balance push/pull: si algún día queda raro, lo dejamos como warning
       // (el front puede pintar un aviso pequeño).
       const calentamiento = Calentamiento.calentamiento(dia.enfoque);
       const vuelta_a_calma = Calentamiento.vueltaACalma(dia.enfoque);
       const balance = Patron.auditarBalance(
-        ejercicios.map((e) => Patron.clasificar(e))
+        ejerciciosAdaptados.map((e) => Patron.clasificar(e))
       );
       return {
         ...dia,
-        ejercicios,
+        ejercicios: ejerciciosAdaptados,
         titulo: resumen.titulo,
         descripcion: resumen.descripcion,
         calentamiento,
         vuelta_a_calma,
-        balance_warnings: balance.warnings
+        balance_warnings: balance.warnings,
+        // Avisos visibles para el usuario: "Box jump eliminado por lesión de rodilla",
+        // "Reducida 1 serie en accesorios", etc. El front los pintará como chip naranja.
+        ajustes_personalizacion: adapt.ajustes,
+        avisos_personalizacion: adapt.avisos
       };
     });
 
@@ -398,9 +464,17 @@ class PlanGeneradorService {
       }
     }
 
-    const { plan, sustituciones } = await PlanGeneradorService.generarSemana(planBase, userId, entorno, seed, { nivel });
-    const ultimasSesiones = await PlanGeneradorService.obtenerUltimasSesiones(userId, 3);
+    // Cargamos prefs ANTES de generar para pasarle lesiones/tiempo/fatiga
+    // al pipeline. Sin esto el adaptador de AdaptacionUsuarioService no se
+    // ejecuta nunca y el filtro de lesiones es código muerto.
     const prefsFull = await PlanGeneradorService.obtenerPrefsUsuario(userId);
+    const { plan, sustituciones } = await PlanGeneradorService.generarSemana(planBase, userId, entorno, seed, {
+      nivel,
+      lesiones: prefsFull.lesiones,
+      tiempoDisponibleMin: prefsFull.tiempoDisponibleMin,
+      fatigaPrevia: prefsFull.fatigaPrevia
+    });
+    const ultimasSesiones = await PlanGeneradorService.obtenerUltimasSesiones(userId, 3);
     const coaching = await PlanIaService.generarCoaching({
       entorno,
       resumen: plan.personalizacion?.resumen,
@@ -455,7 +529,8 @@ class PlanGeneradorService {
       'UPDATE usuarios SET plan_variacion_seed = COALESCE(plan_variacion_seed, 0) + 1 WHERE id_usuario = ?',
       [userId]
     );
-    const { seed, entorno } = await PlanGeneradorService.obtenerPrefsUsuario(userId);
+    const prefsR = await PlanGeneradorService.obtenerPrefsUsuario(userId);
+    const { seed, entorno, lesiones, tiempoDisponibleMin, fatigaPrevia } = prefsR;
     const daySeed = seed + idDia * 31;
 
     const { plan: planParcial, sustituciones } = await PlanGeneradorService.generarSemana(
@@ -463,7 +538,13 @@ class PlanGeneradorService {
       userId,
       entorno,
       daySeed,
-      { soloDiaId: idDia, nivel }
+      {
+        soloDiaId: idDia,
+        nivel,
+        lesiones,
+        tiempoDisponibleMin,
+        fatigaPrevia
+      }
     );
 
     const nuevoDia = planParcial.semana.find((d) => d.id_plan_dia === idDia);

@@ -13,6 +13,7 @@ const Periodizacion = require('./PeriodizacionService');
 const Patron = require('./PatronMovimientoService');
 const PrescripcionPro = require('./PrescripcionProService');
 const Progresion = require('./ProgresionService');
+const Explicacion = require('./EjercicioExplicacionService');
 
 const { hashSeed } = EntornoEntreno;
 
@@ -481,6 +482,12 @@ function aplicarInteligencia(ej, ctx = {}) {
     deload: periodizada.deload,
     regresion: Progresion.regresionDe(nombre),
     progresion: Progresion.progresionDe(nombre),
+    // === Coach Pro: 5 secciones tipo Caliber/Strava/Future ===
+    // Cada ejercicio sale con SETUP / EJECUCIÓN / CUES / ERRORES / POR QUÉ,
+    // todo construido a partir del patrón + nombre concreto. Sin esto el
+    // usuario veía "Escápulas retraídas, toque pecho controlado." y se
+    // sentía estafado.
+    explicacion: Explicacion.explicar({ ...ej, nombre }),
     instrucciones_tecnicas: instruccionesAjustadas,
     prescripcion_inteligente: true,
     instrucciones_inteligentes: true

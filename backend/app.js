@@ -39,6 +39,24 @@ const authLimiter = rateLimit({
     msg: 'Demasiados intentos de autenticación. Espera unos minutos.'
   }
 });
+// Seguridad: cabeceras HTTP defensivas (equivalente manual a helmet, sin añadir
+// dependencia). Pensadas para una API JSON consumida por la app móvil:
+//  - HSTS: navegadores recuerdan TLS un año.
+//  - nosniff: bloquea MIME-sniffing.
+//  - X-Frame-Options DENY: previene clickjacking si la API se carga en iframe.
+//  - Referrer-Policy: minimiza fuga de URLs internas.
+//  - X-XSS-Protection: legacy pero sigue siendo eco para navegadores antiguos.
+//  - Permissions-Policy: bloquea geolocation/cámara/mic en la API (no aplica).
+app.use((req, res, next) => {
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer-when-downgrade');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=()');
+  next();
+});
+
 app.use(cors());
 app.use(express.json({ limit: '3mb' }));
 app.use(express.static('public'));

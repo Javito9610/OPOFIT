@@ -435,6 +435,14 @@ function query(sql, params = []) {
   }
 
   // ---------- SETTINGS ----------
+  // SELECT genérico por usuario: devuelve la fila completa (lesiones,
+  // tiempo_disponible_min, fatiga_previa, material_disponible, etc.). Si no
+  // existe la fila, devolvemos array vacío (mismo comportamiento que MySQL).
+  if (s.startsWith('select') && /from settings/.test(s) && /usuarios_id_usuario\s*=\s*\?/.test(s)) {
+    const id = Number(params[0]);
+    const st = state.settings.find((x) => x.usuarios_id_usuario === id);
+    return Promise.resolve([st ? [st] : [], []]);
+  }
   if (s.startsWith('insert into settings')) {
     const id = nextId.settings++;
     state.settings.push({
@@ -843,12 +851,20 @@ function query(sql, params = []) {
   }
 
   // ---------- EJERCICIOS ----------
+  if (s.startsWith('select id_ejercicio, nombre, video_url, instrucciones_tecnicas') && s.includes('where id_ejercicio')) {
+    const id = Number(params[0]);
+    const ej = state.ejercicios.find((e) => e.id_ejercicio === id);
+    return Promise.resolve([ej ? [ej] : [], []]);
+  }
   if (s.startsWith('select id_ejercicio, nombre, video_url, instrucciones_tecnicas')) {
-    let res = state.ejercicios.slice();
-    return Promise.resolve([res, []]);
+    return Promise.resolve([state.ejercicios.slice(), []]);
   }
   if (s.startsWith('select * from ejercicios')) {
     return Promise.resolve([state.ejercicios.slice(), []]);
+  }
+  if (s.startsWith('select nombre from ejercicios where id_ejercicio')) {
+    const ej = state.ejercicios.find((e) => e.id_ejercicio === Number(params[0]));
+    return Promise.resolve([ej ? [{ nombre: ej.nombre }] : [], []]);
   }
   if (s.includes('from ejercicios') && s.includes('entornos')) {
     const rows = state.ejercicios.map((e) => ({

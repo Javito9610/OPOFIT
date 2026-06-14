@@ -55,12 +55,24 @@ data class EjercicioPlan(
     val fase_label: String? = null,
     val deload: Boolean = false,
     val regresion: AlternativaEjercicio? = null,
-    val progresion: AlternativaEjercicio? = null
+    val progresion: AlternativaEjercicio? = null,
+    // v11-coach-pro: explicación en 5 secciones (Setup/Ejecución/Cues/Errores/Por qué).
+    // Nivel Strava/Caliber. Antes era un único `instrucciones_tecnicas` plano.
+    val explicacion: ExplicacionPro? = null
 )
 
 data class AlternativaEjercicio(
     val nombre: String,
     val motivo: String? = null
+)
+
+data class ExplicacionPro(
+    val setup: String,
+    val ejecucion: String,
+    val coaching_cues: List<String> = emptyList(),
+    val errores_comunes: List<String> = emptyList(),
+    val porque: String,
+    val patron_movimiento: String? = null
 )
 
 data class BloqueCalentamiento(

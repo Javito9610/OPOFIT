@@ -6,9 +6,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -141,7 +142,7 @@ fun ComunidadScreen(
                 title = { Text("Comunidad") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
                 actions = {
@@ -150,9 +151,9 @@ fun ComunidadScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -194,7 +195,7 @@ fun ComunidadScreen(
                             title = "Sin publicaciones aún",
                             message = "Cuando tú o tus amigos compartáis una actividad aparecerá aquí con stats, fotos y comentarios.",
                             modifier = Modifier.fillMaxWidth(),
-                            icon = androidx.compose.material.icons.Icons.Outlined.Forum
+                            icon = Icons.Filled.Groups
                         )
                     } else {
                         LazyColumn(
@@ -507,10 +508,11 @@ fun ComunidadScreen(
                     }
                 }
                 5 -> Column(Modifier.padding(16.dp)) {
-                    if (chatCon == null) {
+                    val chat = chatCon
+                    if (chat == null) {
                         Text("Selecciona un amigo en la pestaña Amigos para chatear.")
                     } else {
-                        Text("Chat con ${chatCon!!.amigo_nombre}", fontWeight = FontWeight.Bold)
+                        Text("Chat con ${chat.amigo_nombre}", fontWeight = FontWeight.Bold)
                         LazyColumn(
                             modifier = Modifier.weight(1f, fill = false).heightIn(max = 320.dp),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -545,10 +547,10 @@ fun ComunidadScreen(
                                             val token = tokenManager.getToken().first() ?: ""
                                             RetrofitClient.amigosApi.enviarMensaje(
                                                 "Bearer $token",
-                                                EnviarMensajeRequest(chatCon!!.amigo_id, texto)
+                                                EnviarMensajeRequest(chat.amigo_id, texto)
                                             )
                                             textoMsg = ""
-                                            val c = RetrofitClient.amigosApi.chat("Bearer $token", chatCon!!.amigo_id)
+                                            val c = RetrofitClient.amigosApi.chat("Bearer $token", chat.amigo_id)
                                             mensajes = c.data.orEmpty()
                                         } catch (e: Exception) {
                                             msg = ApiErrorParser.message(e)

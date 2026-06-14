@@ -15,7 +15,18 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import coil.compose.AsyncImage
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Inbox
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Whatshot
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -289,8 +300,7 @@ fun EmptyState(
     title: String,
     message: String,
     modifier: Modifier = Modifier,
-    icon: androidx.compose.ui.graphics.vector.ImageVector =
-        androidx.compose.material.icons.Icons.Outlined.Inbox,
+    icon: androidx.compose.ui.graphics.vector.ImageVector = Icons.Filled.Inbox,
     emoji: String = "",
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null
@@ -339,17 +349,17 @@ fun EmptyState(
 
 /** Mapeo defensivo emoji → Material Icon para callsites legacy. */
 private fun emojiToMaterialIcon(emoji: String): androidx.compose.ui.graphics.vector.ImageVector? = when {
-    emoji.contains("🏃") || emoji.contains("🏋") -> androidx.compose.material.icons.Icons.Outlined.FitnessCenter
-    emoji.contains("🎯") -> androidx.compose.material.icons.Icons.Outlined.EmojiEvents
-    emoji.contains("📊") || emoji.contains("📈") -> androidx.compose.material.icons.Icons.Outlined.BarChart
-    emoji.contains("📅") -> androidx.compose.material.icons.Icons.Outlined.CalendarMonth
-    emoji.contains("👥") || emoji.contains("👤") -> androidx.compose.material.icons.Icons.Outlined.People
-    emoji.contains("💬") -> androidx.compose.material.icons.Icons.AutoMirrored.Outlined.Chat
-    emoji.contains("⏱") || emoji.contains("⏰") -> androidx.compose.material.icons.Icons.Outlined.Timer
-    emoji.contains("🗺") || emoji.contains("📍") -> androidx.compose.material.icons.Icons.Outlined.LocationOn
-    emoji.contains("🔥") || emoji.contains("⚡") -> androidx.compose.material.icons.Icons.Outlined.Whatshot
-    emoji.contains("🏆") || emoji.contains("⭐") -> androidx.compose.material.icons.Icons.Outlined.EmojiEvents
-    emoji.contains("❤") -> androidx.compose.material.icons.Icons.Outlined.FavoriteBorder
+    emoji.contains("🏃") || emoji.contains("🏋") -> Icons.Filled.FitnessCenter
+    emoji.contains("🎯") -> Icons.Filled.EmojiEvents
+    emoji.contains("📊") || emoji.contains("📈") -> Icons.Filled.BarChart
+    emoji.contains("📅") -> Icons.Filled.CalendarMonth
+    emoji.contains("👥") || emoji.contains("👤") -> Icons.Filled.People
+    emoji.contains("💬") -> Icons.AutoMirrored.Filled.Chat
+    emoji.contains("⏱") || emoji.contains("⏰") -> Icons.Filled.Timer
+    emoji.contains("🗺") || emoji.contains("📍") -> Icons.Filled.LocationOn
+    emoji.contains("🔥") || emoji.contains("⚡") -> Icons.Filled.Whatshot
+    emoji.contains("🏆") || emoji.contains("⭐") -> Icons.Filled.EmojiEvents
+    emoji.contains("❤") -> Icons.Filled.FavoriteBorder
     else -> null
 }
 

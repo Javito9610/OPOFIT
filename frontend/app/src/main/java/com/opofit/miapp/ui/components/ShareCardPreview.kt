@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -100,13 +101,7 @@ fun ShareCardPreview(
     editorState: ShareEditorState? = null
 ) {
     val tipo = stats?.tipo?.uppercase().orEmpty()
-    val emoji = when {
-        tipo.contains("RUN") || tipo == "CARRERA" -> "🏃"
-        tipo.contains("BIKE") || tipo == "BICI" -> "🚴"
-        tipo.contains("WALK") || tipo == "PASEO" -> "🚶"
-        tipo == "ENTRENO" -> "💪"
-        else -> "⚡"
-    }
+    val actividadIcon = EnfoqueIcons.forActividadTipo(tipo)
     val accent = Color(0xFFFF5722)
 
     // Estado hoist: si nos lo pasan desde el editor lo usamos; si no, local.
@@ -316,7 +311,12 @@ fun ShareCardPreview(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("OpoFit", color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp)
-                Text(emoji, fontSize = 28.sp)
+                Icon(
+                    actividadIcon,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {

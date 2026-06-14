@@ -2,8 +2,10 @@ package com.opofit.miapp.ui.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.DirectionsRun
+import androidx.compose.material.icons.automirrored.outlined.DirectionsWalk
 import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.outlined.DirectionsBike
+import androidx.compose.material.icons.automirrored.outlined.DirectionsBike
+import com.opofit.miapp.gps.model.ActivityType
 import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.LocationOn
@@ -32,12 +34,18 @@ object EnfoqueIcons {
         else -> Icons.Outlined.FitnessCenter
     }
 
+    fun forActivityType(type: ActivityType): ImageVector = when (type) {
+        ActivityType.RUN -> Icons.AutoMirrored.Outlined.DirectionsRun
+        ActivityType.WALK -> Icons.AutoMirrored.Outlined.DirectionsWalk
+        ActivityType.BIKE -> Icons.AutoMirrored.Outlined.DirectionsBike
+    }
+
     /** Tipo de post/actividad social (Strava/Hevy/Adidas style). */
     fun forActividadTipo(tipo: String?): ImageVector {
         val t = tipo?.uppercase() ?: ""
         return when {
             t.contains("RUN") || t == "CARRERA" -> Icons.AutoMirrored.Outlined.DirectionsRun
-            t.contains("BIKE") || t == "BICI" -> Icons.Outlined.DirectionsBike
+            t.contains("BIKE") || t == "BICI" -> Icons.AutoMirrored.Outlined.DirectionsBike
             t == "WALK" || t == "ANDAR" -> Icons.AutoMirrored.Outlined.DirectionsRun
             t == "SWIM" || t == "PISCINA" -> Icons.Outlined.Pool
             t == "ENTRENO" -> Icons.Outlined.FitnessCenter

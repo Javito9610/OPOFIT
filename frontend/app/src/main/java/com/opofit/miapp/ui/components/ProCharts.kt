@@ -12,11 +12,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material3.Icon
 import androidx.compose.ui.Alignment as ComposeAlignment
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +39,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -435,21 +441,21 @@ fun CalendarHeatmap(
     val maxCount = (countsByDate.values.maxOrNull() ?: 0).coerceAtLeast(1)
     val onSurface = MaterialTheme.colorScheme.onSurfaceVariant
     val textMeasurer = androidx.compose.ui.text.rememberTextMeasurer()
-    val textStyle = androidx.compose.ui.text.TextStyle(
-        color = onSurface,
-        fontSize = 10.sp
-    )
-    val diasSemana = listOf("L", "X", "V")  // mostramos 3 para no saturar
 
-    // Canvas con eje vertical (días) + eje horizontal (meses) y rejilla.
-    // Layout v2: ahora reservamos espacio explícito arriba para los meses
-    // (28 px / ~14 dp) e izquierda para días (18 px). Antes el padding era 18
-    // total y el "abr" se solapaba con la fila L de los cuadros. Ahora se
-    // separa con margen claro y nunca se mezclan.
+    // v3: tipografía + paddings ESCALAN según vista.
+    //   - Año (52w): celdas muy estrechas → ocultamos etiquetas L/X/V para no
+    //     comerle ancho a la rejilla, y los meses van en fuente pequeña con
+    //     control de solape (cada etiqueta mide su ancho antes de pintar).
+    //   - Mes / Semana: vista cómoda, mostramos L/X/V y meses normales.
+    val esAnual = weeks >= 40
+    val fontSp = if (esAnual) 8.sp else 10.sp
+    val textStyle = androidx.compose.ui.text.TextStyle(color = onSurface, fontSize = fontSp)
+    val diasSemana = if (esAnual) emptyList() else listOf("L", "X", "V")
+
     Canvas(modifier = modifier) {
         val totalDays = weeks * 7
-        val padTop = 28f          // espacio para etiquetas de meses
-        val padLeft = 18f         // espacio para L / X / V
+        val padTop = if (esAnual) 22f else 28f
+        val padLeft = if (esAnual) 2f else 22f
         val gridW = size.width - padLeft
         val gridH = size.height - padTop
         val cell = (gridW / weeks).coerceAtMost(gridH / 7f)
@@ -459,7 +465,8 @@ fun CalendarHeatmap(
         cal.time = today
         cal.add(java.util.Calendar.DAY_OF_YEAR, -(totalDays - 1))
 
-        var mesAnterior = -1
+        // Primer paso: dibujar todas las celdas.
+        val mesesPorColumna = IntArray(weeks) { -1 }
         for (i in 0 until totalDays) {
             val dow = (cal.get(java.util.Calendar.DAY_OF_WEEK) + 5) % 7
             val week = i / 7
@@ -476,26 +483,51 @@ fun CalendarHeatmap(
                 size = Size(cell - gap, cell - gap),
                 cornerRadius = androidx.compose.ui.geometry.CornerRadius(cell * 0.18f, cell * 0.18f)
             )
-            // Etiqueta de mes en la primera columna donde aparece un mes nuevo.
-            // Capitalizada y centrada arriba de la columna correspondiente.
+            // Registramos el mes en cuanto aparece su primer día (dow=0 o i=0).
             val mesActual = cal.get(java.util.Calendar.MONTH)
-            if (dow == 0 && mesActual != mesAnterior) {
-                val texto = mesFmt.format(cal.time).take(3)
-                    .replaceFirstChar { c -> c.uppercase() }
-                drawText(
-                    textMeasurer = textMeasurer,
-                    text = texto,
-                    style = textStyle,
-                    topLeft = Offset(padLeft + week * cell + 1f, 4f)
-                )
-                mesAnterior = mesActual
+            if ((dow == 0 || i == 0) && mesesPorColumna[week] == -1) {
+                mesesPorColumna[week] = mesActual
             }
             cal.add(java.util.Calendar.DAY_OF_YEAR, 1)
         }
 
-        // Etiquetas L/X/V a la izquierda — alineadas verticalmente con su fila.
+        // Segundo paso: pintar etiquetas de mes SOLO si caben sin solapar con
+        // la siguiente. Recorremos columnas, medimos cada etiqueta y la
+        // posicionamos solo si su `x + width` no invade la próxima etiqueta.
+        var mesAnterior = -1
+        var ultimaXFin = -1e9f
+        // Para vista anual: una etiqueta mensual nueva tiene que estar al menos
+        // a `cell * 2.2` de distancia de la anterior para que se lea.
+        val minSeparacion = if (esAnual) cell * 2.2f else 0f
+        for (week in 0 until weeks) {
+            val mes = mesesPorColumna[week]
+            if (mes == -1 || mes == mesAnterior) continue
+            val xCol = padLeft + week * cell + 1f
+            if (xCol < ultimaXFin + minSeparacion) continue  // solaparía → skip
+            // Construir nombre con calendario local del primer día de ese mes
+            // en la columna.
+            val cTmp = java.util.Calendar.getInstance().apply {
+                time = today
+                add(java.util.Calendar.DAY_OF_YEAR, -(totalDays - 1 - week * 7))
+            }
+            val texto = mesFmt.format(cTmp.time).take(3)
+                .replaceFirstChar { c -> c.uppercase() }
+            val medido = textMeasurer.measure(texto, textStyle)
+            val anchoTexto = medido.size.width.toFloat()
+            if (xCol + anchoTexto > size.width) continue  // saldría del Canvas
+            drawText(
+                textMeasurer = textMeasurer,
+                text = texto,
+                style = textStyle,
+                topLeft = Offset(xCol, 2f)
+            )
+            ultimaXFin = xCol + anchoTexto
+            mesAnterior = mes
+        }
+
+        // Etiquetas L/X/V (solo si no es vista anual).
         diasSemana.forEachIndexed { idx, etiqueta ->
-            val rowIdx = idx * 2  // L=0, X=2, V=4
+            val rowIdx = idx * 2
             drawText(
                 textMeasurer = textMeasurer,
                 text = etiqueta,
@@ -580,6 +612,50 @@ fun MetricBadge(
 }
 
 @Composable
+fun ChartSection(
+    title: String,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    hint: String? = null,
+    icon: ImageVector? = Icons.Outlined.BarChart,
+    iconTint: Color = MaterialTheme.colorScheme.primary,
+    content: @Composable () -> Unit
+) {
+    ElevatedCard(modifier = modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = ComposeAlignment.CenterVertically) {
+                if (icon != null) {
+                    Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(22.dp))
+                    Spacer(Modifier.width(8.dp))
+                }
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        title,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    if (!subtitle.isNullOrBlank()) {
+                        Text(
+                            subtitle,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+            if (!hint.isNullOrBlank()) {
+                Text(
+                    hint,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            content()
+        }
+    }
+}
+
+@Composable
 private fun EmptyState(text: String, modifier: Modifier) {
     Box(
         modifier
@@ -587,7 +663,15 @@ private fun EmptyState(text: String, modifier: Modifier) {
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(horizontalAlignment = ComposeAlignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Icon(
+                Icons.Outlined.BarChart,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                modifier = Modifier.size(28.dp)
+            )
+            Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 
@@ -663,18 +747,31 @@ fun DonutChart(
                 }
             }
         }
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             slices.forEach { s ->
-                Row(verticalAlignment = ComposeAlignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = ComposeAlignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     Box(
                         modifier = Modifier
-                            .size(12.dp)
-                            .background(s.color, RoundedCornerShape(3.dp))
+                            .size(10.dp)
+                            .background(s.color, RoundedCornerShape(2.dp))
+                    )
+                    Text(
+                        s.label,
+                        style = labelStyle,
+                        modifier = Modifier.weight(1f)
                     )
                     val pct = (s.value / total * 100).toInt()
                     Text(
-                        "  ${s.label}  ·  ${formatValue(s.value)}  ·  $pct%",
-                        style = labelStyle
+                        "${formatValue(s.value)} · $pct%",
+                        style = labelStyle.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }

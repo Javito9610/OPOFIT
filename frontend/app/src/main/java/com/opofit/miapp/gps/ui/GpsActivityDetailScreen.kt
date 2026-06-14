@@ -140,7 +140,17 @@ fun GpsActivityDetailScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("${activity.type.emoji} ${activity.type.display}", fontWeight = FontWeight.SemiBold)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                com.opofit.miapp.ui.components.EnfoqueIcons.forActivityType(activity.type),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(activity.type.display, fontWeight = FontWeight.SemiBold)
+                        }
                         Text(
                             SimpleDateFormat("EEEE d MMM · HH:mm", Locale.forLanguageTag("es-ES"))
                                 .format(Date(activity.startedAtMs)),

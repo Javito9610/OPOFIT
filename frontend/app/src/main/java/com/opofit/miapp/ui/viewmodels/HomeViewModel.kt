@@ -48,7 +48,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     try {
                         val fr = RetrofitClient.amigosApi.feed("Bearer $token")
                         if (fr.ok) feed = fr.data.orEmpty().take(5)
-                    } catch (_: Exception) { }
+                    } catch (e: Exception) {
+                        // Feed amigos es opcional: si falla la red, no
+                        // bloqueamos el resto del home. Log en debug para
+                        // detectar bugs reales.
+                        com.opofit.miapp.utils.SafeLog.w("HomeViewModel", "cargar feed amigos", e)
+                    }
                     try {
                         val rss = RetrofitClient.oposicionesApi.getNoticiasRss("Bearer $token", oposicionId)
                         if (rss.ok) {
@@ -88,7 +93,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                                 )
                                 .take(3)
                         }
-                    } catch (_: Exception) { }
+                    } catch (e: Exception) {
+                        // RSS noticias también es opcional: si el feed no carga,
+                        // el home funciona igual sin noticias.
+                        com.opofit.miapp.utils.SafeLog.w("HomeViewModel", "cargar RSS noticias", e)
+                    }
                     _uiState.update {
                         it.copy(loading = false, resumen = resp.data, feedAmigos = feed, noticiasRss = noticias)
                     }

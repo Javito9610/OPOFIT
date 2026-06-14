@@ -7,7 +7,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
@@ -88,17 +90,17 @@ fun RankingScreen(
 
     LaunchedEffect(oposicionId) { cargar() }
 
-    if (detalleUsuario != null) {
+    detalleUsuario?.let { detalle ->
         AlertDialog(
             onDismissRequest = { detalleUsuario = null },
-            title = { Text(detalleUsuario!!.first, fontWeight = FontWeight.Bold) },
+            title = { Text(detalle.first, fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         "Nota media global",
                         style = MaterialTheme.typography.labelMedium
                     )
-                    detalleUsuario!!.second.forEach { p ->
+                    detalle.second.forEach { p ->
                         Row(
                             Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -128,13 +130,9 @@ fun RankingScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Ranking de tu oposición") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
-                    }
-                },
+            com.opofit.miapp.ui.components.ProTopBar(
+                title = "Ranking de tu oposición",
+                onBack = onNavigateBack,
                 actions = {
                     com.opofit.miapp.ui.components.InfoTip(
                         title = "¿Cómo funciona el ranking?",
@@ -145,13 +143,7 @@ fun RankingScreen(
                             "Tu nota se actualiza cuando registras nuevas marcas en el perfil o haces un simulacro " +
                             "y aplicas las marcas a tu perfil."
                     )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                }
             )
         }
     ) { padding ->
@@ -210,7 +202,7 @@ fun RankingScreen(
                     ) { CircularProgressIndicator() }
                     error.isNotBlank() && ranking.isEmpty() -> ErrorState(error, onRetry = { cargar() })
                     ranking.isEmpty() -> EmptyState(
-                        icon = androidx.compose.material.icons.Icons.Outlined.EmojiEvents,
+                        icon = Icons.Filled.EmojiEvents,
                         title = "Sin clasificación aún",
                         message = "Activa tu perfil público y registra las 3 marcas oficiales para aparecer y compararte con otros opositores.",
                         modifier = Modifier.weight(1f),
@@ -253,21 +245,31 @@ private fun PodiumRow(top3: List<RankingEntry>) {
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.Bottom
         ) {
-            top3.getOrNull(1)?.let { PodiumPlace(it, medal = "🥈", emphasis = false) }
-            top3.getOrNull(0)?.let { PodiumPlace(it, medal = "🥇", emphasis = true) }
-            top3.getOrNull(2)?.let { PodiumPlace(it, medal = "🥉", emphasis = false) }
+            top3.getOrNull(1)?.let { PodiumPlace(it, place = 2, emphasis = false) }
+            top3.getOrNull(0)?.let { PodiumPlace(it, place = 1, emphasis = true) }
+            top3.getOrNull(2)?.let { PodiumPlace(it, place = 3, emphasis = false) }
         }
     }
 }
 
 @Composable
-private fun PodiumPlace(entry: RankingEntry, medal: String, emphasis: Boolean) {
+private fun PodiumPlace(entry: RankingEntry, place: Int, emphasis: Boolean) {
+    val medalColor = when (place) {
+        1 -> Color(0xFFFFD700)
+        2 -> Color(0xFFC0C0C0)
+        else -> Color(0xFFCD7F32)
+    }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.padding(horizontal = 2.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Bottom)
     ) {
-        Text(medal, style = MaterialTheme.typography.titleLarge)
+        Icon(
+            Icons.Filled.EmojiEvents,
+            contentDescription = "Puesto $place",
+            tint = medalColor,
+            modifier = Modifier.size(if (emphasis) 32.dp else 26.dp)
+        )
         ProfileAvatar(entry.nombre, sizeDp = if (emphasis) 48 else 40)
         Text(
             entry.nombre.split(" ").firstOrNull() ?: entry.nombre,

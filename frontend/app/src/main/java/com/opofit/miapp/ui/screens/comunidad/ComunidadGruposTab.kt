@@ -8,6 +8,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -131,7 +139,7 @@ fun ComunidadGruposTab(
                 EmptyState(
                     title = "Sin grupos aún",
                     message = "Crea el primero o únete cuando aparezcan grupos de tu comunidad.",
-                    icon = androidx.compose.material.icons.Icons.AutoMirrored.Outlined.Chat
+                    icon = Icons.Filled.Groups
                 )
             }
         }
@@ -146,12 +154,19 @@ fun ComunidadGruposTab(
                             ) {
                                 Text(g.nombre, fontWeight = FontWeight.Bold)
                                 // Badge pequeño con el tipo del grupo.
-                                androidx.compose.material3.AssistChip(
+                                AssistChip(
                                     onClick = {},
                                     label = {
                                         Text(
-                                            if (g.tipo == "PRIVADO") "🔒 Privado" else "🌐 Comunidad",
-                                            style = androidx.compose.material3.MaterialTheme.typography.labelSmall
+                                            if (g.tipo == "PRIVADO") "Privado" else "Comunidad",
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = if (g.tipo == "PRIVADO") Icons.Filled.Lock else Icons.Filled.Public,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
                                         )
                                     }
                                 )

@@ -101,7 +101,10 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
                     entornoEntreno = usuario.data?.entorno
                 )
             }
-        } catch (_: Exception) { }
+        } catch (e: Exception) {
+            // Entornos opcional: si falla, el sheet usa fallback hardcoded.
+            com.opofit.miapp.utils.SafeLog.w("RutinasViewModel", "cargar entornos", e)
+        }
     }
 
     fun abrirSheetEntorno() {

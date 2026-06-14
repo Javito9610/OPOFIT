@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
@@ -107,7 +109,7 @@ fun ComunidadCercaTab(
                 EmptyState(
                     title = "Nadie cerca por ahora",
                     message = "Activa tu visibilidad y vuelve a buscar. En zonas con más usuarios verás opositores y personas fitness.",
-                    icon = androidx.compose.material.icons.Icons.Outlined.LocationOn
+                    icon = Icons.Filled.LocationOn
                 )
             }
         }

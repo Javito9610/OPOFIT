@@ -14,14 +14,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -235,13 +235,13 @@ fun AjustesScreen(
                 title = { Text("Ajustes") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
@@ -433,7 +433,8 @@ fun AjustesScreen(
                     CircularProgressIndicator()
                 }
             } else {
-                Button(
+                com.opofit.miapp.ui.components.PrimaryButton(
+                    text = "Guardar Ajustes",
                     onClick = {
                         ajustesViewModel.guardarAjustes(
                             userId,
@@ -442,11 +443,8 @@ fun AjustesScreen(
                             horaRecordatorio,
                             recordatorioActivo
                         )
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Guardar Ajustes")
-                }
+                    }
+                )
             }
 
             if (!esFitness) {
@@ -504,12 +502,10 @@ fun AjustesScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Button(
-                        onClick = onNavigateToMisDispositivos,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Conexiones y reloj")
-                    }
+                    com.opofit.miapp.ui.components.SecondaryButton(
+                        text = "Conexiones y reloj",
+                        onClick = onNavigateToMisDispositivos
+                    )
                 }
             }
 
@@ -535,7 +531,9 @@ fun AjustesScreen(
                     if (passMsg.isNotBlank()) {
                         Text(passMsg, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
                     }
-                    Button(
+                    com.opofit.miapp.ui.components.PrimaryButton(
+                        text = "Actualizar contraseña",
+                        enabled = passActual.length >= 4 && passNueva.length >= 6,
                         onClick = {
                             scope.launch {
                                 try {
@@ -548,10 +546,8 @@ fun AjustesScreen(
                                     passMsg = e.message ?: "Error al cambiar contraseña"
                                 }
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = passActual.length >= 4 && passNueva.length >= 6
-                    ) { Text("Actualizar contraseña") }
+                        }
+                    )
                 }
             }
 

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,17 +19,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.DirectionsBike
+import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Map
-import androidx.compose.material.icons.filled.DirectionsWalk
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.Pool
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.SelfImprovement
 import com.opofit.miapp.ui.components.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,6 +40,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
@@ -197,9 +200,9 @@ fun HistorialScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -450,31 +453,25 @@ private fun ResumenTab(resumen: ResumenHistorial?, periodo: String, onPeriodoCha
         }
         if (resumen.porTipo.isNotEmpty()) {
             item {
-                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            "Distribución por tipo de entreno",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        // El donut central ahora muestra DOS líneas con info útil:
-                        //   N sesiones / X min (en vez de solo "N sesiones").
-                        // Suma minutos del periodo al centro para que de un vistazo
-                        // se vea el volumen total, no solo el conteo.
-                        DonutChart(
-                            slices = resumen.porTipo.map { item ->
-                                DonutSlice(
-                                    label = labelTipo(item.tipo),
-                                    value = item.sesiones.toDouble(),
-                                    color = colorTipo(item.tipo)
-                                )
-                            },
-                            centerTitle = "${resumen.porTipo.sumOf { it.sesiones }}",
-                            centerSubtitle = if (resumen.minutos > 0) "ses · ${resumen.minutos} min"
-                                             else "sesiones",
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                com.opofit.miapp.ui.components.ChartSection(
+                    title = "Distribución por tipo de entreno",
+                    subtitle = "Sesiones del periodo seleccionado",
+                    icon = Icons.Filled.PieChart,
+                    hint = "El centro resume el volumen total del periodo"
+                ) {
+                    DonutChart(
+                        slices = resumen.porTipo.map { item ->
+                            DonutSlice(
+                                label = labelTipo(item.tipo),
+                                value = item.sesiones.toDouble(),
+                                color = colorTipo(item.tipo)
+                            )
+                        },
+                        centerTitle = "${resumen.porTipo.sumOf { it.sesiones }}",
+                        centerSubtitle = if (resumen.minutos > 0) "ses · ${resumen.minutos} min"
+                                         else "sesiones",
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }
@@ -639,8 +636,8 @@ private fun SesionCard(
 ) {
     val icon = when {
         sesion.gpsActividadUuid != null -> when (sesion.enfoque?.uppercase()) {
-            "BICI", "CICLISMO" -> Icons.Filled.DirectionsBike
-            "MARCHA", "CAMINAR", "SENDERISMO" -> Icons.Filled.DirectionsWalk
+            "BICI", "CICLISMO" -> Icons.AutoMirrored.Filled.DirectionsBike
+            "MARCHA", "CAMINAR", "SENDERISMO" -> Icons.AutoMirrored.Filled.DirectionsWalk
             else -> Icons.AutoMirrored.Filled.DirectionsRun
         }
         sesion.tipoRutina == "PERS" -> Icons.Filled.Bolt
@@ -648,7 +645,7 @@ private fun SesionCard(
         sesion.enfoque?.uppercase() == "VELOCIDAD" -> Icons.Filled.Speed
         sesion.enfoque?.uppercase() == "FUERZA" -> Icons.Filled.FitnessCenter
         sesion.enfoque?.uppercase() == "NATACION" || sesion.enfoque?.uppercase() == "NATACIÓN" -> Icons.Filled.Pool
-        sesion.enfoque?.uppercase() == "BICI" || sesion.enfoque?.uppercase() == "CICLISMO" -> Icons.Filled.DirectionsBike
+        sesion.enfoque?.uppercase() == "BICI" || sesion.enfoque?.uppercase() == "CICLISMO" -> Icons.AutoMirrored.Filled.DirectionsBike
         sesion.enfoque?.uppercase() == "FLEXIBILIDAD" || sesion.enfoque?.uppercase() == "MOVILIDAD" -> Icons.Filled.SelfImprovement
         sesion.tipoRutina == "OPO" -> Icons.Filled.EmojiEvents
         else -> Icons.Filled.FitnessCenter
@@ -770,7 +767,19 @@ private fun GpsTab(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Text(a.type.emoji, style = MaterialTheme.typography.headlineSmall)
+                        Surface(
+                            shape = MaterialTheme.shapes.small,
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                        ) {
+                            Icon(
+                                com.opofit.miapp.ui.components.EnfoqueIcons.forActivityType(a.type),
+                                contentDescription = a.type.display,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .padding(10.dp)
+                                    .size(24.dp)
+                            )
+                        }
                         Column(Modifier.weight(1f)) {
                             Text(
                                 "${a.type.display}",
