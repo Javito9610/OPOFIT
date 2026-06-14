@@ -2,53 +2,73 @@ package com.opofit.miapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Paleta OpoFit v2 — navy + acento naranja, con mejores contrastes WCAG AA.
+// Paleta OpoFit Dark Pro — fondo negro azulado, acento naranja intenso, estilo Strava/TrainingPeaks.
 
-// === Light scheme ===
-val PrimaryLight = Color(0xFF132340)        // navy más oscuro: mejor contraste sobre blanco
-val OnPrimaryLight = Color(0xFFFFFFFF)
+// === Backgrounds / Surfaces ===
+val BgPrimary      = Color(0xFF0D1117)   // fondo principal — casi negro
+val BgSecondary    = Color(0xFF161B22)   // surface de cards
+val BgTertiary     = Color(0xFF1C2128)   // surface elevado (sheets, dialogs)
+val BgCard         = Color(0xFF21262D)   // card interna / row destacado
 
-val SecondaryLight = Color(0xFF1D4ED8)      // azul más saturado para botones secundarios
-val OnSecondaryLight = Color(0xFFFFFFFF)
+// === Accent naranja ===
+val AccentOrange        = Color(0xFFFF6B00)   // naranja primario
+val AccentOrangeBright  = Color(0xFFFF8C38)   // hover / estado activo
+val AccentOrangeDim     = Color(0xFFCC5500)   // pressed / disabled
+val AccentOrangeGlow    = Color(0x33FF6B00)   // capa translucida para fondos de badge/icono
+val AccentOrangeSoft    = Color(0xFFFFD0A8)   // texto sobre container naranja oscuro
+val AccentOrangeContainer = Color(0xFF3D1A00) // container secundario naranja
 
-val AccentOrange = Color(0xFFF97316)        // naranja vivo (tailwind orange-500)
-val AccentOrangeDark = Color(0xFFC2410C)
-val AccentOrangeSoft = Color(0xFFFED7AA)
-val AccentOrangeContainer = Color(0xFFFFEDD5)
+// === Text ===
+val TextPrimary   = Color(0xFFF0F6FC)   // texto principal — blanco suave
+val TextSecondary = Color(0xFF8B949E)   // texto secundario — gris GitHub
+val TextMuted     = Color(0xFF484F58)   // texto desactivado / hint
+val TextOnAccent  = Color(0xFFFFFFFF)   // texto sobre naranja
 
-val SuccessLight = Color(0xFF15803D)
-val WarningLight = Color(0xFFD97706)
-val ErrorLight = Color(0xFFB91C1C)
-val InfoLight = Color(0xFF0369A1)
+// === Semantic ===
+val SemanticSuccess = Color(0xFF3FB950)   // verde GitHub
+val SemanticWarning = Color(0xFFD29922)   // amarillo ámbar
+val SemanticError   = Color(0xFFF85149)   // rojo GitHub
+val SemanticInfo    = Color(0xFF58A6FF)   // azul GitHub
 
-val BackgroundLight = Color(0xFFF1F4F9)     // fondo más limpio (gris muy claro)
-val SurfaceLight = Color(0xFFFFFFFF)
-val OutlineLight = Color(0xFFCBD5E1)
+// === Borders / Dividers ===
+val BorderSubtle  = Color(0xFF30363D)
+val BorderDefault = Color(0xFF21262D)
 
-val OnBackgroundLight = Color(0xFF0F172A)   // slate-900: contraste 16.6:1
-val OnSurfaceLight = Color(0xFF0F172A)
-val OnSurfaceVariantLight = Color(0xFF334155)  // slate-700: 11.5:1
+// === Aliases para compatibilidad con los esquemas M3 ===
+// Light (no lo usamos pero M3 lo exige)
+val PrimaryLight          = Color(0xFF132340)
+val OnPrimaryLight        = Color(0xFFFFFFFF)
+val SecondaryLight        = Color(0xFF1D4ED8)
+val OnSecondaryLight      = Color(0xFFFFFFFF)
+val BackgroundLight       = Color(0xFF0D1117)
+val SurfaceLight          = Color(0xFF161B22)
+val OutlineLight          = Color(0xFF30363D)
+val OnBackgroundLight     = Color(0xFFF0F6FC)
+val OnSurfaceLight        = Color(0xFFF0F6FC)
+val OnSurfaceVariantLight = Color(0xFF8B949E)
+val SuccessLight          = Color(0xFF3FB950)
+val WarningLight          = Color(0xFFD29922)
+val ErrorLight            = Color(0xFFF85149)
+val InfoLight             = Color(0xFF58A6FF)
 
-val AccentTeal = Color(0xFF0D9488)
-val AccentSlate = Color(0xFF475569)
-val AccentIndigo = Color(0xFF4338CA)
+// Dark
+val PrimaryDark          = AccentOrange
+val OnPrimaryDark        = Color(0xFF0D1117)
+val SecondaryDark        = AccentOrangeBright
+val OnSecondaryDark      = Color(0xFF0D1117)
+val BackgroundDark       = BgPrimary
+val SurfaceDark          = BgSecondary
+val OutlineDark          = BorderSubtle
+val OnBackgroundDark     = TextPrimary
+val OnSurfaceDark        = TextPrimary
+val OnSurfaceVariantDark = TextSecondary
+val SuccessDark          = SemanticSuccess
+val WarningDark          = SemanticWarning
+val ErrorDark            = SemanticError
+val InfoDark             = SemanticInfo
 
-// === Dark scheme ===
-val PrimaryDark = Color(0xFFA8C5F0)
-val OnPrimaryDark = Color(0xFF0A1428)
-
-val SecondaryDark = Color(0xFF93C5FD)
-val OnSecondaryDark = Color(0xFF0A1428)
-
-val SuccessDark = Color(0xFF86EFAC)
-val WarningDark = Color(0xFFFBBF24)
-val ErrorDark = Color(0xFFFCA5A5)
-val InfoDark = Color(0xFF7DD3FC)
-
-val BackgroundDark = Color(0xFF0B1018)       // negro azulado más profundo
-val SurfaceDark = Color(0xFF161E2B)
-val OutlineDark = Color(0xFF334155)
-
-val OnBackgroundDark = Color(0xFFF1F5F9)
-val OnSurfaceDark = Color(0xFFF1F5F9)
-val OnSurfaceVariantDark = Color(0xFFCBD5E1)
+// Extras usados en componentes existentes
+val AccentOrangeDark  = AccentOrangeDim
+val AccentTeal        = Color(0xFF39D353)   // verde acento para streaks
+val AccentSlate       = Color(0xFF8B949E)
+val AccentIndigo      = Color(0xFF58A6FF)   // azul para datos informativos

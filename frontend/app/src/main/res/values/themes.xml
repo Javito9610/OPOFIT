@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.MiApp" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.MiApp" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/opofit_blue</item>
+        <item name="android:navigationBarColor">@color/opofit_blue</item>
+        <item name="android:windowBackground">@color/opofit_blue</item>
+    </style>
 
     <style name="Theme.MiApp.Splash" parent="Theme.SplashScreen">
         <item name="android:windowBackground">@color/opofit_blue</item>

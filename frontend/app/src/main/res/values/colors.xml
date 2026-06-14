@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="opofit_blue">#1B2A4A</color>
-    <color name="opofit_orange">#FF9100</color>
+    <color name="opofit_blue">#0D1117</color>
+    <color name="opofit_orange">#FF6B00</color>
+    <color name="opofit_bg_secondary">#161B22</color>
 </resources>

@@ -10,70 +10,72 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-private val LightColorScheme = lightColorScheme(
-    primary = PrimaryLight,
-    onPrimary = OnPrimaryLight,
-    primaryContainer = Color(0xFFD3E0F5),
-    onPrimaryContainer = Color(0xFF0A1428),
+// Dark Pro siempre oscuro — forzamos darkColorScheme incluso si el sistema está en light.
+private val DarkProColorScheme = darkColorScheme(
+    primary             = AccentOrange,
+    onPrimary           = Color(0xFF0D1117),
+    primaryContainer    = AccentOrangeContainer,
+    onPrimaryContainer  = AccentOrangeSoft,
 
-    secondary = SecondaryLight,
-    onSecondary = OnSecondaryLight,
-    secondaryContainer = Color(0xFFDBE8FF),
-    onSecondaryContainer = Color(0xFF0B2A6B),
+    secondary           = AccentOrangeBright,
+    onSecondary         = Color(0xFF0D1117),
+    secondaryContainer  = Color(0xFF2A1800),
+    onSecondaryContainer = AccentOrangeSoft,
 
-    tertiary = AccentOrange,
-    onTertiary = Color(0xFFFFFFFF),
-    tertiaryContainer = AccentOrangeContainer,
-    onTertiaryContainer = AccentOrangeDark,
+    tertiary            = SemanticInfo,
+    onTertiary          = Color(0xFF0D1117),
+    tertiaryContainer   = Color(0xFF0D2442),
+    onTertiaryContainer = Color(0xFFB0D0FF),
 
-    error = ErrorLight,
-    onError = Color(0xFFFFFFFF),
-    errorContainer = Color(0xFFFEE2E2),
-    onErrorContainer = ErrorLight,
+    error               = SemanticError,
+    onError             = Color(0xFF0D1117),
+    errorContainer      = Color(0xFF4A0E0A),
+    onErrorContainer    = Color(0xFFFFB4AC),
 
-    background = BackgroundLight,
-    onBackground = OnBackgroundLight,
+    background          = BgPrimary,
+    onBackground        = TextPrimary,
 
-    surface = SurfaceLight,
-    onSurface = OnSurfaceLight,
-    surfaceVariant = Color(0xFFE2E8F0),
-    onSurfaceVariant = OnSurfaceVariantLight,
+    surface             = BgSecondary,
+    onSurface           = TextPrimary,
+    surfaceVariant      = BgTertiary,
+    onSurfaceVariant    = TextSecondary,
 
-    outline = OutlineLight,
-    outlineVariant = Color(0xFF94A3B8)
+    outline             = BorderSubtle,
+    outlineVariant      = Color(0xFF21262D),
+
+    inverseSurface      = Color(0xFFF0F6FC),
+    inverseOnSurface    = BgPrimary,
+    inversePrimary      = AccentOrangeDim,
+
+    scrim               = Color(0xCC000000)
 )
 
-private val DarkColorScheme = darkColorScheme(
-    primary = PrimaryDark,
-    onPrimary = OnPrimaryDark,
-    primaryContainer = Color(0xFF1E3358),
-    onPrimaryContainer = Color(0xFFDDEAF7),
-
-    secondary = SecondaryDark,
-    onSecondary = OnSecondaryDark,
-    secondaryContainer = Color(0xFF1E3A5F),
-    onSecondaryContainer = Color(0xFFCFE0F2),
-
-    tertiary = AccentOrange,
-    onTertiary = Color(0xFFFFFFFF),
-    tertiaryContainer = Color(0xFF7C2D12),
-    onTertiaryContainer = AccentOrangeSoft,
-
-    error = ErrorDark,
-    onError = Color(0xFF4A0A0A),
-    errorContainer = Color(0xFF6B1A1A),
-    onErrorContainer = ErrorDark,
-
-    background = BackgroundDark,
-    onBackground = OnBackgroundDark,
-
-    surface = SurfaceDark,
-    onSurface = OnSurfaceDark,
-    surfaceVariant = Color(0xFF1F2937),
-    onSurfaceVariant = OnSurfaceVariantDark,
-
-    outline = OutlineDark,
-    outlineVariant = Color(0xFF475569)
+// Light scheme conservado para no romper preview tools, pero no se usa en runtime.
+private val LightColorScheme = lightColorScheme(
+    primary             = PrimaryLight,
+    onPrimary           = OnPrimaryLight,
+    primaryContainer    = Color(0xFFD3E0F5),
+    onPrimaryContainer  = Color(0xFF0A1428),
+    secondary           = SecondaryLight,
+    onSecondary         = OnSecondaryLight,
+    secondaryContainer  = Color(0xFFDBE8FF),
+    onSecondaryContainer = Color(0xFF0B2A6B),
+    tertiary            = AccentOrange,
+    onTertiary          = Color(0xFFFFFFFF),
+    tertiaryContainer   = AccentOrangeContainer,
+    onTertiaryContainer = AccentOrangeDim,
+    error               = ErrorLight,
+    onError             = Color(0xFFFFFFFF),
+    errorContainer      = Color(0xFFFEE2E2),
+    onErrorContainer    = ErrorLight,
+    background          = BackgroundLight,
+    onBackground        = OnBackgroundLight,
+    surface             = SurfaceLight,
+    onSurface           = OnSurfaceLight,
+    surfaceVariant      = Color(0xFFE2E8F0),
+    onSurfaceVariant    = OnSurfaceVariantLight,
+    outline             = OutlineLight,
+    outlineVariant      = Color(0xFF94A3B8)
 )
 
 @Composable
@@ -81,20 +83,21 @@ fun MiAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    // Dark Pro: siempre oscuro — ignoramos la preferencia del sistema
+    val colorScheme = DarkProColorScheme
 
     val shapes = Shapes(
-        extraSmall = RoundedCornerShape(8.dp),
-        small = RoundedCornerShape(12.dp),
-        medium = RoundedCornerShape(18.dp),
-        large = RoundedCornerShape(22.dp),
-        extraLarge = RoundedCornerShape(28.dp)
+        extraSmall = RoundedCornerShape(6.dp),
+        small      = RoundedCornerShape(10.dp),
+        medium     = RoundedCornerShape(14.dp),
+        large      = RoundedCornerShape(18.dp),
+        extraLarge = RoundedCornerShape(24.dp)
     )
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = AppTypography,
-        shapes = shapes,
-        content = content
+        typography  = AppTypography,
+        shapes      = shapes,
+        content     = content
     )
 }
