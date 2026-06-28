@@ -2,21 +2,48 @@ package com.opofit.miapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Paleta OpoFit Dark Pro — fondo negro azulado, acento naranja intenso, estilo Strava/TrainingPeaks.
+// =====================================================================
+//   PALETA OpoFit NEON 2026
+//   Inspiración: Strava 2025, Whoop, Apple Fitness+, Centr, Nike Run.
+//
+//   Decisión: ROMPER con el naranja apagado anterior. Vamos a un look
+//   FULL BLACK + LIME (verde Strava 2024) + CYAN (Whoop) + acentos cálidos.
+//   Los acentos LIME y CYAN explotan sobre negro puro, dan sensación
+//   de "alto rendimiento", deportiva y MUY moderna.
+// =====================================================================
 
-// === Backgrounds / Surfaces ===
-val BgPrimary      = Color(0xFF0D1117)   // fondo principal — casi negro
-val BgSecondary    = Color(0xFF161B22)   // surface de cards
-val BgTertiary     = Color(0xFF1C2128)   // surface elevado (sheets, dialogs)
-val BgCard         = Color(0xFF21262D)   // card interna / row destacado
+// === Backgrounds / Surfaces — negro puro escalonado ===
+val BgPrimary      = Color(0xFF000000)   // negro absoluto — feel premium
+val BgSecondary    = Color(0xFF0A0A0A)   // surface de cards
+val BgTertiary     = Color(0xFF141414)   // surface elevado (sheets, dialogs)
+val BgCard         = Color(0xFF1C1C1E)   // card interna (referencia iOS)
 
-// === Accent naranja ===
-val AccentOrange        = Color(0xFFFF6B00)   // naranja primario
-val AccentOrangeBright  = Color(0xFFFF8C38)   // hover / estado activo
-val AccentOrangeDim     = Color(0xFFCC5500)   // pressed / disabled
-val AccentOrangeGlow    = Color(0x33FF6B00)   // capa translucida para fondos de badge/icono
-val AccentOrangeSoft    = Color(0xFFFFD0A8)   // texto sobre container naranja oscuro
-val AccentOrangeContainer = Color(0xFF3D1A00) // container secundario naranja
+// === ACENTO PRIMARIO — LIME ELÉCTRICO (Strava 2024 vibe) ===
+val AccentLime          = Color(0xFFC7F73C)   // verde lima saturado — el COLOR
+val AccentLimeBright    = Color(0xFFD8FF5C)   // hover / glow
+val AccentLimeDim       = Color(0xFF95C515)   // pressed / disabled
+val AccentLimeGlow      = Color(0x33C7F73C)   // capa translucida para badges
+val AccentLimeSoft      = Color(0xFFE5FFB3)   // texto sobre container lime
+val AccentLimeContainer = Color(0xFF1A2900)   // container secundario lime oscuro
+
+// === ACENTO SECUNDARIO — CYAN ELÉCTRICO (Whoop) ===
+val AccentCyan          = Color(0xFF22D3EE)   // cyan vibrante datos / info
+val AccentCyanBright    = Color(0xFF67E8F9)
+val AccentCyanGlow      = Color(0x3322D3EE)
+
+// === ACENTO TERCIARIO — ÁMBAR (calorías, fuego) ===
+val AccentAmber         = Color(0xFFFFB300)   // ámbar dorado, PRs y kcal
+val AccentAmberGlow     = Color(0x33FFB300)
+
+// === RETROCOMPATIBILIDAD: los componentes existentes usan AccentOrange ===
+// Mapean al lime para no romper código antiguo. Si quieres recuperar
+// el naranja real, usa AccentAmber.
+val AccentOrange          = AccentLime
+val AccentOrangeBright    = AccentLimeBright
+val AccentOrangeDim       = AccentLimeDim
+val AccentOrangeGlow      = AccentLimeGlow
+val AccentOrangeSoft      = AccentLimeSoft
+val AccentOrangeContainer = AccentLimeContainer
 
 // === Text ===
 val TextPrimary   = Color(0xFFF0F6FC)   // texto principal — blanco suave
@@ -52,10 +79,11 @@ val ErrorLight            = Color(0xFFF85149)
 val InfoLight             = Color(0xFF58A6FF)
 
 // Dark
-val PrimaryDark          = AccentOrange
-val OnPrimaryDark        = Color(0xFF0D1117)
-val SecondaryDark        = AccentOrangeBright
-val OnSecondaryDark      = Color(0xFF0D1117)
+val PrimaryDark          = AccentLime
+// Lime es muy claro → texto sobre primary debe ser NEGRO (no oscuro azulado).
+val OnPrimaryDark        = Color(0xFF000000)
+val SecondaryDark        = AccentCyan
+val OnSecondaryDark      = Color(0xFF000000)
 val BackgroundDark       = BgPrimary
 val SurfaceDark          = BgSecondary
 val OutlineDark          = BorderSubtle

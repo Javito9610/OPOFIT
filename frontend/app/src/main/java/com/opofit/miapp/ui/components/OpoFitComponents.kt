@@ -157,7 +157,11 @@ fun StatCard(
     supporting: String? = null,
     icon: ImageVector? = null,
     accentColor: Color = MaterialTheme.colorScheme.primary,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    // Si el valor es un entero (sesiones, racha, kcal), pasa este Int extra
+    // y la card animará el cambio con tween + flash de color. Si null, usa
+    // el String value normal.
+    animatedIntValue: Int? = null
 ) {
     val compact = isCompactScreen()
     val pad = if (compact) 10.dp else 12.dp
@@ -195,7 +199,13 @@ fun StatCard(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            Text(
+            if (animatedIntValue != null) {
+                AnimatedNumber(
+                    value = animatedIntValue,
+                    fontSize = if (compact) 22f else 28f,
+                    accent = MaterialTheme.colorScheme.onSurface
+                )
+            } else Text(
                 text = value,
                 style = if (compact) MaterialTheme.typography.titleLarge
                 else MaterialTheme.typography.headlineSmall,

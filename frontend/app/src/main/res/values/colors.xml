@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="opofit_blue">#0D1117</color>
-    <color name="opofit_orange">#FF6B00</color>
-    <color name="opofit_bg_secondary">#161B22</color>
+    <!-- Paleta NEON 2026 — negro puro + lime + cyan + amber.
+         Los nombres legacy se mantienen para no romper themes.xml. -->
+    <color name="opofit_blue">#000000</color>           <!-- alias legacy → negro -->
+    <color name="opofit_orange">#C7F73C</color>          <!-- alias legacy → lime -->
+    <color name="opofit_bg_secondary">#0A0A0A</color>
+    <color name="opofit_lime">#C7F73C</color>
+    <color name="opofit_cyan">#22D3EE</color>
+    <color name="opofit_amber">#FFB300</color>
 </resources>

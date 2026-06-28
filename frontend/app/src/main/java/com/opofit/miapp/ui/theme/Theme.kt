@@ -10,22 +10,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-// Dark Pro siempre oscuro — forzamos darkColorScheme incluso si el sistema está en light.
+// Dark NEON 2026 — full black + lime + cyan + amber. Inspiración Strava 2025.
 private val DarkProColorScheme = darkColorScheme(
-    primary             = AccentOrange,
-    onPrimary           = Color(0xFF0D1117),
-    primaryContainer    = AccentOrangeContainer,
-    onPrimaryContainer  = AccentOrangeSoft,
+    primary             = AccentLime,
+    onPrimary           = Color(0xFF000000),  // negro sobre lime (lime es muy claro)
+    primaryContainer    = AccentLimeContainer,
+    onPrimaryContainer  = AccentLimeSoft,
 
-    secondary           = AccentOrangeBright,
-    onSecondary         = Color(0xFF0D1117),
-    secondaryContainer  = Color(0xFF2A1800),
-    onSecondaryContainer = AccentOrangeSoft,
+    secondary           = AccentCyan,
+    onSecondary         = Color(0xFF000000),
+    secondaryContainer  = Color(0xFF003640),
+    onSecondaryContainer = Color(0xFFA5F3FC),
 
-    tertiary            = SemanticInfo,
-    onTertiary          = Color(0xFF0D1117),
-    tertiaryContainer   = Color(0xFF0D2442),
-    onTertiaryContainer = Color(0xFFB0D0FF),
+    tertiary            = AccentAmber,
+    onTertiary          = Color(0xFF000000),
+    tertiaryContainer   = Color(0xFF3D2A00),
+    onTertiaryContainer = Color(0xFFFFE082),
 
     error               = SemanticError,
     onError             = Color(0xFF0D1117),

@@ -10,6 +10,18 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+/**
+ * NOTA seguridad — JWT en DataStore.
+ *
+ * El JWT se guarda en DataStore (no cifrado en disco). Las defensas activas son:
+ *  - AndroidManifest.allowBackup=false → no sale en backups ADB/cloud.
+ *  - networkSecurityConfig → solo HTTPS en producción.
+ *  - JWT expira en backend (no es secret de larga duración).
+ *
+ * Para una vuelta de tuerca extra (postlaunch), migrar a EncryptedSharedPreferences
+ * con androidx.security:security-crypto. Requiere cambiar el contrato Flow<String?>
+ * a SharedPreferences listener wrapper, y tocar 15+ consumidores. No bloqueante.
+ */
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "opofit_preferences")
 
 class TokenManager(private val context: Context) {

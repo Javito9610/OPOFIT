@@ -358,6 +358,7 @@ fun HomeScreen(
                                         StatCard(
                                             label = "Sesiones",
                                             value = "${resumen?.sesionesSemana ?: 0}",
+                                            animatedIntValue = resumen?.sesionesSemana ?: 0,
                                             supporting = if (veryCompact) "7 días" else "últimos 7 días",
                                             icon = Icons.Filled.FitnessCenter,
                                             accentColor = MaterialTheme.colorScheme.primary,
@@ -380,6 +381,7 @@ fun HomeScreen(
                                     StatCard(
                                         label = "Racha",
                                         value = "${resumen?.rachaDias ?: 0}",
+                                        animatedIntValue = resumen?.rachaDias ?: 0,
                                         supporting = if ((resumen?.rachaDias ?: 0) > 0) {
                                             if (veryCompact) "días" else "días seguidos"
                                         } else "¡entrena hoy para empezar!",

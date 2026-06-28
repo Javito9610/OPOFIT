@@ -37,17 +37,13 @@ android {
 
     buildTypes {
         release {
-            // Para Play Store activar minify+shrink:
-            //   isMinifyEnabled = true
-            //   isShrinkResources = true
-            // Las reglas ProGuard en app/proguard-rules.pro ya cubren Retrofit
-            // + Gson + Firebase + Health Connect + Compose, que eran las que
-            // hacían crashear el APK release. Mantenido en false hasta probar
-            // el APK firmado en un dispositivo real (login + plan + GPS + share
-            // + push). El comentario antiguo decía "crasheaba al abrir" — ya
-            // no debería con estas reglas.
-            isMinifyEnabled = false
-            isShrinkResources = false
+            // R8 + shrink activados para Play Store. Las reglas ProGuard en
+            // proguard-rules.pro cubren Retrofit + Gson + Firebase + Health
+            // Connect + Compose + Maps + modelos OpoFit serializables.
+            // Si crashea el APK release al abrir: revisar logcat por
+            // ClassNotFoundException y añadir la regla -keep correspondiente.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

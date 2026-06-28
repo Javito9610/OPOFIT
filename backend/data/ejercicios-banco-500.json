@@ -6009,17 +6009,6 @@
       "score_tipo": "reps"
     },
     {
-      "nombre": "Empuje de trineo",
-      "pilar": "VELOCIDAD",
-      "grupo_muscular": "Agilidad",
-      "equipamiento": "Trineo",
-      "entornos": "CROSSFIT,PISTA,MIXTO",
-      "tipo_ilustracion": "RUN",
-      "instrucciones_tecnicas": "Empuje de trineo 10-15m con carga moderada. Combina fuerza y aceleración.",
-      "modalidad": "convencional",
-      "score_tipo": "reps"
-    },
-    {
       "nombre": "Drill T con balón medicinal",
       "pilar": "VELOCIDAD",
       "grupo_muscular": "Agilidad",
@@ -9579,18 +9568,6 @@
       "instrucciones_tecnicas": "En plancha sobre mancuernas, rema alterno.",
       "entornos": "CROSSFIT,GYM,MIXTO",
       "tipo_ilustracion": "PULL",
-      "modalidad": "convencional",
-      "score_tipo": "reps",
-      "categoria": "Fuerza"
-    },
-    {
-      "nombre": "Empuje de trineo",
-      "pilar": "FUERZA",
-      "grupo_muscular": "Cuádriceps",
-      "equipamiento": "Trineo",
-      "instrucciones_tecnicas": "Empuja trineo cargado 10-20 m. Brutal piernas + cardio.",
-      "entornos": "CROSSFIT,MIXTO",
-      "tipo_ilustracion": "RUN",
       "modalidad": "convencional",
       "score_tipo": "reps",
       "categoria": "Fuerza"

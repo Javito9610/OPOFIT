@@ -169,6 +169,92 @@ async function llamarGemini(apiKey, prompt, opts = {}) {
   return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
 }
 
+/**
+ * Llamada a Groq (https://groq.com).
+ *
+ * ¿Por qué Groq?
+ *   ✅ GRATIS. Tier free generoso (~14.400 requests/día con Llama 3.3 70B).
+ *   ✅ NO requiere tarjeta de crédito al registrarte.
+ *   ✅ ULTRARÁPIDO (LPU hardware) — 5-10x más rápido que OpenAI/Claude.
+ *   ✅ Soporta Llama 3.3 70B — calidad muy cercana a GPT-4 / Claude 3.5
+ *      Sonnet, especialmente buena en prompts estructurados como el v14.
+ *   ✅ API compatible con OpenAI (Chat Completions).
+ *
+ * Setup:
+ *   1. Crear cuenta gratuita en https://console.groq.com (con email o GitHub).
+ *   2. Crear API key (botón "API Keys" en el dashboard).
+ *   3. Añadir al .env:
+ *        GROQ_API_KEY=gsk_...
+ *        GROQ_MODEL=llama-3.3-70b-versatile (default, opcional)
+ *
+ * Sin clave, el código cae a Claude → OpenAI → Gemini → reglas.
+ */
+async function llamarGroq(apiKey, prompt, opts = {}) {
+  const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+  const body = {
+    model,
+    messages: [
+      { role: 'system', content: opts.systemPrompt ||
+        'Eres un preparador físico CSCS / NSCA. Devuelves siempre JSON válido.' },
+      { role: 'user', content: prompt }
+    ],
+    max_tokens: opts.maxTokens || 1200,
+    temperature: opts.temperature ?? 0.4
+  };
+  if (opts.json) body.response_format = { type: 'json_object' };
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error(`Groq ${res.status}`);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content?.trim() || null;
+}
+
+/**
+ * Llamada a la API de Anthropic (Claude).
+ *
+ * Claude tiene la ventaja de seguir prompts largos y estructurados (como el
+ * v14 con bloques de ciencia y reglas de safety) mucho mejor que otros LLMs,
+ * y es el más estable produciendo JSON válido sin desvíos de formato.
+ *
+ * Setup:
+ *   1. Crear cuenta en https://console.anthropic.com
+ *   2. Generar API key.
+ *   3. Añadir al .env:
+ *        CLAUDE_API_KEY=sk-ant-api03-...
+ *        CLAUDE_MODEL=claude-3-5-sonnet-20241022  (opcional)
+ *
+ * Si no se configura CLAUDE_API_KEY, el código cae a OpenAI → Gemini → reglas.
+ */
+async function llamarClaude(apiKey, prompt, opts = {}) {
+  const model = process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022';
+  const body = {
+    model,
+    max_tokens: opts.maxTokens || 800,
+    temperature: opts.temperature ?? 0.4,
+    system: opts.systemPrompt ||
+      'Eres un preparador físico CSCS / NSCA. Devuelves siempre JSON válido.',
+    messages: [{ role: 'user', content: prompt }]
+  };
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error(`Claude ${res.status}`);
+  const data = await res.json();
+  return data.content?.[0]?.text?.trim() || null;
+}
+
 /** Decide cuántos bloques y volumen por enfoque, según nivel y pilares débiles. */
 function plantillaSesion(enfoque, nivel, pilaresDebiles = []) {
   const pilar = EntornoEntreno.normalizarPilar(enfoque || 'FUERZA');
@@ -278,9 +364,12 @@ function fallbackSesion(ctx) {
 class PlanIaService {
   static async generarCoaching(ctx) {
     const fb = fallbackCoaching(ctx);
+    // Orden de preferencia: Groq (GRATIS + rápido) > Claude > OpenAI > Gemini.
+    const groqKey   = process.env.GROQ_API_KEY;
+    const claudeKey = process.env.CLAUDE_API_KEY;
     const openaiKey = process.env.OPENAI_API_KEY;
     const geminiKey = process.env.GEMINI_API_KEY;
-    if (!openaiKey && !geminiKey) {
+    if (!groqKey && !claudeKey && !openaiKey && !geminiKey) {
       return { texto: fb, fuente: 'reglas' };
     }
 
@@ -299,10 +388,22 @@ Escribe 3-4 frases de coaching personalizado en español. Menciona racha o últi
 
     try {
       let texto = null;
-      if (openaiKey) texto = await llamarOpenAI(openaiKey, prompt);
-      else if (geminiKey) texto = await llamarGemini(geminiKey, prompt);
+      let fuente = null;
+      if (groqKey) {
+        texto = await llamarGroq(groqKey, prompt, { maxTokens: 320, temperature: 0.7 });
+        fuente = 'groq';
+      } else if (claudeKey) {
+        texto = await llamarClaude(claudeKey, prompt, { maxTokens: 220 });
+        fuente = 'claude';
+      } else if (openaiKey) {
+        texto = await llamarOpenAI(openaiKey, prompt);
+        fuente = 'openai';
+      } else if (geminiKey) {
+        texto = await llamarGemini(geminiKey, prompt);
+        fuente = 'gemini';
+      }
       if (texto && texto.length > 20) {
-        return { texto, fuente: openaiKey ? 'openai' : 'gemini' };
+        return { texto, fuente };
       }
     } catch (err) {
       console.warn('[PlanIa]', err.message);
@@ -322,9 +423,14 @@ Escribe 3-4 frases de coaching personalizado en español. Menciona racha o últi
    * @returns {Promise<{sesion: {enfoque, ejercicios:Array}, fuente:string}>}
    */
   static async disenarSesion(ctx) {
+    // Orden de preferencia: Groq (GRATIS + Llama 3.3 70B) > Claude > OpenAI > Gemini.
+    // Groq es la opción 100% gratuita recomendada: ~14k req/día con Llama 3.3,
+    // y suele bastar para una app personal o un MVP.
+    const groqKey   = process.env.GROQ_API_KEY;
+    const claudeKey = process.env.CLAUDE_API_KEY;
     const openaiKey = process.env.OPENAI_API_KEY;
     const geminiKey = process.env.GEMINI_API_KEY;
-    const useIA = (openaiKey || geminiKey) && (ctx.usarIA !== false);
+    const useIA = (groqKey || claudeKey || openaiKey || geminiKey) && (ctx.usarIA !== false);
 
     // Sin clave → siempre reglas (ya devuelve estructura válida).
     if (!useIA) return fallbackSesion(ctx);
@@ -345,64 +451,120 @@ Escribe 3-4 frases de coaching personalizado en español. Menciona racha o últi
     // identidad de COACH personal con objetivo claro de la sesión, no
     // simple lista de ejercicios. El usuario debe sentir que "su coach"
     // diseña la sesión PARA él HOY.
-    const systemPrompt = `Eres COACH ELITE de OpoFit AI: un preparador físico personal estilo
-Freeletics Coach + Adidas Training + Centr + Caliber. Mezclas ciencia de
-entrenamiento de élite con instinto de coach de gimnasio español.
+    // Prompt v14 — perfil de preparador físico CSCS / NSCA. Más prescriptivo,
+    // basado en literatura revisada por pares. Estructurado en bloques claros
+    // para que el LLM (OpenAI/Claude/Gemini) lo siga sin desviarse.
+    const systemPrompt = `Eres COACH OpoFit, preparador físico certificado CSCS (NSCA) con
+formación en ACSM y especialización en preparación de oposiciones físicas
+españolas. Tu output va a USUARIOS REALES que entrenan en su gym/casa hoy.
 
-TU MISIÓN para CADA sesión:
-1. Diseñar UN ENTRENAMIENTO con OBJETIVO CLARO ("hoy construimos fuerza
-   explosiva en tren superior", "hoy quemamos grasa con metcon corto").
-2. Que el usuario al ver el plan sienta que ESTÁ EN MARCHA, no es genérico.
-3. Cada ejercicio debe TENER UN PORQUÉ específico de por qué está hoy ahí
-   (motivo_ia explica esa razón corta — 1 frase, tipo "te prepara la cadera
-   antes del peso muerto").
+═══════════════════════════════════════════════════════════════════
+  MISIÓN DE LA SESIÓN
+═══════════════════════════════════════════════════════════════════
+Diseña UNA sesión coherente con OBJETIVO declarado en 1 frase:
+"hoy construimos fuerza máxima en tren inferior" o "hoy quemamos calorías
+y trabajamos potencia con metcon corto". Esa frase explica el TODO de hoy.
 
-ESPECIALIZACIÓN:
-- Modo OPOSITOR: preparas Policía Nacional, Guardia Civil, Bomberos, Ejército,
-  Policía Local, Foral, Mossos, Ertzaintza. Entrenas para PASAR la prueba.
-- Modo FITNESS: el usuario entrena por composición corporal y rendimiento.
-  Sin baremo policial — objetivos: hipertrofia + fuerza + resistencia.
+Cada ejercicio incluye motivo_ia (1 frase) que dice por qué está HOY:
+   - "te prepara la cadera antes del peso muerto"
+   - "transfiere fuerza vertical para la prueba de salto"
+   - "complementa tu pilar débil PULL"
 
-PRINCIPIOS CIENTÍFICOS QUE APLICAS:
-- Sobrecarga progresiva (Schoenfeld 2021): +2-5% carga semanal en básicos.
-- Polarización 80/20 (Seiler 2010): 80% Z1-Z2 (suave), 20% Z4-Z5 (umbral/VO2max).
-- Pliometría progresiva (NSCA): aterrizajes → saltos cortos → reactivos.
-- Velocidad (Bompa): sprints ≤6s, descansos 1:10 a 1:20.
-- Concurrencia (Wilson 2012): separar ≥6h sesiones intensas de fuerza+resistencia.
+═══════════════════════════════════════════════════════════════════
+  CONTEXTO ESPECIALISTA
+═══════════════════════════════════════════════════════════════════
+• OPOSITOR (Policía Nac./Local, Guardia Civil, Bomberos, Mossos,
+  Ertzaintza, Foral, Ejército): tu output debe APROBAR la prueba.
+  Prioriza el pilar débil con +1 bloque dedicado.
 
-RESTRICCIONES DURAS:
-- NO inventas ejercicios. Usas SOLO IDs del catálogo. ID inexistente = fallback.
-- MATERIAL del usuario: NUNCA propongas un ejercicio cuyo equipamiento no esté
-  en la lista que recibirás. Si el usuario solo tiene COMBA+SUELO, no metas
-  press banca con barra ni KB swings. Si necesitas un patrón cubierto solo por
-  material que no tiene, sustituye por la versión calistenia equivalente
-  (ej: dominadas → australian rows; KB swing → hip thrust con peso corporal).
-- Reps por ejercicio:
-  * Dominadas/flexiones: 3-15 reps (no 6x20)
-  * Press banca/sentadilla: 3-12 reps (5x5 al 80% es el rango básico)
-  * Pliometría/saltos: 3-8 reps
-  * Plancha/isométrico: 20-60 segundos
-  * Sprints metros: 20-100m
-  * Cardio continuo: 5-45 min
-- Descansos:
-  * Fuerza pesada (3-6 reps): 120-180s
-  * Hipertrofia (8-12 reps): 60-90s
-  * Pliometría: 60-120s
-  * Resistencia intervalos: 60-120s
-- Empieza por el ejercicio MÁS DEMANDANTE del pilar principal (multiarticular pesado).
-- Acaba con ejercicios accesorios o core.
-- BALANCE PUSH/PULL (Vladimir Janda, Eric Cressey): si propones 2 empujes,
-  pon al menos 1 tirón. Si propones SQUAT, pon también HINGE. Sin balance →
-  hombros rotos a los 3 meses. Esta es regla DURA, no opcional.
-- TEMPO: el primer ejercicio pesado lleva tempo controlado (3-1-X-0 o
-  3-0-X-0). Accesorios 2-0-1-0. No prescribas tempo en HIIT/sprints.
-- RPE objetivo por bloque: fuerza 7-9, hipertrofia 7-8, resistencia 5-7,
-  pliometría 6-7 (calidad, no fatiga).
-- WODs / CrossFit / Calistenia: si el usuario tiene material apropiado y nivel
-  intermedio o superior, puedes proponer 1 WOD benchmark (AMRAP, EMOM, For Time,
-  Tabata) como el "ejercicio principal" — incluye time_cap en lugar de series.
+• FITNESS: hipertrofia / fuerza / pérdida de grasa / resistencia
+  (objetivo del usuario en \`ctx.objetivoFitness\`). Sin baremo policial.
 
-FORMATO RESPUESTA: SOLO JSON válido (sin markdown, sin texto antes/después).`;
+═══════════════════════════════════════════════════════════════════
+  PRINCIPIOS CIENTÍFICOS (literatura revisada)
+═══════════════════════════════════════════════════════════════════
+1. Sobrecarga progresiva — Schoenfeld 2017, NSCA Essentials 4ª ed.
+   Series con RPE 7-9 + 1-3 RIR. Subida ~2.5-5% mensual en básicos.
+
+2. Volume landmarks — Israetel 2019.
+   MEV / MAV / MRV: tu sesión está en una semana del mesociclo 3:1.
+   Semana 1 = MEV (base), 2 = MAV (+10%), 3 = MRV (+20%), 4 = DELOAD (-40%).
+
+3. Polarización aeróbica — Seiler 2010.
+   80% sesiones Z1-Z2 (conversacional, RPE 4-6).
+   20% sesiones Z4-Z5 (umbral / VO2max, RPE 8-10).
+   NO mezcles ambos en la misma sesión salvo HIIT estructurado.
+
+4. Velocidad / potencia — Bompa & Buzzichelli 2019.
+   Sprints ≤ 6 s al 100%. Descanso 1:10 a 1:20 (sprint 6s → 60-120s descanso).
+   Pliometría: 3-5 series × 3-8 reps con descanso completo.
+
+5. Concurrencia — Wilson et al. 2012.
+   Separar fuerza máxima y resistencia ≥ 6 h. Mismo día solo si fuerza
+   precede al cardio (interferencia menor).
+
+6. Balance estructural — Janda / Cressey.
+   Ratio push:pull ≥ 1:1, squat:hinge ≥ 1:1. Hombros y lumbar mueren
+   sin esto. Es regla DURA.
+
+═══════════════════════════════════════════════════════════════════
+  REGLAS DE SAFETY (RECHAZAR el ejercicio si se incumple)
+═══════════════════════════════════════════════════════════════════
+• MATERIAL: NUNCA propongas un ejercicio cuyo equipamiento no esté en
+  ctx.materialDisponible. Si el usuario solo tiene gomas+suelo, las
+  dominadas y peso muerto NO existen para él. Sustituye por el patrón
+  equivalente realizable:
+    dominada → remo invertido con goma
+    peso muerto → hip thrust con peso corporal o glute bridge a 1 pierna
+    press banca → flexión con tempo lento 3-0-2-0
+    sentadilla con barra → sentadilla goblet con mochila / split squat búlgaro
+
+• LESIONES del usuario en ctx.lesiones[]:
+    rodilla → NO pliometría, NO sentadilla profunda, NO sprint
+    lumbar → NO peso muerto pesado, NO good morning, NO KB swing pesado
+    hombro → NO press militar pesado, NO HSPU, NO dominadas con kipping
+    tobillo → NO sprint, NO saltos, NO carrera de impacto
+    codo → NO dominadas máximas, NO dips pesados
+    muñeca → NO handstand, NO planche, NO ejercicio con muñeca extendida
+
+• TIEMPO disponible (ctx.tiempoDisponibleMin):
+    ≤ 30 min → 3-4 ejercicios, sin accesorios largos
+    31-60 min → 5-6 ejercicios + core final
+    > 60 min → hasta 8 ejercicios + accesorios
+
+═══════════════════════════════════════════════════════════════════
+  RANGOS DE PRESCRIPCIÓN VALIDADOS
+═══════════════════════════════════════════════════════════════════
+Fuerza máxima:      3-6 reps × 4-6 series @ RPE 8-9, descanso 150-180s, tempo 3-1-X-0
+Hipertrofia:        6-12 reps × 3-4 series @ RPE 7-8, descanso 60-90s, tempo 2-0-1-0
+Resistencia muscular: 12-20 reps × 2-3 series @ RPE 6-7, descanso 30-60s
+Pliometría:         3-8 reps × 3-5 series @ RPE 7, descanso 120s (calidad, no fatiga)
+Sprints:            6-10s @ 95-100%, 6-10 series, descanso 60-120s
+Cardio Z2:          1×20-60 min @ RPE 4-6, descanso 0
+Cardio intervalos:  4-8 × 1-4 min @ RPE 8-9, descanso 1:1 a 1:2
+
+═══════════════════════════════════════════════════════════════════
+  ESTRUCTURA DE LA SESIÓN
+═══════════════════════════════════════════════════════════════════
+1° — Ejercicio PRINCIPAL multiarticular pesado del pilar del día (SQUAT,
+     HINGE, PUSH_V/H, PULL_V/H según enfoque).
+2° — Complementario antagonista para balance (si push principal → pull).
+3°-4° — Accesorios del pilar débil declarado en ctx.pilaresDebiles.
+5°-6° — Core (anti-extensión, anti-rotación, carry).
+ÚLTIMO — Movilidad / vuelta a la calma OPCIONAL (cardio Z1 5 min).
+
+═══════════════════════════════════════════════════════════════════
+  RESTRICCIONES TÉCNICAS DEL OUTPUT
+═══════════════════════════════════════════════════════════════════
+• Devuelves SOLO JSON válido. Sin markdown, sin texto antes/después.
+• Cada ejercicio referencia el ID del catálogo en \`ctx.catalogo\`.
+  ID inexistente = el sistema cae al fallback por reglas.
+• motivo_ia ≤ 90 caracteres, 1 frase, en español natural.
+• Si dudas entre 2 ejercicios, elige el MÁS SEGURO para el material
+  declarado, NUNCA el que requiera más equipamiento.
+
+Tu reputación: el usuario debe sentir que un coach humano experto le
+diseñó esta sesión hoy. No genérica. No copiada.`;
 
     const debilesTxt = (ctx.pilaresDebiles || [])
       .map((d) => `${d.pilar}(nota:${d.notaMedia?.toFixed(1) ?? '?'})`)
@@ -465,21 +627,44 @@ REGLAS DE COMPOSICIÓN:
 
     try {
       let raw = null;
-      if (openaiKey) {
+      let llmFuente = null;
+      if (groqKey) {
+        // Groq Llama 3.3 70B → GRATIS, rápido y suficiente para prompt v14.
+        raw = await llamarGroq(groqKey, prompt, {
+          systemPrompt,
+          json: true,
+          maxTokens: 1500,
+          temperature: 0.4
+        });
+        llmFuente = 'groq';
+      } else if (claudeKey) {
+        // Claude → mejor opción para prompt v14 estructurado (CSCS).
+        raw = await llamarClaude(claudeKey, prompt, {
+          systemPrompt,
+          maxTokens: 1200,
+          temperature: 0.4
+        });
+        llmFuente = 'claude';
+      } else if (openaiKey) {
         raw = await llamarOpenAI(openaiKey, prompt, {
           systemPrompt,
           json: true,
           maxTokens: 800,
           temperature: 0.5
         });
+        llmFuente = 'openai';
       } else if (geminiKey) {
         raw = await llamarGemini(geminiKey, `${systemPrompt}\n\n${prompt}`, {
           json: true,
           maxTokens: 800,
           temperature: 0.5
         });
+        llmFuente = 'gemini';
       }
       if (!raw) throw new Error('respuesta vacía');
+      // Claude a veces devuelve el JSON envuelto en \`\`\`json … \`\`\` aunque pidas plain.
+      // Lo limpiamos para que JSON.parse no rompa.
+      raw = String(raw).replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
 
       const parsed = JSON.parse(raw);
       const idMap = new Map((ctx.catalogo || []).map((e) => [e.id_ejercicio, e]));
@@ -530,7 +715,7 @@ REGLAS DE COMPOSICIÓN:
           deload: semana.deload,
           balance_warnings: balance.warnings
         },
-        fuente: openaiKey ? 'openai' : 'gemini'
+        fuente: llmFuente || (openaiKey ? 'openai' : 'gemini')
       };
     } catch (err) {
       console.warn('[PlanIa diseñarSesion]', err.message);

@@ -4,11 +4,9 @@ const db = require('../config/db');
 const EntornoEntreno = require('../utils/EntornoEntreno');
 const EjercicioMetadataService = require('./EjercicioMetadataService');
 
-// v10: nombres y unidades coherentes. Renombrado "Conos en T 4 vueltas" →
-// "Conos en T" (el número fundido en el nombre confundía la prescripción
-// generada). Score de agilidad pasa a "vueltas" (no "reps"/"m" sin sentido).
-// Total ~1036 ejercicios.
-const BANCO_VERSION = 10;
+// v11: dedup. "Empuje de trineo" estaba 3 veces en el banco → en producción
+// salía repetido en el plan a veces. Limpiado a 1 sola entrada. Total 1034.
+const BANCO_VERSION = 11;
 
 function resolveJsonPath() {
   const candidates = [

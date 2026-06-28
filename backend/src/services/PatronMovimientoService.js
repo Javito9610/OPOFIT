@@ -77,6 +77,20 @@ function clasificar(ej) {
     return 'ROT';
   }
 
+  // Aislamientos de bíceps / tríceps / hombro lateral — son tirones u
+  // empujes parciales. Antes "Curl con mancuernas" caía en SQUAT por el
+  // fallback genérico → ranges sin sentido (138s de descanso). Ahora:
+  //   curl / martillo / chin-up aislado → PULL_H (es tracción de brazo)
+  //   triceps / extension / press francés → PUSH_H (empuje de codo)
+  //   elevación lateral / pájaros / face pull → PUSH_V (hombro)
+  if (/\bcurl\b|martillo|preacher|spider curl/.test(n)) return 'PULL_H';
+  if (/triceps|tríceps|patada de triceps|press francés|press frances|extension.*brazo|extension.*codo|katana|skull/.test(n)) {
+    return 'PUSH_H';
+  }
+  if (/elevacion lateral|elevacion frontal|pájaros|pajaros|y-raise|face pull|cuban press/.test(n)) {
+    return 'PUSH_V';
+  }
+
   // Fallback por grupo muscular.
   const g = normalizar(ej.grupo_muscular);
   if (g.includes('pecho')) return 'PUSH_H';

@@ -8,15 +8,15 @@
     </style>
 
     <style name="Theme.MiApp.Splash" parent="Theme.SplashScreen">
-        <!-- Splash en NARANJA brand para coherencia con el TopAppBar naranja
-             de la app. Antes era #0D1117 (azul oscuro) → el usuario veía un
-             splash oscuro y luego una app naranja, no pegaba. -->
-        <item name="android:windowBackground">@color/opofit_orange</item>
-        <item name="android:statusBarColor">@color/opofit_orange</item>
-        <item name="android:navigationBarColor">@color/opofit_orange</item>
-        <item name="windowSplashScreenBackground">@color/opofit_orange</item>
+        <!-- Splash NEGRO PURO con icono lime — feel premium estilo Whoop/iOS.
+             La app dark con acento lime hace que el splash negro encaje
+             perfecto. Transición invisible. -->
+        <item name="android:windowBackground">@color/opofit_blue</item>
+        <item name="android:statusBarColor">@color/opofit_blue</item>
+        <item name="android:navigationBarColor">@color/opofit_blue</item>
+        <item name="windowSplashScreenBackground">@color/opofit_blue</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_empty</item>
-        <item name="windowSplashScreenIconBackgroundColor">@color/opofit_orange</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/opofit_blue</item>
         <item name="windowSplashScreenAnimationDuration">0</item>
         <item name="postSplashScreenTheme">@style/Theme.MiApp</item>
     </style>
