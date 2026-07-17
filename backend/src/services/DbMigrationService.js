@@ -121,11 +121,15 @@ class DbMigrationService {
       // v8: comunidad — grupos con tipo (PRIVADO estilo WhatsApp, COMUNIDAD
       // estilo Strava clubs). Antes solo había un tipo y los privados no
       // existían como concepto.
-      await DbMigrationService.addColumnIfMissing(
-        'grupos_comunidad',
-        'tipo',
-        "VARCHAR(16) NOT NULL DEFAULT 'COMUNIDAD'"
-      );
+      // La tabla se crea más abajo en esta misma migración: en una BBDD
+      // recién importada aún no existe y el ALTER abortaba todo el run.
+      if (await DbMigrationService.tableExists('grupos_comunidad')) {
+        await DbMigrationService.addColumnIfMissing(
+          'grupos_comunidad',
+          'tipo',
+          "VARCHAR(16) NOT NULL DEFAULT 'COMUNIDAD'"
+        );
+      }
 
       // v7-doctorado: campos modalidad + score_tipo en cada ejercicio para que
       // la UI sepa qué input mostrar (timer para AMRAP, contador rondas para
@@ -558,6 +562,7 @@ class DbMigrationService {
             id_oposicion INT NULL,
             creador_id INT NOT NULL,
             creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            tipo VARCHAR(16) NOT NULL DEFAULT 'COMUNIDAD',
             PRIMARY KEY (id_grupo),
             INDEX idx_grupo_opo (id_oposicion),
             CONSTRAINT fk_gc_opo FOREIGN KEY (id_oposicion) REFERENCES oposiciones (id_oposicion),
