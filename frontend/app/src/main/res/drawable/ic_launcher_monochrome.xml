@@ -4,27 +4,11 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <group
-        android:pivotX="54"
-        android:pivotY="54"
-        android:scaleX="0.80"
-        android:scaleY="0.80">
-        <path
-            android:fillColor="#00000000"
-            android:pathData="M54,12 L80,44 L80,80 L54,66 L28,80 L28,44 Z"
-            android:strokeWidth="3.5"
-            android:strokeColor="#FFFFFF"
-            android:strokeLineJoin="round" />
-        <path
-            android:fillColor="#FFFFFF"
-            android:pathData="M54,8 L59,14 L54,20 L49,14 Z" />
-        <path
-            android:fillColor="#00000000"
-            android:pathData="M42,58 m-11,0 a11,11 0 1,1 22,0 a11,11 0 1,1 -22,0"
-            android:strokeWidth="5"
-            android:strokeColor="#FFFFFF" />
-        <path
-            android:fillColor="#FFFFFF"
-            android:pathData="M50,46 H55 V74 H50 Z M55,46 H70 V52 H55 Z M55,58 H66 V63 H55 Z" />
-    </group>
+    <!-- Versión monocroma (iconos temáticos Android 13+): silueta de la insignia -->
+    <path android:pathData="M54,10 a44,44 0 1,0 0,88 a44,44 0 1,0 0,-88 z"
+        android:strokeColor="#FFFFFF" android:strokeWidth="4" android:fillColor="#00000000" />
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M28,72 L46,46 L55,57 L67,40 L80,72 Z" />
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M54,22 l3,6 6.6,1 -4.8,4.6 1.1,6.5 -5.9,-3.1 -5.9,3.1 1.1,-6.5 -4.8,-4.6 6.6,-1 z" />
 </vector>
