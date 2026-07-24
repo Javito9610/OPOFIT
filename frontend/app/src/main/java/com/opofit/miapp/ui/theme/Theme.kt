@@ -7,75 +7,101 @@ import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-// Dark PRO 2026 — grafito azulado + azul rendimiento + teal + ámbar.
-private val DarkProColorScheme = darkColorScheme(
-    primary             = AccentBlue,
-    onPrimary           = Color(0xFFFFFFFF),
-    primaryContainer    = AccentBlueContainer,
-    onPrimaryContainer  = AccentBlueSoft,
+/**
+ * Permite a cualquier composable (logo, splash) saber si el tema activo es
+ * oscuro sin pasar flags a mano. Lo provee [MiAppTheme].
+ */
+val LocalIsDarkTheme = staticCompositionLocalOf { false }
 
-    secondary           = AccentCyan,
-    onSecondary         = Color(0xFF04231F),
-    secondaryContainer  = Color(0xFF0B2E2A),
-    onSecondaryContainer = Color(0xFF99F6E4),
+// =====================================================================
+//   TEMA CLARO — "Amanecer"  (por defecto)
+//   Fondo cálido crema + naranja energía + azul de apoyo. Luminoso y
+//   motivador, estilo Nike Training Club / Runna en claro.
+// =====================================================================
+private val AmanecerLightScheme = lightColorScheme(
+    primary              = Color(0xFFF97316),  // naranja energía
+    onPrimary            = Color(0xFFFFFFFF),
+    primaryContainer     = Color(0xFFFFE7D3),
+    onPrimaryContainer   = Color(0xFF7A3200),
 
-    tertiary            = AccentAmber,
-    onTertiary          = Color(0xFF231300),
-    tertiaryContainer   = Color(0xFF3A2A08),
-    onTertiaryContainer = Color(0xFFFDE68A),
+    secondary            = Color(0xFF2563EB),  // azul de apoyo
+    onSecondary          = Color(0xFFFFFFFF),
+    secondaryContainer   = Color(0xFFDCE8FF),
+    onSecondaryContainer = Color(0xFF0B2A6B),
 
-    error               = SemanticError,
-    onError             = Color(0xFFFFFFFF),
-    errorContainer      = Color(0xFF4A100C),
-    onErrorContainer    = Color(0xFFFFB4AC),
+    tertiary             = Color(0xFF0F766E),  // teal salud/progreso
+    onTertiary           = Color(0xFFFFFFFF),
+    tertiaryContainer    = Color(0xFFCCFBF1),
+    onTertiaryContainer  = Color(0xFF134E48),
 
-    background          = BgPrimary,
-    onBackground        = TextPrimary,
+    error                = Color(0xFFDC2626),
+    onError              = Color(0xFFFFFFFF),
+    errorContainer       = Color(0xFFFEE2E2),
+    onErrorContainer     = Color(0xFF7F1D1D),
 
-    surface             = BgSecondary,
-    onSurface           = TextPrimary,
-    surfaceVariant      = BgTertiary,
-    onSurfaceVariant    = TextSecondary,
+    background           = Color(0xFFFFF7F0),  // crema cálido
+    onBackground         = Color(0xFF1C1917),
+    surface              = Color(0xFFFFFFFF),
+    onSurface            = Color(0xFF1C1917),
+    surfaceVariant       = Color(0xFFF3EAE1),
+    onSurfaceVariant     = Color(0xFF78716C),
 
-    outline             = BorderSubtle,
-    outlineVariant      = BorderDefault,
+    outline              = Color(0xFFE3D8CC),
+    outlineVariant       = Color(0xFFEFE7DE),
 
-    inverseSurface      = Color(0xFFF1F5F9),
-    inverseOnSurface    = BgPrimary,
-    inversePrimary      = AccentBlueDim,
+    inverseSurface       = Color(0xFF1C1917),
+    inverseOnSurface     = Color(0xFFFAF7F4),
+    inversePrimary       = Color(0xFFFFB27A),
 
-    scrim               = Color(0xCC000000)
+    scrim                = Color(0x99000000)
 )
 
-// Light scheme conservado para no romper preview tools, pero no se usa en runtime.
-private val LightColorScheme = lightColorScheme(
-    primary             = PrimaryLight,
-    onPrimary           = OnPrimaryLight,
-    primaryContainer    = Color(0xFFDBE8FF),
-    onPrimaryContainer  = Color(0xFF0B2A6B),
-    secondary           = SecondaryLight,
-    onSecondary         = OnSecondaryLight,
-    secondaryContainer  = Color(0xFFCCFBF1),
-    onSecondaryContainer = Color(0xFF134E48),
-    tertiary            = AccentAmber,
-    onTertiary          = Color(0xFF231300),
-    tertiaryContainer   = Color(0xFFFEF3C7),
-    onTertiaryContainer = Color(0xFF78350F),
-    error               = ErrorLight,
-    onError             = Color(0xFFFFFFFF),
-    errorContainer      = Color(0xFFFEE2E2),
-    onErrorContainer    = ErrorLight,
-    background          = BackgroundLight,
-    onBackground        = OnBackgroundLight,
-    surface             = SurfaceLight,
-    onSurface           = OnSurfaceLight,
-    surfaceVariant      = Color(0xFFE2E8F0),
-    onSurfaceVariant    = OnSurfaceVariantLight,
-    outline             = OutlineLight,
-    outlineVariant      = Color(0xFF94A3B8)
+// =====================================================================
+//   TEMA OSCURO — "Aurora"  (seleccionable en Ajustes)
+//   Azul noche + cian eléctrico + lima energía. Oscuro pero VIVO, sin
+//   la sensación lúgubre del negro plano.
+// =====================================================================
+private val AuroraDarkScheme = darkColorScheme(
+    primary              = Color(0xFF22D3EE),  // cian eléctrico
+    onPrimary            = Color(0xFF04222A),
+    primaryContainer     = Color(0xFF0A3A44),
+    onPrimaryContainer   = Color(0xFFA5F3FC),
+
+    secondary            = Color(0xFFA3E635),  // lima energía
+    onSecondary          = Color(0xFF1A2E05),
+    secondaryContainer   = Color(0xFF24310A),
+    onSecondaryContainer = Color(0xFFD9F99D),
+
+    tertiary             = Color(0xFFF59E0B),  // ámbar récords/kcal
+    onTertiary           = Color(0xFF231300),
+    tertiaryContainer    = Color(0xFF3A2A08),
+    onTertiaryContainer  = Color(0xFFFDE68A),
+
+    error                = Color(0xFFF0524A),
+    onError              = Color(0xFFFFFFFF),
+    errorContainer       = Color(0xFF4A100C),
+    onErrorContainer     = Color(0xFFFFB4AC),
+
+    background           = Color(0xFF0C1322),  // azul noche
+    onBackground         = Color(0xFFE8EEF7),
+    surface              = Color(0xFF16203A),
+    onSurface            = Color(0xFFE8EEF7),
+    surfaceVariant       = Color(0xFF1E2B4A),
+    onSurfaceVariant     = Color(0xFF8DA0BC),
+
+    outline              = Color(0xFF24314F),
+    outlineVariant       = Color(0xFF1A2540),
+
+    inverseSurface       = Color(0xFFE8EEF7),
+    inverseOnSurface     = Color(0xFF0C1322),
+    inversePrimary       = Color(0xFF0E7490),
+
+    scrim                = Color(0xCC000000)
 )
 
 @Composable
@@ -83,8 +109,7 @@ fun MiAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    // Dark Pro: siempre oscuro — ignoramos la preferencia del sistema
-    val colorScheme = DarkProColorScheme
+    val colorScheme = if (darkTheme) AuroraDarkScheme else AmanecerLightScheme
 
     val shapes = Shapes(
         extraSmall = RoundedCornerShape(6.dp),
@@ -94,10 +119,12 @@ fun MiAppTheme(
         extraLarge = RoundedCornerShape(24.dp)
     )
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography  = AppTypography,
-        shapes      = shapes,
-        content     = content
-    )
+    CompositionLocalProvider(LocalIsDarkTheme provides darkTheme) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography  = AppTypography,
+            shapes      = shapes,
+            content     = content
+        )
+    }
 }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -19,24 +20,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
-import com.opofit.miapp.ui.theme.AccentOrangeBright
-
-val SplashNavy = Color(0xFF1B2A4A)
+import com.opofit.miapp.ui.theme.LocalIsDarkTheme
 
 @Composable
 fun OpoFitSplashScreen() {
     val view = LocalView.current
-    // Forzamos iconos claros (sobre navy) mientras dura el splash, y los
-    // restauramos al modo claro normal cuando se desmonta. Sin esto, la app
-    // se quedaba con la barra de estado/gestos con apariencia de splash
-    // después de terminar el arranque.
-    DisposableEffect(Unit) {
+    val isDark = LocalIsDarkTheme.current
+    // Iconos de sistema: claros sobre splash oscuro (Aurora), oscuros sobre
+    // splash claro (Amanecer). Se restauran al desmontar.
+    DisposableEffect(isDark) {
         val window = (view.context as Activity).window
         val controller = WindowCompat.getInsetsController(window, view)
         val prevLightStatus = controller.isAppearanceLightStatusBars
         val prevLightNav = controller.isAppearanceLightNavigationBars
-        controller.isAppearanceLightStatusBars = false
-        controller.isAppearanceLightNavigationBars = false
+        controller.isAppearanceLightStatusBars = !isDark
+        controller.isAppearanceLightNavigationBars = !isDark
         onDispose {
             controller.isAppearanceLightStatusBars = prevLightStatus
             controller.isAppearanceLightNavigationBars = prevLightNav
@@ -46,14 +44,14 @@ fun OpoFitSplashScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(SplashNavy),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            OpoFitLogo(size = 120.dp, onDarkBackground = true)
+            OpoFitLogo(size = 120.dp)
             Spacer(modifier = Modifier.height(28.dp))
             CircularProgressIndicator(
-                color = AccentOrangeBright,
+                color = MaterialTheme.colorScheme.primary,
                 strokeWidth = 2.5.dp
             )
             Spacer(modifier = Modifier.height(20.dp))
@@ -61,7 +59,7 @@ fun OpoFitSplashScreen() {
                 text = "OpoFit",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onBackground,
                 letterSpacing = 2.sp
             )
         }

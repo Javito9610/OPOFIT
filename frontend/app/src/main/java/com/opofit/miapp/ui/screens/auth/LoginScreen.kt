@@ -117,13 +117,7 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                androidx.compose.ui.graphics.Brush.verticalGradient(
-                    0f to com.opofit.miapp.ui.theme.BrandGradientStart,
-                    0.42f to MaterialTheme.colorScheme.background,
-                    1f to MaterialTheme.colorScheme.background
-                )
-            )
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -136,7 +130,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(48.dp))
 
             
-            OpoFitLogo(size = 112.dp, onDarkBackground = false)
+            OpoFitLogo(size = 112.dp)
 
             Spacer(modifier = Modifier.height(20.dp))
 

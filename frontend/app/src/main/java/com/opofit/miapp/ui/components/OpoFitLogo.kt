@@ -17,18 +17,21 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.opofit.miapp.ui.theme.AccentOrange
+import com.opofit.miapp.ui.theme.LocalIsDarkTheme
 
 private val LogoNavy = Color(0xFF1B2A4A)
 private val LogoWhite = Color(0xFFFFFFFF)
 
 /**
- * Logo C) Pico ascenso — chevron + OF + diamante naranja. Mismo diseño que el launcher.
+ * Logo C) Pico ascenso — chevron + OF + diamante. Mismo diseño que el launcher.
+ * Por defecto se adapta al tema activo: mark oscuro sobre fondo claro (Amanecer),
+ * mark blanco sobre fondo oscuro (Aurora).
  */
 @Composable
 fun OpoFitLogo(
     modifier: Modifier = Modifier,
     size: Dp = 72.dp,
-    onDarkBackground: Boolean = false
+    onDarkBackground: Boolean = LocalIsDarkTheme.current
 ) {
     Canvas(modifier = modifier.size(size)) {
         val s = this.size.minDimension / 108f

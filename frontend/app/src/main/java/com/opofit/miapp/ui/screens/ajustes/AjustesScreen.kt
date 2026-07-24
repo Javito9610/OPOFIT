@@ -26,6 +26,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -302,18 +304,32 @@ fun AjustesScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Icon(
+                        imageVector = if (uiState.darkMode)
+                            Icons.Filled.DarkMode else Icons.Filled.LightMode,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(end = 12.dp)
+                    )
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Tema Dark Pro",
+                            text = if (uiState.darkMode) "Modo oscuro (Aurora)" else "Modo claro (Amanecer)",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            text = "Modo oscuro profesional siempre activo",
+                            text = if (uiState.darkMode)
+                                "Azul noche con acentos energéticos"
+                            else
+                                "Luminoso y cálido — recomendado de día",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                    Switch(
+                        checked = uiState.darkMode,
+                        onCheckedChange = { ajustesViewModel.setDarkMode(it) }
+                    )
                 }
             }
 

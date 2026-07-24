@@ -187,7 +187,7 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        OpoFitLogo(size = 36.dp, onDarkBackground = true)
+                        OpoFitLogo(size = 36.dp)
                         Column {
                             Text("OpoFit", fontWeight = FontWeight.ExtraBold)
                             Text(
@@ -205,12 +205,12 @@ fun HomeScreen(
                 ),
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Filled.Menu, "Menú", tint = MaterialTheme.colorScheme.onPrimary)
+                        Icon(Icons.Filled.Menu, "Menú", tint = MaterialTheme.colorScheme.onSurface)
                     }
                 },
                 actions = {
                     IconButton(onClick = onNavigateToAjustes) {
-                        Icon(Icons.Filled.Settings, "Ajustes", tint = MaterialTheme.colorScheme.onPrimary)
+                        Icon(Icons.Filled.Settings, "Ajustes", tint = MaterialTheme.colorScheme.onSurface)
                     }
                 }
             )
