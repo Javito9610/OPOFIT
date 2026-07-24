@@ -361,6 +361,48 @@ function fallbackSesion(ctx) {
   };
 }
 
+/**
+ * Sanitiza la salida de coaching del LLM por si devuelve JSON crudo en lugar de
+ * texto plano (Llama/Claude a veces lo hacen aunque les digamos lo contrario).
+ *
+ * Acepta cualquiera de estos formatos y devuelve solo prosa legible:
+ *   - {"text": "...", "reasoning": "..."}
+ *   - {"content": "..."}
+ *   - {"coaching": "..."}
+ *   - ```json\n{...}\n```
+ *   - texto plano (devuelto tal cual)
+ *
+ * Si no logra extraer nada útil, devuelve el texto tal cual saneado de comillas
+ * y backticks de cierre — siempre prefiere algo legible a un JSON al usuario.
+ */
+function sanearTextoCoaching(raw) {
+  if (!raw || typeof raw !== 'string') return raw;
+  let t = raw.trim();
+  // Quita fences ```json ... ``` o ``` ... ```
+  if (t.startsWith('```')) {
+    t = t.replace(/^```(?:json)?\s*/i, '').replace(/```$/, '').trim();
+  }
+  // Si parece JSON, intenta parsear y extraer la primera clave de texto válida.
+  if (t.startsWith('{') && t.endsWith('}')) {
+    try {
+      const obj = JSON.parse(t);
+      for (const k of ['text', 'content', 'coaching', 'message', 'output', 'response', 'texto']) {
+        if (typeof obj[k] === 'string' && obj[k].trim().length > 10) {
+          return obj[k].trim();
+        }
+      }
+      // Si hay un único string en el objeto, úsalo.
+      const strings = Object.values(obj).filter((v) => typeof v === 'string' && v.length > 10);
+      if (strings.length === 1) return strings[0].trim();
+    } catch { /* no era JSON válido — usar texto tal cual */ }
+  }
+  // Quita comillas envolventes residuales.
+  if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith('“') && t.endsWith('”'))) {
+    t = t.slice(1, -1).trim();
+  }
+  return t;
+}
+
 class PlanIaService {
   static async generarCoaching(ctx) {
     const fb = fallbackCoaching(ctx);
@@ -389,11 +431,23 @@ Escribe 3-4 frases de coaching personalizado en español. Menciona racha o últi
     try {
       let texto = null;
       let fuente = null;
+      // Coaching = TEXTO PLANO (3-4 frases). El system prompt por defecto de
+      // los wrappers pide "JSON válido" (porque lo comparten con disenarSesion),
+      // y eso hacía que Llama / Claude devolvieran {"text":"...","reasoning":"..."}
+      // y el front lo pintara crudo. Forzamos prompt de texto plano aquí.
+      const coachSystem =
+        'Eres un coach personal motivador. Responde SIEMPRE con texto plano en ' +
+        'español, sin JSON, sin comillas envolventes, sin claves, sin Markdown, sin ' +
+        'listas. Solo 3-4 frases de coaching directas al usuario.';
       if (groqKey) {
-        texto = await llamarGroq(groqKey, prompt, { maxTokens: 320, temperature: 0.7 });
+        texto = await llamarGroq(groqKey, prompt, {
+          maxTokens: 320, temperature: 0.7, systemPrompt: coachSystem
+        });
         fuente = 'groq';
       } else if (claudeKey) {
-        texto = await llamarClaude(claudeKey, prompt, { maxTokens: 220 });
+        texto = await llamarClaude(claudeKey, prompt, {
+          maxTokens: 220, systemPrompt: coachSystem
+        });
         fuente = 'claude';
       } else if (openaiKey) {
         texto = await llamarOpenAI(openaiKey, prompt);
@@ -403,7 +457,7 @@ Escribe 3-4 frases de coaching personalizado en español. Menciona racha o últi
         fuente = 'gemini';
       }
       if (texto && texto.length > 20) {
-        return { texto, fuente };
+        return { texto: sanearTextoCoaching(texto), fuente };
       }
     } catch (err) {
       console.warn('[PlanIa]', err.message);
@@ -447,13 +501,11 @@ Escribe 3-4 frases de coaching personalizado en español. Menciona racha o últi
     const meta = EntornoEntreno.ENTORNO_META[ctx.entorno] || EntornoEntreno.ENTORNO_META.MIXTO;
     const tpl = plantillaSesion(ctx.enfoque, ctx.nivel, ctx.pilaresDebiles);
 
-    // System prompt mejorado v13 — estilo Freeletics / Centr / Future:
-    // identidad de COACH personal con objetivo claro de la sesión, no
-    // simple lista de ejercicios. El usuario debe sentir que "su coach"
-    // diseña la sesión PARA él HOY.
-    // Prompt v14 — perfil de preparador físico CSCS / NSCA. Más prescriptivo,
-    // basado en literatura revisada por pares. Estructurado en bloques claros
-    // para que el LLM (OpenAI/Claude/Gemini) lo siga sin desviarse.
+    // Prompt v15 — LIBRE ESTILO FREELETICS. La IA inventa los ejercicios con
+    // nombre claro + series + reps + descanso + instrucciones, sin estar atada
+    // al banco de la app. El banco se usa solo para enriquecer con GIF/vídeo
+    // si hay coincidencia de nombre. Esto elimina los "Carrera en el sitio 22 45 min"
+    // y nombres surrealistas que salían cuando la IA forzaba IDs del catálogo.
     const systemPrompt = `Eres COACH OpoFit, preparador físico certificado CSCS (NSCA) con
 formación en ACSM y especialización en preparación de oposiciones físicas
 españolas. Tu output va a USUARIOS REALES que entrenan en su gym/casa hoy.
@@ -557,9 +609,13 @@ Cardio intervalos:  4-8 × 1-4 min @ RPE 8-9, descanso 1:1 a 1:2
   RESTRICCIONES TÉCNICAS DEL OUTPUT
 ═══════════════════════════════════════════════════════════════════
 • Devuelves SOLO JSON válido. Sin markdown, sin texto antes/después.
-• Cada ejercicio referencia el ID del catálogo en \`ctx.catalogo\`.
-  ID inexistente = el sistema cae al fallback por reglas.
-• motivo_ia ≤ 90 caracteres, 1 frase, en español natural.
+• Inventa libremente cada ejercicio con un nombre CLARO Y EJECUTABLE
+  en español ("Sentadilla goblet con mancuerna", "Plancha frontal",
+  "Sprint 30m" — NO "Carrera en el sitio 22 45 min" ni nombres con
+  números colados, NO siglas raras).
+• Cada ejercicio incluye: nombre, series, reps_o_tiempo, unidad,
+  descanso_seg, motivo (1 frase en español), instrucciones (2-3 puntos
+  CORTOS de técnica clave).
 • Si dudas entre 2 ejercicios, elige el MÁS SEGURO para el material
   declarado, NUNCA el que requiera más equipamiento.
 
@@ -607,23 +663,30 @@ SESIÓN A DISEÑAR:
 - Descanso base: ${tpl.descansoBase}s
 - RPE objetivo: ${tpl.rpeObjetivo}/10
 
-CATÁLOGO DISPONIBLE (filtrado por entorno ${meta.etiqueta}):
-${JSON.stringify(catalogo)}
-
-DEVUELVE EXACTAMENTE ESTE JSON:
+DEVUELVE EXACTAMENTE ESTE JSON (sin texto adicional, sin markdown):
 {"ejercicios":[
-  {"id":<int>, "series":<int>, "reps":<int|null>, "descanso":<seg>, "unidad":"reps"|"min"|"km"|"s"|"m", "motivo":"<por qué este ejercicio para este aspirante>"}
+  {
+    "nombre": "<nombre claro en español>",
+    "pilar": "<SQUAT|HINGE|PUSH_H|PUSH_V|PULL_H|PULL_V|LUNGE|PLYO|SPRINT|CARRY|ROT|CORE|LOCO|MOB>",
+    "series": <int 1-8>,
+    "reps_o_tiempo": <int>,
+    "unidad": "reps"|"s"|"min"|"m"|"km",
+    "descanso_seg": <int 0-300>,
+    "motivo": "<1 frase corta de por qué HOY>",
+    "instrucciones": ["<punto técnica 1>", "<punto técnica 2>", "<punto técnica 3>"]
+  }
 ]}
 
 REGLAS DE COMPOSICIÓN:
-1. Genera ${tpl.bloques} ejercicios SIN repetir id.
+1. Genera ${tpl.bloques} ejercicios SIN repetir.
 2. El PRIMERO debe ser un compuesto pesado del pilar ${tpl.pilar}.
 3. Si hay pilares débiles, mete 1-2 accesorios que los ataquen (no más).
 4. Si pilar principal es VELOCIDAD, incluye 1 bloque pliométrico.
 5. Si pilar principal es RESISTENCIA, alterna serie larga + intervalos.
 6. Si pilar principal es FUERZA, secuencia: pesado → moderado → accesorio.
 7. Termina con CORE o MOVILIDAD si quedan bloques.
-8. El "motivo" debe ser UNA frase que explique POR QUÉ este ejercicio para este perfil (ej: "Para reforzar dominadas que están débiles").`;
+8. "motivo" = 1 frase ≤ 90 caracteres explicando POR QUÉ este ejercicio para este perfil.
+9. "instrucciones" = 2-3 puntos cortos de técnica clave (setup, ejecución, error común).`;
 
     try {
       let raw = null;
@@ -667,24 +730,67 @@ REGLAS DE COMPOSICIÓN:
       raw = String(raw).replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
 
       const parsed = JSON.parse(raw);
-      const idMap = new Map((ctx.catalogo || []).map((e) => [e.id_ejercicio, e]));
+      // Índice del banco POR NOMBRE NORMALIZADO para enriquecer con GIF/vídeo
+      // cuando la IA propone un ejercicio que ya existe en nuestro catálogo.
+      // Sin match, el ejercicio se sirve igualmente (libre estilo Freeletics).
+      const normalizar = (s) => String(s || '')
+        .toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9 ]+/g, ' ')
+        .replace(/\s+/g, ' ').trim();
+      const bancoPorNombre = new Map();
+      const bancoPorId = new Map();
+      for (const c of (ctx.catalogo || [])) {
+        const k = normalizar(c.nombre);
+        if (k && !bancoPorNombre.has(k)) bancoPorNombre.set(k, c);
+        if (c.id_ejercicio != null) bancoPorId.set(Number(c.id_ejercicio), c);
+      }
+      // Pilares válidos para no propagar basura del LLM al frontend.
+      const PILARES_OK = new Set([
+        'SQUAT','HINGE','PUSH_H','PUSH_V','PULL_H','PULL_V','LUNGE','PLYO',
+        'SPRINT','CARRY','ROT','CORE','LOCO','MOB','AGI','ANTI_EXT'
+      ]);
       const ejerciciosValidados = (parsed.ejercicios || [])
         .map((e, idx) => {
-          const cat = idMap.get(Number(e.id));
-          if (!cat) return null;
+          // Retrocompat: si la IA devuelve {id, ...} sin nombre, intentamos
+          // resolver el nombre desde el catálogo. Es el formato del prompt v14
+          // y de los tests existentes.
+          let nombre = String(e.nombre || '').trim();
+          let cat = bancoPorNombre.get(normalizar(nombre)) || null;
+          if (!nombre && e.id != null) {
+            const c = bancoPorId.get(Number(e.id));
+            if (c) { nombre = c.nombre; cat = c; }
+          }
+          if (!nombre || nombre.length < 3) return null;
+          if (!cat) cat = bancoPorNombre.get(normalizar(nombre)) || null;
+          const series = Math.min(8, Math.max(1, Math.round(Number(e.series) || 4)));
+          const rawReps = e.reps_o_tiempo != null ? e.reps_o_tiempo : e.reps;
+          const reps = rawReps == null ? null
+            : Math.min(999, Math.max(1, Math.round(Number(rawReps))));
+          const unidad = ['reps','min','km','s','m'].includes(e.unidad) ? e.unidad : 'reps';
+          const descanso = Math.min(300, Math.max(0,
+            Math.round(Number(e.descanso_seg ?? e.descanso) || tpl.descansoBase)));
+          const pilarLlm = String(e.pilar || '').toUpperCase().trim();
+          const pilar = PILARES_OK.has(pilarLlm) ? pilarLlm : (cat?.pilar || tpl.pilar);
+          const instrucciones = Array.isArray(e.instrucciones)
+            ? e.instrucciones.filter((s) => typeof s === 'string').map((s) => s.slice(0, 160)).slice(0, 4)
+            : [];
           return {
-            id_ejercicio: cat.id_ejercicio,
-            nombre: cat.nombre,
-            pilar: cat.pilar,
-            grupo_muscular: cat.grupo_muscular,
-            series: Math.min(8, Math.max(1, Math.round(Number(e.series) || 4))),
-            repeticiones:
-              e.reps == null ? null : Math.min(99, Math.max(1, Math.round(Number(e.reps)))),
-            descanso: Math.min(300, Math.max(0, Math.round(Number(e.descanso) || tpl.descansoBase))),
-            unidad: ['reps', 'min', 'km', 's', 'm'].includes(e.unidad) ? e.unidad : 'reps',
+            // Si el banco lo tiene → id real para enriquecer en frontend (GIF/vídeo).
+            // Si no → null (Freeletics-style libre, sin animación pero con instrucciones).
+            id_ejercicio: cat?.id_ejercicio || null,
+            nombre: cat?.nombre || nombre,
+            pilar,
+            grupo_muscular: cat?.grupo_muscular || null,
+            series,
+            repeticiones: reps,
+            descanso,
+            unidad,
             orden: idx + 1,
-            motivo_ia: typeof e.motivo === 'string' ? e.motivo.slice(0, 120) : null,
-            ia_origen: openaiKey ? 'openai' : 'gemini'
+            motivo_ia: typeof e.motivo === 'string' ? e.motivo.slice(0, 140) : null,
+            instrucciones_ia: instrucciones,
+            ia_origen: llmFuente,
+            generado_libre: !cat
           };
         })
         .filter(Boolean);
