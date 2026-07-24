@@ -244,13 +244,13 @@ fun SwipeableActionCard(
                     Icon(
                         Icons.Filled.CheckCircle,
                         contentDescription = null,
-                        tint = Color.Black,
+                        tint = cs.onPrimary,
                         modifier = Modifier.size(28.dp)
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
                         completeLabel.uppercase(),
-                        color = Color.Black,
+                        color = cs.onPrimary,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.5.sp
                     )

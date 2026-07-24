@@ -361,7 +361,8 @@ fun MainScreen(
                         onNavigateToRutinasLibres = onNavigateToRutinasLibres,
                         onNavigateToEditarPerfil = onNavigateToEditarPerfil,
                         onNavigateToPlanHistorial = onNavigateToPlanHistorial,
-                        onNavigateToLugaresEntreno = onNavigateToLugaresEntreno
+                        onNavigateToLugaresEntreno = onNavigateToLugaresEntreno,
+                        onNavigatePremium = onNavigateToPremium
                     )
                 }
 

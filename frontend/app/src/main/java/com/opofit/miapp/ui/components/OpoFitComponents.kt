@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -379,21 +380,66 @@ fun ErrorState(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+    // Mensaje amigable: si es un fallo de red, no soltamos el stacktrace crudo.
+    val esRed = message.contains("ENOTFOUND", true) ||
+        message.contains("conexión", true) ||
+        message.contains("timeout", true) ||
+        message.contains("Unable", true) ||
+        message.contains("failed to connect", true)
+    val titulo = if (esRed) "Sin conexión" else "Algo ha fallado"
+    val cuerpo = if (esRed) {
+        "No hemos podido conectar con el servidor. Revisa tu internet e inténtalo de nuevo."
+    } else message
+
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = message,
-            color = MaterialTheme.colorScheme.error,
-            textAlign = TextAlign.Center
-        )
-        OutlinedButton(onClick = onRetry) {
-            Icon(Icons.Filled.Refresh, contentDescription = null)
-            Text("Reintentar", modifier = Modifier.padding(start = 8.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(88.dp)
+                    .background(
+                        MaterialTheme.colorScheme.error.copy(alpha = 0.10f),
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.CloudOff,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(42.dp)
+                )
+            }
+            Text(
+                text = titulo,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = cuerpo,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            Button(
+                onClick = onRetry,
+                modifier = Modifier
+                    .fillMaxWidth(0.7f)
+                    .height(52.dp),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(20.dp))
+                Text("Reintentar", modifier = Modifier.padding(start = 8.dp), fontWeight = FontWeight.Bold)
+            }
         }
     }
 }

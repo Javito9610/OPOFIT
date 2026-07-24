@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
-import com.opofit.miapp.ui.theme.AccentOrange
+import com.opofit.miapp.ui.theme.AccentOrangeBright
 
 val SplashNavy = Color(0xFF1B2A4A)
 
@@ -53,7 +53,7 @@ fun OpoFitSplashScreen() {
             OpoFitLogo(size = 120.dp, onDarkBackground = true)
             Spacer(modifier = Modifier.height(28.dp))
             CircularProgressIndicator(
-                color = AccentOrange,
+                color = AccentOrangeBright,
                 strokeWidth = 2.5.dp
             )
             Spacer(modifier = Modifier.height(20.dp))

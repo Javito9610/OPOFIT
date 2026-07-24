@@ -243,8 +243,14 @@ fun GpsRecordingScreen(
         }
 
         Surface(
+            // Antes: alpha=0.97f sobre el mapa → en algunos móviles el panel
+            // quedaba semi-transparente y los `value` heredaban color casi
+            // negro contra fondo negro (queja del usuario). Fondo opaco fijo
+            // (surfaceContainerHigh = bien diferenciado del mapa y con
+            // contraste alto contra onSurface).
             tonalElevation = 6.dp,
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.97f),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            contentColor = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
@@ -382,13 +388,21 @@ fun GpsRecordingScreen(
 
 @Composable
 private fun MetricBlock(label: String, value: String) {
+    // Color explícito en value: antes heredaba LocalContentColor del Surface
+    // y con tema oscuro a veces salía casi negro sobre el panel. Forzamos
+    // onSurface para garantizar contraste WCAG AA.
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             label,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Text(
+            value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
     }
 }
 

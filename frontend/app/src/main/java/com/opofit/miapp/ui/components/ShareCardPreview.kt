@@ -102,7 +102,7 @@ fun ShareCardPreview(
 ) {
     val tipo = stats?.tipo?.uppercase().orEmpty()
     val actividadIcon = EnfoqueIcons.forActividadTipo(tipo)
-    val accent = Color(0xFFFF5722)
+    val accent = Color(0xFF6FA5FF)   // azul de marca (AccentBlueBright)
 
     // Estado hoist: si nos lo pasan desde el editor lo usamos; si no, local.
     val localState = editorState ?: rememberShareEditorState()
@@ -384,7 +384,7 @@ private fun EditorPill(
         Modifier
             .clickable(onClick = onClick)
             .background(
-                if (selected) Color(0xFFFF5722) else Color.Black.copy(alpha = 0.55f),
+                if (selected) Color(0xFF2563EB) else Color.Black.copy(alpha = 0.55f),
                 RoundedCornerShape(10.dp)
             )
             .padding(horizontal = 12.dp, vertical = 6.dp)

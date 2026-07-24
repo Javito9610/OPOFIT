@@ -1081,6 +1081,13 @@ private suspend fun cargarUbicacion(
     context: android.content.Context,
     onResult: (Double, Double) -> Unit
 ): Boolean {
+    val tieneFine = androidx.core.content.ContextCompat.checkSelfPermission(
+        context, android.Manifest.permission.ACCESS_FINE_LOCATION
+    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    val tieneCoarse = androidx.core.content.ContextCompat.checkSelfPermission(
+        context, android.Manifest.permission.ACCESS_COARSE_LOCATION
+    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    if (!tieneFine && !tieneCoarse) return false
     return try {
         val fused = LocationServices.getFusedLocationProviderClient(context)
         val loc = fused.lastLocation.await()

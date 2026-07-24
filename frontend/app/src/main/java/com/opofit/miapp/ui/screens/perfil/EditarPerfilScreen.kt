@@ -120,13 +120,15 @@ fun EditarPerfilScreen(
             }
     }
 
+    // Acepta coma o punto decimal: en dispositivos en español el teclado
+    // numérico y el prefill usan coma, y toDoubleOrNull() con coma da null.
     val imc = remember(peso, altura, unitPeso) {
-        val pRaw = peso.toDoubleOrNull()
-        val a = altura.toDoubleOrNull()
+        val pRaw = peso.replace(',', '.').toDoubleOrNull()
+        val a = altura.replace(',', '.').toDoubleOrNull()
         val pKg = pRaw?.let { if (unitPeso == "lb") Units.lbToKg(it) else it }
         if (pKg != null && a != null && a > 0) {
             val alturaM = a / 100.0
-            "%.2f".format(pKg / alturaM.pow(2))
+            String.format(java.util.Locale.US, "%.2f", pKg / alturaM.pow(2))
         } else "-"
     }
 
@@ -137,13 +139,13 @@ fun EditarPerfilScreen(
     LaunchedEffect(authState.peso, unitPeso) {
         if (peso.isBlank() && authState.peso != null) {
             val shown = if (unitPeso == "lb") Units.kgToLb(authState.peso!!) else authState.peso!!
-            peso = String.format("%.1f", shown)
+            peso = String.format(java.util.Locale.US, "%.1f", shown)
         }
     }
 
     LaunchedEffect(authState.altura) {
         if (altura.isBlank() && authState.altura != null) {
-            altura = String.format("%.0f", authState.altura!!)
+            altura = String.format(java.util.Locale.US, "%.0f", authState.altura!!)
         }
     }
 
@@ -188,9 +190,9 @@ fun EditarPerfilScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.primary
                 )
             )
         }
@@ -477,12 +479,12 @@ fun EditarPerfilScreen(
                 } else {
                     Button(
                         onClick = {
-                            val pRaw = peso.toDoubleOrNull() ?: 0.0
+                            val pRaw = peso.replace(',', '.').toDoubleOrNull() ?: 0.0
                             val p = if (unitPeso == "lb") Units.lbToKg(pRaw) else pRaw
-                            val a = altura.toDoubleOrNull() ?: 0.0
+                            val a = altura.replace(',', '.').toDoubleOrNull() ?: 0.0
                             val nuevasMarcas = marcas.mapNotNull { row ->
                                 val id = row.idPrueba ?: return@mapNotNull null
-                                val v = row.valor.toDoubleOrNull() ?: return@mapNotNull null
+                                val v = row.valor.replace(',', '.').toDoubleOrNull() ?: return@mapNotNull null
                                 MarcaActualizar(id, v)
                             }
                             perfilViewModel.actualizarPerfil(

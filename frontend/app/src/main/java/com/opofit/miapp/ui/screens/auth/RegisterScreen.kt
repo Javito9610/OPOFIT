@@ -138,11 +138,12 @@ fun RegisterScreen(
     }
 
     fun calcularIMC() {
-        val pesoFloat = peso.toFloatOrNull() ?: 0f
-        val alturaFloat = altura.toFloatOrNull() ?: 0f
+        // Acepta coma o punto decimal (los teclados en español escriben coma).
+        val pesoFloat = peso.replace(',', '.').toFloatOrNull() ?: 0f
+        val alturaFloat = altura.replace(',', '.').toFloatOrNull() ?: 0f
         if (pesoFloat > 0 && alturaFloat > 0) {
             val alturaMetros = alturaFloat / 100f
-            imc = String.format("%.2f", pesoFloat / (alturaMetros * alturaMetros))
+            imc = String.format(java.util.Locale.US, "%.2f", pesoFloat / (alturaMetros * alturaMetros))
         }
     }
 
@@ -435,25 +436,33 @@ fun RegisterScreen(
                     Button(
                         onClick = {
                             val token = pendingFirebaseIdToken
+                            // Acepta coma o punto decimal (teclados en español escriben coma).
+                            val pesoNum = peso.replace(',', '.').toDoubleOrNull()
+                            val alturaNum = altura.replace(',', '.').toDoubleOrNull()
                             localError = when {
                                 nombre.isBlank() -> "El nombre es obligatorio"
                                 email.isBlank() -> "El email es obligatorio"
                                 genero.isBlank() -> "Debes seleccionar un género"
-                                peso.isBlank() || peso.toDoubleOrNull() == null -> "Introduce un peso válido (kg)"
-                                altura.isBlank() || altura.toDoubleOrNull() == null -> "Introduce una altura válida (cm)"
+                                pesoNum == null || pesoNum <= 0 -> "Introduce un peso válido (kg)"
+                                alturaNum == null || alturaNum <= 0 -> "Introduce una altura válida (cm)"
                                 !soloFitness && oposicionId == null -> "Selecciona una oposición"
+                                // El registro con Google requiere oposición en el servidor:
+                                // sin este check la app crasheaba (oposicionId!!) en modo fitness.
+                                token != null && oposicionId == null ->
+                                    "El registro con Google requiere seleccionar una oposición. " +
+                                    "Elige una o regístrate con email para el modo solo fitness."
                                 token == null && password.length < 6 -> "La contraseña debe tener al menos 6 caracteres"
                                 token == null && password != confirmPassword -> "Las contraseñas no coinciden"
                                 else -> ""
                             }
-                            if (localError.isEmpty()) {
-                                if (token != null) {
+                            if (localError.isEmpty() && pesoNum != null && alturaNum != null) {
+                                if (token != null && oposicionId != null) {
                                     viewModel.registerWithFirebase(
                                         idToken = token,
                                         nombre = nombre.trim(),
                                         genero = genero,
-                                        peso = peso.toDouble(),
-                                        altura = altura.toDouble(),
+                                        peso = pesoNum,
+                                        altura = alturaNum,
                                         oposicionesId = oposicionId!!
                                     )
                                 } else {
@@ -462,8 +471,8 @@ fun RegisterScreen(
                                         email = email,
                                         password = password,
                                         genero = genero,
-                                        peso = peso.toDouble(),
-                                        altura = altura.toDouble(),
+                                        peso = pesoNum,
+                                        altura = alturaNum,
                                         oposiciones_id = if (soloFitness) null else oposicionId,
                                         modoUso = if (soloFitness) "FITNESS" else "OPOSITOR"
                                     )

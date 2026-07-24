@@ -118,9 +118,9 @@ fun RegistrarEntrenamientoScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.primary
                 )
             )
         }
@@ -295,7 +295,7 @@ fun RegistrarEntrenamientoScreen(
                             val segundos = (mins * 60).coerceAtLeast(60)
                             val realizados = ejercicios.mapNotNull { row ->
                                 val id = row.idEjercicio.toIntOrNull() ?: return@mapNotNull null
-                                val v = row.valor.toDoubleOrNull() ?: 0.0
+                                val v = row.valor.replace(',', '.').toDoubleOrNull() ?: 0.0
                                 EjercicioRealizado(id, v)
                             }
                             val tituloRutina = when (tipoRutinaSeleccionada) {

@@ -661,10 +661,10 @@ fun EntrenamientosScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.primary,
+                    actionIconContentColor = MaterialTheme.colorScheme.primary
                 )
             )
         },
@@ -714,7 +714,7 @@ fun EntrenamientosScreen(
                                     cronometroActivo = false
                                     val realizados = ejerciciosEstado
                                         .filter { it.completado }
-                                        .map { EjercicioRealizado(it.idEjercicio, it.valorConseguido.toDoubleOrNull() ?: 0.0) }
+                                        .map { EjercicioRealizado(it.idEjercicio, it.valorConseguido.replace(',', '.').toDoubleOrNull() ?: 0.0) }
                                     val rutinaOpoId = diaPlanSesion?.id_rutina_opo
                                         ?: initialRutinaOpoId
                                         ?: rutinasSelector.getOrNull(selectedRutinaIndex)?.id_rutina_opo

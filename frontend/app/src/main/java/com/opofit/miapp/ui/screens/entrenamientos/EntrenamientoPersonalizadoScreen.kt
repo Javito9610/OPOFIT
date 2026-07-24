@@ -400,9 +400,9 @@ fun EntrenamientoPersonalizadoScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.primary
                 )
             )
         }
@@ -749,7 +749,7 @@ fun EntrenamientoPersonalizadoScreen(
                                 guardando = true
                                 error = ""
                                 val sinValor = ejerciciosUi.indices
-                                    .filter { i -> ejerciciosUi[i].checked && ejerciciosUi[i].valor.toDoubleOrNull() == null }
+                                    .filter { i -> ejerciciosUi[i].checked && ejerciciosUi[i].valor.replace(',', '.').toDoubleOrNull() == null }
                                     .toSet()
                                 errorEjIndices = sinValor
                                 if (sinValor.isNotEmpty()) {
@@ -760,7 +760,7 @@ fun EntrenamientoPersonalizadoScreen(
                                 val ejercicios = ejerciciosUi
                                     .filter { it.checked }
                                     .mapNotNull {
-                                        val v = it.valor.toDoubleOrNull() ?: return@mapNotNull null
+                                        val v = it.valor.replace(',', '.').toDoubleOrNull() ?: return@mapNotNull null
                                         EjercicioRealizado(id_ejercicio = it.id, valor = v)
                                     }
                                 if (ejercicios.isEmpty()) {

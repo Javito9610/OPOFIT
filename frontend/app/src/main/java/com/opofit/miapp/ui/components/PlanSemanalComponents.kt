@@ -49,6 +49,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.material3.IconButton
 import com.opofit.miapp.data.responsemodels.DiaPlan
 import com.opofit.miapp.data.responsemodels.EjercicioPlan
 import com.opofit.miapp.data.responsemodels.PersonalizacionPlan
@@ -241,6 +245,17 @@ fun PlanSemanaResumenRow(
     }
 }
 
+/**
+ * Plan día — rediseño Material 3 Expressive:
+ *  - Encabezado limpio: día + chip enfoque + estado (HOY / ✓) a la derecha.
+ *  - SUBTÍTULO (titulo) en bodyMedium con 2 líneas máx, no junto al chip.
+ *  - Métricas inline reducidas a "Nº ejercicios" — el resto era ruido.
+ *  - "Otra variante" deja de ser botón cyan gigante y pasa a IconButton
+ *    compacto en la cabecera (acción secundaria, no protagonista).
+ *  - Solo HOY mantiene un CTA grande "Empezar entreno". El resto, secundario.
+ *  - Drag horizontal tipo Tinder con offset visual real (no fade) para que el
+ *    usuario VEA que la card se mueve cuando arrastra.
+ */
 @Composable
 fun PlanDiaCard(
     dia: DiaPlan,
@@ -250,66 +265,104 @@ fun PlanDiaCard(
     onOtraOpcion: (() -> Unit)? = null,
     regenerando: Boolean = false
 ) {
-    var dragTotal by remember(dia.id_plan_dia) { mutableFloatStateOf(0f) }
+    var dragOffset by remember(dia.id_plan_dia) { mutableFloatStateOf(0f) }
+    val animatedOffset by animateFloatAsState(
+        targetValue = dragOffset, label = "card-drag"
+    )
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
+            .alpha(1f - (kotlin.math.abs(animatedOffset) / 400f).coerceIn(0f, 0.4f))
+            .graphicsLayer(translationX = animatedOffset)
             .pointerInput(dia.id_plan_dia, onOtraOpcion, dia.completada) {
                 if (onOtraOpcion != null && !dia.completada) {
                     detectHorizontalDragGestures(
                         onDragEnd = {
-                            if (dragTotal < -100f) onOtraOpcion()
-                            dragTotal = 0f
+                            if (dragOffset < -160f) onOtraOpcion()
+                            dragOffset = 0f
                         },
-                        onHorizontalDrag = { _, amount -> dragTotal += amount }
+                        onHorizontalDrag = { _, amount -> dragOffset += amount }
                     )
                 }
             }
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        dia.nombre_dia,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    AssistChip(
-                        onClick = {},
-                        leadingIcon = {
-                            Icon(
-                                imageVector = EnfoqueIcons.forEnfoque(dia.enfoque),
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        },
-                        label = { Text(enfoqueLabel(dia.enfoque)) }
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            dia.nombre_dia,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        AssistChip(
+                            onClick = {},
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = EnfoqueIcons.forEnfoque(dia.enfoque),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            },
+                            label = {
+                                Text(enfoqueLabel(dia.enfoque), style = MaterialTheme.typography.labelSmall)
+                            }
+                        )
+                    }
                     Text(
                         dia.titulo,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2
+                        maxLines = 2,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
                 }
-                if (dia.completada) {
-                    Icon(
-                        Icons.Filled.CheckCircle,
-                        contentDescription = "Completada",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(28.dp)
-                    )
-                } else if (dia.es_hoy) {
-                    Text(
-                        "HOY",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (dia.completada) {
+                        Icon(
+                            Icons.Filled.CheckCircle,
+                            contentDescription = "Completada",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    } else if (dia.es_hoy) {
+                        Surface(
+                            shape = MaterialTheme.shapes.small,
+                            color = MaterialTheme.colorScheme.primary
+                        ) {
+                            Text(
+                                "HOY",
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
+                    // "Otra variante" → IconButton sutil (acción secundaria),
+                    // no botón gigante cyan que dominaba la card.
+                    if (!dia.completada && onOtraOpcion != null) {
+                        androidx.compose.material3.IconButton(
+                            onClick = onOtraOpcion,
+                            enabled = !regenerando,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            if (regenerando) {
+                                CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                            } else {
+                                Icon(
+                                    Icons.Filled.SwapHoriz,
+                                    contentDescription = "Otra variante",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
             Row(
@@ -317,27 +370,6 @@ fun PlanDiaCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 PlanMetricMini("Ejercicios", "${dia.ejercicios.size}")
-                if (dia.completada) {
-                    PlanMetricMini("Estado", "Hecho ✓")
-                } else if (dia.es_hoy) {
-                    PlanMetricMini("Estado", "Hoy")
-                }
-            }
-            if (!dia.completada && onOtraOpcion != null) {
-                FilledTonalButton(
-                    onClick = onOtraOpcion,
-                    enabled = !regenerando,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    if (regenerando) {
-                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                        Spacer(Modifier.width(8.dp))
-                    } else {
-                        Icon(Icons.Filled.SwapHoriz, null, Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                    }
-                    Text(if (regenerando) "Generando…" else "Otra variante ←")
-                }
             }
             if (dia.es_hoy && !dia.completada) {
                 Button(
@@ -349,7 +381,7 @@ fun PlanDiaCard(
                     Text("Empezar entreno de hoy")
                 }
             } else if (!dia.completada && expanded) {
-                OutlinedButton(
+                FilledTonalButton(
                     onClick = { onEntrenar(dia.enfoque, dia.id_plan_dia, dia.id_rutina_opo) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -367,121 +399,110 @@ fun PlanPersonalizacionCard(
     modifier: Modifier = Modifier
 ) {
     var expandido by remember { mutableStateOf(false) }
-    val textoIa = personalizacion.explicacion_ia ?: personalizacion.resumen
-    ElevatedCard(
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            // Cabecera: título + chip de coaching debajo (no en SpaceBetween).
-            // Antes el chip "Coaching automático" se descuadraba y partía el
-            // texto en dos líneas a la derecha. Ahora título en una línea
-            // limpia y el chip de fuente como subtítulo si toca.
-            Row(verticalAlignment = Alignment.CenterVertically) {
+    val textoIa = sanearTextoIa(personalizacion.explicacion_ia ?: personalizacion.resumen)
+    ElevatedCard(modifier = modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // CABECERA: título + chip NIVEL a la derecha (Material 3 Expressive).
+            // Antes la card amontonaba 3 chips (entorno, nivel, fuente) en flowrow
+            // sin jerarquía clara. Ahora solo el NIVEL en la cabecera; el resto
+            // baja al footer una línea (datos secundarios).
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Icon(
                     Icons.Filled.AutoAwesome,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )
-                Spacer(Modifier.size(8.dp))
                 Text(
                     "Tu plan inteligente",
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f),
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
-            }
-            // FlowRow para que entorno + nivel + fuente se reorganicen y no
-            // se corten en pantallas pequeñas.
-            androidx.compose.foundation.layout.FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                if (!personalizacion.entorno_etiqueta.isNullOrBlank()) {
-                    AssistChip(
-                        onClick = {},
-                        label = {
-                            Text(
-                                "${personalizacion.entorno_emoji ?: ""} ${personalizacion.entorno_etiqueta}",
-                                maxLines = 1
-                            )
-                        }
-                    )
-                }
-                // Nivel del plan (BÁSICO / INTERMEDIO / AVANZADO) — el usuario
-                // pidió saber qué plan tiene. Antes no aparecía en ningún sitio.
                 personalizacion.nivel_usado?.takeIf { it.isNotBlank() }?.let { nivel ->
-                    AssistChip(
-                        onClick = {},
-                        label = {
-                            Text(
-                                "Nivel ${nivelLabel(nivel)}",
-                                maxLines = 1,
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ) {
+                        Text(
+                            nivelLabel(nivel).uppercase(),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
                         )
-                    )
-                }
-                coachingFuenteLabel(personalizacion.coaching_fuente)?.let { label ->
-                    AssistChip(
-                        onClick = {},
-                        label = {
-                            Text(label, maxLines = 1, style = MaterialTheme.typography.labelSmall)
-                        },
-                        enabled = false,
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
-                        )
-                    )
+                    }
                 }
             }
+
+            // CONTENIDO PRINCIPAL: explicación IA — el corazón de la card.
             Text(
                 textoIa,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                // Subido de 2 → 4 líneas colapsado. Antes el texto se cortaba
-                // en "...(nota" justo antes de cerrar el paréntesis y quedaba
-                // ilegible.
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = if (expandido) Int.MAX_VALUE else 4,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
             if (textoIa.length > 200) {
-                TextButton(onClick = { expandido = !expandido }) {
+                TextButton(
+                    onClick = { expandido = !expandido },
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 0.dp)
+                ) {
                     Text(if (expandido) "Ver menos" else "Ver explicación completa")
                 }
             }
-            if (personalizacion.pilares_debiles.isNotEmpty() || personalizacion.pilares_fuertes.isNotEmpty()) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    personalizacion.pilares_debiles.forEach { p ->
-                        AssistChip(
-                            onClick = {},
-                            label = { Text("↑ ${p.etiqueta ?: p.pilar} ${String.format("%.1f", p.notaMedia)}") },
-                            colors = AssistChipDefaults.assistChipColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f)
-                            )
-                        )
-                    }
-                    personalizacion.pilares_fuertes.forEach { p ->
-                        AssistChip(
-                            onClick = {},
-                            label = { Text("✓ ${p.etiqueta ?: p.pilar}") },
-                            colors = AssistChipDefaults.assistChipColors(
-                                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f)
-                            )
-                        )
+
+            // PILARES DÉBILES (solo si hay) — destacar a refuerzo.
+            if (personalizacion.pilares_debiles.isNotEmpty()) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        "Refuerza esta semana",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        personalizacion.pilares_debiles.forEach { p ->
+                            Surface(
+                                shape = MaterialTheme.shapes.small,
+                                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                            ) {
+                                Text(
+                                    "↑ ${p.etiqueta ?: p.pilar}",
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
                     }
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                PlanMetricMini("Adaptados", "${personalizacion.ajustes_aplicados}")
-                personalizacion.sustituciones?.takeIf { it > 0 }?.let {
-                    PlanMetricMini("Sustituidos", "$it", Modifier.weight(1f))
+
+            // FOOTER: 1 sola línea sutil con metadatos (entorno + racha + fuente).
+            // Lo que antes eran 3 chips y una row de PlanMetricMini se compacta
+            // a una sola línea legible.
+            val footerParts = buildList {
+                personalizacion.entorno_etiqueta?.takeIf { it.isNotBlank() }?.let {
+                    add("${personalizacion.entorno_emoji ?: ""} $it".trim())
                 }
-                PlanMetricMini("Racha", "${personalizacion.racha_dias}d", Modifier.weight(1f))
+                if (personalizacion.racha_dias > 0) add("🔥 ${personalizacion.racha_dias} días")
+                coachingFuenteLabel(personalizacion.coaching_fuente)?.let { add(it) }
+            }
+            if (footerParts.isNotEmpty()) {
+                Text(
+                    footerParts.joinToString("  ·  "),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
@@ -626,8 +647,37 @@ private fun nivelLabel(nivel: String): String = when (nivel.uppercase()) {
 }
 
 private fun coachingFuenteLabel(fuente: String?): String? = when (fuente?.lowercase()) {
-    "openai", "gemini" -> "Coaching IA"
+    "groq", "openai", "gemini", "claude" -> "Coaching IA"
     "reglas" -> "Coaching pro"
     "cache" -> null
     else -> null
+}
+
+/**
+ * Limpia JSON crudo si el backend lo devuelve por error. Algunas IAs (Groq /
+ * Llama / Claude) ignoran el system prompt y devuelven {"text":"...","reasoning":"..."}
+ * incluso pidiendo texto plano. Extrae el primer campo de texto humano.
+ */
+private fun sanearTextoIa(raw: String): String {
+    if (raw.isBlank()) return raw
+    var t = raw.trim()
+    if (t.startsWith("```")) {
+        t = t.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+    }
+    if (t.startsWith("{") && t.endsWith("}")) {
+        // Busca "text" / "content" / "coaching" / "message" en el JSON crudo.
+        for (key in listOf("text", "content", "coaching", "message", "output", "response", "texto")) {
+            val regex = Regex(""""$key"\s*:\s*"((?:[^"\\]|\\.)*)"""")
+            val m = regex.find(t)
+            if (m != null) {
+                val extracted = m.groupValues[1]
+                    .replace("\\n", "\n")
+                    .replace("\\\"", "\"")
+                    .trim()
+                if (extracted.length > 10) return extracted
+            }
+        }
+    }
+    if ((t.startsWith("\"") && t.endsWith("\""))) t = t.substring(1, t.length - 1)
+    return t
 }

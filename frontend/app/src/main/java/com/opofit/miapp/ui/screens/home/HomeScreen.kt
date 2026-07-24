@@ -17,6 +17,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.ExitToApp
@@ -33,7 +38,9 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Watch
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
@@ -64,6 +71,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.opofit.miapp.ui.theme.AccentAmber
 import com.opofit.miapp.ui.theme.AccentIndigo
 import com.opofit.miapp.ui.theme.AccentOrange
 import com.opofit.miapp.ui.theme.AccentSlate
@@ -86,6 +94,7 @@ import com.opofit.miapp.ui.components.enfoqueLabel
 import com.opofit.miapp.ui.components.StatCard
 import com.opofit.miapp.ui.components.WeekActivityChart
 import androidx.compose.material3.TextButton
+import com.opofit.miapp.ui.theme.PremiumGold
 import com.opofit.miapp.ui.viewmodels.HomeViewModel
 import com.opofit.miapp.utils.AppEvents
 import com.opofit.miapp.utils.MapaEntrenoNav
@@ -189,9 +198,10 @@ fun HomeScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    scrolledContainerColor = MaterialTheme.colorScheme.primary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface,
+                    actionIconContentColor = MaterialTheme.colorScheme.primary
                 ),
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
@@ -217,7 +227,20 @@ fun HomeScreen(
             when {
                 uiState.loading && resumen == null -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.primary,
+                                strokeWidth = 3.dp
+                            )
+                            Text(
+                                "Preparando tu entrenamiento…",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
                 uiState.error.isNotBlank() && resumen == null -> {
@@ -386,7 +409,7 @@ fun HomeScreen(
                                             if (veryCompact) "días" else "días seguidos"
                                         } else "¡entrena hoy para empezar!",
                                         icon = Icons.Filled.LocalFireDepartment,
-                                        accentColor = AccentOrange,
+                                        accentColor = AccentAmber,
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                 }
@@ -418,10 +441,17 @@ fun HomeScreen(
                                         value = "${resumen?.rachaDias ?: 0}",
                                         supporting = if ((resumen?.rachaDias ?: 0) > 0) "días seguidos" else "¡entrena hoy para empezar!",
                                         icon = Icons.Filled.LocalFireDepartment,
-                                        accentColor = AccentOrange,
+                                        accentColor = AccentAmber,
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
+                            }
+                        }
+
+                        // Upsell Premium: solo si sabemos con certeza que NO es premium.
+                        if (uiState.esPremium == false) {
+                            item {
+                                PremiumUpsellBanner(onClick = onNavigateToPremium)
                             }
                         }
 
@@ -626,28 +656,24 @@ fun HomeScreen(
                         }
 
                         item {
-                            val rows = quickLinks.chunked(2)
-                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                rows.forEach { row ->
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                    ) {
-                                        row.forEach { link ->
-                                            NavCard(
-                                                icon = link.icon,
-                                                title = link.title,
-                                                subtitle = link.subtitle,
-                                                containerColor = link.containerColor,
-                                                contentColor = link.contentColor,
-                                                onClick = link.onClick,
-                                                compact = compact,
-                                                modifier = Modifier.weight(1f)
-                                            )
-                                        }
-                                        if (row.size == 1) {
-                                            Spacer(Modifier.weight(1f))
-                                        }
+                            // Carrusel horizontal (slide en vez de scroll): menos
+                            // altura, gesto natural estilo Nike/Freeletics.
+                            AppearOnce {
+                                LazyRow(
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    items(quickLinks.size) { i ->
+                                        val link = quickLinks[i]
+                                        NavCard(
+                                            icon = link.icon,
+                                            title = link.title,
+                                            subtitle = link.subtitle,
+                                            containerColor = link.containerColor,
+                                            contentColor = link.contentColor,
+                                            onClick = link.onClick,
+                                            compact = compact,
+                                            modifier = Modifier.width(if (compact) 132.dp else 148.dp)
+                                        )
                                     }
                                 }
                             }
@@ -739,6 +765,26 @@ private fun nivelLabel(nivel: String): String = when (nivel.uppercase()) {
     else -> nivel
 }
 
+/**
+ * Envuelve contenido para que "entre" con fade + deslizamiento la primera vez
+ * que aparece. Da esa sensación viva de Nike/Freeletics sin coste de rendimiento.
+ */
+@Composable
+private fun AppearOnce(
+    delayMillis: Int = 0,
+    content: @Composable () -> Unit
+) {
+    var shown by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(delayMillis.toLong())
+        shown = true
+    }
+    AnimatedVisibility(
+        visible = shown,
+        enter = fadeIn(tween(420)) + slideInVertically(tween(420)) { it / 6 }
+    ) { content() }
+}
+
 @Composable
 private fun NavCard(
     icon: ImageVector,
@@ -780,6 +826,62 @@ private fun NavCard(
                 color = contentColor.copy(alpha = 0.85f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+/**
+ * Banner de upsell Premium en Home. Compacto y elegante — borde dorado sutil,
+ * un solo tap al paywall. Solo se muestra si el usuario NO es premium.
+ */
+@Composable
+private fun PremiumUpsellBanner(onClick: () -> Unit) {
+    val cs = MaterialTheme.colorScheme
+    androidx.compose.material3.Surface(
+        shape = MaterialTheme.shapes.large,
+        color = cs.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, PremiumGold.copy(alpha = 0.55f)),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                Modifier
+                    .size(38.dp)
+                    .background(PremiumGold.copy(alpha = 0.16f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Filled.Star,
+                    contentDescription = null,
+                    tint = PremiumGold,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Column(Modifier.weight(1f)) {
+                Text(
+                    "Pásate a Premium",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    "Planes avanzados, IA y baremos completos · 30 días gratis",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = cs.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = cs.onSurfaceVariant
             )
         }
     }

@@ -96,7 +96,7 @@ fun SimulacroScreen(
         errorCampo = ""
         val p = pruebas.getOrNull(paso) ?: return@LaunchedEffect
         if (p.unidad == "s") {
-            val savedMs = valores[p.id_pruebas_oficiales]?.toDoubleOrNull()
+            val savedMs = valores[p.id_pruebas_oficiales]?.replace(',', '.')?.toDoubleOrNull()
                 ?.let { TimeFormatUtil.msFromSeconds(it) } ?: 0L
             simulacroViewModel.setElapsedMs(savedMs)
         } else {
@@ -134,10 +134,10 @@ fun SimulacroScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.primary,
+                    actionIconContentColor = MaterialTheme.colorScheme.primary
                 )
             )
         }
@@ -362,11 +362,13 @@ fun SimulacroScreen(
                                         simulacroViewModel.stopTimer()
                                         if (elapsedMs > 0L) {
                                             val sec = TimeFormatUtil.secondsFromMs(elapsedMs)
-                                            simulacroViewModel.setValor(id, "%.3f".format(sec))
+                                            // Locale.US: con locale español "%.3f" escribe coma
+                                            // y luego toDoubleOrNull() la rechaza (marca perdida).
+                                            simulacroViewModel.setValor(id, String.format(java.util.Locale.US, "%.3f", sec))
                                             sec
                                         } else null
                                     } else {
-                                        valores[id]?.toDoubleOrNull()
+                                        valores[id]?.replace(',', '.')?.toDoubleOrNull()
                                     }
                                     if (v == null || v < 0) {
                                         errorCampo = if (esTiempo) {
@@ -376,7 +378,7 @@ fun SimulacroScreen(
                                         }
                                         return@Button
                                     }
-                                    simulacroViewModel.setValor(id, if (esTiempo) "%.3f".format(v) else v.toString())
+                                    simulacroViewModel.setValor(id, if (esTiempo) String.format(java.util.Locale.US, "%.3f", v) else v.toString())
                                     errorCampo = ""
                                     simulacroViewModel.stopTimer()
                                     simulacroViewModel.resetTimer()
@@ -389,7 +391,7 @@ fun SimulacroScreen(
                                                 val token = tokenManager.getToken().first() ?: ""
                                                 val resultados = pruebas.mapNotNull { p ->
                                                     val valStr = valores[p.id_pruebas_oficiales] ?: return@mapNotNull null
-                                                    val num = valStr.toDoubleOrNull() ?: return@mapNotNull null
+                                                    val num = valStr.replace(',', '.').toDoubleOrNull() ?: return@mapNotNull null
                                                     ResultadoSimulacroItem(p.id_pruebas_oficiales, num)
                                                 }
                                                 val resp = RetrofitClient.simulacroApi.guardar(

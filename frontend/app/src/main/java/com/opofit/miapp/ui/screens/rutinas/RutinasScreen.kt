@@ -93,6 +93,7 @@ fun RutinasScreen(
     onNavigateToEditarPerfil: () -> Unit,
     onNavigateToPlanHistorial: (Int) -> Unit = {},
     onNavigateToLugaresEntreno: (tipo: String) -> Unit = {},
+    onNavigatePremium: () -> Unit = {},
     rutinasViewModel: RutinasViewModel = viewModel()
 ) {
     val authState by authViewModel.uiState.collectAsState()
@@ -181,10 +182,13 @@ fun RutinasScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
+                // Material 3 Expressive: cabecera neutra (surface), título en
+                // onSurface y un toque de color sólo en el icon. Antes era un
+                // bloque enorme lime/amarillo que cegaba sobre fondo oscuro.
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.primary
                 )
             )
         }
@@ -403,8 +407,12 @@ fun RutinasScreen(
                                 }
                                 if (!uiState.msgPremium.isNullOrBlank()) {
                                     item {
+                                        // Momento de máximo deseo: el usuario acaba de toparse
+                                        // con contenido bloqueado → un tap lo lleva al paywall.
                                         ElevatedCard(
-                                            modifier = Modifier.fillMaxWidth()
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable(onClick = onNavigatePremium)
                                         ) {
                                             Row(
                                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
@@ -414,13 +422,19 @@ fun RutinasScreen(
                                                 Icon(
                                                     androidx.compose.material.icons.Icons.Filled.Lock,
                                                     contentDescription = null,
-                                                    tint = MaterialTheme.colorScheme.tertiary
+                                                    tint = com.opofit.miapp.ui.theme.PremiumGold
                                                 )
                                                 Text(
                                                     text = uiState.msgPremium!!,
                                                     style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     modifier = Modifier.weight(1f)
+                                                )
+                                                Text(
+                                                    "Desbloquear",
+                                                    style = MaterialTheme.typography.labelLarge,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = com.opofit.miapp.ui.theme.PremiumGold
                                                 )
                                             }
                                         }
@@ -711,16 +725,28 @@ fun RutinasScreen(
                                     }
                                 }
                                 item {
-                                ScrollableTabRow(
-                                    selectedTabIndex = selectedTab,
-                                        edgePadding = 0.dp
-                                ) {
-                                    enfoqueTabs.forEachIndexed { index, (label, _) ->
-                                        Tab(
-                                            selected = selectedTab == index,
-                                            onClick = { selectedTab = index },
-                                            text = { Text(label) }
-                                        )
+                                // Header contextual + tabs Material 3 Expressive.
+                                // Antes los chips "Fuerza / Resistencia / Velocidad"
+                                // aparecían sueltos sin pista de qué eran. Ahora con
+                                // SectionHeader queda claro: estás filtrando ejercicios
+                                // por enfoque dentro del banco.
+                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    SectionHeader(
+                                        title = "Explorar ejercicios",
+                                        subtitle = "Filtra por tipo para ver propuestas de cada bloque"
+                                    )
+                                    ScrollableTabRow(
+                                        selectedTabIndex = selectedTab,
+                                        edgePadding = 0.dp,
+                                        containerColor = MaterialTheme.colorScheme.surface
+                                    ) {
+                                        enfoqueTabs.forEachIndexed { index, (label, _) ->
+                                            Tab(
+                                                selected = selectedTab == index,
+                                                onClick = { selectedTab = index },
+                                                text = { Text(label) }
+                                            )
+                                        }
                                     }
                                 }
                                 }

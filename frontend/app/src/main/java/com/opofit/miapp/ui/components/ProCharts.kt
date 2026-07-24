@@ -296,7 +296,7 @@ fun LineAreaChart(
             var ty = cy - h - 12.dp.toPx()
             if (ty < geo.top) ty = cy + 14.dp.toPx()
             drawRoundRect(
-                color = Color(0xFF1E1E1E).copy(alpha = 0.92f),
+                color = Color(0xFF1A2130).copy(alpha = 0.92f),
                 topLeft = Offset(tx, ty),
                 size = Size(w.toFloat(), h.toFloat()),
                 cornerRadius = androidx.compose.ui.geometry.CornerRadius(10f, 10f)

@@ -79,8 +79,8 @@ fun FreeleticsHeroCard(
                 .background(
                     Brush.linearGradient(
                         colors = listOf(
-                            Color(0xFF1A1A1A),
-                            Color(0xFF2D1500),
+                            Color(0xFF121722),
+                            Color(0xFF10203D),
                             cs.primary.copy(alpha = 0.85f)
                         )
                     )

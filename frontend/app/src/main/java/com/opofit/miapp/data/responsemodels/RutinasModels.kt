@@ -58,7 +58,14 @@ data class EjercicioPlan(
     val progresion: AlternativaEjercicio? = null,
     // v11-coach-pro: explicación en 5 secciones (Setup/Ejecución/Cues/Errores/Por qué).
     // Nivel Strava/Caliber. Antes era un único `instrucciones_tecnicas` plano.
-    val explicacion: ExplicacionPro? = null
+    val explicacion: ExplicacionPro? = null,
+    // v15-libre: la IA puede ahora generar ejercicios libres (sin id del banco)
+    // estilo Freeletics. motivo_ia = por qué este ejercicio HOY (1 frase).
+    // instrucciones_ia = 2-3 puntos cortos de técnica que inventa la IA.
+    // generado_libre = true cuando no hay match con el banco (sin GIF/vídeo).
+    val motivo_ia: String? = null,
+    val instrucciones_ia: List<String>? = null,
+    val generado_libre: Boolean = false
 )
 
 data class AlternativaEjercicio(

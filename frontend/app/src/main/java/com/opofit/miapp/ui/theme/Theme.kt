@@ -10,26 +10,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-// Dark NEON 2026 — full black + lime + cyan + amber. Inspiración Strava 2025.
+// Dark PRO 2026 — grafito azulado + azul rendimiento + teal + ámbar.
 private val DarkProColorScheme = darkColorScheme(
-    primary             = AccentLime,
-    onPrimary           = Color(0xFF000000),  // negro sobre lime (lime es muy claro)
-    primaryContainer    = AccentLimeContainer,
-    onPrimaryContainer  = AccentLimeSoft,
+    primary             = AccentBlue,
+    onPrimary           = Color(0xFFFFFFFF),
+    primaryContainer    = AccentBlueContainer,
+    onPrimaryContainer  = AccentBlueSoft,
 
     secondary           = AccentCyan,
-    onSecondary         = Color(0xFF000000),
-    secondaryContainer  = Color(0xFF003640),
-    onSecondaryContainer = Color(0xFFA5F3FC),
+    onSecondary         = Color(0xFF04231F),
+    secondaryContainer  = Color(0xFF0B2E2A),
+    onSecondaryContainer = Color(0xFF99F6E4),
 
     tertiary            = AccentAmber,
-    onTertiary          = Color(0xFF000000),
-    tertiaryContainer   = Color(0xFF3D2A00),
-    onTertiaryContainer = Color(0xFFFFE082),
+    onTertiary          = Color(0xFF231300),
+    tertiaryContainer   = Color(0xFF3A2A08),
+    onTertiaryContainer = Color(0xFFFDE68A),
 
     error               = SemanticError,
-    onError             = Color(0xFF0D1117),
-    errorContainer      = Color(0xFF4A0E0A),
+    onError             = Color(0xFFFFFFFF),
+    errorContainer      = Color(0xFF4A100C),
     onErrorContainer    = Color(0xFFFFB4AC),
 
     background          = BgPrimary,
@@ -41,11 +41,11 @@ private val DarkProColorScheme = darkColorScheme(
     onSurfaceVariant    = TextSecondary,
 
     outline             = BorderSubtle,
-    outlineVariant      = Color(0xFF21262D),
+    outlineVariant      = BorderDefault,
 
-    inverseSurface      = Color(0xFFF0F6FC),
+    inverseSurface      = Color(0xFFF1F5F9),
     inverseOnSurface    = BgPrimary,
-    inversePrimary      = AccentOrangeDim,
+    inversePrimary      = AccentBlueDim,
 
     scrim               = Color(0xCC000000)
 )
@@ -54,16 +54,16 @@ private val DarkProColorScheme = darkColorScheme(
 private val LightColorScheme = lightColorScheme(
     primary             = PrimaryLight,
     onPrimary           = OnPrimaryLight,
-    primaryContainer    = Color(0xFFD3E0F5),
-    onPrimaryContainer  = Color(0xFF0A1428),
+    primaryContainer    = Color(0xFFDBE8FF),
+    onPrimaryContainer  = Color(0xFF0B2A6B),
     secondary           = SecondaryLight,
     onSecondary         = OnSecondaryLight,
-    secondaryContainer  = Color(0xFFDBE8FF),
-    onSecondaryContainer = Color(0xFF0B2A6B),
-    tertiary            = AccentOrange,
-    onTertiary          = Color(0xFFFFFFFF),
-    tertiaryContainer   = AccentOrangeContainer,
-    onTertiaryContainer = AccentOrangeDim,
+    secondaryContainer  = Color(0xFFCCFBF1),
+    onSecondaryContainer = Color(0xFF134E48),
+    tertiary            = AccentAmber,
+    onTertiary          = Color(0xFF231300),
+    tertiaryContainer   = Color(0xFFFEF3C7),
+    onTertiaryContainer = Color(0xFF78350F),
     error               = ErrorLight,
     onError             = Color(0xFFFFFFFF),
     errorContainer      = Color(0xFFFEE2E2),

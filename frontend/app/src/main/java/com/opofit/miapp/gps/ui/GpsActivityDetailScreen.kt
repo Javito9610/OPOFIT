@@ -270,8 +270,10 @@ private fun RouteMap(activity: ActivitySummary) {
                                 width = 12f
                             )
                         }
-                        Marker(state = MarkerState(pts.first()), title = "Inicio")
-                        Marker(state = MarkerState(pts.last()), title = "Fin")
+                        val inicioState = remember(pts) { MarkerState(pts.first()) }
+                        val finState = remember(pts) { MarkerState(pts.last()) }
+                        Marker(state = inicioState, title = "Inicio")
+                        Marker(state = finState, title = "Fin")
                     }
                 }
                 if (pts.isEmpty()) {

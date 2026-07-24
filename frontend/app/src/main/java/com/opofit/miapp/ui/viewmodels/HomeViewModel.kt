@@ -25,7 +25,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val error: String = "",
         val resumen: DashboardResumen? = null,
         val feedAmigos: List<FeedActividadItem> = emptyList(),
-        val noticiasRss: List<NoticiaRss> = emptyList()
+        val noticiasRss: List<NoticiaRss> = emptyList(),
+        // null = aún no se sabe (no mostrar upsell hasta confirmar que NO es premium)
+        val esPremium: Boolean? = null
     )
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -45,6 +47,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 if (resp.ok && resp.data != null) {
                     var feed = emptyList<FeedActividadItem>()
                     var noticias = emptyList<NoticiaRss>()
+                    var premium: Boolean? = null
+                    try {
+                        val pr = RetrofitClient.premiumApi.estado("Bearer $token")
+                        if (pr.ok && pr.data != null) premium = pr.data.esPremium
+                    } catch (e: Exception) {
+                        // Estado premium es opcional: sin él simplemente no se
+                        // muestra el banner de upsell (esPremium queda en null).
+                        com.opofit.miapp.utils.SafeLog.w("HomeViewModel", "cargar estado premium", e)
+                    }
                     try {
                         val fr = RetrofitClient.amigosApi.feed("Bearer $token")
                         if (fr.ok) feed = fr.data.orEmpty().take(5)
@@ -99,7 +110,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         com.opofit.miapp.utils.SafeLog.w("HomeViewModel", "cargar RSS noticias", e)
                     }
                     _uiState.update {
-                        it.copy(loading = false, resumen = resp.data, feedAmigos = feed, noticiasRss = noticias)
+                        it.copy(loading = false, resumen = resp.data, feedAmigos = feed, noticiasRss = noticias, esPremium = premium)
                     }
                 } else {
                     _uiState.update {

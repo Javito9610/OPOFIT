@@ -21,7 +21,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "BASE_URL", "\"https://opofit-production.up.railway.app/\"")
+        buildConfigField("String", "BASE_URL", "\"https://opofit.onrender.com/\"")
 
         val localProps = Properties()
         val localPropsFile = rootProject.file("local.properties")
