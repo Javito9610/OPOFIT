@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.PlayArrow
@@ -31,8 +32,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -392,13 +396,14 @@ fun PlanDiaCard(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun PlanPersonalizacionCard(
     personalizacion: PersonalizacionPlan,
     modifier: Modifier = Modifier
 ) {
-    var expandido by remember { mutableStateOf(false) }
+    var mostrarSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val textoIa = sanearTextoIa(personalizacion.explicacion_ia ?: personalizacion.resumen)
     ElevatedCard(modifier = modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -440,21 +445,21 @@ fun PlanPersonalizacionCard(
                 }
             }
 
-            // CONTENIDO PRINCIPAL: explicación IA — el corazón de la card.
+            // TEASER: 2 líneas. El texto completo se abre en un bottom-sheet
+            // para no cargar la tarjeta (antes ocupaba 4+ líneas + expandible).
             Text(
                 textoIa,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = if (expandido) Int.MAX_VALUE else 4,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
-            if (textoIa.length > 200) {
-                TextButton(
-                    onClick = { expandido = !expandido },
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 0.dp)
-                ) {
-                    Text(if (expandido) "Ver menos" else "Ver explicación completa")
-                }
+            TextButton(
+                onClick = { mostrarSheet = true },
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 0.dp)
+            ) {
+                Icon(Icons.Filled.AutoStories, null, modifier = Modifier.size(18.dp))
+                Text("  Ver explicación", fontWeight = FontWeight.SemiBold)
             }
 
             // PILARES DÉBILES (solo si hay) — destacar a refuerzo.
@@ -503,6 +508,62 @@ fun PlanPersonalizacionCard(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+        }
+    }
+
+    // BOTTOM-SHEET con la explicación completa (pop-up emergente limpio).
+    if (mostrarSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { mostrarSheet = false },
+            sheetState = sheetState
+        ) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Icon(Icons.Filled.AutoAwesome, null, tint = MaterialTheme.colorScheme.primary)
+                    Text(
+                        "Tu plan inteligente",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Text(
+                    textoIa,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (personalizacion.pilares_debiles.isNotEmpty()) {
+                    Text(
+                        "Refuerza esta semana",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        personalizacion.pilares_debiles.forEach { p ->
+                            Surface(
+                                shape = MaterialTheme.shapes.small,
+                                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                            ) {
+                                Text(
+                                    "↑ ${p.etiqueta ?: p.pilar}",
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }

@@ -420,13 +420,28 @@ fun Sparkline(
     }
 }
 
+private data class HeatmapSel(
+    val key: String,
+    val label: String,
+    val count: Int
+)
+
+/**
+ * Heatmap de actividad estilo GitHub — LIMPIO e INTERACTIVO.
+ *
+ * v4: sin etiquetas de mes/día (antes duplicaban "May" por un bug de solape y
+ * ensuciaban la rejilla). Ahora cada cuadrito es pulsable: al tocarlo aparece
+ * un bocadillo con la fecha y las sesiones de ese día, y se resalta la celda.
+ * [onDayClick] permite reaccionar al tap (p. ej. abrir el detalle de esa fecha).
+ */
 @Composable
 fun CalendarHeatmap(
     countsByDate: Map<String, Int>,
     weeks: Int = 16,
     modifier: Modifier = Modifier,
     activeColor: Color = MaterialTheme.colorScheme.primary,
-    emptyColor: Color = MaterialTheme.colorScheme.outline.copy(alpha = 0.22f)
+    emptyColor: Color = MaterialTheme.colorScheme.outline.copy(alpha = 0.22f),
+    onDayClick: ((String, Int) -> Unit)? = null
 ) {
     val today = remember {
         val cal = java.util.Calendar.getInstance()
@@ -437,103 +452,98 @@ fun CalendarHeatmap(
         cal.time
     }
     val df = remember { java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US) }
-    val mesFmt = remember { java.text.SimpleDateFormat("MMM", java.util.Locale.forLanguageTag("es-ES")) }
+    val humanFmt = remember { java.text.SimpleDateFormat("d 'de' MMMM", java.util.Locale.forLanguageTag("es-ES")) }
     val maxCount = (countsByDate.values.maxOrNull() ?: 0).coerceAtLeast(1)
-    val onSurface = MaterialTheme.colorScheme.onSurfaceVariant
-    val textMeasurer = androidx.compose.ui.text.rememberTextMeasurer()
+    val totalDays = weeks * 7
+    val startTime = remember(weeks, today) {
+        java.util.Calendar.getInstance().apply {
+            time = today
+            add(java.util.Calendar.DAY_OF_YEAR, -(totalDays - 1))
+        }.time
+    }
 
-    // v3: tipografía + paddings ESCALAN según vista.
-    //   - Año (52w): celdas muy estrechas → ocultamos etiquetas L/X/V para no
-    //     comerle ancho a la rejilla, y los meses van en fuente pequeña con
-    //     control de solape (cada etiqueta mide su ancho antes de pintar).
-    //   - Mes / Semana: vista cómoda, mostramos L/X/V y meses normales.
-    val esAnual = weeks >= 40
-    val fontSp = if (esAnual) 8.sp else 10.sp
-    val textStyle = androidx.compose.ui.text.TextStyle(color = onSurface, fontSize = fontSp)
-    val diasSemana = if (esAnual) emptyList() else listOf("L", "X", "V")
+    var selected by remember { mutableStateOf<HeatmapSel?>(null) }
 
-    Canvas(modifier = modifier) {
-        val totalDays = weeks * 7
-        val padTop = if (esAnual) 22f else 28f
-        val padLeft = if (esAnual) 2f else 22f
-        val gridW = size.width - padLeft
-        val gridH = size.height - padTop
-        val cell = (gridW / weeks).coerceAtMost(gridH / 7f)
-        val gap = cell * 0.16f
-
-        val cal = java.util.Calendar.getInstance()
-        cal.time = today
-        cal.add(java.util.Calendar.DAY_OF_YEAR, -(totalDays - 1))
-
-        // Primer paso: dibujar todas las celdas.
-        val mesesPorColumna = IntArray(weeks) { -1 }
-        for (i in 0 until totalDays) {
-            val dow = (cal.get(java.util.Calendar.DAY_OF_WEEK) + 5) % 7
-            val week = i / 7
-            val key = df.format(cal.time)
-            val count = countsByDate[key] ?: 0
-            val intensity = (count.toFloat() / maxCount).coerceIn(0f, 1f)
-            val color = if (count == 0) emptyColor
-            else lerp(emptyColor, activeColor, 0.35f + 0.65f * intensity)
-            val x = padLeft + week * cell + gap / 2f
-            val y = padTop + dow * cell + gap / 2f
-            drawRoundRect(
-                color = color,
-                topLeft = Offset(x, y),
-                size = Size(cell - gap, cell - gap),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(cell * 0.18f, cell * 0.18f)
-            )
-            // Registramos el mes en cuanto aparece su primer día (dow=0 o i=0).
-            val mesActual = cal.get(java.util.Calendar.MONTH)
-            if ((dow == 0 || i == 0) && mesesPorColumna[week] == -1) {
-                mesesPorColumna[week] = mesActual
+    Box(modifier) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(weeks, countsByDate) {
+                    detectTapGestures { off ->
+                        val pad = 3f
+                        val cell = ((size.width - pad) / weeks)
+                            .coerceAtMost((size.height - pad) / 7f)
+                        val week = (((off.x - pad) / cell)).toInt()
+                        val dow = (((off.y - pad) / cell)).toInt()
+                        if (week in 0 until weeks && dow in 0..6) {
+                            val idx = week * 7 + dow
+                            val c = java.util.Calendar.getInstance().apply {
+                                time = startTime
+                                add(java.util.Calendar.DAY_OF_YEAR, idx)
+                            }
+                            if (idx in 0 until totalDays && !c.time.after(today)) {
+                                val key = df.format(c.time)
+                                val count = countsByDate[key] ?: 0
+                                selected = HeatmapSel(key, humanFmt.format(c.time), count)
+                                onDayClick?.invoke(key, count)
+                                return@detectTapGestures
+                            }
+                        }
+                        selected = null
+                    }
+                }
+        ) {
+            val pad = 3f
+            val cell = ((size.width - pad) / weeks).coerceAtMost((size.height - pad) / 7f)
+            val gap = cell * 0.16f
+            val cal = java.util.Calendar.getInstance().apply { time = startTime }
+            for (i in 0 until totalDays) {
+                val dow = (cal.get(java.util.Calendar.DAY_OF_WEEK) + 5) % 7
+                val week = i / 7
+                val key = df.format(cal.time)
+                val count = countsByDate[key] ?: 0
+                val intensity = (count.toFloat() / maxCount).coerceIn(0f, 1f)
+                val color = if (count == 0) emptyColor
+                else lerp(emptyColor, activeColor, 0.35f + 0.65f * intensity)
+                val x = pad + week * cell + gap / 2f
+                val y = pad + dow * cell + gap / 2f
+                drawRoundRect(
+                    color = color,
+                    topLeft = Offset(x, y),
+                    size = Size(cell - gap, cell - gap),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(cell * 0.22f, cell * 0.22f)
+                )
+                if (selected?.key == key) {
+                    drawRoundRect(
+                        color = activeColor,
+                        topLeft = Offset(x, y),
+                        size = Size(cell - gap, cell - gap),
+                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cell * 0.22f, cell * 0.22f),
+                        style = Stroke(width = (cell * 0.12f).coerceAtLeast(2f))
+                    )
+                }
+                cal.add(java.util.Calendar.DAY_OF_YEAR, 1)
             }
-            cal.add(java.util.Calendar.DAY_OF_YEAR, 1)
         }
 
-        // Segundo paso: pintar etiquetas de mes SOLO si caben sin solapar con
-        // la siguiente. Recorremos columnas, medimos cada etiqueta y la
-        // posicionamos solo si su `x + width` no invade la próxima etiqueta.
-        var mesAnterior = -1
-        var ultimaXFin = -1e9f
-        // Para vista anual: una etiqueta mensual nueva tiene que estar al menos
-        // a `cell * 2.2` de distancia de la anterior para que se lea.
-        val minSeparacion = if (esAnual) cell * 2.2f else 0f
-        for (week in 0 until weeks) {
-            val mes = mesesPorColumna[week]
-            if (mes == -1 || mes == mesAnterior) continue
-            val xCol = padLeft + week * cell + 1f
-            if (xCol < ultimaXFin + minSeparacion) continue  // solaparía → skip
-            // Construir nombre con calendario local del primer día de ese mes
-            // en la columna.
-            val cTmp = java.util.Calendar.getInstance().apply {
-                time = today
-                add(java.util.Calendar.DAY_OF_YEAR, -(totalDays - 1 - week * 7))
+        selected?.let { sel ->
+            val texto = if (sel.count > 0)
+                "${sel.label} · ${sel.count} ${if (sel.count == 1) "sesión" else "sesiones"}"
+            else "${sel.label} · sin actividad"
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = MaterialTheme.colorScheme.inverseSurface,
+                shadowElevation = 6.dp,
+                modifier = Modifier.align(Alignment.TopCenter)
+            ) {
+                Text(
+                    texto,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.inverseOnSurface,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                )
             }
-            val texto = mesFmt.format(cTmp.time).take(3)
-                .replaceFirstChar { c -> c.uppercase() }
-            val medido = textMeasurer.measure(texto, textStyle)
-            val anchoTexto = medido.size.width.toFloat()
-            if (xCol + anchoTexto > size.width) continue  // saldría del Canvas
-            drawText(
-                textMeasurer = textMeasurer,
-                text = texto,
-                style = textStyle,
-                topLeft = Offset(xCol, 2f)
-            )
-            ultimaXFin = xCol + anchoTexto
-            mesAnterior = mes
-        }
-
-        // Etiquetas L/X/V (solo si no es vista anual).
-        diasSemana.forEachIndexed { idx, etiqueta ->
-            val rowIdx = idx * 2
-            drawText(
-                textMeasurer = textMeasurer,
-                text = etiqueta,
-                style = textStyle,
-                topLeft = Offset(2f, padTop + rowIdx * cell + cell * 0.20f)
-            )
         }
     }
 }
