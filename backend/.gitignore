@@ -2,4 +2,5 @@ node_modules/
 .idea/
 .env
 .env.render
+.env.backup
 *.log
