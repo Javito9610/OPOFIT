@@ -9,12 +9,19 @@ function getTransport() {
   const pass = process.env.GMAIL_APP_PASSWORD;
   if (!user || !pass) return null;
   return nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
       user,
       // La app password de Google se muestra con espacios; los quitamos.
       pass: String(pass).replace(/\s+/g, '')
-    }
+    },
+    // Timeouts: si Render bloquea/ralentiza el SMTP, fallamos rápido en vez
+    // de dejar la petición colgada 2 minutos.
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000
   });
 }
 

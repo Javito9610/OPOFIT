@@ -26,7 +26,11 @@ class AuthService {
       'UPDATE usuarios SET reset_code_hash = ?, reset_code_expires = ? WHERE id_usuario = ?',
       [hash, expira, rows[0].id_usuario]
     );
-    await EmailService.enviarCodigoRecuperacion(normalizedEmail, codigo);
+    // Fire-and-forget: el código ya está guardado; el email se manda en 2º plano
+    // para que la respuesta HTTP sea inmediata (no colgar la petición si el SMTP
+    // de Render va lento o bloqueado).
+    EmailService.enviarCodigoRecuperacion(normalizedEmail, codigo)
+      .catch((e) => console.error('[email] envío async falló:', e.message));
     return { ok: true };
   }
 
