@@ -12,4 +12,6 @@ router.post('/google_firebase', authController.loginConFirebase);
 router.post('/google_firebase/registrar', authController.registrarConFirebase);
 router.get('/me', validarToken, authController.me);
 router.post('/cambiar-password', validarToken, authController.cambiarPassword);
+router.post('/recuperar-password', authController.recuperarPassword);
+router.post('/reset-password', authController.resetPassword);
 module.exports = router;

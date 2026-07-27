@@ -4,7 +4,56 @@ const crypto = require('crypto');
 const {
   OAuth2Client
 } = require('google-auth-library');
+const EmailService = require('./EmailService');
 class AuthService {
+
+  /**
+   * Genera un código de 6 dígitos, lo guarda hasheado con caducidad (15 min)
+   * y lo envía por email. Nunca revela si el email existe (seguridad).
+   */
+  static async solicitarResetPassword(email) {
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    if (!normalizedEmail) return { ok: true };
+    const [rows] = await db.query(
+      'SELECT id_usuario FROM usuarios WHERE LOWER(TRIM(email)) = LOWER(TRIM(?))',
+      [normalizedEmail]
+    );
+    if (!rows?.length) return { ok: true };
+    const codigo = String(crypto.randomInt(100000, 1000000)); // 6 dígitos
+    const hash = await bcrypt.hash(codigo, 10);
+    const expira = new Date(Date.now() + 15 * 60 * 1000);
+    await db.query(
+      'UPDATE usuarios SET reset_code_hash = ?, reset_code_expires = ? WHERE id_usuario = ?',
+      [hash, expira, rows[0].id_usuario]
+    );
+    await EmailService.enviarCodigoRecuperacion(normalizedEmail, codigo);
+    return { ok: true };
+  }
+
+  /**
+   * Valida el código (hash + caducidad) y, si es correcto, cambia la contraseña.
+   */
+  static async resetPassword(email, codigo, nuevaPass) {
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const nueva = String(nuevaPass || '');
+    if (nueva.length < 6) throw new Error('PASSWORD_CORTA');
+    const [rows] = await db.query(
+      'SELECT id_usuario, reset_code_hash, reset_code_expires FROM usuarios WHERE LOWER(TRIM(email)) = LOWER(TRIM(?))',
+      [normalizedEmail]
+    );
+    if (!rows?.length) throw new Error('CODIGO_INVALIDO');
+    const u = rows[0];
+    if (!u.reset_code_hash || !u.reset_code_expires) throw new Error('CODIGO_INVALIDO');
+    if (new Date(u.reset_code_expires).getTime() < Date.now()) throw new Error('CODIGO_EXPIRADO');
+    const ok = await bcrypt.compare(String(codigo || ''), u.reset_code_hash);
+    if (!ok) throw new Error('CODIGO_INVALIDO');
+    const hashed = await bcrypt.hash(nueva, 10);
+    await db.query(
+      'UPDATE usuarios SET password = ?, reset_code_hash = NULL, reset_code_expires = NULL WHERE id_usuario = ?',
+      [hashed, u.id_usuario]
+    );
+    return { ok: true };
+  }
   static async cambiarPassword(userId, actual, nueva) {
     const nuevaLimpia = String(nueva || '');
     if (nuevaLimpia.length < 6) throw new Error('PASSWORD_CORTA');

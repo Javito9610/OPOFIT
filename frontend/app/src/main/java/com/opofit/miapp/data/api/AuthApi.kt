@@ -9,6 +9,8 @@ import com.opofit.miapp.data.responsemodels.AuthResponse
 import com.opofit.miapp.data.responsemodels.CambiarPasswordRequest
 import com.opofit.miapp.data.responsemodels.MeResponse
 import com.opofit.miapp.data.responsemodels.OkAuthResponse
+import com.opofit.miapp.data.responsemodels.RecuperarPasswordRequest
+import com.opofit.miapp.data.responsemodels.ResetPasswordRequest
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Body
@@ -42,4 +44,10 @@ interface AuthApi {
         @Header("Authorization") token: String,
         @Body body: CambiarPasswordRequest
     ): OkAuthResponse
+
+    @POST("/api/auth/recuperar-password")
+    suspend fun recuperarPassword(@Body body: RecuperarPasswordRequest): OkAuthResponse
+
+    @POST("/api/auth/reset-password")
+    suspend fun resetPassword(@Body body: ResetPasswordRequest): OkAuthResponse
 }

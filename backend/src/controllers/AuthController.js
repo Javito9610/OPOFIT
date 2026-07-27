@@ -335,6 +335,39 @@ const cambiarPassword = async (req, res) => {
   }
 };
 
+const recuperarPassword = async (req, res) => {
+  try {
+    const { email } = req.body || {};
+    if (!email) return res.status(400).json({ ok: false, msg: 'Introduce tu email' });
+    await AuthService.solicitarResetPassword(email);
+  } catch (error) {
+    console.error('recuperarPassword:', error.message);
+  }
+  // Siempre respondemos igual para no revelar si el email existe.
+  return res.json({
+    ok: true,
+    msg: 'Si el email está registrado, recibirás un código en unos minutos.'
+  });
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { email, codigo, passwordNueva } = req.body || {};
+    if (!email || !codigo || !passwordNueva) {
+      return res.status(400).json({ ok: false, msg: 'Faltan datos (email, código o contraseña)' });
+    }
+    await AuthService.resetPassword(email, codigo, passwordNueva);
+    return res.json({ ok: true, msg: 'Contraseña actualizada. Ya puedes iniciar sesión.' });
+  } catch (error) {
+    const map = {
+      PASSWORD_CORTA: 'La contraseña debe tener al menos 6 caracteres',
+      CODIGO_INVALIDO: 'El código no es válido',
+      CODIGO_EXPIRADO: 'El código ha caducado. Solicita uno nuevo.'
+    };
+    return res.status(400).json({ ok: false, msg: map[error.message] || 'No se pudo restablecer la contraseña' });
+  }
+};
+
 module.exports = {
   registrar,
   login,
@@ -343,5 +376,7 @@ module.exports = {
   loginConFirebase,
   registrarConFirebase,
   me,
-  cambiarPassword
+  cambiarPassword,
+  recuperarPassword,
+  resetPassword
 };

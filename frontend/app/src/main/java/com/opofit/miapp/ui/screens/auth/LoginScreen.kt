@@ -40,6 +40,7 @@ import kotlinx.coroutines.tasks.await
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onNavigateToRegister: () -> Unit,
+    onNavigateToForgot: () -> Unit = {},
     viewModel: AuthViewModel = viewModel()
 ) {
     var email by remember { mutableStateOf("") }
@@ -242,7 +243,13 @@ fun LoginScreen(
                         }
                     }
 
-                    
+                    TextButton(
+                        onClick = onNavigateToForgot,
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text("¿Has olvidado la contraseña?", style = MaterialTheme.typography.bodySmall)
+                    }
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,

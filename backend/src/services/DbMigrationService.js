@@ -542,6 +542,9 @@ class DbMigrationService {
       await DbMigrationService.addColumnIfMissing('gps_actividades', 'mejores_segmentos_json', 'TEXT NULL');
 
       await DbMigrationService.addColumnIfMissing('usuarios', 'avatar_url', 'VARCHAR(512) NULL');
+      // Recuperación de contraseña por código (email).
+      await DbMigrationService.addColumnIfMissing('usuarios', 'reset_code_hash', 'VARCHAR(255) NULL');
+      await DbMigrationService.addColumnIfMissing('usuarios', 'reset_code_expires', 'DATETIME NULL');
       if (!(await DbMigrationService.columnExists('usuarios', 'modo_uso'))) {
         await db.query(
           `ALTER TABLE usuarios ADD COLUMN modo_uso ENUM('OPOSITOR','FITNESS') NOT NULL DEFAULT 'OPOSITOR'`

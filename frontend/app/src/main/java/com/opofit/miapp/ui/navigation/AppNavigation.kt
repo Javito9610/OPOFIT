@@ -61,7 +61,17 @@ fun AppNavigation(
                 onNavigateToRegister = {
                     navController.navigate(NavDestinations.REGISTRO)
                 },
+                onNavigateToForgot = {
+                    navController.navigate(NavDestinations.RECUPERAR_PASSWORD)
+                },
                 viewModel = authViewModel
+            )
+        }
+
+        composable(NavDestinations.RECUPERAR_PASSWORD) {
+            com.opofit.miapp.ui.screens.auth.ForgotPasswordScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onPasswordReset = { navController.popBackStack() }
             )
         }
 

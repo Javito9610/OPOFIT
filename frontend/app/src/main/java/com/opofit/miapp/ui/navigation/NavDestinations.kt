@@ -3,6 +3,7 @@ package com.opofit.miapp.ui.navigation
 object NavDestinations {
     const val LOGIN = "login"
     const val REGISTRO = "registro"
+    const val RECUPERAR_PASSWORD = "recuperar_password"
 
     const val MAIN = "main"
     const val HOME = "home"
