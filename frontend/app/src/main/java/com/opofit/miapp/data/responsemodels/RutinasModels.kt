@@ -168,7 +168,9 @@ data class DiaPlan(
     // v10-pro: warmup RAMP + cooldown auto, balance de patrones.
     val calentamiento: List<BloqueCalentamiento> = emptyList(),
     val vuelta_a_calma: List<BloqueCalentamiento> = emptyList(),
-    val balance_warnings: List<String> = emptyList()
+    // Nullable a propósito: el backend puede mandar null explícito y Gson lo
+    // mete tal cual (ignora el default de Kotlin) → crasheaba con firstOrNull.
+    val balance_warnings: List<String>? = null
 )
 
 data class DiaCalendario(

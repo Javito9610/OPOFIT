@@ -503,12 +503,15 @@ fun RutinasScreen(
                                                 // grande, chips (ejercicios, min, fase) y
                                                 // CTA naranja gigante "EMPEZAR AHORA".
                                                 val chips = buildList {
-                                                    add("${hoy.ejercicios.size} ejercicios")
-                                                    val totalMin = hoy.ejercicios.sumOf {
+                                                    // Defensivo: el backend puede mandar estas listas como
+                                                    // null (Gson las deja null pese al default) → guardas.
+                                                    val ejs = hoy.ejercicios ?: emptyList()
+                                                    add("${ejs.size} ejercicios")
+                                                    val totalMin = ejs.sumOf {
                                                         ((it.series * (60 + it.descanso)) / 60)
                                                     }
                                                     if (totalMin > 0) add("${totalMin} min")
-                                                    hoy.balance_warnings.firstOrNull()?.let { add(it) }
+                                                    hoy.balance_warnings?.firstOrNull()?.let { add(it) }
                                                 }
                                                 com.opofit.miapp.ui.components.FreeleticsHeroCard(
                                                     label = "Entrenamiento de hoy",
