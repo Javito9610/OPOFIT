@@ -86,14 +86,20 @@ class GpsTrackingService : Service() {
     }
 
     private fun startSession(type: ActivityType) {
+        // Contrato Android 12+: tras startForegroundService() estamos OBLIGADOS a
+        // llamar a startForeground() en pocos segundos, aunque luego cancelemos.
+        // Si salimos antes (p. ej. sin permiso) sin haberlo llamado, el sistema
+        // lanza ForegroundServiceDidNotStartInTimeException y la app crashea.
+        // Por eso lo hacemos SIEMPRE lo primero.
+        startInForeground()
         if (!hasLocationPermission()) {
             GpsTracker.setError("Permiso de ubicación denegado")
+            stopForegroundCompat()
             stopSelf()
             return
         }
         val weight = WeightPreferences.get(this)
         GpsTracker.begin(type, weight)
-        startInForeground()
         startLocationUpdates()
         startStepSensor(type)
         startTimer()
@@ -138,14 +144,21 @@ class GpsTrackingService : Service() {
 
     private fun startInForeground() {
         val notif = buildNotification()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                NOTIF_ID,
-                notif,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
-            )
-        } else {
-            startForeground(NOTIF_ID, notif)
+        // Blindado: en Android 12+ startForeground puede lanzar
+        // ForegroundServiceStartNotAllowedException / SecurityException. Nunca
+        // debe tumbar la app: si falla, lo registramos y seguimos best-effort.
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(
+                    NOTIF_ID,
+                    notif,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+                )
+            } else {
+                startForeground(NOTIF_ID, notif)
+            }
+        } catch (e: Exception) {
+            com.opofit.miapp.utils.SafeLog.w("GpsTrackingService", "startForeground falló", e)
         }
     }
 
@@ -229,7 +242,11 @@ class GpsTrackingService : Service() {
         }
         val stop = actionIntent(ACTION_STOP, "Finalizar")
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            // Icono monocromo dedicado (mismo que el cronómetro): los iconos de
+            // notificación deben ser una silueta blanca sobre transparente. Usar
+            // el launcher adaptativo (con degradado) hace que Android 14+ rechace
+            // la notificación del foreground service y tumbe la app.
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(body)
             .setContentIntent(tapIntent)
