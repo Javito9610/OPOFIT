@@ -1,23 +1,31 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
-// Remitente por defecto: el dominio de pruebas de Resend. Para producción con
-// usuarios reales hay que verificar un dominio propio en Resend y cambiar EMAIL_FROM.
-const FROM = process.env.EMAIL_FROM || 'OpoFit <onboarding@resend.dev>';
+// Envío por Gmail SMTP con una cuenta dedicada (opofit.noreply@gmail.com) y su
+// contraseña de aplicación. Llega a CUALQUIER destinatario, gratis, sin dominio.
+const FROM = process.env.EMAIL_FROM || 'OpoFit <opofit.noreply@gmail.com>';
 
-function getClient() {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return null;
-  return new Resend(key);
+function getTransport() {
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+  if (!user || !pass) return null;
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user,
+      // La app password de Google se muestra con espacios; los quitamos.
+      pass: String(pass).replace(/\s+/g, '')
+    }
+  });
 }
 
 /**
  * Envía el código de recuperación de contraseña por email.
- * Si RESEND_API_KEY no está configurada, no falla: sólo avisa por log.
+ * Si faltan las credenciales, no falla: sólo avisa por log.
  */
 async function enviarCodigoRecuperacion(email, codigo) {
-  const resend = getClient();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY no configurada; no se envía el código de recuperación');
+  const transport = getTransport();
+  if (!transport) {
+    console.warn('[email] GMAIL_USER/GMAIL_APP_PASSWORD no configuradas; no se envía el código');
     return { ok: false, skipped: true };
   }
   const html = `
@@ -29,11 +37,12 @@ async function enviarCodigoRecuperacion(email, codigo) {
       <p style="color:#97A3B6;font-size:13px">Si no has solicitado este cambio, ignora este correo. Tu contraseña seguirá siendo la misma.</p>
     </div>`;
   try {
-    await resend.emails.send({
+    await transport.sendMail({
       from: FROM,
       to: email,
       subject: 'Tu código de recuperación · OpoFit',
-      html
+      html,
+      text: `Tu código de recuperación OpoFit es: ${codigo} (caduca en 15 minutos).`
     });
     return { ok: true };
   } catch (e) {
