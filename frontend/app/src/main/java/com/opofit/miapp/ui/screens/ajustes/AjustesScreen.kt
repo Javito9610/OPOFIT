@@ -767,6 +767,50 @@ fun AjustesScreen(
                 }
             }
 
+            // Diagnóstico: muestra el último error técnico (crash) guardado, para
+            // poder copiarlo y reportarlo. Solo aparece si hubo algún cierre.
+            var crashTexto by remember {
+                mutableStateOf(com.opofit.miapp.utils.CrashReporter.lastCrash(context))
+            }
+            val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
+            crashTexto?.let { texto ->
+                SectionHeader(title = "Diagnóstico", subtitle = "Último error técnico")
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            "Se registró un cierre inesperado. Cópialo y pásamelo para arreglarlo.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Text(
+                            texto.take(600),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = {
+                                    clipboard.setText(androidx.compose.ui.text.AnnotatedString(texto))
+                                    scope.launch { snackbarHostState.showSnackbar("Error copiado al portapapeles") }
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) { Text("Copiar") }
+                            OutlinedButton(
+                                onClick = {
+                                    com.opofit.miapp.utils.CrashReporter.clear(context)
+                                    crashTexto = null
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) { Text("Borrar") }
+                        }
+                    }
+                }
+            }
+
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth()
             ) {

@@ -74,7 +74,7 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
                             notaActual = data.notaActual ?: "",
                             nivelAsignado = data.nivelAsignado ?: "",
                             nivelRutinasMostradas = data.nivelRutinasMostradas,
-                            rutinaCompleta = data.rutinaCompleta,
+                            rutinaCompleta = data.rutinaCompleta ?: emptyList(),
                             planSemanal = data.planSemanal,
                             pruebasFaltantes = data.pruebasFaltantes,
                             totalPruebas = data.totalPruebas,

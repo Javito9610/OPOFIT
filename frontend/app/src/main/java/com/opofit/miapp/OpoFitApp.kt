@@ -31,6 +31,10 @@ class OpoFitApp : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
 
+        // Capturador de crashes: guarda el último error para verlo en
+        // Ajustes → Diagnóstico. Se instala lo primero, pase lo que pase.
+        com.opofit.miapp.utils.CrashReporter.install(this)
+
         val hrBle = runCatching { HrBleManager.get(this) }.getOrNull() ?: return
         runCatching { hrBle.autoConnectSavedDevice() }
 
