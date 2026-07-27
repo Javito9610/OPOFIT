@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.opofit.miapp.data.api.RetrofitClient
 import com.opofit.miapp.data.local.TokenManager
 import com.opofit.miapp.data.responsemodels.ActualizarAjustesRequest
+import com.opofit.miapp.data.responsemodels.ActualizarPerfilRequest
 import com.opofit.miapp.data.responsemodels.MaterialDisponibleItem
+import com.opofit.miapp.data.responsemodels.Oposicion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,7 +36,10 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
         // v7-doctorado: material disponible para que la IA y los entrenos
         // libres no propongan ejercicios que el usuario no puede hacer.
         val materialCatalogo: List<MaterialDisponibleItem> = emptyList(),
-        val materialSeleccionado: Set<String> = emptySet()
+        val materialSeleccionado: Set<String> = emptySet(),
+        // Modo de uso / cambio de oposición
+        val oposiciones: List<Oposicion> = emptyList(),
+        val cambioModoGuardado: Boolean = false
     )
 
     private val _uiState = MutableStateFlow(AjustesUiState())
@@ -113,6 +118,50 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
             _uiState.update { it.copy(darkMode = enabled) }
         }
     }
+
+    /** Carga la lista de oposiciones para el selector de "Modo de uso". */
+    fun cargarOposiciones() {
+        if (_uiState.value.oposiciones.isNotEmpty()) return
+        viewModelScope.launch {
+            try {
+                val token = tokenManager.getToken().first().orEmpty()
+                if (token.isBlank()) return@launch
+                val resp = RetrofitClient.oposicionesApi.getOposiciones("Bearer $token")
+                if (resp.ok && resp.data != null) {
+                    _uiState.update { it.copy(oposiciones = resp.data) }
+                }
+            } catch (_: Exception) { /* opcional */ }
+        }
+    }
+
+    /**
+     * Cambia el modo de uso (OPOSITOR/FITNESS) y, si es opositor, la oposición.
+     * El backend invalida el plan cacheado. Tras esto la pantalla debe refrescar
+     * la sesión para que toda la app (esFitness) se actualice.
+     */
+    fun cambiarModo(userId: Int, modoUso: String, oposicionId: Int?) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = "", cambioModoGuardado = false) }
+            try {
+                val token = tokenManager.getToken().first() ?: ""
+                val body = ActualizarPerfilRequest(
+                    userId = userId,
+                    modoUso = modoUso,
+                    oposicionId = if (modoUso == "OPOSITOR") oposicionId else null
+                )
+                val resp = RetrofitClient.usuarioApi.actualizarPerfil("Bearer $token", body)
+                if (resp.ok) {
+                    _uiState.update { it.copy(isLoading = false, cambioModoGuardado = true) }
+                } else {
+                    _uiState.update { it.copy(isLoading = false, error = resp.msg ?: resp.message ?: "No se pudo cambiar el modo") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Error de conexión") }
+            }
+        }
+    }
+
+    fun clearCambioModo() = _uiState.update { it.copy(cambioModoGuardado = false) }
 
     fun guardarAjustes(
         userId: Int,

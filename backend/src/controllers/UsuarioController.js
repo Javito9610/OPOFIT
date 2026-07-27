@@ -125,7 +125,20 @@ const actualizarPerfil = async (req, res) => {
       await db.query('UPDATE usuarios SET modo_uso = ? WHERE id_usuario = ?', [modoUso, userId]);
       if (modoUso === 'FITNESS') {
         await db.query('UPDATE usuarios SET oposiciones_id_oposicion = NULL WHERE id_usuario = ?', [userId]);
+      } else if (modoUso === 'OPOSITOR') {
+        // Al volver a opositor (o cambiar de oposición) asignamos la elegida,
+        // validando antes que exista. Sin esto el usuario quedaba en OPOSITOR
+        // sin oposición y el plan no cargaba.
+        const opoId = Number(oposicionId);
+        if (Number.isFinite(opoId) && opoId > 0) {
+          const [op] = await db.query('SELECT id_oposicion FROM oposiciones WHERE id_oposicion = ?', [opoId]);
+          if (op && op.length) {
+            await db.query('UPDATE usuarios SET oposiciones_id_oposicion = ? WHERE id_usuario = ?', [opoId, userId]);
+          }
+        }
       }
+      // Cambiar de modo/oposición invalida el plan cacheado (hay que regenerarlo).
+      await db.query('DELETE FROM planes_generados_cache WHERE usuarios_id_usuario = ?', [userId]).catch(() => {});
     }
     if (hasUbicVisible) {
       await db.query('UPDATE usuarios SET ubicacion_visible = ? WHERE id_usuario = ?', [ubicacionVisible ? 1 : 0, userId]);

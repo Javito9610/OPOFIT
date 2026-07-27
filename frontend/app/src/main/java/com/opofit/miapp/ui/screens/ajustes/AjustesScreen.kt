@@ -26,6 +26,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.Icon
@@ -109,6 +110,20 @@ fun AjustesScreen(
     var mostrarSheetEntorno by remember { mutableStateOf(false) }
     var mostrarSheetOnboarding by remember { mutableStateOf(false) }
     var perfilPublico by remember { mutableStateOf(false) }
+
+    // Modo de uso (opositor / solo fitness) + oposición elegida
+    var modoOpositor by remember(esFitness) { mutableStateOf(!esFitness) }
+    var oposicionSel by remember(authState.oposicionId) { mutableStateOf(authState.oposicionId) }
+    var expandedOpo by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) { ajustesViewModel.cargarOposiciones() }
+    LaunchedEffect(uiState.cambioModoGuardado) {
+        if (uiState.cambioModoGuardado) {
+            authViewModel.refreshSessionFromBackend()
+            snackbarHostState.showSnackbar("Modo actualizado")
+            ajustesViewModel.clearCambioModo()
+        }
+    }
 
     LaunchedEffect(userId, oposicionId, esFitness) {
         if (userId <= 0) return@LaunchedEffect
@@ -330,6 +345,85 @@ fun AjustesScreen(
                         checked = uiState.darkMode,
                         onCheckedChange = { ajustesViewModel.setDarkMode(it) }
                     )
+                }
+            }
+
+            SectionHeader(title = "Modo de uso", subtitle = "Opositor o solo fitness")
+
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        androidx.compose.material3.FilterChip(
+                            selected = modoOpositor,
+                            onClick = { modoOpositor = true },
+                            label = { Text("Opositor") },
+                            leadingIcon = if (modoOpositor) {
+                                { Icon(Icons.Filled.Check, null, Modifier.size(18.dp)) }
+                            } else null,
+                            modifier = Modifier.weight(1f)
+                        )
+                        androidx.compose.material3.FilterChip(
+                            selected = !modoOpositor,
+                            onClick = { modoOpositor = false },
+                            label = { Text("Solo fitness") },
+                            leadingIcon = if (!modoOpositor) {
+                                { Icon(Icons.Filled.Check, null, Modifier.size(18.dp)) }
+                            } else null,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    if (modoOpositor) {
+                        ExposedDropdownMenuBox(
+                            expanded = expandedOpo,
+                            onExpandedChange = { expandedOpo = it }
+                        ) {
+                            OutlinedTextField(
+                                value = uiState.oposiciones.find { it.id_oposicion == oposicionSel }?.nombre
+                                    ?: "Elige tu oposición",
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Oposición") },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedOpo) },
+                                modifier = Modifier.fillMaxWidth().menuAnchor()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expandedOpo,
+                                onDismissRequest = { expandedOpo = false }
+                            ) {
+                                uiState.oposiciones.forEach { opo ->
+                                    DropdownMenuItem(
+                                        text = { Text(opo.nombre) },
+                                        onClick = { oposicionSel = opo.id_oposicion; expandedOpo = false }
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        Text(
+                            "En modo fitness se ocultan simulacro, ranking y baremos de oposición. Tu plan será de fuerza y cardio.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    val cambioValido = !modoOpositor || oposicionSel != null
+                    Button(
+                        onClick = {
+                            ajustesViewModel.cambiarModo(
+                                userId = userId,
+                                modoUso = if (modoOpositor) "OPOSITOR" else "FITNESS",
+                                oposicionId = oposicionSel
+                            )
+                        },
+                        enabled = cambioValido && !uiState.isLoading,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(if (modoOpositor) "Guardar oposición y modo" else "Cambiar a solo fitness")
+                    }
                 }
             }
 
