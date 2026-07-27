@@ -68,8 +68,11 @@ class RutinasViewModel(application: Application) : AndroidViewModel(application)
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            notaActual = data.notaActual,
-                            nivelAsignado = data.nivelAsignado,
+                            // Fitness (sin oposición): el backend manda estos
+                            // campos como null → coalescemos para no reventar
+                            // el .copy (campos no-nullables). Antes: crash.
+                            notaActual = data.notaActual ?: "",
+                            nivelAsignado = data.nivelAsignado ?: "",
                             nivelRutinasMostradas = data.nivelRutinasMostradas,
                             rutinaCompleta = data.rutinaCompleta,
                             planSemanal = data.planSemanal,

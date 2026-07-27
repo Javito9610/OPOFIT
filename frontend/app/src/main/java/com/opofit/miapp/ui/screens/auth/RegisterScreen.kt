@@ -141,9 +141,13 @@ fun RegisterScreen(
         // Acepta coma o punto decimal (los teclados en español escriben coma).
         val pesoFloat = peso.replace(',', '.').toFloatOrNull() ?: 0f
         val alturaFloat = altura.replace(',', '.').toFloatOrNull() ?: 0f
-        if (pesoFloat > 0 && alturaFloat > 0) {
+        // Solo calculamos con valores realistas — antes mostraba "IMC 256"
+        // con datos absurdos (altura 1753 cm) porque no había cota superior.
+        if (pesoFloat in 25f..250f && alturaFloat in 100f..250f) {
             val alturaMetros = alturaFloat / 100f
             imc = String.format(java.util.Locale.US, "%.2f", pesoFloat / (alturaMetros * alturaMetros))
+        } else {
+            imc = "0.00"
         }
     }
 
@@ -376,6 +380,18 @@ fun RegisterScreen(
                             enabled = !uiState.isLoading,
                             visualTransformation = if (passwordVisible)
                                 VisualTransformation.None else PasswordVisualTransformation(),
+                            isError = password.isNotEmpty() && password.length < 6,
+                            supportingText = {
+                                // Feedback en vivo de seguridad (antes no avisaba nada).
+                                val (txt, col) = when {
+                                    password.isEmpty() -> "Mínimo 6 caracteres" to MaterialTheme.colorScheme.onSurfaceVariant
+                                    password.length < 6 -> "Demasiado corta (mínimo 6)" to MaterialTheme.colorScheme.error
+                                    password.length < 8 || password.all { it.isDigit() } || password.all { it.isLetter() } ->
+                                        "Seguridad media — combina letras y números" to MaterialTheme.colorScheme.tertiary
+                                    else -> "Contraseña segura ✓" to MaterialTheme.colorScheme.primary
+                                }
+                                Text(txt, style = MaterialTheme.typography.labelSmall, color = col)
+                            },
                             trailingIcon = {
                                 IconButton(
                                     onClick = { passwordVisible = !passwordVisible },
@@ -443,8 +459,8 @@ fun RegisterScreen(
                                 nombre.isBlank() -> "El nombre es obligatorio"
                                 email.isBlank() -> "El email es obligatorio"
                                 genero.isBlank() -> "Debes seleccionar un género"
-                                pesoNum == null || pesoNum <= 0 -> "Introduce un peso válido (kg)"
-                                alturaNum == null || alturaNum <= 0 -> "Introduce una altura válida (cm)"
+                                pesoNum == null || pesoNum < 25 || pesoNum > 250 -> "Introduce un peso realista (25-250 kg)"
+                                alturaNum == null || alturaNum < 100 || alturaNum > 250 -> "Introduce una altura realista (100-250 cm)"
                                 !soloFitness && oposicionId == null -> "Selecciona una oposición"
                                 // El registro con Google requiere oposición en el servidor:
                                 // sin este check la app crasheaba (oposicionId!!) en modo fitness.

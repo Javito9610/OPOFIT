@@ -9,8 +9,8 @@
  */
 
 const LIMITES = {
-  pesoKg: { min: 25, max: 350 },
-  alturaCm: { min: 100, max: 260 },
+  pesoKg: { min: 25, max: 250 },
+  alturaCm: { min: 100, max: 250 },
   nombreMax: 80,
   emailMax: 254
 };
