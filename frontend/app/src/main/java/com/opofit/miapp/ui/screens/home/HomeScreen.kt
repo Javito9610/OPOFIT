@@ -471,7 +471,8 @@ fun HomeScreen(
                                         supporting = resumen?.rankingTotal?.let { "de $it opositores" },
                                         icon = Icons.Filled.Leaderboard,
                                         accentColor = AccentIndigo,
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier.weight(1f),
+                                        onClick = onNavigateToRanking
                                     )
                                     StatCard(
                                         label = "Simulacro",
