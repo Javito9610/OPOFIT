@@ -1,38 +1,17 @@
-const nodemailer = require('nodemailer');
-
-// Envío por Gmail SMTP con una cuenta dedicada (opofit.noreply@gmail.com) y su
-// contraseña de aplicación. Llega a CUALQUIER destinatario, gratis, sin dominio.
-const FROM = process.env.EMAIL_FROM || 'OpoFit <opofit.noreply@gmail.com>';
-
-function getTransport() {
-  const user = process.env.GMAIL_USER;
-  const pass = process.env.GMAIL_APP_PASSWORD;
-  if (!user || !pass) return null;
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-      user,
-      // La app password de Google se muestra con espacios; los quitamos.
-      pass: String(pass).replace(/\s+/g, '')
-    },
-    // Timeouts: si Render bloquea/ralentiza el SMTP, fallamos rápido en vez
-    // de dejar la petición colgada 2 minutos.
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000
-  });
-}
+// Envío de emails por la API HTTP de Brevo (https://api.brevo.com).
+// Usa HTTPS (no SMTP), así que NO lo bloquea Render, y con el remitente
+// verificado (opofit.noreply@gmail.com) llega a CUALQUIER destinatario.
+const SENDER_EMAIL = process.env.EMAIL_SENDER || process.env.GMAIL_USER || 'opofit.noreply@gmail.com';
+const SENDER_NAME = 'OpoFit';
 
 /**
  * Envía el código de recuperación de contraseña por email.
- * Si faltan las credenciales, no falla: sólo avisa por log.
+ * Si falta BREVO_API_KEY, no falla: sólo avisa por log.
  */
 async function enviarCodigoRecuperacion(email, codigo) {
-  const transport = getTransport();
-  if (!transport) {
-    console.warn('[email] GMAIL_USER/GMAIL_APP_PASSWORD no configuradas; no se envía el código');
+  const key = process.env.BREVO_API_KEY;
+  if (!key) {
+    console.warn('[email] BREVO_API_KEY no configurada; no se envía el código');
     return { ok: false, skipped: true };
   }
   const html = `
@@ -44,13 +23,26 @@ async function enviarCodigoRecuperacion(email, codigo) {
       <p style="color:#97A3B6;font-size:13px">Si no has solicitado este cambio, ignora este correo. Tu contraseña seguirá siendo la misma.</p>
     </div>`;
   try {
-    await transport.sendMail({
-      from: FROM,
-      to: email,
-      subject: 'Tu código de recuperación · OpoFit',
-      html,
-      text: `Tu código de recuperación OpoFit es: ${codigo} (caduca en 15 minutos).`
+    const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'api-key': key,
+        'Content-Type': 'application/json',
+        'accept': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: { name: SENDER_NAME, email: SENDER_EMAIL },
+        to: [{ email }],
+        subject: 'Tu código de recuperación · OpoFit',
+        htmlContent: html,
+        textContent: `Tu código de recuperación OpoFit es: ${codigo} (caduca en 15 minutos).`
+      })
     });
+    if (!resp.ok) {
+      const detalle = await resp.text().catch(() => '');
+      console.error('[email] Brevo respondió', resp.status, detalle);
+      return { ok: false, error: `HTTP ${resp.status}` };
+    }
     return { ok: true };
   } catch (e) {
     console.error('[email] error enviando código:', e.message);
