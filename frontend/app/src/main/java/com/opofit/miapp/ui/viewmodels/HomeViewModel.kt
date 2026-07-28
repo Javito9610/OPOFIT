@@ -33,8 +33,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+    // Oposición del último resumen cargado. Si cambia (p. ej. al cambiar de
+    // modo/oposición), hay que RE-fetch aunque ya haya datos; antes se quedaba
+    // el resumen viejo cacheado y parecía que "se perdían" los datos.
+    private var lastOposicionId: Int? = null
+
     fun cargarResumen(oposicionId: Int, force: Boolean = false) {
-        if (!force && _uiState.value.resumen != null && !_uiState.value.loading) return
+        if (!force && lastOposicionId == oposicionId &&
+            _uiState.value.resumen != null && !_uiState.value.loading) return
+        lastOposicionId = oposicionId
         viewModelScope.launch {
             _uiState.update { it.copy(loading = true, error = "") }
             try {
