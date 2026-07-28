@@ -167,11 +167,14 @@ fun HomeScreen(
     }
 
     val quickLinks = buildList {
-        add(QuickLink("Plan", "Entreno semanal", Icons.Filled.FitnessCenter, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary, onNavigateToRutinas))
+        // "Plan" solo para opositores (en fitness no hay plan de oposición).
+        if (!esFitness) {
+            add(QuickLink("Plan", "Entreno semanal", Icons.Filled.FitnessCenter, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary, onNavigateToRutinas))
+        }
         add(QuickLink("Empezar carrera", "GPS al aire libre", Icons.Filled.Explore, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary, { startGpsFromHome() }))
         if (esFitness) {
+            add(QuickLink("Rutinas libres", "Crea la tuya", Icons.Filled.FitnessCenter, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary, onNavigateToRutinasLibres))
             add(QuickLink("Comunidad", "Grupos · Chat", Icons.Filled.Groups, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToComunidad))
-            add(QuickLink("Rutinas libres", "Crea la tuya", Icons.Filled.FitnessCenter, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, onNavigateToRutinasLibres))
         } else {
             add(QuickLink("Historial", "Tu actividad", Icons.Filled.BarChart, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, onNavigateToHistorial))
             add(QuickLink("Conexiones", "Reloj · sync", Icons.Filled.Watch, AccentSlate, Color.White, onNavigateToMisDispositivos))
@@ -333,8 +336,9 @@ fun HomeScreen(
                             }
                         }
 
+                        // El "Entreno de hoy" viene del plan de oposición → solo opositores.
                         resumen?.entrenoHoy?.let { hoy ->
-                            if (!hoy.completada && !hoy.enfoque.isNullOrBlank()) {
+                            if (!esFitness && !hoy.completada && !hoy.enfoque.isNullOrBlank()) {
                                 item {
                                     EntrenoHoyHeroCard(
                                         titulo = if (hoy.esHoy) "Entreno de hoy" else "Próximo entreno",
@@ -572,11 +576,17 @@ fun HomeScreen(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 com.opofit.miapp.ui.components.PrimaryButton(
-                                    text = "Entrenar",
+                                    // Fitness: no hay entreno de oposición → el botón
+                                    // principal lleva a las rutinas libres del usuario.
+                                    text = if (esFitness) "Rutinas" else "Entrenar",
                                     leadingIcon = Icons.Filled.PlayArrow,
                                     onClick = {
-                                        val h = resumen?.entrenoHoy
-                                        onNavigateToEntrenamientos(h?.enfoque, h?.id_plan_dia, h?.id_rutina_opo)
+                                        if (esFitness) {
+                                            onNavigateToRutinasLibres()
+                                        } else {
+                                            val h = resumen?.entrenoHoy
+                                            onNavigateToEntrenamientos(h?.enfoque, h?.id_plan_dia, h?.id_rutina_opo)
+                                        }
                                     },
                                     modifier = Modifier.weight(1f),
                                     fillMaxWidth = false

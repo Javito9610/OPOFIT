@@ -118,12 +118,14 @@ fun MainScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    val tabs = listOf(
-        BottomTab.Inicio,
-        BottomTab.Rutinas,
-        BottomTab.Perfil,
-        BottomTab.Historial
-    )
+    // En modo fitness no hay plan de oposición → se quita la pestaña "Plan".
+    // El entreno del usuario fitness se hace desde Rutinas libres y GPS.
+    val tabs = buildList {
+        add(BottomTab.Inicio)
+        if (!esFitness) add(BottomTab.Rutinas)
+        add(BottomTab.Perfil)
+        add(BottomTab.Historial)
+    }
 
     fun navigateToTab(route: String) {
         innerNavController.navigate(route) {
@@ -192,13 +194,15 @@ fun MainScreen(
                         onClick = { navigateToTab(BottomTab.Inicio.route) },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                     )
-                    NavigationDrawerItem(
-                        label = { Text("Plan de entrenamiento") },
-                        icon = { Icon(Icons.Filled.FitnessCenter, null) },
-                        selected = false,
-                        onClick = { navigateToTab(BottomTab.Rutinas.route) },
-                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                    )
+                    if (!esFitness) {
+                        NavigationDrawerItem(
+                            label = { Text("Plan de entrenamiento") },
+                            icon = { Icon(Icons.Filled.FitnessCenter, null) },
+                            selected = false,
+                            onClick = { navigateToTab(BottomTab.Rutinas.route) },
+                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        )
+                    }
                     NavigationDrawerItem(
                         label = { Text("Dónde entrenar") },
                         icon = { Icon(Icons.Filled.Explore, null) },
