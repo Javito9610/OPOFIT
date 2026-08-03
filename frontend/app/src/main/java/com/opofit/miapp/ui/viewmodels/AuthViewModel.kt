@@ -91,6 +91,12 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         inferredUserId: Int?
     ) {
         val opoId = session.oposicionId.toIntOrNull()
+        // Preferimos el modo PERSISTIDO en la sesión. Solo si nunca se guardó
+        // (sesiones antiguas) lo inferimos desde la oposición. Esto evita la
+        // incoherencia de mostrar contenido de opositor a un usuario fitness.
+        val modoCacheado = session.modoUso.trim().ifBlank {
+            if (opoId == null) "FITNESS" else "OPOSITOR"
+        }.uppercase()
         _uiState.update { state ->
             state.copy(
                 isLoggedIn = session.isLoggedIn,
@@ -100,7 +106,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 userName = session.userName,
                 genero = session.genero.ifEmpty { null },
                 oposicionId = opoId,
-                modoUso = if (opoId == null) "FITNESS" else "OPOSITOR",
+                modoUso = modoCacheado,
                 peso = session.peso.toDoubleOrNull(),
                 altura = session.altura.toDoubleOrNull(),
                 imc = session.imc.toDoubleOrNull()
@@ -123,10 +129,14 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         userName = user.nombre,
                         genero = user.genero,
                         oposicionId = user.oposiciones_id_oposicion?.toString() ?: "",
+                        modoUso = resolveModoUso(user) ?: "",
                         peso = user.peso.toString(),
                         altura = user.altura.toString(),
                         imc = user.imc.toString()
                     )
+                    if (user.oposiciones_id_oposicion == null) {
+                        tokenManager.saveOposicionId("")
+                    }
                     _uiState.update { state ->
                         state.copy(
                             isLoggedIn = true,
@@ -447,10 +457,17 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             userName = user.nombre,
                             genero = user.genero,
                             oposicionId = user.oposiciones_id_oposicion?.toString() ?: "",
+                            modoUso = resolveModoUso(user) ?: "",
                             peso = user.peso.toString(),
                             altura = user.altura.toString(),
                             imc = user.imc.toString()
                         )
+                        // Al pasar a FITNESS la oposición es null: hay que LIMPIAR
+                        // la oposición cacheada (saveSession no borra con ""), si no
+                        // quedaría una oposición fantasma tras cambiar de modo.
+                        if (user.oposiciones_id_oposicion == null) {
+                            tokenManager.saveOposicionId("")
+                        }
                         _uiState.update { state ->
                             state.copy(
                                 userId = user.id_usuario,

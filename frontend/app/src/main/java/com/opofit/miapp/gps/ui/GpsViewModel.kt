@@ -101,7 +101,10 @@ class GpsViewModel(application: Application) : AndroidViewModel(application) {
             return null
         }
         GpsTrackingService.stop(getApplication())
-        if (summary.points.size >= 2 && summary.distanceM >= 25.0) {
+        // Umbral bajo (antes 25 m) para no descartar actividades cortas reales:
+        // si no se guardaban, tampoco se sincronizaban al servidor y se perdían
+        // al reinstalar. 10 m + 2 puntos basta para filtrar señal-fantasma.
+        if (summary.points.size >= 2 && summary.distanceM >= 10.0) {
             repo.save(summary)
             _lastSaved.value = summary
             GpsLastResult.set(summary)

@@ -10,6 +10,7 @@ data class UserSession(
     val userName: String = "",
     val genero: String = "",
     val oposicionId: String = "",
+    val modoUso: String = "",
     val peso: String = "",
     val altura: String = "",
     val imc: String = "",
@@ -29,7 +30,8 @@ class SessionManager(private val tokenManager: TokenManager) {
                 tokenManager.getPeso(),
                 tokenManager.getAltura(),
                 tokenManager.getImc(),
-                tokenManager.getOposicionId()
+                tokenManager.getOposicionId(),
+                tokenManager.getModoUso()
             )
         ) { values ->
             val token = values.getOrNull(0) as String?
@@ -41,6 +43,7 @@ class SessionManager(private val tokenManager: TokenManager) {
             val altura = values.getOrNull(6) as String?
             val imc = values.getOrNull(7) as String?
             val oposicionId = values.getOrNull(8) as String?
+            val modoUso = values.getOrNull(9) as String?
 
             UserSession(
                 token = token ?: "",
@@ -49,6 +52,7 @@ class SessionManager(private val tokenManager: TokenManager) {
                 userName = name ?: "",
                 genero = genero ?: "",
                 oposicionId = oposicionId ?: "",
+                modoUso = modoUso ?: "",
                 peso = peso ?: "",
                 altura = altura ?: "",
                 imc = imc ?: "",
@@ -63,6 +67,7 @@ class SessionManager(private val tokenManager: TokenManager) {
         userName: String,
         genero: String = "",
         oposicionId: String = "",
+        modoUso: String = "",
         peso: String = "",
         altura: String = "",
         imc: String = ""
@@ -74,6 +79,7 @@ class SessionManager(private val tokenManager: TokenManager) {
             saveUserName(userName)
             if (genero.isNotEmpty()) saveGenero(genero)
             if (oposicionId.isNotEmpty()) saveOposicionId(oposicionId)
+            if (modoUso.isNotEmpty()) saveModoUso(modoUso)
             if (peso.isNotEmpty()) savePeso(peso)
             if (altura.isNotEmpty()) saveAltura(altura)
             if (imc.isNotEmpty()) saveImc(imc)

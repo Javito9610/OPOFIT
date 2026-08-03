@@ -33,6 +33,7 @@ class TokenManager(private val context: Context) {
         private val USER_NAME_KEY = stringPreferencesKey("user_name")
         private val USER_GENERO_KEY = stringPreferencesKey("user_genero")
         private val USER_OPOSICION_ID_KEY = stringPreferencesKey("user_oposicion_id")
+        private val USER_MODO_USO_KEY = stringPreferencesKey("user_modo_uso")
         private val USER_PESO_KEY = stringPreferencesKey("user_peso")
         private val USER_ALTURA_KEY = stringPreferencesKey("user_altura")
         private val USER_IMC_KEY = stringPreferencesKey("user_imc")
@@ -99,6 +100,18 @@ class TokenManager(private val context: Context) {
 
     fun getOposicionId(): Flow<String?> = context.dataStore.data.map { preferences ->
         preferences[USER_OPOSICION_ID_KEY]
+    }
+
+    // Modo de uso persistido ("OPOSITOR" / "FITNESS"). Antes NO se guardaba y al
+    // arrancar se INFERÍA desde la oposición (opoId==null → FITNESS), lo que
+    // producía incoherencias (usuario opositor sin oposición aparecía como
+    // opositor en unas pantallas y fitness en otras). Persistirlo lo elimina.
+    suspend fun saveModoUso(modoUso: String) {
+        context.dataStore.edit { preferences -> preferences[USER_MODO_USO_KEY] = modoUso }
+    }
+
+    fun getModoUso(): Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[USER_MODO_USO_KEY]
     }
 
     suspend fun savePeso(peso: String) {
