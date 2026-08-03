@@ -47,11 +47,32 @@ function esEquipamientoCubierto(equip, userMaterial) {
 
 function enriquecerInstrucciones(rows) {
   return rows.map((e) => {
+    // Contenido COMPLETO para el detalle del ejercicio: técnica (setup/ejecución/
+    // cues/errores), "por qué" y objetivo. Antes el banco solo traía
+    // instrucciones planas → las pestañas "Por qué" y "Técnica" salían vacías.
+    let rico = null;
+    try {
+      rico = EjercicioInteligenteService.aplicarInteligencia(
+        {
+          nombre: e.nombre,
+          id_ejercicio: e.id_ejercicio,
+          pilar: e.pilar,
+          grupo_muscular: e.grupo_muscular,
+          categoria: e.categoria,
+          equipamiento: e.equipamiento
+        },
+        { seed: e.id_ejercicio }
+      );
+    } catch (_) { /* si algo falla, seguimos con lo básico */ }
+
     const instr = String(e.instrucciones_tecnicas || '').trim();
-    if (instr.length > 24) return e;
     return {
       ...e,
-      instrucciones_tecnicas: EjercicioInteligenteService.generarInstrucciones(e)
+      instrucciones_tecnicas: instr.length > 24
+        ? instr
+        : (rico?.instrucciones_tecnicas || EjercicioInteligenteService.generarInstrucciones(e)),
+      explicacion: rico?.explicacion || null,
+      objetivo: rico?.objetivo || null
     };
   });
 }

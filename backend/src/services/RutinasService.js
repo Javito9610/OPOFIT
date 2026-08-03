@@ -1,4 +1,25 @@
 const db = require('../config/db');
+
+/**
+ * ¿La prescripción almacenada es irreal? El seed de detalle_rutina_opo tiene
+ * valores absurdos en algunos ejercicios (p. ej. "3×200 reps", series 0…). Esto
+ * detecta los fuera de rango por unidad para regenerarlos con el motor inteligente.
+ */
+function prescripcionAbsurda(unidad, series, reps) {
+  const s = Number(series);
+  const r = Number(reps);
+  if (!Number.isFinite(s) || !Number.isFinite(r)) return true;
+  if (s < 1 || s > 8) return true;
+  switch (unidad) {
+    case 'reps': return r < 1 || r > 50;   // nadie hace 200 repeticiones por serie
+    case 's':    return r < 5 || r > 300;
+    case 'min':  return r < 1 || r > 120;
+    case 'm':    return r < 20 || r > 5000;
+    case 'km':   return r < 1 || r > 42;
+    default:     return r < 1;
+  }
+}
+
 class RutinaService {
   static inferUnidad(nombre) {
     // Normalizamos quitando acentos para que "natación" vs "natacion" se trate igual.
@@ -88,12 +109,29 @@ class RutinaService {
          WHERE d.rutinas_opo_id_rutina_opo = ?`,
         [r.id_rutina_opo]
       );
+      const Inteligente = require('./EjercicioInteligenteService');
       candidatos.push({
         rutina: r,
-        ejercicios: ejercicios.map((e) => ({
-          ...e,
-          unidad: RutinaService.inferUnidad(e.nombre)
-        }))
+        ejercicios: ejercicios.map((e) => {
+          const unidad = RutinaService.inferUnidad(e.nombre);
+          // Saneo: si series/reps almacenados son irreales, los regeneramos con
+          // el motor inteligente (rangos por perfil de ejercicio). Antes salían
+          // prescripciones absurdas que el usuario reportó.
+          if (prescripcionAbsurda(unidad, e.series, e.repeticiones)) {
+            const p = Inteligente.generarPrescripcion(
+              { nombre: e.nombre, id_ejercicio: e.id_ejercicio },
+              { seed: e.id_ejercicio }
+            );
+            return {
+              ...e,
+              series: p.series,
+              repeticiones: p.repeticiones,
+              descanso: (Number(e.descanso) > 0 ? Number(e.descanso) : p.descanso),
+              unidad: p.unidad || unidad
+            };
+          }
+          return { ...e, unidad };
+        })
       });
     }
 

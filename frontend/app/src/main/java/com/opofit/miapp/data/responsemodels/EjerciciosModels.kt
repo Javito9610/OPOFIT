@@ -19,7 +19,10 @@ data class Ejercicio(
     //                rondas_completadas | reps_min_ronda | ultima_ronda |
     //                peso | distancia | rpe | calorias
     val modalidad: String? = null,
-    val score_tipo: String? = null
+    val score_tipo: String? = null,
+    // Contenido rico para el detalle (rellena pestañas Técnica / Por qué).
+    val objetivo: String? = null,
+    val explicacion: ExplicacionPro? = null
 )
 
 fun Ejercicio.toEjercicioPlan(prescripcion: String = ""): com.opofit.miapp.data.responsemodels.EjercicioPlan {
@@ -38,7 +41,9 @@ fun Ejercicio.toEjercicioPlan(prescripcion: String = ""): com.opofit.miapp.data.
         pilar = pilar,
         series = series,
         repeticiones = reps,
-        descanso = 90
+        descanso = 90,
+        objetivo = objetivo,
+        explicacion = explicacion
     )
 }
 

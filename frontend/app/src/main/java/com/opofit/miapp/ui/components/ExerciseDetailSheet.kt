@@ -178,10 +178,16 @@ fun ExerciseDetailSheet(
                 // con animaciones de muñecos).
                 androidx.compose.material3.OutlinedButton(
                     onClick = {
-                        val q = java.net.URLEncoder.encode(ejercicio.nombre, "UTF-8")
+                        // Antes abría un LISTADO genérico de wger. Ahora búsqueda de
+                        // imágenes/gifs del ejercicio CONCRETO → se ve el movimiento
+                        // exacto ("no me llevaba a la animación concreta").
+                        val q = java.net.URLEncoder.encode(
+                            "${ejercicio.nombre} ejercicio técnica animación",
+                            "UTF-8"
+                        )
                         com.opofit.miapp.utils.UrlOpener.open(
                             ctxLocal,
-                            "https://wger.de/en/exercise/overview/?term=$q"
+                            "https://www.google.com/search?tbm=isch&q=$q"
                         )
                     },
                     modifier = Modifier

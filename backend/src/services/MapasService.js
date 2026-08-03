@@ -108,7 +108,10 @@ const TIPOS_LUGAR = {
     textQueries: ['piscina municipal', 'piscina cubierta', 'centro acuático natación', 'swimming pool'],
     radioDefault: 15000,
     etiqueta: 'Piscina',
-    mustNotMatch: /(privada\s+exclusiva|hotel\s+privado|resort\s+privado)/i
+    // Excluimos piscinas de comunidad de vecinos / residenciales / hoteles /
+    // campings (el usuario reportaba que aparecían piscinas de urbanización).
+    // Las municipales/deportivas sí pasan.
+    mustNotMatch: /(comunidad\s+de\s+vecinos|vecinos|residencial|urbanizaci[oó]n|\bprivad|hotel|resort|camping|c[áa]mping|chalet|spa\b|balneario)/i
   }
 };
 
@@ -166,22 +169,29 @@ const OVERPASS_TAGS = {
     'way["leisure"="fitness_station"]',
     'node["sport"="calisthenics"]',
     'way["sport"="calisthenics"]',
+    'node["sport"="street_workout"]',
+    'way["sport"="street_workout"]',
     'node["leisure"="outdoor_gym"]',
-    'way["leisure"="outdoor_gym"]'
+    'way["leisure"="outdoor_gym"]',
+    'node["leisure"="pitch"]["sport"~"calisthenics|street_workout|fitness"]',
+    'way["leisure"="pitch"]["sport"~"calisthenics|street_workout|fitness"]'
   ],
   PARQUE: [
     'node["leisure"="park"]',
     'way["leisure"="park"]'
   ],
   PISCINA: [
-    'node["leisure"="swimming_pool"]["access"!="private"]',
-    'way["leisure"="swimming_pool"]["access"!="private"]',
-    'node["amenity"="swimming_pool"]',
-    'way["amenity"="swimming_pool"]',
-    'node["sport"="swimming"]',
-    'way["sport"="swimming"]',
+    // Piscinas públicas/municipales: excluimos access private/residents y las
+    // marcadas como residenciales (comunidad de vecinos). Priorizamos las que
+    // son claramente deportivas (sport=swimming, sports_centre).
+    'node["leisure"="swimming_pool"]["access"!="private"]["access"!="residents"]["access"!="members"]',
+    'way["leisure"="swimming_pool"]["access"!="private"]["access"!="residents"]["access"!="members"]',
     'node["leisure"="sports_centre"]["sport"="swimming"]',
-    'way["leisure"="sports_centre"]["sport"="swimming"]'
+    'way["leisure"="sports_centre"]["sport"="swimming"]',
+    'node["sport"="swimming"]["access"!="private"]',
+    'way["sport"="swimming"]["access"!="private"]',
+    'node["leisure"="water_park"]',
+    'way["leisure"="water_park"]'
   ]
 };
 
@@ -213,7 +223,7 @@ function lugarCumpleFiltro(tipoMeta, nombre, direccion, tags = {}) {
 
   // Atajo: tag explícito de la categoría exacta es señal fuerte.
   if (tipoMeta === TIPOS_LUGAR.CROSSFIT && tagSport === 'crossfit') return true;
-  if (tipoMeta === TIPOS_LUGAR.CALISTENIA && (tagSport === 'calisthenics' || tagLeisure === 'fitness_station' || tagLeisure === 'outdoor_gym')) return true;
+  if (tipoMeta === TIPOS_LUGAR.CALISTENIA && (tagSport === 'calisthenics' || tagSport === 'street_workout' || tagLeisure === 'fitness_station' || tagLeisure === 'outdoor_gym')) return true;
   if (tipoMeta === TIPOS_LUGAR.PISTA && (tagSport === 'athletics' || tagSport === 'running')) return true;
 
   // Caso normal: solo nombre/dirección/nombres localizados.
