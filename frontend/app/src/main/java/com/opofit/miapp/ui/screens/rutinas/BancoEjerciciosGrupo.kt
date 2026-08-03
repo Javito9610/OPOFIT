@@ -7,10 +7,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -98,15 +102,22 @@ fun BancoEjerciciosPorGrupo(
                                 )
                             } else {
                                 disponibles.take(40).forEach { ej ->
+                                    // Fila SIN clickable global: antes tocar cualquier
+                                    // parte añadía el ejercicio y chocaba con el botón
+                                    // de info. Ahora info (ⓘ) y añadir (+) son dos
+                                    // botones claros, grandes y separados.
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clickable { onSeleccionar(ej) }
                                             .padding(vertical = 6.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Column(modifier = Modifier.weight(1f)) {
+                                        Column(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clickable { onVerDetalle(ej) }
+                                        ) {
                                             Text(ej.nombre, style = MaterialTheme.typography.bodyMedium)
                                             ej.equipamiento?.takeIf { it.isNotBlank() }?.let { eq ->
                                                 Text(
@@ -116,16 +127,21 @@ fun BancoEjerciciosPorGrupo(
                                                 )
                                             }
                                         }
-                                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                            ExerciseInfoButton(
-                                                onClick = { onVerDetalle(ej) },
-                                                size = 32.dp
+                                        ExerciseInfoButton(
+                                            onClick = { onVerDetalle(ej) },
+                                            size = 40.dp
+                                        )
+                                        FilledIconButton(
+                                            onClick = { onSeleccionar(ej) },
+                                            modifier = Modifier.size(44.dp),
+                                            colors = IconButtonDefaults.filledIconButtonColors(
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary
                                             )
-                                            Text(
-                                                "+",
-                                                style = MaterialTheme.typography.titleMedium,
-                                                color = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.clickable { onSeleccionar(ej) }
+                                        ) {
+                                            Icon(
+                                                Icons.Filled.Add,
+                                                contentDescription = "Añadir ${ej.nombre}"
                                             )
                                         }
                                     }

@@ -6,7 +6,9 @@ class RutinaPersService {
   static async crearRutinaPropia(userId, nombre, ejercicios, entorno = null) {
     const connection = await db.getConnection();
     try {
-      const sqlCheck = 'SELECT id_rutina_pers FROM rutinas_pers WHERE usuarios_id_usuario = ? AND nombre_personalizado = ?';
+      // Comparación robusta: ignora mayúsculas/minúsculas y espacios sobrantes
+      // para que "Prueba2", "prueba2 " y "prueba2" cuenten como el mismo nombre.
+      const sqlCheck = 'SELECT id_rutina_pers FROM rutinas_pers WHERE usuarios_id_usuario = ? AND LOWER(TRIM(nombre_personalizado)) = LOWER(TRIM(?))';
       const [existente] = await connection.query(sqlCheck, [userId, nombre]);
       if (existente.length > 0) {
         throw new Error("Ya tienes una rutina con este nombre. ¡Prueba uno diferente!");

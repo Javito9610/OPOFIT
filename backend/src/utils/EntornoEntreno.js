@@ -68,6 +68,93 @@ function ejercicioCompatible(entornosCsv, entornoUsuario) {
 }
 
 /**
+ * Clasificador POR NOMBRE (autoritativo). El catálogo base (~400 ejercicios de
+ * oposición) no traía entornos fiables → el filtro dejaba pasar "press banca"
+ * en calistenia y ejercicios de gym en casa. Los nombres SÍ son descriptivos,
+ * así que deducimos entorno+equipamiento del nombre. Orden = de más específico
+ * a más genérico; gana la primera regla que casa. Todas incluyen MIXTO.
+ */
+const CLASIF_NOMBRE = [
+  // Natación (antes que carrera para que "Natación 50m" no caiga en pista)
+  [/nataci[oó]n|\bcrol\b|nadar|piscina|braza|espalda \(agua\)/i,
+    ['GYM', 'PISTA', 'MIXTO'], 'Piscina'],
+  // Carrera / pista / velocidad en campo (metros, series, sprints, cuestas)
+  [/carrera|trote|rodaje|fartlek|\btempo\b|cuestas?|cambios? de ritmo|\bsprints?\b|\d+\s*m\b|\d+\s*km\b|1000m|2000m|800m|400m|200m|100m|marat[oó]n/i,
+    ['PISTA', 'MIXTO'], 'Pista'],
+  // Comba / cuerda de saltar
+  [/\bcomba\b|cuerda.*salt|salt.*cuerda|double under/i,
+    ['CASA', 'CROSSFIT', 'PISTA', 'CALISTENIA', 'MIXTO'], 'Comba'],
+  // Barra fija / calistenia con barra (dominadas, muscle-up, remo invertido...)
+  [/dominad|pull[\s-]?up|muscle[\s-]?up|front lever|back lever|l[\s-]?sit|suspensi[oó]n en barra|remo invertid|remo australian|toes to bar|colgad/i,
+    ['CALISTENIA', 'GYM', 'CROSSFIT', 'MIXTO'], 'Barra fija'],
+  // Paralelas / fondos
+  [/fondos? en paralel|dips?( en)? paralel|paralelas/i,
+    ['CALISTENIA', 'GYM', 'CROSSFIT', 'MIXTO'], 'Paralelas'],
+  // Kettlebell (antes que barra/mancuerna para captar "swing con KB")
+  [/kettlebell|\bkb\b|\bswing\b|turkish|goblet/i,
+    ['CROSSFIT', 'GYM', 'CASA', 'MIXTO'], 'Kettlebell'],
+  // Mancuernas (antes que barra: "press banca con mancuernas" → mancuernas)
+  [/mancuerna|dumbbell|\bdb\b|botellas? de agua/i,
+    ['GYM', 'CASA', 'CROSSFIT', 'MIXTO'], 'Mancuernas'],
+  // Levantamientos con barra olímpica (gym/crossfit)
+  [/press banca|press militar|press de banca|peso muerto|sentadilla con barra|hip thrust con barra|remo con barra|arranque|dos tiempos|\bclean\b|\bsnatch\b|\bjerk\b|thruster|overhead squat|front squat|back squat|barra ol[ií]mpica|hip thrust\b/i,
+    ['GYM', 'CROSSFIT', 'MIXTO'], 'Barra olímpica'],
+  // Máquinas de gimnasio
+  [/prensa|jal[oó]n|\bpolea\b|m[aá]quina|multipower|\bsmith\b|contractor|peck deck|extensi[oó]n de cu[aá]driceps|femoral|elevaci[oó]n de gemelo en m/i,
+    ['GYM', 'MIXTO'], 'Máquina'],
+  // Material CrossFit específico
+  [/wall\s?ball|box jump|caj[oó]n|assault bike|echo bike|air bike|row(ing)? erg|remo ergo|ski\s?erg|battle rope|cuerda de batalla|\bsled\b|trineo|devil press|\bwod\b|\bamrap\b|\bemom\b|for time|man\s?maker|\byoke\b|farmer/i,
+    ['CROSSFIT', 'GYM', 'MIXTO'], 'Material CrossFit'],
+  // Bandas elásticas / gomas
+  [/banda el[aá]stica|goma el[aá]stica|\bgoma\b|resistance band/i,
+    ['CASA', 'GYM', 'MIXTO'], 'Banda'],
+  // Cardio de máquina
+  [/cinta de correr|bici(cleta)? est[aá]tica|el[ií]ptica|spinning|remo(ergómetro| c2)/i,
+    ['GYM', 'CASA', 'MIXTO'], 'Máquina cardio'],
+  // Agilidad / coordinación / velocidad de pies
+  [/escalera de agilidad|\bconos\b|circuito de conos|\bvallas\b|skipping|carioca|desplazamiento lateral|agilidad|propiocep|coordinaci[oó]n|reacci[oó]n/i,
+    ['PISTA', 'CALISTENIA', 'CASA', 'MIXTO'], 'Conos'],
+  // Movilidad / calentamiento / estiramientos
+  [/movilidad|estiramiento|estirar|foam roller|\byoga\b|calentamiento|activaci[oó]n|respiraci[oó]n/i,
+    ['CASA', 'GYM', 'CALISTENIA', 'PISTA', 'MIXTO'], 'Suelo'],
+  // Peso corporal (flexiones, plancha, sentadilla, burpee, abdominales...)
+  [/flexion|push[\s-]?up|fondos en silla|planch|\bplank\b|abdominal|\bcrunch\b|mountain climb|sentadilla|\bsquat\b|zancada|\blunge\b|puente|glute bridge|burpee|jumping jack|sit[\s-]?up|hollow|superman|elevaci[oó]n de piernas|\bgemelo|pistol|handstand|\bpino\b|escalador/i,
+    ['CASA', 'CALISTENIA', 'PISTA', 'MIXTO'], 'Suelo']
+];
+
+function clasificarEntornos(nombre, equipamiento, pilar) {
+  const n = String(nombre || '').toLowerCase();
+  for (const [re, entornos, equip] of CLASIF_NOMBRE) {
+    if (re.test(n)) return { entornos: entornos.slice(), equip, confianza: true };
+  }
+  return {
+    entornos: inferirEntornosDesdeEquipamiento(equipamiento, pilar),
+    equip: equipamiento || null,
+    confianza: false
+  };
+}
+
+/** Entornos efectivos de un ejercicio: manda el nombre; si no es concluyente,
+ *  usa el CSV almacenado y, en último caso, la inferencia por equipamiento. */
+function entornosEfectivos(ejercicio) {
+  const c = clasificarEntornos(ejercicio.nombre, ejercicio.equipamiento, ejercicio.pilar);
+  if (c.confianza) return c.entornos;
+  const stored = parseEntornosCsv(ejercicio.entornos);
+  return stored.length ? stored : c.entornos;
+}
+
+/** Compatibilidad usando el clasificador por nombre (recomendado).
+ *  OJO: MIXTO es concepto del USUARIO ("muéstramelo todo"), NO comodín del
+ *  ejercicio. Por eso aquí NO se acepta lista.includes('MIXTO') — si no, todo
+ *  sería compatible con todo (era el bug: "press banca" salía en calistenia). */
+function ejercicioCompatiblePorNombre(ejercicio, entornoUsuario) {
+  const ent = normalizarEntorno(entornoUsuario) || 'MIXTO';
+  if (ent === 'MIXTO') return true;
+  const lista = entornosEfectivos(ejercicio);
+  return lista.includes(ent);
+}
+
+/**
  * Filtro defensivo (defense-in-depth): aunque el ejercicio diga que es
  * compatible con un entorno, descartamos los obvios falsos positivos
  * (saco de arena en gimnasio comercial, dominada con toalla en casa sin
@@ -183,6 +270,9 @@ module.exports = {
   inferirEntornosDesdeEquipamiento,
   parseEntornosCsv,
   ejercicioCompatible,
+  clasificarEntornos,
+  entornosEfectivos,
+  ejercicioCompatiblePorNombre,
   ejercicioRealistaParaEntorno,
   inferirTipoIlustracion,
   hashSeed,

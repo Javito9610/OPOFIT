@@ -1,6 +1,7 @@
 package com.opofit.miapp.ui.screens.rutinas
 
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -140,6 +142,10 @@ fun CrearRutinaScreen(
     var errorIndices by remember { mutableStateOf<Set<Int>>(emptySet()) }
     var ejercicioDetalleBanco by remember { mutableStateOf<EjercicioPlan?>(null) }
     var prescripcionDetalleBanco by remember { mutableStateOf("") }
+    // Material disponible del usuario para ESTE entorno: así "en casa con comba
+    // y mancuernas" solo ofrece ejercicios que pueda hacer de verdad.
+    var materialCatalogo by remember { mutableStateOf<List<com.opofit.miapp.data.responsemodels.MaterialDisponibleItem>>(emptyList()) }
+    val materialSeleccionado = remember { mutableStateListOf<String>() }
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
 
@@ -157,6 +163,10 @@ fun CrearRutinaScreen(
             entornosOpciones = entornos.data.orEmpty().filter { it.id != "MIXTO" && it.id != "PISTA" }
             val usuario = RetrofitClient.planesApi.getEntornoUsuario("Bearer $token")
             entornoSeleccionado = usuario.data?.entorno?.takeIf { it.isNotBlank() }
+            try {
+                val mat = RetrofitClient.ejerciciosApi.listarMaterial("Bearer $token")
+                if (mat.ok) materialCatalogo = mat.data
+            } catch (_: Exception) { /* material opcional */ }
         } catch (_: Exception) {
             entornosOpciones = listOf(
                 EntornoEntrenoOpcion("GYM", "Gimnasio", "🏋️", "Máquinas, barras y mancuernas"),
@@ -167,16 +177,19 @@ fun CrearRutinaScreen(
         }
     }
 
-    LaunchedEffect(entornoSeleccionado, filtroPilar, pasoEnfoque) {
+    LaunchedEffect(entornoSeleccionado, filtroPilar, pasoEnfoque, materialSeleccionado.toList()) {
         val ent = entornoSeleccionado ?: return@LaunchedEffect
         if (pasoEnfoque) return@LaunchedEffect
         cargandoEjercicios = true
         try {
             val token = tokenManager.getToken().first() ?: ""
+            val materialCsv = materialSeleccionado.filter { it.isNotBlank() }
+                .takeIf { it.isNotEmpty() }?.joinToString(",")
             val response = RetrofitClient.ejerciciosApi.listarEjercicios(
                 "Bearer $token",
                 pilar = filtroPilar,
-                entorno = ent
+                entorno = ent,
+                material = materialCsv
             )
             if (response.ok && response.data != null) {
                 ejerciciosDisponibles = response.data
@@ -246,29 +259,65 @@ fun CrearRutinaScreen(
                     .padding(padH),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    "Elige el entorno para adaptar el banco de ejercicios a tu material.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    entornosOpciones.forEach { op ->
-                        FilterChip(
-                            selected = entornoSeleccionado == op.id,
-                            onClick = { entornoSeleccionado = op.id },
-                            label = { Text("${op.emoji ?: ""} ${op.etiqueta}") }
+                    Text(
+                        "Elige el entorno para adaptar el banco de ejercicios a tu material.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        entornosOpciones.forEach { op ->
+                            FilterChip(
+                                selected = entornoSeleccionado == op.id,
+                                onClick = { entornoSeleccionado = op.id },
+                                label = { Text("${op.emoji ?: ""} ${op.etiqueta}") }
+                            )
+                        }
+                    }
+                    entornoSeleccionado?.let { id ->
+                        entornosOpciones.find { it.id == id }?.descripcion?.let { desc ->
+                            Text(desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+                        }
+                    }
+                    if (materialCatalogo.isNotEmpty()) {
+                        HorizontalDivider()
+                        Text(
+                            "¿Con qué material cuentas?",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onBackground
                         )
+                        Text(
+                            "Opcional. Marca lo que tengas y el banco solo mostrará ejercicios que puedas hacer. Si no marcas nada, verás todos los del entorno.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            materialCatalogo.forEach { mat ->
+                                val sel = materialSeleccionado.contains(mat.id)
+                                FilterChip(
+                                    selected = sel,
+                                    onClick = {
+                                        if (sel) materialSeleccionado.remove(mat.id)
+                                        else materialSeleccionado.add(mat.id)
+                                    },
+                                    label = { Text("${mat.icono ?: ""} ${mat.label}") }
+                                )
+                            }
+                        }
                     }
                 }
-                entornoSeleccionado?.let { id ->
-                    entornosOpciones.find { it.id == id }?.descripcion?.let { desc ->
-                        Text(desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
-                    }
-                }
-                Spacer(modifier = Modifier.weight(1f))
                 Button(
                     onClick = { if (entornoSeleccionado != null) pasoEnfoque = false },
                     enabled = entornoSeleccionado != null,
@@ -315,58 +364,17 @@ fun CrearRutinaScreen(
 
             item {
                 Text(
-                    text = "Banco de ejercicios (${ejerciciosDisponibles.size})",
+                    text = if (ejercicios.isEmpty()) "Tu rutina" else "Tu rutina (${ejercicios.size})",
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    "Abre un grupo muscular y pulsa + para añadir.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    listOf(
-                        null to "Todos",
-                        "FUERZA" to "Fuerza",
-                        "RESISTENCIA" to "Resistencia",
-                        "VELOCIDAD" to "Velocidad"
-                    ).forEach { (pilar, label) ->
-                        FilterChip(
-                            selected = filtroPilar == pilar,
-                            onClick = { filtroPilar = pilar },
-                            label = { Text(label, maxLines = 1, softWrap = false) }
-                        )
-                    }
-                }
-                if (cargandoEjercicios) {
-                    CircularProgressIndicator(modifier = Modifier.padding(8.dp))
-                }
-                if (errorCargaEjercicios.isNotEmpty()) {
-                    Text(errorCargaEjercicios, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                }
-            }
-
-            item {
-                BancoEjerciciosPorGrupo(
-                    ejercicios = ejerciciosDisponibles,
-                    idsYaAnadidos = ejercicios.mapNotNull { it.idEjercicio }.toSet(),
-                    onSeleccionar = { anadirEjercicio(it) },
-                    onVerDetalle = { ej ->
-                        ejercicioDetalleBanco = ej.toEjercicioPlan()
-                        prescripcionDetalleBanco = ""
-                    }
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
 
             if (ejercicios.isEmpty()) {
                 item {
                     Text(
-                        "Aún no has añadido ejercicios. Expande un grupo muscular arriba.",
+                        "Aún no has añadido ejercicios. Explora el banco de abajo y pulsa el botón + para añadirlos aquí.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -461,6 +469,57 @@ fun CrearRutinaScreen(
                         }
                     }
                 }
+            }
+
+            item {
+                Text(
+                    text = "Banco de ejercicios (${ejerciciosDisponibles.size})",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    "Abre un grupo muscular y pulsa + para añadirlo a tu rutina.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    listOf(
+                        null to "Todos",
+                        "FUERZA" to "Fuerza",
+                        "RESISTENCIA" to "Resistencia",
+                        "VELOCIDAD" to "Velocidad"
+                    ).forEach { (pilar, label) ->
+                        FilterChip(
+                            selected = filtroPilar == pilar,
+                            onClick = { filtroPilar = pilar },
+                            label = { Text(label, maxLines = 1, softWrap = false) }
+                        )
+                    }
+                }
+                if (cargandoEjercicios) {
+                    CircularProgressIndicator(modifier = Modifier.padding(8.dp))
+                }
+                if (errorCargaEjercicios.isNotEmpty()) {
+                    Text(errorCargaEjercicios, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                }
+            }
+
+            item {
+                BancoEjerciciosPorGrupo(
+                    ejercicios = ejerciciosDisponibles,
+                    idsYaAnadidos = ejercicios.mapNotNull { it.idEjercicio }.toSet(),
+                    onSeleccionar = { anadirEjercicio(it) },
+                    onVerDetalle = { ej ->
+                        ejercicioDetalleBanco = ej.toEjercicioPlan()
+                        prescripcionDetalleBanco = ""
+                    }
+                )
             }
 
             if (uiState.error.isNotEmpty()) {

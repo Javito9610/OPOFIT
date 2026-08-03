@@ -140,7 +140,9 @@ class PlanGeneradorService {
        FROM ejercicios`
     );
     return rows
-      .filter((e) => EntornoEntreno.ejercicioCompatible(e.entornos, entorno))
+      // Clasificador POR NOMBRE (autoritativo): coherencia entorno↔ejercicio
+      // aunque el CSV almacenado sea ruidoso (catálogo base sin etiquetar).
+      .filter((e) => EntornoEntreno.ejercicioCompatiblePorNombre(e, entorno))
       // Filtro defensivo extra para que NUNCA se cuele saco / trineo / yoke
       // en gym comercial — el banco puede tener datos legacy ruidosos.
       .filter((e) => EntornoEntreno.ejercicioRealistaParaEntorno(e.nombre, e.equipamiento, entorno))

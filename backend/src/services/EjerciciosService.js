@@ -7,7 +7,7 @@ const EjercicioInteligenteService = require('./EjercicioInteligenteService');
  * Sirve para responder: "¿el usuario que solo tiene KB+COMBA puede hacer este ejercicio?"
  */
 const EQUIP_MAP = [
-  { re: /barra dominadas|barra horizontal|barra vertical/i,    cod: 'BARRA_DOMINADAS' },
+  { re: /barra dominadas|barra horizontal|barra vertical|barra fija|paralelas/i, cod: 'BARRA_DOMINADAS' },
   { re: /barra olímpica|barra olimpica|barra\+banco|banco\+barra|barra\b/i, cod: 'BARRA_OLIMPICA' },
   { re: /\bkb\b|kettlebell/i,                                  cod: 'KB' },
   { re: /mancuerna/i,                                          cod: 'MANCUERNAS' },
@@ -103,18 +103,26 @@ class EjerciciosService {
     const ent = EntornoEntreno.normalizarEntorno(entorno);
     let filtrados = !ent || ent === 'MIXTO'
       ? rows
-      : rows.filter((e) => {
-          const csv = e.entornos || EntornoEntreno.inferirEntornosDesdeEquipamiento(e.equipamiento, e.pilar).join(',');
-          return EntornoEntreno.ejercicioCompatible(csv, ent)
-              && EntornoEntreno.ejercicioRealistaParaEntorno(e.nombre, e.equipamiento, ent);
-        });
+      : rows.filter((e) =>
+          // Clasificador POR NOMBRE (autoritativo) + filtro defensivo. Antes se
+          // usaba el CSV almacenado (poco fiable en el catálogo base) y colaba
+          // "press banca" en calistenia. Ahora manda el nombre.
+          EntornoEntreno.ejercicioCompatiblePorNombre(e, ent)
+            && EntornoEntreno.ejercicioRealistaParaEntorno(e.nombre, e.equipamiento, ent)
+        );
 
     // Filtrado por material disponible (CSV de códigos)
     if (material && String(material).trim()) {
       const userMat = String(material).toUpperCase().split(',').map((m) => m.trim()).filter(Boolean);
       // Si tiene GIMNASIO_COMPLETO o nada → no filtra
       if (!userMat.includes('GIMNASIO_COMPLETO')) {
-        filtrados = filtrados.filter((e) => esEquipamientoCubierto(e.equipamiento, userMat));
+        filtrados = filtrados.filter((e) => {
+          // El catálogo base tiene equipamiento NULL → usamos el equip que
+          // deduce el clasificador por nombre para que el filtro de material
+          // funcione igualmente (mancuernas, kettlebell, barra, comba...).
+          const equip = e.equipamiento || EntornoEntreno.clasificarEntornos(e.nombre, e.equipamiento, e.pilar).equip;
+          return esEquipamientoCubierto(equip, userMat);
+        });
       }
     }
 
