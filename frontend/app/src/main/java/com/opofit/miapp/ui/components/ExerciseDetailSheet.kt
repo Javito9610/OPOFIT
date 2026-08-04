@@ -148,14 +148,17 @@ fun ExerciseDetailSheet(
                 // Vídeo YouTube (rojo de marca YouTube).
                 androidx.compose.material3.Button(
                     onClick = {
-                        val q = java.net.URLEncoder.encode(
-                            "${ejercicio.nombre} técnica correcta",
-                            "UTF-8"
-                        )
-                        com.opofit.miapp.utils.UrlOpener.open(
-                            ctxLocal,
+                        // Si hay vídeo curado (correcto y verificado) lo abrimos
+                        // DIRECTO; si no, caemos a una búsqueda en YouTube.
+                        val vid = ejercicio.video_url?.takeIf { it.startsWith("http") }
+                        val destino = vid ?: run {
+                            val q = java.net.URLEncoder.encode(
+                                "${ejercicio.nombre} técnica correcta",
+                                "UTF-8"
+                            )
                             "https://www.youtube.com/results?search_query=$q"
-                        )
+                        }
+                        com.opofit.miapp.utils.UrlOpener.open(ctxLocal, destino)
                     },
                     modifier = Modifier
                         .weight(1f)
@@ -198,7 +201,7 @@ fun ExerciseDetailSheet(
                     Icon(Icons.Outlined.Timer, null, Modifier.size(20.dp))
                     androidx.compose.foundation.layout.Spacer(Modifier.size(8.dp))
                     Text(
-                        "Animación",
+                        "Imágenes",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold
                     )

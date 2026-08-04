@@ -2,6 +2,7 @@ const db = require('../config/db');
 const EntornoEntreno = require('../utils/EntornoEntreno');
 const EjercicioInteligenteService = require('./EjercicioInteligenteService');
 const { CURADAS } = require('./EjercicioExplicacionesCuradas');
+const { getVideoUrl } = require('./EjercicioVideoService');
 
 function normNombre(s) {
   return String(s || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
@@ -83,8 +84,14 @@ function enriquecerInstrucciones(rows) {
     }
 
     const { explicacion_json, ...limpio } = e; // no exponemos el JSON crudo
+    // Vídeo YouTube curado (correcto y verificado) cuando la BD no tiene uno:
+    // así el botón "Vídeo" del detalle abre la demostración EXACTA del ejercicio.
+    const videoCurado = (e.video_url && String(e.video_url).startsWith('http'))
+      ? e.video_url
+      : (getVideoUrl(e.nombre)?.url || null);
     return {
       ...limpio,
+      video_url: videoCurado,
       instrucciones_tecnicas: instr.length > 24
         ? instr
         : (rico?.instrucciones_tecnicas || EjercicioInteligenteService.generarInstrucciones(e)),
