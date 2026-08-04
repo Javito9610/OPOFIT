@@ -44,14 +44,59 @@ const CARGA_RELATIVA = {
  *  - Pilar (FUERZA/RESISTENCIA/VELOCIDAD/CORE/MOVILIDAD)
  *  - Posición en la sesión (1º = más pesado/exigente, último = accesorio o core)
  */
-function objetivoDe(pilar, posicion) {
+function objetivoDe(pilar, posicion, reps, unidad) {
   const p = String(pilar || '').toUpperCase();
-  if (p === 'RESISTENCIA' || p === 'CARDIO') return 'resistencia';
-  if (p === 'MOVILIDAD') return 'resistencia';
+  if (p === 'RESISTENCIA' || p === 'CARDIO' || p === 'MOVILIDAD') return 'resistencia';
+  // MANDA EL Nº DE REPETICIONES (principio clásico de fuerza): 1-5 reps = fuerza
+  // máxima (80-90%), 6-12 = hipertrofia (65-80%), 13+ = resistencia muscular.
+  // Antes se decidía solo por la POSICIÓN → un 3×5 salía como hipertrofia. Mal.
+  const u = String(unidad || 'reps').toLowerCase();
+  const r = Number(reps);
+  if ((u === 'reps' || u === 'rep') && Number.isFinite(r) && r > 0) {
+    if (r <= 6) return 'fuerza';        // 1-6 reps = fuerza (cargas altas)
+    if (r <= 12) return 'hipertrofia';   // 7-12 = hipertrofia
+    return 'resistencia';                // 13+ = resistencia muscular
+  }
   if (p === 'VELOCIDAD') return posicion <= 2 ? 'fuerza' : 'hipertrofia';
   if (posicion === 1) return 'fuerza';
   if (posicion >= 4) return 'resistencia';
   return 'hipertrofia';
+}
+
+function normalizarNombre(s) {
+  return String(s || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+}
+
+/** RPE del cardio según la INTENSIDAD que indica el nombre (no todo el cardio
+ *  es RPE 5). Intervalos/VO2máx/series/umbral = muy duro; Z2/rodaje/suave = fácil. */
+function rpeCardio(nombre) {
+  const n = normalizarNombre(nombre);
+  if (/vo2|9[0-9]\s*%|8[5-9]\s*%|\bmax\b|m[aá]xim|sprint|\bseries\b|interval|umbral|\btempo\b|cuesta|hiit|tabata|\br[0-9]/.test(n)) return 9;
+  if (/z3|z4|fartlek|cambios de ritmo|progresi|moderad|\britmo\b/.test(n)) return 7;
+  return 5; // Z2 / rodaje / continua / suave / recuperacion
+}
+
+/** Valores de descanso REALISTAS y redondeados (nada de "114 s"). */
+const DESCANSOS_ESTANDAR = [20, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300];
+function snapDescanso(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return DESCANSOS_ESTANDAR.reduce((best, s) => (Math.abs(s - n) < Math.abs(best - n) ? s : best), DESCANSOS_ESTANDAR[0]);
+}
+
+/** Descanso COHERENTE: 1) respeta el que viene en el nombre ("R 2'", "rec 90s"),
+ *  2) si no, redondea a un valor estándar, 3) si no hay, usa el estándar por objetivo. */
+function descansoCoherente(descanso, nombre, objetivo, patron) {
+  const n = normalizarNombre(nombre);
+  const min = n.match(/\b(?:r|rec|recuperaci[oó]n|descanso|rest)\s*[:=]?\s*(\d+)\s*['′m]/);
+  if (min) return Number(min[1]) * 60;
+  const seg = n.match(/\b(?:r|rec|recuperaci[oó]n|descanso|rest)\s*[:=]?\s*(\d+)\s*["″s]/);
+  if (seg) return Number(seg[1]);
+  const snapped = snapDescanso(descanso);
+  if (snapped) return snapped;
+  if (patron === 'MOB') return 30;
+  const estandar = { fuerza: 180, hipertrofia: 90, resistencia: 60 };
+  return estandar[objetivo] || 90;
 }
 
 /**
@@ -64,19 +109,40 @@ function objetivoDe(pilar, posicion) {
  */
 function enriquecer(prescripcion, ej, ctx = {}) {
   const patron = Patron.clasificar(ej);
-  const objetivo = objetivoDe(ej.pilar || ej.categoria, ctx.posicion || 1);
+  const objetivo = objetivoDe(
+    ej.pilar || ej.categoria,
+    ctx.posicion || 1,
+    prescripcion.repeticiones,
+    prescripcion.unidad
+  );
   const meta = META_POR_PATRON[patron] || META_POR_PATRON.SQUAT;
   const carga = CARGA_RELATIVA[objetivo] || CARGA_RELATIVA.hipertrofia;
 
-  // Movilidad / pliometría / sprint: no aplica % de 1RM.
-  const sinCarga = ['MOB', 'PLYO', 'SPRINT', 'AGI', 'LOCO', 'ANTI_EXT'].includes(patron);
+  // Detección ROBUSTA de cardio: por patrón, por pilar RESISTENCIA/VELOCIDAD o
+  // por el nombre (metros, km, VO2, carrera, natación, series...). El clasificador
+  // de patrón no siempre pilla "4×1000m VO2máx" → aquí sí.
+  const nn = normalizarNombre(ej.nombre);
+  const pil = String(ej.pilar || ej.categoria || '').toUpperCase();
+  const esCardio = ['LOCO', 'SPRINT', 'AGI', 'PLYO'].includes(patron)
+    || pil === 'RESISTENCIA'
+    || /\bvo2|\bkm\b|\d+\s*m\b|carrera|correr|trote|rodaje|fartlek|nataci|\bcrol\b|\bseries\b|interval|cuesta/.test(nn);
+
+  // Movilidad / pliometría / sprint / cardio: no aplica % de 1RM.
+  const sinCarga = ['MOB', 'PLYO', 'SPRINT', 'AGI', 'LOCO', 'ANTI_EXT'].includes(patron) || esCardio;
+
+  // RPE: en cardio/intervalos manda la INTENSIDAD del nombre (no todo es RPE 5).
+  const rpe = esCardio ? rpeCardio(ej.nombre) : (meta.rpe[objetivo] ?? meta.rpe.hipertrofia);
+
+  // Descanso coherente (respeta el del nombre, redondea a valor pro).
+  const descanso = descansoCoherente(prescripcion.descanso, ej.nombre, objetivo, patron);
 
   return {
     ...prescripcion,
+    descanso,
     patron_movimiento: patron,
     objetivo,
     tempo: meta.tempo,
-    rpe_objetivo: meta.rpe[objetivo] ?? meta.rpe.hipertrofia,
+    rpe_objetivo: rpe,
     rango_rm: sinCarga ? null : carga.rangoRm,
     nota_carga: sinCarga ? null : carga.nota
   };

@@ -182,7 +182,19 @@ function generarPrescripcion(ej, ctx = {}) {
 
   const rango = RANGOS[clasif.perfil] || RANGOS.FUERZA_GENERAL;
   const series = variar(seed, `${key}|s`, rango.series[0], rango.series[1]);
-  const repeticiones = variar(seed, `${key}|r`, rango.reps[0], rango.reps[1]);
+
+  // PRINCIPIO PRO: el ejercicio PRINCIPAL del día (posición 1) en un compuesto
+  // de fuerza va PESADO y a reps bajas (4-6 = fuerza). Los accesorios (posición
+  // posterior) van a más reps (hipertrofia). Antes el básico salía a 12 reps,
+  // que ningún entrenador programa como ejercicio principal.
+  const COMPUESTO_FUERZA = ['PRESS', 'DOMINADA', 'REMO', 'PIERNA', 'CADENA_POSTERIOR'];
+  let repsMin = rango.reps[0];
+  let repsMax = rango.reps[1];
+  if (Number(ctx.posicion) === 1 && COMPUESTO_FUERZA.includes(clasif.perfil) && (clasif.unidad || 'reps') === 'reps') {
+    repsMin = 4;
+    repsMax = 6;
+  }
+  const repeticiones = variar(seed, `${key}|r`, repsMin, repsMax);
   const descanso = variar(seed, `${key}|d`, rango.descanso[0], rango.descanso[1]);
 
   return {
