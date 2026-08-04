@@ -2,7 +2,10 @@ package com.opofit.miapp.data.responsemodels
 
 data class EjercicioRealizado(
     val id_ejercicio: Int,
-    val valor: Double
+    val valor: Double,
+    // Peso (kg) levantado, opcional. Solo en ejercicios de fuerza donde el
+    // usuario lo anota → seguimiento de sobrecarga progresiva.
+    val peso: Double? = null
 )
 
 data class RegistrarHistorialRequest(

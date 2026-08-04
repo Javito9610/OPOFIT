@@ -113,6 +113,8 @@ private data class EjercicioEstado(
     val idEjercicio: Int,
     var completado: Boolean = false,
     var valorConseguido: String = "",
+    // Peso (kg) levantado, opcional (ejercicios de fuerza). Sobrecarga progresiva.
+    var pesoKg: String = "",
     val objetivoSegundos: Int? = null,
     val tipo: String? = null,
     var distancia: String = "",
@@ -714,7 +716,13 @@ fun EntrenamientosScreen(
                                     cronometroActivo = false
                                     val realizados = ejerciciosEstado
                                         .filter { it.completado }
-                                        .map { EjercicioRealizado(it.idEjercicio, it.valorConseguido.replace(',', '.').toDoubleOrNull() ?: 0.0) }
+                                        .map {
+                                            EjercicioRealizado(
+                                                it.idEjercicio,
+                                                it.valorConseguido.replace(',', '.').toDoubleOrNull() ?: 0.0,
+                                                peso = it.pesoKg.replace(',', '.').toDoubleOrNull()?.takeIf { p -> p > 0 }
+                                            )
+                                        }
                                     val rutinaOpoId = diaPlanSesion?.id_rutina_opo
                                         ?: initialRutinaOpoId
                                         ?: rutinasSelector.getOrNull(selectedRutinaIndex)?.id_rutina_opo
@@ -1230,7 +1238,15 @@ fun EntrenamientosScreen(
                         onInfoClick = { mostrarDetalleEjercicio(activo) },
                         modalidad = activo.modalidad,
                         scoreTipo = activo.scoreTipo,
-                        timeCapSeg = activo.timeCapSeg
+                        timeCapSeg = activo.timeCapSeg,
+                        // Peso: solo en ejercicios de fuerza (no cardio, medidos en reps).
+                        mostrarPeso = activo.tipo == null &&
+                            (unidadEff == "reps" || unidadEff.isNullOrBlank()) &&
+                            activo.modalidad?.lowercase() !in setOf("wod", "amrap", "emom", "for_time", "tabata"),
+                        pesoKg = activo.pesoKg,
+                        onPesoChange = { v ->
+                            ejerciciosEstado[pasoActualIdx] = activo.copy(pesoKg = v)
+                        }
                     )
                 }
             }

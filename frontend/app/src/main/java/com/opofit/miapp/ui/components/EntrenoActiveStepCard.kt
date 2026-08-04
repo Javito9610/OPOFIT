@@ -58,6 +58,10 @@ fun EntrenoActiveStepCard(
     modalidad: String? = null,
     scoreTipo: String? = null,
     timeCapSeg: Int? = null,
+    // --- Peso levantado (opcional, ejercicios de fuerza) ---
+    mostrarPeso: Boolean = false,
+    pesoKg: String = "",
+    onPesoChange: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     ElevatedCard(
@@ -146,6 +150,20 @@ fun EntrenoActiveStepCard(
                         Spacer(Modifier.size(6.dp))
                         ButtonText("Aplicar ${TimeFormatUtil.formatElapsedMs(elapsedMsCronometro)}")
                     }
+                }
+                // Peso levantado (opcional): sobrecarga progresiva. Se muestra en
+                // ejercicios de fuerza; el usuario lo deja vacío si es peso corporal.
+                if (mostrarPeso) {
+                    androidx.compose.material3.OutlinedTextField(
+                        value = pesoKg,
+                        onValueChange = onPesoChange,
+                        label = { Text("Peso levantado (kg) — opcional") },
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                        ),
+                        singleLine = true
+                    )
                 }
                 // Orden de prioridad para elegir el input:
                 //   1) Modalidad WOD/AMRAP/EMOM/etc → WodInput (counters + cap).

@@ -154,6 +154,14 @@ class DbMigrationService {
         'TEXT NULL'
       );
 
+      // Peso (kg) levantado en cada resultado, para seguimiento de sobrecarga
+      // progresiva en ejercicios de fuerza. NULL cuando no aplica (cardio, etc.).
+      await DbMigrationService.addColumnIfMissing(
+        'registro_resultados',
+        'peso_kg',
+        'DECIMAL(6,2) NULL'
+      );
+
       await DbMigrationService.addColumnIfMissing(
         'oposiciones',
         'incluida_gratis',

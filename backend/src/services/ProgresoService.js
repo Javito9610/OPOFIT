@@ -89,11 +89,13 @@ class ProgresoService {
       );
       const idHistorial = resHistorial.insertId;
       const sqlResultados = `
-                INSERT INTO registro_resultados 
-                (ejercicios_id_ejercicio, historial_sesiones_id_historial_sesiones, valor_conseguido) 
-                VALUES (?, ?, ?)`;
+                INSERT INTO registro_resultados
+                (ejercicios_id_ejercicio, historial_sesiones_id_historial_sesiones, valor_conseguido, peso_kg)
+                VALUES (?, ?, ?, ?)`;
       for (const item of ejercicios) {
-        await connection.query(sqlResultados, [item.id_ejercicio, idHistorial, item.valor]);
+        // peso_kg opcional: solo en ejercicios de fuerza donde el usuario lo anota.
+        const pesoKg = item.peso != null && Number(item.peso) > 0 ? Number(item.peso) : null;
+        await connection.query(sqlResultados, [item.id_ejercicio, idHistorial, item.valor, pesoKg]);
       }
       await connection.commit();
       return {
@@ -109,7 +111,7 @@ class ProgresoService {
     }
   }
   static async obtenerEvolucionEntreno(userId, idEjercicio) {
-    const sql = `SELECT h.fecha_entreno, h.duracion_oficial, r.valor_conseguido, e.nombre AS nombre_ejercicio
+    const sql = `SELECT h.fecha_entreno, h.duracion_oficial, r.valor_conseguido, r.peso_kg, e.nombre AS nombre_ejercicio
             FROM registro_resultados r
             JOIN historial_sesiones h ON r.historial_sesiones_id_historial_sesiones = h.id_historial_sesion
             JOIN ejercicios e ON r.ejercicios_id_ejercicio = e.id_ejercicio
