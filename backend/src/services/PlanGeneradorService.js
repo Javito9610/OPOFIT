@@ -277,13 +277,15 @@ class PlanGeneradorService {
   }
 
   static async generarSemana(planBase, userId, entorno, seed, opts = {}) {
-    const { soloDiaId, nivel, lesiones, tiempoDisponibleMin, fatigaPrevia } = opts;
+    const { soloDiaId, nivel, lesiones, tiempoDisponibleMin, fatigaPrevia, materialDisponible } = opts;
     if (!entorno || entorno === 'MIXTO') {
       return { plan: planBase, sustituciones: 0 };
     }
-    const prefsMat = await PlanGeneradorService.obtenerPrefsUsuario(userId);
-    const catalogo = await PlanGeneradorService.cargarCatalogo(entorno, prefsMat.materialDisponible);
-    if (catalogo.length < 8) return { plan: planBase, sustituciones: 0 };
+    const catalogo = await PlanGeneradorService.cargarCatalogo(entorno, materialDisponible);
+    // Floor bajo: con el clasificador estricto + filtro de material el catálogo
+    // puede quedar más pequeño; en producción siempre hay cientos, así que 5
+    // basta para sustituir sin quedarnos sin variedad.
+    if (catalogo.length < 5) return { plan: planBase, sustituciones: 0 };
     const indice = PlanGeneradorService.indexarCatalogo(catalogo);
     let sustituciones = 0;
     let idx = 0;
@@ -494,7 +496,8 @@ class PlanGeneradorService {
       nivel,
       lesiones: prefsFull.lesiones,
       tiempoDisponibleMin: prefsFull.tiempoDisponibleMin,
-      fatigaPrevia: prefsFull.fatigaPrevia
+      fatigaPrevia: prefsFull.fatigaPrevia,
+      materialDisponible: prefsFull.materialDisponible
     });
     const ultimasSesiones = await PlanGeneradorService.obtenerUltimasSesiones(userId, 3);
     const coaching = await PlanIaService.generarCoaching({
@@ -565,7 +568,8 @@ class PlanGeneradorService {
         nivel,
         lesiones,
         tiempoDisponibleMin,
-        fatigaPrevia
+        fatigaPrevia,
+        materialDisponible: prefsR.materialDisponible
       }
     );
 

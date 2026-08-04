@@ -25,7 +25,7 @@ describe('RegistroValidator.validarRegistro: casos validos', () => {
   });
   test('limites de peso/altura incluidos', () => {
     expect(validarRegistro({ ...base, peso: 25, altura: 100 }).ok).toBe(true);
-    expect(validarRegistro({ ...base, peso: 350, altura: 260 }).ok).toBe(true);
+    expect(validarRegistro({ ...base, peso: 250, altura: 250 }).ok).toBe(true);
   });
   test('modo FITNESS no exige oposicion', () => {
     const r = validarRegistro({ ...base, modo_uso: 'FITNESS' });

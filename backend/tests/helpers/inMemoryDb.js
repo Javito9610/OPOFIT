@@ -766,9 +766,12 @@ function query(sql, params = []) {
 
   // ---------- RUTINAS PERS ----------
   if (s.startsWith('select id_rutina_pers from rutinas_pers')) {
-    if (s.includes('usuarios_id_usuario = ? and nombre_personalizado')) {
+    if (s.includes('nombre_personalizado')) {
+      // Soporta la comprobación de duplicado con LOWER(TRIM(...)) — comparación
+      // insensible a mayúsculas y espacios, igual que la query real.
+      const norm = (v) => String(v || '').trim().toLowerCase();
       const r = state.rutinas_pers.find(
-        (x) => x.usuarios_id_usuario === Number(params[0]) && x.nombre_personalizado === params[1]
+        (x) => x.usuarios_id_usuario === Number(params[0]) && norm(x.nombre_personalizado) === norm(params[1])
       );
       return Promise.resolve([r ? [{ id_rutina_pers: r.id_rutina_pers }] : [], []]);
     }

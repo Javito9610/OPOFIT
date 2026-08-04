@@ -13,6 +13,31 @@ const NOMBRES_DIA = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', '
  * Reparte N días de entreno a lo largo de la semana de la forma más
  * equilibrada posible: 3 → L/X/V, 4 → L/M/J/V, 5 → L-V, etc.
  */
+/**
+ * Ordena los días ALTERNANDO enfoques (round-robin por grupo) para que no
+ * caigan dos sesiones del mismo tipo seguidas. Con 2 carrera + 1 fuerza sale
+ * "carrera · fuerza · carrera", no "carrera · carrera · fuerza". Principio de
+ * recuperación por patrón: separar estímulos iguales mejora la adaptación.
+ */
+function ordenarAlternando(dias) {
+  const grupos = {};
+  for (const d of dias) {
+    const e = String(d.enfoque || 'OTRO').toUpperCase();
+    (grupos[e] = grupos[e] || []).push(d);
+  }
+  // El grupo más numeroso se reparte primero para maximizar su separación.
+  const claves = Object.keys(grupos).sort((a, b) => grupos[b].length - grupos[a].length);
+  const out = [];
+  let quedan = dias.length;
+  let guard = 0;
+  while (quedan > 0 && guard++ < 1000) {
+    for (const k of claves) {
+      if (grupos[k].length) { out.push(grupos[k].shift()); quedan--; }
+    }
+  }
+  return out;
+}
+
 function repartirEnSemana(n) {
   const mapa = {
     1: [3],
@@ -176,39 +201,38 @@ class PlanesService {
    */
   static adaptarDiasSemana(diasOrig, diasObjetivo, pilaresDebiles = []) {
     const dias = Array.isArray(diasOrig) ? [...diasOrig] : [];
-    if (!dias.length || !Number.isFinite(diasObjetivo) || diasObjetivo === dias.length) {
-      return { dias, diasObjetivo: dias.length };
-    }
-    const N = Math.min(7, Math.max(1, Math.round(diasObjetivo)));
+    if (!dias.length) return { dias, diasObjetivo: 0 };
+
+    // N = días objetivo del usuario, acotado a lo que el banco puede ofrecer
+    // (no inventamos sesiones vacías: rompería historial/registro).
+    const objetivo = Number.isFinite(diasObjetivo) ? Math.round(diasObjetivo) : dias.length;
+    const N = Math.min(dias.length, Math.min(7, Math.max(1, objetivo)));
+
+    // 1) SELECCIÓN: si hay que recortar, conservamos priorizando el pilar débil
+    //    (para que la semana refuerce tu punto flojo) y el orden deportivo base.
     const PRIO_BASE = { RESISTENCIA: 0, FUERZA: 1, VELOCIDAD: 2, CORE: 3, MOVILIDAD: 4 };
     const debilSet = new Set((pilaresDebiles || []).map((p) => String(p.pilar || p).toUpperCase()));
     const score = (d) => {
       const enf = String(d.enfoque || '').toUpperCase();
-      const base = PRIO_BASE[enf] ?? 5;
-      const bonus = debilSet.has(enf) ? -10 : 0;
-      return base + bonus;
+      return (PRIO_BASE[enf] ?? 5) + (debilSet.has(enf) ? -10 : 0);
     };
+    const conservadas = N < dias.length
+      ? [...dias].sort((a, b) => score(a) - score(b)).slice(0, N)
+      : [...dias];
 
-    if (N < dias.length) {
-      const ordenadas = [...dias].sort((a, b) => score(a) - score(b)).slice(0, N);
-      const conservadasIds = new Set(ordenadas.map((d) => d.id_plan_dia));
-      const conservadas = dias.filter((d) => conservadasIds.has(d.id_plan_dia));
-      const slots = repartirEnSemana(N);
-      const reasignadas = conservadas.map((d, idx) => ({
-        ...d,
-        dia_semana: slots[idx],
-        nombre_dia: NOMBRES_DIA[slots[idx]] || d.nombre_dia
-      }));
-      return { dias: reasignadas, diasObjetivo: N };
-    }
+    // 2) ORDEN: alternamos enfoques (nada de 2 sesiones iguales seguidas).
+    const alternadas = ordenarAlternando(conservadas);
 
-    // Si el usuario pide MÁS días que el banco trae, no inventamos sesiones
-    // vacías (rompería registro de entreno e historial). Mantenemos las
-    // sesiones reales del banco hasta que la IA genere días extra con
-    // ejercicios de verdad.
-    if (N > dias.length) {
-      return { dias, diasObjetivo: dias.length };
-    }
+    // 3) REPARTO: colocamos en días de la semana bien espaciados (descanso
+    //    entre sesiones duras).
+    const slots = repartirEnSemana(alternadas.length);
+    const reasignadas = alternadas.map((d, idx) => ({
+      ...d,
+      dia_semana: slots[idx] ?? d.dia_semana,
+      orden: idx + 1,
+      nombre_dia: NOMBRES_DIA[slots[idx]] || d.nombre_dia
+    }));
+    return { dias: reasignadas, diasObjetivo: reasignadas.length };
   }
 
   static async obtenerPlanSemanal(userId, idOposicion, nivel, genero, opts = {}) {

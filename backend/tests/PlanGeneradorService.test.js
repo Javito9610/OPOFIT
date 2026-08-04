@@ -135,6 +135,33 @@ const catalogoCasa = [
     equipamiento: 'Suelo',
     entornos: 'CASA',
     tipo_ilustracion: 'PLANK'
+  },
+  {
+    id_ejercicio: 109,
+    nombre: 'Flexiones diamante',
+    pilar: 'FUERZA',
+    grupo_muscular: 'Pecho',
+    equipamiento: 'Suelo',
+    entornos: 'CASA',
+    tipo_ilustracion: 'PUSH'
+  },
+  {
+    id_ejercicio: 110,
+    nombre: 'Flexiones pike',
+    pilar: 'FUERZA',
+    grupo_muscular: 'Pecho',
+    equipamiento: 'Suelo',
+    entornos: 'CASA',
+    tipo_ilustracion: 'PUSH'
+  },
+  {
+    id_ejercicio: 111,
+    nombre: 'Sentadilla búlgara (silla)',
+    pilar: 'FUERZA',
+    grupo_muscular: 'Pierna',
+    equipamiento: 'Silla',
+    entornos: 'CASA',
+    tipo_ilustracion: 'SQUAT'
   }
 ];
 
