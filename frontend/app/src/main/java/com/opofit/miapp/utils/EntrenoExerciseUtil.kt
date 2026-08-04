@@ -14,17 +14,34 @@ object EntrenoExerciseUtil {
     private val PATRON_NATACION = Regex("""\b(natación|natacion|nadar|swim)\b""", RegexOption.IGNORE_CASE)
     private val PATRON_BICI = Regex("""\b(bici|ciclismo|bicicleta|bike|cycling)\b""", RegexOption.IGNORE_CASE)
 
+    // Cardio EN EL SITIO / de máquina: NO se mide en distancia por terreno ni
+    // lleva GPS (comba, burpees, jumping jacks, mountain climbers, HIIT/tabata,
+    // battle rope, elíptica, remo ergómetro, bici estática...). Antes la comba
+    // salía con "Distancia (km)" y botón de GPS — sin sentido.
+    private val PATRON_EN_SITIO = Regex(
+        """(comba|cuerda|\bunder|skip|jumping\s*jack|burpee|mountain\s*climb|escalador|rodillas\s*altas|high\s*knee|talones\s*al|shadow|sombra|battle\s*rope|cuerda\s*de\s*batalla|el[íi]ptica|remo\s*erg|\berg\b|est[áa]tic|cinta|tapiz|treadmill|circuito|\bhiit\b|tabata|\bemom\b|\bamrap\b|\bwod\b|salto)""",
+        RegexOption.IGNORE_CASE
+    )
+    // Desplazamiento real sobre el terreno (para el fallback de resistencia).
+    private val PATRON_LOCOMOTOR = Regex(
+        """\b(carrera|correr|trote|rodaje|sprint|fartlek|cuesta|marcha|caminar|paseo|km|\d+\s*m)\b""",
+        RegexOption.IGNORE_CASE
+    )
+
     fun esCardio(nombre: String, pilar: String? = null, enfoqueBloque: String? = null): Boolean =
         tipoCardio(nombre, pilar, enfoqueBloque) != null
 
     fun tipoCardio(nombre: String, pilar: String? = null, enfoqueBloque: String? = null): String? {
         val n = nombre.lowercase()
         if (PATRON_NATACION.containsMatchIn(n)) return "SWIM"
+        // Cardio en el sitio / máquina → NO distancia/GPS (usa reps o tiempo).
+        if (PATRON_EN_SITIO.containsMatchIn(n)) return null
         if (PATRON_BICI.containsMatchIn(n)) return "RUN"
         if (PATRON_CARDIO_CORRER.containsMatchIn(n)) return "RUN"
+        // Resistencia/velocidad genérica: solo es RUN si el nombre indica que te
+        // desplazas de verdad; si no, no es un ejercicio de distancia.
         val pil = (pilar ?: enfoqueBloque)?.uppercase()
-        if (pil == "RESISTENCIA") return "RUN"
-        if (pil == "VELOCIDAD" && Regex("""\b(sprint|arranque|velocidad)\b""", RegexOption.IGNORE_CASE).containsMatchIn(n)) {
+        if ((pil == "RESISTENCIA" || pil == "VELOCIDAD") && PATRON_LOCOMOTOR.containsMatchIn(n)) {
             return "RUN"
         }
         return null

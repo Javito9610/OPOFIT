@@ -132,8 +132,12 @@ class PlanGeneradorService {
     return { ...planActual, semana, sesion_hoy, proxima_sesion: proxima };
   }
 
-  static async cargarCatalogo(entorno) {
+  static async cargarCatalogo(entorno, material = null) {
     const EjercicioVideoService = require('./EjercicioVideoService');
+    const EjerciciosService = require('./EjerciciosService');
+    const userMat = Array.isArray(material)
+      ? material.filter((m) => m && m !== 'NADA')
+      : [];
     const [rows] = await db.query(
       `SELECT id_ejercicio, nombre, pilar, grupo_muscular, equipamiento,
               entornos, tipo_ilustracion, video_url, animacion_url, instrucciones_tecnicas
@@ -146,6 +150,9 @@ class PlanGeneradorService {
       // Filtro defensivo extra para que NUNCA se cuele saco / trineo / yoke
       // en gym comercial — el banco puede tener datos legacy ruidosos.
       .filter((e) => EntornoEntreno.ejercicioRealistaParaEntorno(e.nombre, e.equipamiento, entorno))
+      // Material del usuario: si marcó instrumentos, solo ejercicios que pueda
+      // hacer con ellos (o a peso corporal). Antes el plan ignoraba el material.
+      .filter((e) => userMat.length === 0 || EjerciciosService.cubreMaterial(e, userMat))
       .map((e) => {
         const nombre = EjercicioMetadataService.normalizarNombreEjercicio(e.nombre);
         const pilar = EntornoEntreno.normalizarPilar(e.pilar || 'FUERZA');
@@ -274,7 +281,8 @@ class PlanGeneradorService {
     if (!entorno || entorno === 'MIXTO') {
       return { plan: planBase, sustituciones: 0 };
     }
-    const catalogo = await PlanGeneradorService.cargarCatalogo(entorno);
+    const prefsMat = await PlanGeneradorService.obtenerPrefsUsuario(userId);
+    const catalogo = await PlanGeneradorService.cargarCatalogo(entorno, prefsMat.materialDisponible);
     if (catalogo.length < 8) return { plan: planBase, sustituciones: 0 };
     const indice = PlanGeneradorService.indexarCatalogo(catalogo);
     let sustituciones = 0;
@@ -652,7 +660,7 @@ class PlanGeneradorService {
     if (!dia) throw new Error('Día no encontrado en el plan');
     if (dia.completada) throw new Error('No puedes cambiar un día ya completado');
 
-    const catalogo = await PlanGeneradorService.cargarCatalogo(entorno);
+    const catalogo = await PlanGeneradorService.cargarCatalogo(entorno, materialDisponible);
     if (catalogo.length < 8) throw new Error('Catálogo insuficiente para diseñar la sesión');
 
     const { sesion, fuente } = await PlanIaService.disenarSesion({

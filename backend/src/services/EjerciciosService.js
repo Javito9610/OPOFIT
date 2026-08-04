@@ -19,7 +19,7 @@ const EQUIP_MAP = [
   { re: /mancuerna/i,                                          cod: 'MANCUERNAS' },
   { re: /\btrx\b/i,                                            cod: 'TRX' },
   { re: /anilla/i,                                             cod: 'ANILLAS' },
-  { re: /goma/i,                                               cod: 'GOMAS' },
+  { re: /goma|banda el[aá]stica|\bbanda\b/i,                    cod: 'GOMAS' },
   { re: /comba/i,                                              cod: 'COMBA' },
   { re: /saco|sandbag/i,                                       cod: 'SACO' },
   { re: /foam roller|foam/i,                                   cod: 'FOAM' },
@@ -102,6 +102,19 @@ function enriquecerInstrucciones(rows) {
 }
 
 class EjerciciosService {
+  /**
+   * ¿El ejercicio se puede hacer con el material que tiene el usuario?
+   * Reutilizable desde el generador de plan. userMat = array de códigos
+   * (['MANCUERNAS','COMBA',...]). GIMNASIO_COMPLETO o lista vacía = todo cubierto.
+   */
+  static cubreMaterial(ejercicio, userMat) {
+    if (!Array.isArray(userMat) || userMat.length === 0) return true;
+    if (userMat.includes('GIMNASIO_COMPLETO')) return true;
+    const equip = ejercicio.equipamiento
+      || EntornoEntreno.clasificarEntornos(ejercicio.nombre, ejercicio.equipamiento, ejercicio.pilar).equip;
+    return esEquipamientoCubierto(equip, userMat);
+  }
+
   /**
    * Filtra ejercicios. Acepta:
    *  - categoria, pilar, busqueda, grupo_muscular, entorno: filtros básicos.

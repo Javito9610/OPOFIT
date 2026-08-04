@@ -509,6 +509,13 @@ fun AjustesScreen(
                         )
                     }
                     Spacer(Modifier.height(8.dp))
+                    Text(
+                        "Ajusta cómo entrenas tu plan (días por semana, minutos por " +
+                            "sesión y lesiones a evitar). No cambia tu nivel ni el objetivo " +
+                            "de nota: solo adapta el MISMO plan a tu disponibilidad.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     // CTA Freeletics-style: abre el wizard de 4 pasos que
                     // ajusta objetivo + días + tiempo + lesiones de una vez.
                     com.opofit.miapp.ui.components.FreeleticsBigButton(
