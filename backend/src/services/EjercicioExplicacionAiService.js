@@ -59,7 +59,7 @@ class EjercicioExplicacionAiService {
   static async generar(ej) {
     const parsed = await PlanIaService.generarJson(construirPrompt(ej), {
       systemPrompt: SYSTEM,
-      maxTokens: 700,
+      maxTokens: 500,
       temperature: 0.5
     });
     return validar(parsed);
