@@ -416,7 +416,7 @@ class HistorialAvanzadoService {
     const [puntos] = await db.query(
       `SELECT h.id_historial_sesion AS id_sesion, h.fecha_entreno, h.duracion_oficial,
               h.gps_actividad_uuid,
-              r.valor_conseguido,
+              r.valor_conseguido, r.peso_kg,
               e.nombre AS nombre_ejercicio, e.categoria, e.pilar, e.video_url
        FROM registro_resultados r
        JOIN historial_sesiones h ON h.id_historial_sesion = r.historial_sesiones_id_historial_sesiones
@@ -499,6 +499,7 @@ class HistorialAvanzadoService {
         fechaEntreno: p.fecha_entreno,
         duracionSeg: p.duracion_oficial,
         valor: Number(p.valor_conseguido),
+        peso_kg: p.peso_kg != null ? Number(p.peso_kg) : null,
         gpsActividadUuid: p.gps_actividad_uuid
       }))
     };

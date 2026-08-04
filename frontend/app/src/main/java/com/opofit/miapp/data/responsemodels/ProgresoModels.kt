@@ -41,6 +41,7 @@ data class PuntoEvolucion(
     val fecha_entreno: String,
     val duracion_oficial: Int? = null,
     val valor_conseguido: Double,
+    val peso_kg: Double? = null,
     val nombre_ejercicio: String? = null
 )
 

@@ -116,6 +116,10 @@ fun EjercicioHistorialScreen(
             } else {
                 item { InfoChip("Haz al menos 2 sesiones de este ejercicio para ver gráficas de evolución.") }
             }
+            // Progreso de PESO levantado (sobrecarga progresiva) si el usuario lo anotó.
+            if (h.puntos.count { (it.peso_kg ?: 0.0) > 0.0 } >= 2) {
+                item { PesoChartCard(h) }
+            }
             if (h.esCardio) {
                 item { ChartRitmoCard(h) }
             }
@@ -371,6 +375,39 @@ private fun ChartCard(h: HistorialEjercicio) {
             pointLabels = h.puntos.map { fechaCorta(it.fechaEntreno) },
             invertY = h.menorEsMejor,
             lineColor = colorPilar(h.pilar)
+        )
+    }
+}
+
+@Composable
+private fun PesoChartCard(h: HistorialEjercicio) {
+    // Solo puntos con peso anotado, en orden cronológico.
+    val conPeso = h.puntos.filter { (it.peso_kg ?: 0.0) > 0.0 }
+    val pesos = conPeso.map { it.peso_kg ?: 0.0 }
+    val subida = (pesos.lastOrNull() ?: 0.0) - (pesos.firstOrNull() ?: 0.0)
+    ChartSection(
+        title = "Peso levantado por sesión",
+        subtitle = if (subida > 0) "Sobrecarga progresiva: +%.1f kg desde que empezaste 💪".format(subida)
+        else "Cada punto = el peso que registraste ese día",
+        icon = Icons.Filled.Timeline,
+        iconTint = MaterialTheme.colorScheme.primary,
+        hint = "Sube el peso poco a poco manteniendo la técnica. Esto es la clave para ganar fuerza."
+    ) {
+        LineAreaChart(
+            values = pesos,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp),
+            showDots = true,
+            yFormatter = { v -> "%.1f kg".format(v) },
+            yAxisLabel = "Peso (kg)",
+            xLabels = if (conPeso.size >= 3) listOf(
+                fechaCorta(conPeso.first().fechaEntreno),
+                fechaCorta(conPeso[conPeso.size / 2].fechaEntreno),
+                fechaCorta(conPeso.last().fechaEntreno)
+            ) else conPeso.map { fechaCorta(it.fechaEntreno) },
+            pointLabels = conPeso.map { fechaCorta(it.fechaEntreno) },
+            lineColor = MaterialTheme.colorScheme.primary
         )
     }
 }

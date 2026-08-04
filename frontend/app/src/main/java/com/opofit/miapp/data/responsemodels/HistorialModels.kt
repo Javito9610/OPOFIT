@@ -133,6 +133,7 @@ data class PuntoEjercicio(
     val fechaEntreno: String? = null,
     val duracionSeg: Int? = null,
     val valor: Double,
+    val peso_kg: Double? = null,
     val gpsActividadUuid: String? = null
 )
 
