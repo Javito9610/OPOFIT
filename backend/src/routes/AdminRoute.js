@@ -14,5 +14,6 @@ router.post('/pruebas', ctrl.upsertPrueba);
 router.post('/baremos', ctrl.upsertBaremo);
 router.post('/notificaciones/recordatorios', ctrl.enviarRecordatorios);
 router.post('/notificaciones/noticia', ctrl.enviarNoticia);
+router.post('/explicaciones/generar', ctrl.generarExplicaciones);
 
 module.exports = router;

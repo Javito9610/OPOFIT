@@ -465,6 +465,53 @@ Escribe 3-4 frases de coaching personalizado en español. Menciona racha o últi
     return { texto: fb, fuente: 'reglas' };
   }
 
+  /** ¿Hay alguna clave de IA configurada? (Groq/Claude/OpenAI/Gemini). */
+  static iaDisponible() {
+    return !!(
+      process.env.GROQ_API_KEY || process.env.CLAUDE_API_KEY ||
+      process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY
+    );
+  }
+
+  /**
+   * Generación GENÉRICA que devuelve JSON parseado (o null). Reutiliza los
+   * conectores existentes en orden Groq (gratis) > Claude > OpenAI > Gemini.
+   * Pensada para tareas puntuales (p.ej. generar la ficha de un ejercicio).
+   */
+  static async generarJson(prompt, opts = {}) {
+    const groqKey = process.env.GROQ_API_KEY;
+    const claudeKey = process.env.CLAUDE_API_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY;
+    const geminiKey = process.env.GEMINI_API_KEY;
+    if (!groqKey && !claudeKey && !openaiKey && !geminiKey) return null;
+    const o = {
+      json: true,
+      maxTokens: opts.maxTokens || 800,
+      temperature: opts.temperature ?? 0.5,
+      systemPrompt: opts.systemPrompt
+    };
+    let texto = null;
+    try {
+      if (groqKey) texto = await llamarGroq(groqKey, prompt, o);
+      else if (claudeKey) texto = await llamarClaude(claudeKey, prompt, o);
+      else if (openaiKey) texto = await llamarOpenAI(openaiKey, prompt, o);
+      else if (geminiKey) texto = await llamarGemini(geminiKey, prompt, o);
+    } catch (e) {
+      console.warn('[PlanIa.generarJson]', e.message);
+      return null;
+    }
+    if (!texto) return null;
+    let t = String(texto).trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
+    const i = t.indexOf('{');
+    const j = t.lastIndexOf('}');
+    if (i >= 0 && j > i) t = t.slice(i, j + 1);
+    try {
+      return JSON.parse(t);
+    } catch (_) {
+      return null;
+    }
+  }
+
   /**
    * Diseña la lista de ejercicios de UNA sesión.
    * @param {object} ctx

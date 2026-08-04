@@ -146,6 +146,14 @@ class DbMigrationService {
         "VARCHAR(32) NOT NULL DEFAULT 'reps'"
       );
 
+      // Cache de la ficha explicativa generada por IA (setup/ejecución/cues/
+      // errores/porqué). Se rellena una vez y se sirve desde aquí (0 coste al usar).
+      await DbMigrationService.addColumnIfMissing(
+        'ejercicios',
+        'explicacion_json',
+        'TEXT NULL'
+      );
+
       await DbMigrationService.addColumnIfMissing(
         'oposiciones',
         'incluida_gratis',

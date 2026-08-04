@@ -9,7 +9,8 @@
     "dev": "nodemon app.js",
     "micro:noticias": "node microservicios/run.js noticias",
     "micro:baremos": "node microservicios/run.js baremos",
-    "micro:all": "node microservicios/run.js all"
+    "micro:all": "node microservicios/run.js all",
+    "explicaciones:generar": "node scripts/generar-explicaciones.js"
   },
   "keywords": [],
   "author": "",

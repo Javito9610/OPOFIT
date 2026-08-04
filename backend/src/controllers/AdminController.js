@@ -1,5 +1,19 @@
 const db = require('../config/db');
 const NotificationService = require('../services/NotificationService');
+const EjercicioExplicacionAiService = require('../services/EjercicioExplicacionAiService');
+
+// Genera con IA un lote de fichas de ejercicio y las cachea en BD. Se llama
+// repetidamente hasta que "restantes" sea 0 (cada llamada procesa un lote para
+// no exceder el timeout de la request). Uso: POST /api/admin/explicaciones/generar?limite=30&adminKey=...
+const generarExplicaciones = async (req, res) => {
+  const limite = Number(req.query.limite) || 30;
+  try {
+    const r = await EjercicioExplicacionAiService.procesarLote(limite, 300);
+    res.json({ ok: true, ...r });
+  } catch (e) {
+    res.status(500).json({ ok: false, msg: e.message });
+  }
+};
 
 const listOposiciones = async (_req, res) => {
   const [rows] = await db.query('SELECT * FROM oposiciones ORDER BY id_oposicion');
@@ -122,5 +136,6 @@ module.exports = {
   upsertPrueba,
   upsertBaremo,
   enviarRecordatorios,
-  enviarNoticia
+  enviarNoticia,
+  generarExplicaciones
 };

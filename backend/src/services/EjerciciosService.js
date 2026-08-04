@@ -1,6 +1,11 @@
 const db = require('../config/db');
 const EntornoEntreno = require('../utils/EntornoEntreno');
 const EjercicioInteligenteService = require('./EjercicioInteligenteService');
+const { CURADAS } = require('./EjercicioExplicacionesCuradas');
+
+function normNombre(s) {
+  return String(s || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+}
 
 /**
  * Mapeo equipamiento (string libre del banco) → códigos canonical de material.
@@ -66,12 +71,24 @@ function enriquecerInstrucciones(rows) {
     } catch (_) { /* si algo falla, seguimos con lo básico */ }
 
     const instr = String(e.instrucciones_tecnicas || '').trim();
+
+    // Prioridad de la explicación: curada a mano (dentro de rico) > cache IA
+    // (columna explicacion_json) > patrón personalizado (rico).
+    let explicacion = rico?.explicacion || null;
+    if (!CURADAS[normNombre(e.nombre)] && e.explicacion_json) {
+      try {
+        const cache = JSON.parse(e.explicacion_json);
+        if (cache && (cache.setup || cache.porque)) explicacion = cache;
+      } catch (_) { /* json corrupto: usamos el de patrón */ }
+    }
+
+    const { explicacion_json, ...limpio } = e; // no exponemos el JSON crudo
     return {
-      ...e,
+      ...limpio,
       instrucciones_tecnicas: instr.length > 24
         ? instr
         : (rico?.instrucciones_tecnicas || EjercicioInteligenteService.generarInstrucciones(e)),
-      explicacion: rico?.explicacion || null,
+      explicacion,
       objetivo: rico?.objetivo || null
     };
   });
@@ -91,7 +108,7 @@ class EjerciciosService {
     const { categoria, pilar, busqueda, grupo_muscular, entorno, modalidad, material, limite = 1000 } = filtros;
     let sql = `SELECT id_ejercicio, nombre, video_url, instrucciones_tecnicas,
                       categoria, pilar, grupo_muscular, equipamiento, entornos, tipo_ilustracion,
-                      modalidad, score_tipo
+                      modalidad, score_tipo, explicacion_json
                FROM ejercicios WHERE 1=1`;
     const params = [];
 
