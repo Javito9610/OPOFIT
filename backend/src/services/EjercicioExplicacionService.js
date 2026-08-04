@@ -22,6 +22,7 @@
  */
 
 const Patron = require('./PatronMovimientoService');
+const { CURADAS } = require('./EjercicioExplicacionesCuradas');
 
 function normalizar(s) {
   return String(s || '')
@@ -381,6 +382,21 @@ function explicar(ejercicio, ctx = {}) {
   const ficha = FICHAS[patron] || FICHAS.SQUAT;
   const nombre = normalizar(ejercicio.nombre);
   const nombreCap = capitalizar(ejercicio.nombre);
+
+  // 1) PRIORIDAD MÁXIMA: explicación curada (escrita a mano, específica de ese
+  // ejercicio). Si existe, se usa tal cual — es la de mayor calidad.
+  const curada = CURADAS[nombre];
+  if (curada) {
+    return {
+      setup: curada.setup || ficha.setup,
+      ejecucion: curada.ejecucion || ficha.ejecucion,
+      coaching_cues: curada.cues || ficha.cues,
+      errores_comunes: curada.errores || ficha.errores,
+      porque: curada.porque || ficha.porque,
+      patron_movimiento: patron
+    };
+  }
+
   const override = OVERRIDES.find((o) => o.match.test(nombre)) || {};
 
   // Override toma prioridad por sección.
