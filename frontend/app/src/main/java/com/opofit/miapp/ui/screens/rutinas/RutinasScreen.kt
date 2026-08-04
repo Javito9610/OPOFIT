@@ -360,6 +360,39 @@ fun RutinasScreen(
                                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
+                                // Badge de PERIODIZACIÓN: hace visible el mesociclo 3:1
+                                // (Semana X/4 · Fase). El plan progresa y descarga como
+                                // el de un preparador; antes no se veía.
+                                plan.periodizacion?.let { per ->
+                                    item {
+                                        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                            ) {
+                                                Text(
+                                                    if (per.deload) "🌙" else "📈",
+                                                    style = MaterialTheme.typography.titleMedium
+                                                )
+                                                Column(Modifier.weight(1f)) {
+                                                    Text(
+                                                        "Semana ${per.semana_idx} de 4 · ${per.fase_label}",
+                                                        style = MaterialTheme.typography.titleSmall,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        color = MaterialTheme.colorScheme.onSurface
+                                                    )
+                                                    Text(
+                                                        if (per.deload) "Semana de descarga: baja el volumen para recuperar y supercompensar."
+                                                        else "Progresión: cada semana sube un poco la carga hasta el pico, luego descarga.",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                                 if (!esFitness && uiState.notaActual.isNotEmpty()) {
                                     item {
                                         // Cabecera pro tipo Strong/Hevy: dos filas claras.

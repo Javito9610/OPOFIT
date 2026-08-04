@@ -226,11 +226,20 @@ fun ExerciseDetailSheet(
                         .padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text(
-                        "Prescripción",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "Prescripción",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        )
+                        InfoTip(
+                            title = "¿Qué significan estos datos?",
+                            text = "• RPE (1-10): esfuerzo. RPE 7 = te quedan ~3 reps antes del fallo; RPE 9 = 1 rep.\n" +
+                                "• Tempo (p.ej. 3-0-1-0): segundos bajando · pausa abajo · subiendo · pausa arriba.\n" +
+                                "• % 1RM: el peso relativo a tu máximo. 80-90% = fuerza (pesado, pocas reps); 65-80% = hipertrofia.\n" +
+                                "• RIR: repeticiones en reserva (las que dejas sin hacer)."
+                        )
+                    }
                     Text(
                         prescripcion,
                         style = MaterialTheme.typography.headlineSmall,
