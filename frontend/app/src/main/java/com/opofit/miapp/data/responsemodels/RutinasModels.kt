@@ -16,6 +16,12 @@ data class BloqueRutina(
     val ejercicios: List<EjercicioRutina>
 )
 
+/** Una serie dentro de una estructura (pirámide, etc.): reps + pista de carga. */
+data class SerieEsquema(
+    val reps: Int,
+    val intensidad: String? = null
+)
+
 data class EjercicioPlan(
     val id_ejercicio: Int? = null,
     val nombre: String,
@@ -31,6 +37,10 @@ data class EjercicioPlan(
     val repeticiones: Double,
     val descanso: Int,
     val unidad: String? = null,
+    // Estructura de series (rectas / pirámide / pirámide inversa) + esquema por serie.
+    val estructura: String? = null,
+    val estructura_label: String? = null,
+    val esquema_series: List<SerieEsquema>? = null,
     val series_base: Int? = null,
     val repeticiones_base: Double? = null,
     val personalizado: Boolean = false,

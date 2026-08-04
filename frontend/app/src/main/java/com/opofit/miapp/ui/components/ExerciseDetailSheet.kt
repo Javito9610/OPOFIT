@@ -279,6 +279,18 @@ fun ExerciseDetailSheet(
                             }
                         }
                     }
+                    // Estructura de series (pirámide / inversa): mostramos el
+                    // esquema por serie cuando NO es una serie recta trivial.
+                    val esquema = ejercicio.esquema_series
+                    if (esquema != null && esquema.size >= 2 && esquema.map { it.reps }.toSet().size > 1) {
+                        Text(
+                            "${ejercicio.estructura_label ?: "Estructura"}: " +
+                                esquema.joinToString(" · ") { it.reps.toString() } + " reps",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 }
             }
 

@@ -475,6 +475,19 @@ function aplicarInteligencia(ej, ctx = {}) {
   const enriquecida = PrescripcionPro.enriquecer(base, { ...ej, nombre }, { posicion, weekIdx });
   const periodizada = Periodizacion.ajustarPorSemana(enriquecida, weekIdx);
 
+  // Estructura de series (rectas / pirámide / pirámide inversa) según objetivo y
+  // nivel — o la preferencia del usuario si la ha elegido.
+  const EstructuraSeries = require('./EstructuraSeriesService');
+  const estructura = EstructuraSeries.generar({
+    series: periodizada.series,
+    repeticiones: periodizada.repeticiones,
+    unidad: periodizada.unidad,
+    objetivo: periodizada.objetivo,
+    nivel: String(ctx.nivel || ej.nivel || 'BASICO'),
+    preferencia: ctx.estructuraPreferida || ej.estructura_preferida,
+    posicion
+  });
+
   return {
     ...ej,
     nombre: ajustarNombreRitmoSegunNivel(nombre, nivel),
@@ -482,6 +495,9 @@ function aplicarInteligencia(ej, ctx = {}) {
     series: periodizada.series,
     repeticiones: periodizada.repeticiones,
     unidad: periodizada.unidad,
+    esquema_series: estructura.esquema,
+    estructura: estructura.estructura,
+    estructura_label: estructura.estructura_label,
     descanso: periodizada.descanso,
     rpe_objetivo: periodizada.rpe_objetivo,
     tempo: periodizada.tempo,
