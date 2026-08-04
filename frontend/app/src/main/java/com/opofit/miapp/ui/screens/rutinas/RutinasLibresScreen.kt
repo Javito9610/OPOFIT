@@ -202,14 +202,19 @@ fun RutinasLibresScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(16.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column {
+                                    // weight(1f): sin esto un nombre largo se comía
+                                    // todo el ancho y aplastaba la papelera (solo se
+                                    // veía el ">"). Ahora la papelera siempre cabe.
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = rutina.nombre_personalizado,
                                             style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.SemiBold
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 1,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                         )
                                         val subtitulo = buildString {
                                             rutina.entorno_entreno?.let { append("$it • ") }

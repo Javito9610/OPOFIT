@@ -20,14 +20,20 @@ object PrescripcionFormat {
             }
         } else reps
 
+        // Añadimos la UNIDAD explícita (s / min / km / m) para que no haya dudas:
+        // "3×34" no dejaba claro si eran reps, segundos o minutos. Ahora "3×34 s".
+        // Las repeticiones se dejan sin sufijo (el "×" ya implica reps).
         return when {
             u == "km" || n.contains("km") -> {
                 val v = (reps * 10).roundToInt() / 10.0
-                if (v % 1.0 == 0.0) v.toLong().toString() else "%.1f".format(v)
+                val txt = if (v % 1.0 == 0.0) v.toLong().toString() else "%.1f".format(v)
+                "$txt km"
             }
+            u == "m" || Regex("""\d+\s*m\b""").containsMatchIn(n) ->
+                "${capped.roundToInt()} m"
             u == "min" || Regex("""\d+\s*min\b""").containsMatchIn(n) || Regex("""\bminutos?\b""").containsMatchIn(n) ->
-                capped.roundToInt().toString()
-            u == "s" || n.contains("seg") -> capped.roundToInt().toString()
+                "${capped.roundToInt()} min"
+            u == "s" || n.contains("seg") -> "${capped.roundToInt()} s"
             capped % 1.0 == 0.0 -> capped.toLong().toString()
             else -> "%.1f".format(capped)
         }

@@ -487,7 +487,7 @@ function aplicarInteligencia(ej, ctx = {}) {
     // todo construido a partir del patrón + nombre concreto. Sin esto el
     // usuario veía "Escápulas retraídas, toque pecho controlado." y se
     // sentía estafado.
-    explicacion: Explicacion.explicar({ ...ej, nombre }),
+    explicacion: Explicacion.explicar({ ...ej, nombre, grupo_muscular: ej.grupo_muscular || grupo }),
     instrucciones_tecnicas: instruccionesAjustadas,
     prescripcion_inteligente: true,
     instrucciones_inteligentes: true

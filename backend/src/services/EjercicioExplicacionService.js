@@ -330,18 +330,75 @@ const OVERRIDES = [
 // Render: combina ficha por patrón + override por nombre.
 // =============================================================================
 
+function capitalizar(s) {
+  const t = String(s || '').trim();
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+}
+
+// Beneficio concreto por músculo. Sirve para que el "por qué" no sea idéntico
+// entre ejercicios: varía según el grupo muscular real del ejercicio.
+const BEN = {
+  HOMBRO: 'Refuerza el hombro y el empuje por encima de la cabeza (superar muros y vallas en circuitos).',
+  PECHO: 'Trabaja el pectoral y el empuje horizontal (flexiones del baremo, defensa personal).',
+  ESPALDA: 'Fortalece la espalda y el tirón, base de las dominadas del baremo y de una buena postura.',
+  BRAZO: 'Refuerza el brazo (bíceps/tríceps) como apoyo a dominadas, flexiones y agarre.',
+  PIERNA: 'Construye fuerza de piernas para el salto vertical, el sprint y el course-test.',
+  GLUTEO: 'Potencia glúteo e isquios, el motor del sprint y del salto.',
+  CORE: 'Estabiliza el core para transferir fuerza y proteger la lumbar en todas las pruebas.',
+  CARDIO: 'Mejora la capacidad aeróbica y la velocidad, base de 1000m, 2000m y course-test.'
+};
+
+// Prioriza el GRUPO MUSCULAR (campo autoritativo) para evitar colisiones de
+// substring del nombre (p.ej. "jalón al pecho" no es pecho, es espalda; "curl
+// de bíceps" no es espalda aunque su patrón sea de tirón).
+function beneficioPorGrupo(grupo, nombre, patron) {
+  const g = normalizar(grupo);
+  const p = String(patron || '').toUpperCase();
+  if (/hombro|deltoid/.test(g)) return BEN.HOMBRO;
+  if (/brazo|biceps|triceps/.test(g)) return BEN.BRAZO;
+  if (/espalda|dorsal/.test(g)) return BEN.ESPALDA;
+  if (/pecho|pectoral/.test(g)) return BEN.PECHO;
+  if (/gluteo|cadera/.test(g)) return BEN.GLUTEO;
+  if (/pierna|cuadric|femoral|gemelo|isquio/.test(g)) return BEN.PIERNA;
+  if (/core|abdom|lumbar/.test(g)) return BEN.CORE;
+  if (/cardio|resist|aerob/.test(g)) return BEN.CARDIO;
+  // Sin grupo claro: por patrón de movimiento.
+  switch (p) {
+    case 'PUSH_V': return BEN.HOMBRO;
+    case 'PUSH_H': return BEN.PECHO;
+    case 'PULL_V': return BEN.ESPALDA;
+    case 'PULL_H': return /curl|biceps|triceps|martillo/.test(normalizar(nombre)) ? BEN.BRAZO : BEN.ESPALDA;
+    case 'SQUAT': case 'LUNGE': return BEN.PIERNA;
+    case 'HINGE': case 'CARRY': return BEN.GLUTEO;
+    case 'ANTI_EXT': case 'ROT': return BEN.CORE;
+    case 'LOCO': case 'SPRINT': case 'AGI': case 'PLYO': return BEN.CARDIO;
+    default: return null;
+  }
+}
+
 function explicar(ejercicio, ctx = {}) {
   const patron = Patron.clasificar(ejercicio);
   const ficha = FICHAS[patron] || FICHAS.SQUAT;
   const nombre = normalizar(ejercicio.nombre);
+  const nombreCap = capitalizar(ejercicio.nombre);
   const override = OVERRIDES.find((o) => o.match.test(nombre)) || {};
 
   // Override toma prioridad por sección.
-  const setup = override.setup || ficha.setup;
+  const setupBase = override.setup || ficha.setup;
   const ejecucion = override.ejecucion || ficha.ejecucion;
   const cues = override.cues || ficha.cues;
   const errores = override.errores || ficha.errores;
-  const porque = override.porque || ficha.porque;
+  const porqueBase = override.porque || ficha.porque;
+
+  // Personalización POR EJERCICIO (determinista, sin IA): cada ejercicio
+  // menciona su NOMBRE y, si no hay override, su beneficio muscular concreto.
+  // Antes el "por qué" y la técnica salían idénticos para todos los del mismo
+  // patrón (todas las flexiones/press = mismo texto) y parecía copiado.
+  const setup = nombreCap ? `${nombreCap}. ${setupBase}` : setupBase;
+  const benef = override.porque ? null : beneficioPorGrupo(ejercicio.grupo_muscular, nombre, patron);
+  const porque = benef
+    ? `${nombreCap}: ${benef} ${porqueBase}`
+    : (nombreCap ? `${nombreCap}: ${porqueBase}` : porqueBase);
 
   return {
     setup,

@@ -99,8 +99,8 @@ const CLASIF_NOMBRE = [
   // Levantamientos con barra olímpica (gym/crossfit)
   [/press banca|press militar|press de banca|peso muerto|sentadilla con barra|hip thrust con barra|remo con barra|arranque|dos tiempos|\bclean\b|\bsnatch\b|\bjerk\b|thruster|overhead squat|front squat|back squat|barra ol[ií]mpica|hip thrust\b/i,
     ['GYM', 'CROSSFIT', 'MIXTO'], 'Barra olímpica'],
-  // Máquinas de gimnasio
-  [/prensa|jal[oó]n|\bpolea\b|m[aá]quina|multipower|\bsmith\b|contractor|peck deck|extensi[oó]n de cu[aá]driceps|femoral|elevaci[oó]n de gemelo en m/i,
+  // Máquinas de gimnasio (incluye nombres en inglés y poleas/cables)
+  [/prensa|leg press|hack squat|leg extension|extensi[oó]n de cu[aá]driceps|leg curl|curl femoral|femoral (tumbad|sentad|en m)|jal[oó]n|pulldown|lat pulldown|\bpolea\b|\bcable\b|cruce de polea|apertura(s)? en m[aá]quina|pec deck|peck deck|contractor|m[aá]quina|multipower|\bsmith\b|remo en m[aá]quina|press (de )?(pecho|hombro) en m[aá]quina|chest press|shoulder press|seated|gemelo en m[aá]quina|elevaci[oó]n de gemelo en m|hip thrust en m[aá]quina/i,
     ['GYM', 'MIXTO'], 'Máquina'],
   // Material CrossFit específico
   [/wall\s?ball|box jump|caj[oó]n|assault bike|echo bike|air bike|row(ing)? erg|remo ergo|ski\s?erg|battle rope|cuerda de batalla|\bsled\b|trineo|devil press|\bwod\b|\bamrap\b|\bemom\b|for time|man\s?maker|\byoke\b|farmer/i,
@@ -127,11 +127,19 @@ function clasificarEntornos(nombre, equipamiento, pilar) {
   for (const [re, entornos, equip] of CLASIF_NOMBRE) {
     if (re.test(n)) return { entornos: entornos.slice(), equip, confianza: true };
   }
-  return {
-    entornos: inferirEntornosDesdeEquipamiento(equipamiento, pilar),
-    equip: equipamiento || null,
-    confianza: false
-  };
+  // Sin señal por nombre. Si hay equipamiento explícito, inferimos por él.
+  const eq = String(equipamiento || '').trim();
+  if (eq && eq !== '—' && eq !== '-') {
+    return { entornos: inferirEntornosDesdeEquipamiento(equipamiento, pilar), equip: equipamiento, confianza: false };
+  }
+  // Sin equipo NI señal de nombre: NO metemos en CASA/CALISTENIA (evita que
+  // ejercicios desconocidos —normalmente de máquina/gym— contaminen entornos
+  // sin material). Cardio → pista/gym; fuerza desconocida → gym.
+  const pil = normalizarPilar(pilar);
+  if (pil === 'RESISTENCIA' || pil === 'VELOCIDAD') {
+    return { entornos: ['PISTA', 'GYM', 'MIXTO'], equip: null, confianza: false };
+  }
+  return { entornos: ['GYM', 'MIXTO'], equip: null, confianza: false };
 }
 
 /** Entornos efectivos de un ejercicio: manda el nombre; si no es concluyente,
