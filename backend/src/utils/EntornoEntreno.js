@@ -75,8 +75,9 @@ function ejercicioCompatible(entornosCsv, entornoUsuario) {
  * a más genérico; gana la primera regla que casa. Todas incluyen MIXTO.
  */
 const CLASIF_NOMBRE = [
-  // Natación (antes que carrera para que "Natación 50m" no caiga en pista)
-  [/nataci[oó]n|\bcrol\b|nadar|piscina|braza|espalda \(agua\)/i,
+  // Natación (antes que carrera y que movilidad, para que "respiración bilateral"
+  // no caiga en movilidad ni "50m" en pista). Cubre la jerga de nado.
+  [/nataci[oó]n|\bcrol\b|nadar|\bnado\b|piscina|\bbraza\b|espalda \(agua\)|respiraci[oó]n bilateral|brazada|patada de (crol|nado|espalda|braza|mariposa)|t[eé]cnica (de nado|crol|respiraci)|\bviraje\b|deslizamiento en agua|pull\s*buoy|palas de nataci|aleta de nataci/i,
     ['GYM', 'PISTA', 'MIXTO'], 'Piscina'],
   // Carrera / pista / velocidad en campo (metros, series, sprints, cuestas)
   [/carrera|trote|rodaje|fartlek|\btempo\b|cuestas?|cambios? de ritmo|\bsprints?\b|\d+\s*m\b|\d+\s*km\b|1000m|2000m|800m|400m|200m|100m|marat[oó]n/i,

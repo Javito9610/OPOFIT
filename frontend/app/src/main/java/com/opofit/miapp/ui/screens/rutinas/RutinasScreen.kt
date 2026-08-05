@@ -571,48 +571,54 @@ fun RutinasScreen(
                                         item { PlanPersonalizacionCard(personalizacion = perso) }
                                     }
                                     item {
-                                        SectionHeader(
-                                            title = "Microciclo · ${plan.dias_por_semana} días",
-                                            subtitle = plan.personalizacion?.resumen
-                                                ?: "Plan adaptado a tus marcas y nivel"
-                                        )
-                                        Row(
-                                            Modifier.fillMaxWidth().padding(top = 4.dp),
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        // Envuelto en Column con aire: antes se apilaba todo
+                                        // muy junto (agobia). Ahora separación consistente.
+                                        Column(
+                                            modifier = Modifier.padding(top = 6.dp, bottom = 4.dp),
+                                            verticalArrangement = Arrangement.spacedBy(12.dp)
                                         ) {
-                                            OutlinedButton(onClick = { rutinasViewModel.abrirSheetEntorno() }) {
-                                                Text(
-                                                    if (uiState.entornoEntreno.isNullOrBlank()) "¿Dónde entrenas?"
-                                                    else "Cambiar entorno"
-                                                )
-                                            }
-                                            FilledTonalButton(
-                                                onClick = { rutinasViewModel.regenerarPlan(userId, oposicionId) },
-                                                enabled = !uiState.regenerandoPlan && !uiState.entornoEntreno.isNullOrBlank()
+                                            SectionHeader(
+                                                title = "Microciclo · ${plan.dias_por_semana} días",
+                                                subtitle = plan.personalizacion?.resumen
+                                                    ?: "Plan adaptado a tus marcas y nivel"
+                                            )
+                                            Row(
+                                                Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                                             ) {
-                                                if (uiState.regenerandoPlan) {
-                                                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                                                } else {
-                                                    Text("Generar otra semana")
+                                                OutlinedButton(onClick = { rutinasViewModel.abrirSheetEntorno() }) {
+                                                    Text(
+                                                        if (uiState.entornoEntreno.isNullOrBlank()) "¿Dónde entrenas?"
+                                                        else "Cambiar entorno"
+                                                    )
+                                                }
+                                                FilledTonalButton(
+                                                    onClick = { rutinasViewModel.regenerarPlan(userId, oposicionId) },
+                                                    enabled = !uiState.regenerandoPlan && !uiState.entornoEntreno.isNullOrBlank()
+                                                ) {
+                                                    if (uiState.regenerandoPlan) {
+                                                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                                                    } else {
+                                                        Text("Generar otra semana")
+                                                    }
                                                 }
                                             }
-                                        }
-                                        Text(
-                                            "«Generar otra semana» cambia todos los días. «Otra variante» solo en un día.",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.padding(top = 2.dp)
-                                        )
-                                        if (!uiState.entornoEntreno.isNullOrBlank()) {
-                                            OutlinedButton(
-                                                onClick = {
-                                                    onNavigateToLugaresEntreno(
-                                                        MapaEntrenoNav.entornoATipoLugar(uiState.entornoEntreno)
-                                                    )
-                                                },
-                                                modifier = Modifier.fillMaxWidth()
-                                            ) {
-                                                com.opofit.miapp.ui.components.ButtonText("Ver lugares cerca")
+                                            Text(
+                                                "«Generar otra semana» cambia todos los días. «Otra variante» solo en un día.",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            if (!uiState.entornoEntreno.isNullOrBlank()) {
+                                                OutlinedButton(
+                                                    onClick = {
+                                                        onNavigateToLugaresEntreno(
+                                                            MapaEntrenoNav.entornoATipoLugar(uiState.entornoEntreno)
+                                                        )
+                                                    },
+                                                    modifier = Modifier.fillMaxWidth()
+                                                ) {
+                                                    com.opofit.miapp.ui.components.ButtonText("Ver lugares cerca")
+                                                }
                                             }
                                         }
                                     }

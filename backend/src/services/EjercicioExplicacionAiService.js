@@ -22,8 +22,22 @@ en oposiciones físicas españolas (Policía Nacional/Local, Guardia Civil, Bomb
 Mossos, Ejército). Escribes fichas de ejercicio claras, técnicas y en ESPAÑOL de
 España, para usuarios reales. Nada de relleno. Responde SOLO con JSON válido.`;
 
+function disciplinaHint(ej) {
+  const n = String(ej.nombre || '').toLowerCase();
+  if (/nataci|crol|nadar|\bnado\b|braza|espalda \(agua\)|respiraci[oó]n bilateral|brazada|patada de (crol|nado|espalda)|piscina/.test(n)) {
+    return ' IMPORTANTE: es un ejercicio de NATACIÓN (en piscina/agua). Explícalo como técnica de nado, no de gimnasio ni de carrera.';
+  }
+  if (/bici|ciclismo|el[íi]ptica|remo\s*erg|assault|ski\s*erg|step\s*mill|stairmaster|cinta|tapiz/.test(n)) {
+    return ' IMPORTANTE: es cardio en MÁQUINA. Explícalo sobre la máquina indicada, no como pesas.';
+  }
+  if (/carrera|correr|trote|rodaje|fartlek|sprint|cuesta/.test(n)) {
+    return ' IMPORTANTE: es un ejercicio de CARRERA. Explícalo como técnica de carrera.';
+  }
+  return '';
+}
+
 function construirPrompt(ej) {
-  return `Genera la ficha del ejercicio "${ej.nombre}"${ej.grupo_muscular ? ` (grupo: ${ej.grupo_muscular})` : ''}${ej.equipamiento && ej.equipamiento !== '—' ? `, material: ${ej.equipamiento}` : ''}.
+  return `Genera la ficha del ejercicio "${ej.nombre}"${ej.grupo_muscular ? ` (grupo: ${ej.grupo_muscular})` : ''}${ej.pilar ? `, pilar: ${ej.pilar}` : ''}${ej.equipamiento && ej.equipamiento !== '—' ? `, material: ${ej.equipamiento}` : ''}.${disciplinaHint(ej)}
 Devuelve EXACTAMENTE este JSON (en español, específico de ESTE ejercicio, sin genérico):
 {
   "setup": "1-2 frases: posición inicial, colocación, qué activar",
@@ -89,7 +103,7 @@ class EjercicioExplicacionAiService {
       return { generados: 0, fallidos: 0, restantes: 0, sinClave: true };
     }
     const [rows] = await db.query(
-      `SELECT id_ejercicio, nombre, grupo_muscular, equipamiento
+      `SELECT id_ejercicio, nombre, grupo_muscular, equipamiento, pilar
          FROM ejercicios
         WHERE explicacion_json IS NULL
         ORDER BY id_ejercicio ASC
