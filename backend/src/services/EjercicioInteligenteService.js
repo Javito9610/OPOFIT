@@ -37,6 +37,20 @@ function normalizarTexto(nombre) {
     .toLowerCase();
 }
 
+/**
+ * Detecta un esquema de ESCALERA / ladder embebido en el nombre, p.ej.
+ * "Flexiones escalera 1-2-3-4-5-4-3-2-1" → [1,2,3,4,5,4,3,2,1]. Esas cifras
+ * SON la prescripción (cada número es una serie con esas reps), así que el motor
+ * NO debe imponer su propio "3×11" ni una pirámide encima.
+ */
+function parsearEscalera(nombre) {
+  const n = normalizarTexto(nombre);
+  const m = n.match(/\b\d+(?:\s*-\s*\d+){2,}\b/); // 3+ números separados por guiones
+  if (!m) return null;
+  const seq = m[0].split('-').map((x) => parseInt(x.trim(), 10)).filter((x) => x > 0 && x <= 100);
+  return seq.length >= 3 ? seq : null;
+}
+
 /** Extrae prescripción embebida en el nombre (cardio, sprints, series en metros…). */
 function parsearPrescripcionNombre(nombre) {
   const n = normalizarTexto(nombre);
@@ -503,21 +517,38 @@ function aplicarInteligencia(ej, ctx = {}) {
     posicion
   });
 
+  // ESCALERA / ladder en el nombre (1-2-3-4-5-4-3-2-1): ESE es el esquema. No
+  // imponemos "3×11" ni pirámide; mostramos la escalera tal cual.
+  const escalera = parsearEscalera(nombre);
+  const esSerieEscalera = escalera && (estructura.unidad !== 'min' && periodizada.unidad === 'reps');
+  const seriesFinal = esSerieEscalera ? escalera.length : periodizada.series;
+  const repsFinal = esSerieEscalera ? Math.max(...escalera) : periodizada.repeticiones;
+  const esquemaFinal = esSerieEscalera
+    ? escalera.map((r) => ({ reps: r, intensidad: 'media' }))
+    : estructura.esquema;
+  const estructuraNombre = esSerieEscalera ? 'ESCALERA' : estructura.estructura;
+  const estructuraLabelFinal = esSerieEscalera
+    ? `Escalera: ${escalera.join('-')} reps (${escalera.reduce((a, b) => a + b, 0)} totales)`
+    : estructura.estructura_label;
+  const descansoFinal = esSerieEscalera ? 45 : periodizada.descanso;
+  const rpeFinal = esSerieEscalera ? 7 : periodizada.rpe_objetivo;
+  const tempoFinal = esSerieEscalera ? null : periodizada.tempo;
+
   return {
     ...ej,
     nombre: ajustarNombreRitmoSegunNivel(nombre, nivel),
     grupo_muscular: grupo,
-    series: periodizada.series,
-    repeticiones: periodizada.repeticiones,
+    series: seriesFinal,
+    repeticiones: repsFinal,
     unidad: periodizada.unidad,
-    esquema_series: estructura.esquema,
-    estructura: estructura.estructura,
-    estructura_label: estructura.estructura_label,
-    descanso: periodizada.descanso,
-    rpe_objetivo: periodizada.rpe_objetivo,
-    tempo: periodizada.tempo,
-    rango_rm: periodizada.rango_rm,
-    nota_carga: periodizada.nota_carga,
+    esquema_series: esquemaFinal,
+    estructura: estructuraNombre,
+    estructura_label: estructuraLabelFinal,
+    descanso: descansoFinal,
+    rpe_objetivo: rpeFinal,
+    tempo: tempoFinal,
+    rango_rm: esSerieEscalera ? null : periodizada.rango_rm,
+    nota_carga: esSerieEscalera ? null : periodizada.nota_carga,
     patron_movimiento: periodizada.patron_movimiento,
     objetivo: periodizada.objetivo,
     fase_mesociclo: periodizada.fase_mesociclo,

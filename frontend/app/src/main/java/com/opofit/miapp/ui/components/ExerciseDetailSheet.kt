@@ -241,9 +241,17 @@ fun ExerciseDetailSheet(
                                 "• RIR: repeticiones en reserva (las que dejas sin hacer)."
                         )
                     }
+                    // Escalera (1-2-3-4-5-...): el número grande "9×5" confunde.
+                    // Mostramos la secuencia de la escalera como prescripción.
+                    val esEscalera = ejercicio.estructura == "ESCALERA" &&
+                        (ejercicio.esquema_series?.size ?: 0) >= 3
+                    val prescripcionMostrar = if (esEscalera) {
+                        "Escalera: " + ejercicio.esquema_series!!.joinToString("-") { it.reps.toString() } + " reps"
+                    } else prescripcion
                     Text(
-                        prescripcion,
-                        style = MaterialTheme.typography.headlineSmall,
+                        prescripcionMostrar,
+                        style = if (esEscalera) MaterialTheme.typography.titleMedium
+                        else MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -284,7 +292,7 @@ fun ExerciseDetailSheet(
                     // Estructura de series (pirámide / inversa): mostramos el
                     // esquema por serie cuando NO es una serie recta trivial.
                     val esquema = ejercicio.esquema_series
-                    if (esquema != null && esquema.size >= 2 && esquema.map { it.reps }.toSet().size > 1) {
+                    if (!esEscalera && esquema != null && esquema.size >= 2 && esquema.map { it.reps }.toSet().size > 1) {
                         Text(
                             "${ejercicio.estructura_label ?: "Estructura"}: " +
                                 esquema.joinToString(" · ") { it.reps.toString() } + " reps",
