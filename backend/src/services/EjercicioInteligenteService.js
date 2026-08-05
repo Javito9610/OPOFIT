@@ -30,6 +30,10 @@ function normalizarTexto(nombre) {
   return String(nombre || '')
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
+    // Símbolo de multiplicar y subíndices (VO₂ → vo2, 4×4 → 4x4) para que los
+    // detectores de "NxN" e intensidad funcionen con nombres reales del catálogo.
+    .replace(/×/g, 'x')
+    .replace(/[₀₁₂₃₄₅₆₇₈₉]/g, (d) => '₀₁₂₃₄₅₆₇₈₉'.indexOf(d).toString())
     .toLowerCase();
 }
 

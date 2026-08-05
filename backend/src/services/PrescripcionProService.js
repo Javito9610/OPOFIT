@@ -64,7 +64,12 @@ function objetivoDe(pilar, posicion, reps, unidad) {
 }
 
 function normalizarNombre(s) {
-  return String(s || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+  return String(s || '')
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/×/g, 'x')
+    .replace(/[₀₁₂₃₄₅₆₇₈₉]/g, (d) => '₀₁₂₃₄₅₆₇₈₉'.indexOf(d).toString())
+    .toLowerCase();
 }
 
 /** RPE del cardio según la INTENSIDAD que indica el nombre (no todo el cardio
@@ -129,7 +134,7 @@ function enriquecer(prescripcion, ej, ctx = {}) {
   const esCardio = ['LOCO', 'SPRINT', 'AGI', 'PLYO'].includes(patron)
     || pil === 'RESISTENCIA'
     || ['min', 'km'].includes(unidad)
-    || /\bvo2|\bkm\b|\d+\s*m\b|carrera|correr|trote|rodaje|fartlek|nataci|\bcrol\b|\bseries\b|interval|cuesta|bici|bicicleta|ciclismo|el[íi]ptica|remo\s*erg|assault|echo\s*bike|air\s*bike|ski\s*erg|\bcinta\b|tapiz|treadmill|step\s*mill|stairmaster|escaladora|helgerud|comba|salto/.test(nn);
+    || /\bvo2|\bkm\b|\d+\s*m\b|carrera|correr|trote|rodaje|fartlek|nataci|\bcrol\b|\bseries\b|interval|\bhiit\b|tabata|sprint|\bz[1-5]\b|cuesta|bici|bicicleta|ciclismo|el[íi]ptica|remo\s*erg|assault|echo\s*bike|air\s*bike|ski\s*erg|\bcinta\b|tapiz|treadmill|step\s*mill|stairmaster|escaladora|helgerud|comba|salto/.test(nn);
 
   // Movilidad / pliometría / sprint / cardio: no aplica % de 1RM.
   const sinCarga = ['MOB', 'PLYO', 'SPRINT', 'AGI', 'LOCO', 'ANTI_EXT'].includes(patron) || esCardio;
