@@ -468,7 +468,7 @@ fun CrearRutinaScreen(
                         }
                         row.descansoSeg?.takeIf { it > 0 }?.let { d ->
                             Text(
-                                "Descanso sugerido: ${d}s (se guardará al crear la rutina)",
+                                "Descanso entre series: ${d}s (se guardará al crear la rutina)",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.secondary
                             )

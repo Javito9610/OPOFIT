@@ -247,7 +247,7 @@ fun ExerciseDetailSheet(
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     val proMeta = buildList {
-                        if (ejercicio.descanso > 0) add("${ejercicio.descanso}s descanso")
+                        if (ejercicio.descanso > 0) add("${ejercicio.descanso}s entre series")
                         ejercicio.tempo?.takeIf { it.isNotBlank() }?.let { add("Tempo $it") }
                         ejercicio.rpe_objetivo?.let { add("RPE objetivo $it") }
                         ejercicio.rango_rm?.takeIf { it.isNotBlank() }?.let { add(it) }
@@ -264,7 +264,8 @@ fun ExerciseDetailSheet(
                                     enabled = false,
                                     label = { Text(line, style = MaterialTheme.typography.labelSmall) },
                                     leadingIcon = when {
-                                        line.contains("descanso", ignoreCase = true) -> {
+                                        line.contains("descanso", ignoreCase = true) ||
+                                            line.contains("entre series", ignoreCase = true) -> {
                                             { Icon(Icons.Outlined.Timer, null, Modifier.size(16.dp)) }
                                         }
                                         line.contains("RPE", ignoreCase = true) -> {

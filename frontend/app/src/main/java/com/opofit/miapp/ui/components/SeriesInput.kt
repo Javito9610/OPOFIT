@@ -42,6 +42,9 @@ fun SeriesInput(
     unidad: String,
     valoresPorSerie: List<String>,
     onValoresChange: (List<String>) -> Unit,
+    // Descanso ENTRE SERIES (segundos) + acción para lanzar el temporizador.
+    descansoSeg: Int = 0,
+    onDescansar: (Int) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val unidadLeg = EntrenoValidation.unidadLegible(unidad)
@@ -126,6 +129,16 @@ fun SeriesInput(
                     singleLine = true,
                     placeholder = repsObjetivo?.let { { Text("$it") } }
                 )
+            }
+            // Descanso ENTRE SERIES: al anotar una serie (que no sea la última),
+            // ofrece iniciar el temporizador de descanso hacia la siguiente.
+            if (completada && idx < series - 1 && descansoSeg > 0) {
+                TextButton(
+                    onClick = { onDescansar(descansoSeg) },
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("⏱ Descansar ${descansoSeg}s antes de la serie ${idx + 2}")
+                }
             }
         }
 

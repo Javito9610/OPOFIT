@@ -62,6 +62,9 @@ fun EntrenoActiveStepCard(
     mostrarPeso: Boolean = false,
     pesoKg: String = "",
     onPesoChange: (String) -> Unit = {},
+    // --- Descanso ENTRE SERIES (temporizador) ---
+    descansoSegEntreSeries: Int = 0,
+    onDescansarSerie: (Int) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     ElevatedCard(
@@ -195,7 +198,9 @@ fun EntrenoActiveStepCard(
                         repsObjetivo = repsObjetivo,
                         unidad = unidad,
                         valoresPorSerie = valoresPorSerie,
-                        onValoresChange = onValoresPorSerieChange
+                        onValoresChange = onValoresPorSerieChange,
+                        descansoSeg = descansoSegEntreSeries,
+                        onDescansar = onDescansarSerie
                     )
                     if (!errorValor.isNullOrBlank()) {
                         Text(

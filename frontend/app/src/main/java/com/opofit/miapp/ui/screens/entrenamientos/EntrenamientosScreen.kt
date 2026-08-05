@@ -1246,6 +1246,12 @@ fun EntrenamientosScreen(
                         pesoKg = activo.pesoKg,
                         onPesoChange = { v ->
                             ejerciciosEstado[pasoActualIdx] = activo.copy(pesoKg = v)
+                        },
+                        descansoSegEntreSeries = activo.descansoSeg,
+                        onDescansarSerie = { secs ->
+                            restTimerSecs = secs.coerceIn(20, 300)
+                            nextEjercicioNombre = "Siguiente serie de ${activo.nombre}"
+                            showRestTimer = true
                         }
                     )
                 }
