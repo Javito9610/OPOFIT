@@ -10,6 +10,7 @@ const PlanPersonalizadorService = require('./PlanPersonalizadorService');
 const EjercicioInteligenteService = require('./EjercicioInteligenteService');
 const RutinaService = require('./RutinasService');
 const Periodizacion = require('./PeriodizacionService');
+const OrdenSesion = require('./OrdenSesionService');
 const Calentamiento = require('./CalentamientoService');
 const Patron = require('./PatronMovimientoService');
 
@@ -336,8 +337,14 @@ class PlanGeneradorService {
       // ADAPTACIÓN AL USUARIO (v12): aplica filtro por lesiones, autoregula
       // por fatiga reportada y comprime por tiempo disponible. Si no hay
       // ninguno de los tres, devuelve la lista intacta.
+      // ORDEN DE LA SESIÓN (principio NSCA / INEF): los ejercicios más exigentes
+      // y técnicos van EN FRESCO. Orden: potencia/velocidad → compuestos grandes
+      // → compuestos medios → accesorios/aislamiento → core → movilidad. Se hace
+      // ANTES de adaptar por tiempo para que, si hay que recortar, caiga el
+      // accesorio y no el ejercicio principal.
+      const ejerciciosOrdenados = OrdenSesion.ordenar(ejercicios);
       const Adaptacion = require('./AdaptacionUsuarioService');
-      const adapt = Adaptacion.adaptarSesion(ejercicios, {
+      const adapt = Adaptacion.adaptarSesion(ejerciciosOrdenados, {
         lesiones,
         tiempoDisponibleMin,
         fatigaPrevia
