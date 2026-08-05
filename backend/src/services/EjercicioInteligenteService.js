@@ -154,7 +154,7 @@ const RANGOS = {
   CARDIO_INTERVAL: { series: [1, 1], reps: [12, 25], descanso: [0, 0] },
   CARDIO_CONTINUO: { series: [1, 1], reps: [20, 45], descanso: [0, 0] },
   SPRINT: { series: [4, 8], reps: [30, 80], descanso: [90, 150] },
-  PLIOMETRIA: { series: [3, 5], reps: [5, 10], descanso: [90, 120] },
+  PLIOMETRIA: { series: [3, 5], reps: [3, 6], descanso: [90, 150] },
   // Agilidad (conos, vallas, escalera, T-test): se mide en VUELTAS/PASADAS
   // no en metros. Antes prescribía "3×38 reps" sin unidad clara y al usuario
   // le parecía absurdo. Ahora 3-5 series de 4-8 vueltas.
@@ -204,7 +204,12 @@ function generarPrescripcion(ej, ctx = {}) {
     repsMin = 4;
     repsMax = 6;
   }
-  const repeticiones = variar(seed, `${key}|r`, repsMin, repsMax);
+  let repeticiones = variar(seed, `${key}|r`, repsMin, repsMax);
+  // Isométricos (aguantes) en SEGUNDOS redondos, no "43 s".
+  if ((clasif.unidad || '') === 's') {
+    const STD_SEG = [15, 20, 30, 45, 60, 90, 120];
+    repeticiones = STD_SEG.reduce((b, s) => (Math.abs(s - repeticiones) < Math.abs(b - repeticiones) ? s : b), STD_SEG[0]);
+  }
   const descanso = variar(seed, `${key}|d`, rango.descanso[0], rango.descanso[1]);
 
   return {

@@ -76,7 +76,10 @@ function normalizarNombre(s) {
  *  es RPE 5). Intervalos/VO2máx/series/umbral = muy duro; Z2/rodaje/suave = fácil. */
 function rpeCardio(nombre) {
   const n = normalizarNombre(nombre);
-  // Muy duro (VO2máx / intervalos / protocolos): Helgerud 4x4, series, sprints…
+  // Potencia / pliometría: esfuerzo neuromuscular alto por repetición (no
+  // metabólico). Saltos, box jump, pogos, CMJ, depth jump → RPE 8.
+  if (/salt|jump|box\s*jump|caj[oó]n|pliometr|\bcmj\b|pogo|depth\s*jump|\bbound/.test(n)) return 8;
+  // Muy duro metabólico (VO2máx / intervalos): Helgerud 4x4, series, sprints, HIIT.
   if (/vo2|9[0-9]\s*%|8[5-9]\s*%|helgerud|\bz5\b|\bz4\b|\bmax\b|m[aá]xim|sprint|\bseries\b|interval|hiit|tabata|\d+\s*x\s*\d+|\br[0-9]/.test(n)) return 9;
   // Umbral / tempo / cambios de ritmo.
   if (/\bz3\b|umbral|fartlek|cambios de ritmo|\btempo\b|cuesta|progresi|moderad/.test(n)) return 7;
