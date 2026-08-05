@@ -65,9 +65,16 @@ function generar(p = {}) {
   const objetivo = String(p.objetivo || 'hipertrofia').toLowerCase();
   const nivel = String(p.nivel || 'BASICO').toUpperCase();
   const pref = String(p.preferencia || '').toUpperCase();
+  const nombre = String(p.nombre || '').toLowerCase().replace(/×/g, 'x');
 
   // No piramidamos cardio / isométricos / tiempo / distancia ni series únicas.
   if ((unidad !== 'reps' && unidad !== 'rep') || series < 2 || objetivo === 'resistencia') {
+    return recta(series, reps);
+  }
+  // Si el NOMBRE ya trae un esquema explícito "NxN" (p.ej. "Vallas 4x8",
+  // "Landmine press 4x8"), el preparador ya definió series rectas: NO piramidamos
+  // por encima. La escalera (1-2-3-4-5) se maneja aparte en aplicarInteligencia.
+  if (/\b\d+\s*x\s*\d+\b/.test(nombre) && !pref) {
     return recta(series, reps);
   }
 

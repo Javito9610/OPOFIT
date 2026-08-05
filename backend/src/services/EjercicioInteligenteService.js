@@ -514,6 +514,7 @@ function aplicarInteligencia(ej, ctx = {}) {
     objetivo: periodizada.objetivo,
     nivel: String(ctx.nivel || ej.nivel || 'BASICO'),
     preferencia: ctx.estructuraPreferida || ej.estructura_preferida,
+    nombre,
     posicion
   });
 
