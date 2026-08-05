@@ -108,8 +108,12 @@ const CLASIF_NOMBRE = [
   // Bandas elásticas / gomas
   [/banda el[aá]stica|goma el[aá]stica|\bgoma\b|resistance band/i,
     ['CASA', 'GYM', 'MIXTO'], 'Banda'],
-  // Cardio de máquina
-  [/cinta de correr|bici(cleta)? est[aá]tica|el[ií]ptica|spinning|remo(ergómetro| c2)/i,
+  // Cardio de máquina de GYM/BOX (no de casa): step mill, escaladora, assault/
+  // echo/air bike, ski erg, remo ergómetro.
+  [/step\s*mill|stairmaster|escaladora|assault\s*bike|echo\s*bike|air\s*bike|ski\s*erg|remo\s*erg|remoergo|bici\s*sala/i,
+    ['GYM', 'CROSSFIT', 'MIXTO'], 'Máquina cardio'],
+  // Cardio de máquina que también puede haber en casa: cinta, bici estática, elíptica.
+  [/cinta de correr|bici(cleta)? est[aá]tica|el[ií]ptica|spinning/i,
     ['GYM', 'CASA', 'MIXTO'], 'Máquina cardio'],
   // Agilidad / coordinación / velocidad de pies
   [/escalera de agilidad|\bconos\b|circuito de conos|\bvallas\b|skipping|carioca|desplazamiento lateral|agilidad|propiocep|coordinaci[oó]n|reacci[oó]n/i,

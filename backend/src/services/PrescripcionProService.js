@@ -71,9 +71,11 @@ function normalizarNombre(s) {
  *  es RPE 5). Intervalos/VO2máx/series/umbral = muy duro; Z2/rodaje/suave = fácil. */
 function rpeCardio(nombre) {
   const n = normalizarNombre(nombre);
-  if (/vo2|9[0-9]\s*%|8[5-9]\s*%|\bmax\b|m[aá]xim|sprint|\bseries\b|interval|umbral|\btempo\b|cuesta|hiit|tabata|\br[0-9]/.test(n)) return 9;
-  if (/z3|z4|fartlek|cambios de ritmo|progresi|moderad|\britmo\b/.test(n)) return 7;
-  return 5; // Z2 / rodaje / continua / suave / recuperacion
+  // Muy duro (VO2máx / intervalos / protocolos): Helgerud 4x4, series, sprints…
+  if (/vo2|9[0-9]\s*%|8[5-9]\s*%|helgerud|\bz5\b|\bz4\b|\bmax\b|m[aá]xim|sprint|\bseries\b|interval|hiit|tabata|\d+\s*x\s*\d+|\br[0-9]/.test(n)) return 9;
+  // Umbral / tempo / cambios de ritmo.
+  if (/\bz3\b|umbral|fartlek|cambios de ritmo|\btempo\b|cuesta|progresi|moderad/.test(n)) return 7;
+  return 5; // Z1-Z2 / rodaje / continua / suave / recuperacion
 }
 
 /** Valores de descanso REALISTAS y redondeados (nada de "114 s"). */
@@ -123,9 +125,11 @@ function enriquecer(prescripcion, ej, ctx = {}) {
   // de patrón no siempre pilla "4×1000m VO2máx" → aquí sí.
   const nn = normalizarNombre(ej.nombre);
   const pil = String(ej.pilar || ej.categoria || '').toUpperCase();
+  const unidad = String(prescripcion.unidad || '').toLowerCase();
   const esCardio = ['LOCO', 'SPRINT', 'AGI', 'PLYO'].includes(patron)
     || pil === 'RESISTENCIA'
-    || /\bvo2|\bkm\b|\d+\s*m\b|carrera|correr|trote|rodaje|fartlek|nataci|\bcrol\b|\bseries\b|interval|cuesta/.test(nn);
+    || ['min', 'km'].includes(unidad)
+    || /\bvo2|\bkm\b|\d+\s*m\b|carrera|correr|trote|rodaje|fartlek|nataci|\bcrol\b|\bseries\b|interval|cuesta|bici|bicicleta|ciclismo|el[íi]ptica|remo\s*erg|assault|echo\s*bike|air\s*bike|ski\s*erg|\bcinta\b|tapiz|treadmill|step\s*mill|stairmaster|escaladora|helgerud|comba|salto/.test(nn);
 
   // Movilidad / pliometría / sprint / cardio: no aplica % de 1RM.
   const sinCarga = ['MOB', 'PLYO', 'SPRINT', 'AGI', 'LOCO', 'ANTI_EXT'].includes(patron) || esCardio;
@@ -136,12 +140,15 @@ function enriquecer(prescripcion, ej, ctx = {}) {
   // Descanso coherente (respeta el del nombre, redondea a valor pro).
   const descanso = descansoCoherente(prescripcion.descanso, ej.nombre, objetivo, patron);
 
+  // Tempo: NO aplica a cardio (una bici o un rodaje no tienen tempo de barra).
+  const tempo = esCardio ? null : meta.tempo;
+
   return {
     ...prescripcion,
     descanso,
     patron_movimiento: patron,
     objetivo,
-    tempo: meta.tempo,
+    tempo,
     rpe_objetivo: rpe,
     rango_rm: sinCarga ? null : carga.rangoRm,
     nota_carga: sinCarga ? null : carga.nota

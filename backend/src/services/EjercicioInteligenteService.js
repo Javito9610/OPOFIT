@@ -56,7 +56,13 @@ function parsearPrescripcionNombre(nombre) {
   }
   m = n.match(/(\d+)\s*s\b/);
   if (m) return { series: variar(+m[1], 'ss', 3, 4), repeticiones: +m[1], unidad: 's', descanso: 60 };
+  // CARDIO INTERVÁLICO en máquina: "Bici 4x4 Helgerud", "Remo 5x3", etc. El
+  // "NxN" son intervalos × MINUTOS (no series × reps). Recuperación larga.
+  const esCardioMaquina = /bici|bicicleta|ciclismo|el[íi]ptica|remo\s*erg|remoergo|assault|echo\s*bike|air\s*bike|ski\s*erg|cinta|tapiz|treadmill|step\s*mill|stairmaster|escaladora|nataci|helgerud|vo2/.test(n);
   m = n.match(/(\d+)\s*x\s*(\d+)/);
+  if (m && (esCardioMaquina || /interval|hiit|\bvo2\b|helgerud/.test(n))) {
+    return { series: +m[1], repeticiones: +m[2], unidad: 'min', descanso: 180 };
+  }
   if (m) return { series: +m[1], repeticiones: +m[2], unidad: 'reps', descanso: 75 };
   if (/amrap|emom|al fallo|a fallo|max tiempo|máx tiempo/.test(n)) {
     return { series: 1, repeticiones: 99, unidad: 'amrap', descanso: 0 };

@@ -148,17 +148,18 @@ fun ExerciseDetailSheet(
                 // Vídeo YouTube (rojo de marca YouTube).
                 androidx.compose.material3.Button(
                     onClick = {
-                        // Si hay vídeo curado (correcto y verificado) lo abrimos
-                        // DIRECTO; si no, caemos a una búsqueda en YouTube.
-                        val vid = ejercicio.video_url?.takeIf { it.startsWith("http") }
-                        val destino = vid ?: run {
-                            val q = java.net.URLEncoder.encode(
-                                "${ejercicio.nombre} técnica correcta",
-                                "UTF-8"
-                            )
+                        // Búsqueda en YouTube (lista de resultados para que el
+                        // usuario elija). Los links "directos" curados a veces
+                        // quedan caídos ("vídeo no disponible"); la búsqueda
+                        // SIEMPRE funciona y da varias opciones actuales.
+                        val q = java.net.URLEncoder.encode(
+                            "${ejercicio.nombre} técnica ejercicio",
+                            "UTF-8"
+                        )
+                        com.opofit.miapp.utils.UrlOpener.open(
+                            ctxLocal,
                             "https://www.youtube.com/results?search_query=$q"
-                        }
-                        com.opofit.miapp.utils.UrlOpener.open(ctxLocal, destino)
+                        )
                     },
                     modifier = Modifier
                         .weight(1f)

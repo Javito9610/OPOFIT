@@ -208,17 +208,43 @@ class PlanesService {
     const objetivo = Number.isFinite(diasObjetivo) ? Math.round(diasObjetivo) : dias.length;
     const N = Math.min(dias.length, Math.min(7, Math.max(1, objetivo)));
 
-    // 1) SELECCIÓN: si hay que recortar, conservamos priorizando el pilar débil
-    //    (para que la semana refuerce tu punto flojo) y el orden deportivo base.
-    const PRIO_BASE = { RESISTENCIA: 0, FUERZA: 1, VELOCIDAD: 2, CORE: 3, MOVILIDAD: 4 };
+    // 1) SELECCIÓN CON DIVERSIDAD: cubrir TODOS los pilares que entrena la
+    //    oposición antes de repetir ninguno. Antes, al recortar a 3 días,
+    //    salían "2 del mismo pilar + 1 de otro" (y encima se dejaba fuera algún
+    //    pilar que la prueba evalúa). Ahora: primero 1 día de cada enfoque
+    //    (empezando por el PILAR DÉBIL para reforzarlo), y solo si sobran slots
+    //    se repite un enfoque. Con 3 días y pilares {FUE,RES,VEL} → uno de cada.
+    const PRIO_BASE = { RESISTENCIA: 1, FUERZA: 2, VELOCIDAD: 3, CORE: 4, MOVILIDAD: 5 };
     const debilSet = new Set((pilaresDebiles || []).map((p) => String(p.pilar || p).toUpperCase()));
-    const score = (d) => {
-      const enf = String(d.enfoque || '').toUpperCase();
-      return (PRIO_BASE[enf] ?? 5) + (debilSet.has(enf) ? -10 : 0);
-    };
-    const conservadas = N < dias.length
-      ? [...dias].sort((a, b) => score(a) - score(b)).slice(0, N)
-      : [...dias];
+    const grupos = {};
+    for (const d of dias) {
+      const e = String(d.enfoque || 'OTRO').toUpperCase();
+      (grupos[e] = grupos[e] || []).push(d);
+    }
+    // Orden de pilares: primero el débil (para asegurar que entra y se refuerza),
+    // luego por prioridad deportiva base.
+    const claves = Object.keys(grupos).sort((a, b) => {
+      const da = debilSet.has(a) ? -100 : 0;
+      const dbb = debilSet.has(b) ? -100 : 0;
+      return (da + (PRIO_BASE[a] ?? 9)) - (dbb + (PRIO_BASE[b] ?? 9));
+    });
+    let conservadas;
+    if (N >= dias.length) {
+      conservadas = [...dias];
+    } else {
+      conservadas = [];
+      let guard = 0;
+      while (conservadas.length < N && guard++ < 1000) {
+        let progreso = false;
+        for (const k of claves) {
+          if (conservadas.length < N && grupos[k].length) {
+            conservadas.push(grupos[k].shift());
+            progreso = true;
+          }
+        }
+        if (!progreso) break;
+      }
+    }
 
     // 2) ORDEN: alternamos enfoques (nada de 2 sesiones iguales seguidas).
     const alternadas = ordenarAlternando(conservadas);
